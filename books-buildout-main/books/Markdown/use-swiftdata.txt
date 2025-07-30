@@ -1,0 +1,26 @@
+
+# ADR 0001 – Use SwiftData for Local Persistence
+
+| Status | Accepted |
+|--------|----------|
+| Date   | 2024-05-19 |
+| Authors| Core iOS Team |
+
+## 1. Context
+The Books app requires an on-device database to store user-specific book information and shared book metadata.
+Options considered:
+
+1. **SwiftData** – Apple’s new lightweight ORM on top of SQLite, deeply integrated with SwiftUI, automatic schema migration.
+2. **Core Data** – Mature framework, battle-tested but verbose and less Swift-centric.
+3. **Realm** – Third-party, ease of use, but adds external dependency and license considerations.
+4. **Raw SQLite / GRDB** – Maximum control, minimum convenience, higher maintenance.
+
+Key constraints:
+• Must work fully offline.
+• SwiftUI first-class integration.
+• Minimal boilerplate for rapid iteration.
+• Future iCloud sync should be straightforward.
+
+## 2. Decision
+Adopt **SwiftData** as the sole persistence layer.
+Implementation pattern:
