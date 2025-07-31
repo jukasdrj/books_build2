@@ -1,29 +1,71 @@
-// books-buildout/books/LibraryView.swift
 import SwiftUI
 import SwiftData
 
 struct LibraryView: View {
-    @Environment(\.modelContext) private var modelContext
+    enum Filter {
+        case library
+        case wishlist
+        
+        var navigationTitle: String {
+            switch self {
+            case .library:  "Library"
+            case .wishlist: "Wishlist"
+            }
+        }
+        
+        var emptyTitle: String {
+            switch self {
+            case .library:  "Your Library is Empty"
+            case .wishlist: "Your Wishlist is Empty"
+            }
+        }
+        
+        var emptySystemImage: String {
+            switch self {
+            case .library:  "book.closed"
+            case .wishlist: "wand.and.stars"
+            }
+        }
+        
+        var emptyDescription: String {
+            switch self {
+            case .library:  "Add a book from the Search tab to get started."
+            case .wishlist: "Add books you want to read to your wishlist."
+            }
+        }
+    }
     
-    @Query(sort: [SortDescriptor(\UserBook.dateAdded, order: .reverse)]) 
+    let filter: Filter
+    
+    @Environment(\.modelContext) private var modelContext
+    @Query(sort: [SortDescriptor(\UserBook.dateAdded, order: .reverse)])
     private var allBooks: [UserBook]
     
-    private var libraryBooks: [UserBook] {
-        allBooks.filter { !$0.onWishlist && $0.readingStatus != .toRead }
+    private var displayedBooks: [UserBook] {
+        switch filter {
+        case .library:
+            allBooks.filter { !$0.onWishlist && $0.readingStatus != .toRead }
+        case .wishlist:
+            allBooks.filter { $0.onWishlist }
+        }
     }
-
+    
+    init(filter: Filter = .library) {
+        self.filter = filter
+    }
+    
     var body: some View {
         NavigationStack {
             Group {
-                if libraryBooks.isEmpty {
+                if displayedBooks.isEmpty {
                     ContentUnavailableView {
-                        Label("Your Library is Empty", systemImage: "book.closed")
+                        Label(filter.emptyTitle, systemImage: filter.emptySystemImage)
                     } description: {
-                        Text("Add a book from the Search tab to get started.")
+                        Text(filter.emptyDescription)
                     }
                 } else {
                     List {
-                        ForEach(libraryBooks) { userBook in
+                        ForEach(displayedBooks) { userBook in
                             NavigationLink(value: userBook) {
                                 BookRowView(userBook: userBook)
                             }
@@ -32,24 +74,27 @@ struct LibraryView: View {
                     }
                 }
             }
-            .navigationTitle("Library")
+            .navigationTitle(filter.navigationTitle)
             .navigationDestination(for: UserBook.self) { book in
                 BookDetailsView(book: book)
             }
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    EditButton()
+                    if !displayedBooks.isEmpty && filter == .library {
+                        EditButton()
+                    }
                 }
             }
         }
     }
-
+    
     private func deleteItems(offsets: IndexSet) {
+        guard filter == .library else { return }   // Disallow delete from wishlist
         withAnimation {
             for index in offsets {
-                let bookToDelete = libraryBooks[index]
-                if let bookIndex = allBooks.firstIndex(of: bookToDelete) {
-                    modelContext.delete(allBooks[bookIndex])
+                let bookToDelete = displayedBooks[index]
+                if let actualIndex = allBooks.firstIndex(of: bookToDelete) {
+                    modelContext.delete(allBooks[actualIndex])
                 }
             }
         }
