@@ -14,16 +14,16 @@ struct BookRowView: View {
             
             VStack(alignment: .leading) {
                 Text(userBook.metadata?.title ?? "Unknown Title")
-                    .font(.headline)
+                    .titleMedium()
                     .foregroundColor(Theme.Color.PrimaryText)
                     .lineLimit(2)
                 Text(userBook.metadata?.authors.joined(separator: ", ") ?? "Unknown Author")
-                    .font(.subheadline)
+                    .bodyMedium()
                     .foregroundStyle(Theme.Color.SecondaryText)
                 
                 if userBook.readingStatus != .toRead {
                     Text(userBook.readingStatus.rawValue)
-                        .font(.caption)
+                        .labelSmall()
                         .fontWeight(.medium)
                         .padding(.vertical, 2)
                         .padding(.horizontal, 6)

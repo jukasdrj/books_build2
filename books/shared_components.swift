@@ -24,7 +24,7 @@ struct BookListItem: View {
             VStack(alignment: .leading, spacing: 4) {
                 // Title
                 Text(book.metadata?.title ?? "Unknown Title")
-                    .font(.headline)
+                    .titleMedium()
                     .lineLimit(2)
                     .foregroundColor(Theme.Color.PrimaryText)
                 
@@ -34,20 +34,20 @@ struct BookListItem: View {
                         onAuthorTap(firstAuthor)
                     }) {
                         Text(book.metadata?.authors.joined(separator: ", ") ?? "Unknown Author")
-                            .font(.subheadline)
+                            .bodyMedium()
                             .foregroundColor(Theme.Color.PrimaryAction)
                             .underline()
                     }
                     .buttonStyle(.plain)
                 } else {
                     Text(book.metadata?.authors.joined(separator: ", ") ?? "Unknown Author")
-                        .font(.subheadline)
+                        .bodyMedium()
                         .foregroundColor(Theme.Color.SecondaryText)
                 }
                 
                 HStack {
                     Text(book.readingStatus.rawValue)
-                        .font(.caption)
+                        .labelSmall()
                         .padding(.horizontal, 8)
                         .padding(.vertical, 2)
                         .background(statusColor(for: book.readingStatus))
@@ -104,40 +104,66 @@ struct AddBookView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section(header: Text("Book Details")) {
+                Section {
                     TextField("Title", text: $title)
+                        .bodyMedium()
                     TextField("Authors (comma separated)", text: $authors)
+                        .bodyMedium()
                     TextField("ISBN (Optional)", text: $isbn)
+                        .bodyMedium()
+                } header: {
+                    Text("Book Details")
+                        .titleSmall()
                 }
                 
-                Section(header: Text("Publication Details")) {
+                Section {
                     TextField("Publisher (Optional)", text: $publisher)
+                        .bodyMedium()
                     TextField("Published Date (Optional)", text: $publishedDate)
+                        .bodyMedium()
                     TextField("Total Pages (Optional)", text: $pageCount)
                         .keyboardType(.numberPad)
+                        .bodyMedium()
                     TextField("Language (Optional)", text: $language)
+                        .bodyMedium()
+                } header: {
+                    Text("Publication Details")
+                        .titleSmall()
                 }
                 
-                Section(header: Text("Cultural & Language Details")) {
+                Section {
                     TextField("Original Language (Optional)", text: $originalLanguage)
+                        .bodyMedium()
                     TextField("Author Nationality (Optional)", text: $authorNationality)
+                        .bodyMedium()
                     TextField("Translator (Optional)", text: $translator)
+                        .bodyMedium()
+                } header: {
+                    Text("Cultural & Language Details")
+                        .titleSmall()
                 }
                 
-                Section(header: Text("Reading Status")) {
+                Section {
                     Picker("Status", selection: $readingStatus) {
                         ForEach(ReadingStatus.allCases, id: \.self) { status in
-                            Text(status.rawValue).tag(status)
+                            Text(status.rawValue)
+                                .bodyMedium()
+                                .tag(status)
                         }
                     }
                     .pickerStyle(.menu)
                     
                     Toggle("Add to Wishlist", isOn: $addToWishlist)
+                        .bodyMedium()
+                } header: {
+                    Text("Reading Status")
+                        .titleSmall()
                 }
                 
-                Section(header: Text("Rating")) {
+                Section {
                     HStack {
                         Text("Rating:")
+                            .bodyMedium()
                         Spacer()
                         HStack(spacing: 4) {
                             ForEach(1...5, id: \.self) { star in
@@ -150,23 +176,31 @@ struct AddBookView: View {
                         Button("Clear") {
                             personalRating = 0
                         }
-                        .font(.caption)
+                        .labelSmall()
                     }
+                } header: {
+                    Text("Rating")
+                        .titleSmall()
                 }
                 
-                Section(header: Text("Personal Notes")) {
+                Section {
                     TextField("Your thoughts about this book...", text: $personalNotes, axis: .vertical)
                         .lineLimit(3...6)
+                        .bodyMedium()
                     
                     Text("Personal notes are private and separate from the book's description.")
-                        .font(.caption)
+                        .labelSmall()
                         .foregroundColor(Theme.Color.SecondaryText)
+                } header: {
+                    Text("Personal Notes")
+                        .titleSmall()
                 }
             }
             .navigationTitle("Add Book")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
+                        .bodyMedium()
                 }
                 
                 ToolbarItem(placement: .confirmationAction) {
@@ -176,6 +210,7 @@ struct AddBookView: View {
                     }
                     .disabled(title.isEmpty || authors.isEmpty)
                     .tint(Theme.Color.PrimaryAction)
+                    .labelLarge()
                 }
             }
         }

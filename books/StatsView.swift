@@ -100,13 +100,14 @@ struct StatCard: View {
                 .foregroundColor(color)
             
             Text(value)
-                .font(.title2)
+                .headlineSmall()
                 .fontWeight(.bold)
+                .foregroundColor(Theme.Color.PrimaryText)
             
             Text(title)
-                .font(.caption)
-                .fontWeight(.medium)
+                .labelMedium()
                 .multilineTextAlignment(.center)
+                .foregroundColor(Theme.Color.SecondaryText)
         }
         .frame(maxWidth: .infinity)
         .padding()
@@ -121,7 +122,7 @@ struct ReadingStatusBreakdown: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Reading Status")
-                .font(.headline)
+                .titleLarge()
                 .foregroundColor(Theme.Color.PrimaryText)
             
             VStack(spacing: 8) {
@@ -156,19 +157,19 @@ struct StatusRow: View {
     var body: some View {
         HStack {
             Text(status.rawValue)
-                .font(.subheadline)
+                .bodyLarge()
                 .foregroundColor(Theme.Color.PrimaryText)
             
             Spacer()
             
             Text("\(count)")
-                .font(.subheadline)
+                .bodyLarge()
                 .fontWeight(.medium)
                 .foregroundColor(Theme.Color.PrimaryText)
             
             if total > 0 {
                 Text("(\(Int(Double(count) / Double(total) * 100))%)")
-                    .font(.caption)
+                    .labelMedium()
                     .foregroundColor(Theme.Color.SecondaryText)
             }
         }
@@ -181,7 +182,7 @@ struct RecentBooksSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Recently Completed")
-                .font(.headline)
+                .titleLarge()
                 .foregroundColor(Theme.Color.PrimaryText)
             
             ForEach(books, id: \.self) { book in
@@ -194,19 +195,19 @@ struct RecentBooksSection: View {
                     
                     VStack(alignment: .leading, spacing: 4) {
                         Text(book.metadata?.title ?? "Unknown Title")
-                            .font(.subheadline)
+                            .bodyMedium()
                             .fontWeight(.medium)
                             .foregroundColor(Theme.Color.PrimaryText)
                             .lineLimit(1)
                         
                         Text(book.metadata?.authors.joined(separator: ", ") ?? "Unknown Author")
-                            .font(.caption)
+                            .labelMedium()
                             .foregroundColor(Theme.Color.SecondaryText)
                             .lineLimit(1)
                         
                         if let dateCompleted = book.dateCompleted {
                             Text("Completed \(dateCompleted.formatted(date: .abbreviated, time: .omitted))")
-                                .font(.caption2)
+                                .labelSmall()
                                 .foregroundColor(Theme.Color.SecondaryText)
                         }
                     }

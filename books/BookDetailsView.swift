@@ -83,27 +83,27 @@ struct BookHeaderSection: View {
             
             VStack(alignment: .leading, spacing: 8) {
                 Text(book.metadata?.title ?? "Unknown Title")
-                    .font(.title2.bold())
+                    .headlineMedium()
                     .foregroundColor(Theme.Color.PrimaryText)
                 
                 // Author name navigation using NavigationLink with value
                 if let authors = book.metadata?.authors, !authors.isEmpty {
                     NavigationLink(value: authors.first!) {
                         Text(authors.joined(separator: ", "))
-                            .font(.headline)
+                            .titleMedium()
                             .foregroundStyle(Theme.Color.PrimaryAction)
                             .underline()
                     }
                     .buttonStyle(.plain)
                 } else {
                     Text("Unknown Author")
-                        .font(.headline)
+                        .titleMedium()
                         .foregroundStyle(Theme.Color.SecondaryText)
                 }
                 
                 if let genre = book.metadata?.genre?.first {
                     Text(genre)
-                        .font(.caption)
+                        .labelSmall()
                         .fontWeight(.medium)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
@@ -191,7 +191,7 @@ struct DescriptionSection: View {
         GroupBox("Description") {
             VStack(alignment: .leading, spacing: 8) {
                 Text(description)
-                    .font(.body)
+                    .bodyMedium()
                     .lineLimit(isExpanded ? nil : 5)
                 
                 if isTruncated {
@@ -200,7 +200,8 @@ struct DescriptionSection: View {
                             isExpanded.toggle()
                         }
                     }
-                    .font(.caption.bold())
+                    .labelMedium()
+                    .fontWeight(.semibold)
                     .frame(maxWidth: .infinity, alignment: .trailing)
                 }
             }
@@ -220,6 +221,7 @@ struct NotesSection: View {
             ), axis: .vertical)
             .lineLimit(3...10)
             .textFieldStyle(.roundedBorder)
+            .bodyMedium()
         }
     }
 }
@@ -271,11 +273,11 @@ struct DetailRow: View {
     var body: some View {
         HStack(alignment: .top) {
             Text(label)
-                .font(.subheadline.bold())
+                .labelLarge()
                 .foregroundColor(Theme.Color.SecondaryText)
             Spacer()
             Text(value)
-                .font(.subheadline)
+                .bodyMedium()
                 .foregroundColor(Theme.Color.PrimaryText)
                 .multilineTextAlignment(.trailing)
         }
@@ -291,18 +293,25 @@ struct ActionButtonsSection: View {
     var body: some View {
         HStack {
             Button(role: .destructive, action: onDelete) {
-                Label("Delete Book", systemImage: "trash")
-                    .frame(maxWidth: .infinity)
+                HStack(spacing: Theme.Spacing.sm) {
+                    Image(systemName: "trash")
+                    Text("Delete Book")
+                        .labelLarge()
+                }
+                .frame(maxWidth: .infinity)
             }
-            .buttonStyle(.bordered)
+            .materialButton(style: .outlined, size: .large)
             
             Button(action: onEdit) {
-                Label("Edit Details", systemImage: "pencil")
-                    .frame(maxWidth: .infinity)
+                HStack(spacing: Theme.Spacing.sm) {
+                    Image(systemName: "pencil")
+                    Text("Edit Details")
+                        .labelLarge()
+                }
+                .frame(maxWidth: .infinity)
             }
-            .buttonStyle(.borderedProminent)
+            .materialButton(style: .filled, size: .large)
         }
-        .controlSize(.large)
         .padding(.top)
     }
 }

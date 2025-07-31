@@ -97,10 +97,17 @@ struct SearchResultRow: View {
             BookCoverImage(imageURL: book.imageURL?.absoluteString, width: 50, height: 70)
             
             VStack(alignment: .leading) {
-                Text(book.title).font(.headline).foregroundColor(Theme.Color.PrimaryText).lineLimit(2)
-                Text(book.authors.joined(separator: ", ")).font(.subheadline).foregroundStyle(Theme.Color.SecondaryText)
+                Text(book.title)
+                    .titleMedium()
+                    .foregroundColor(Theme.Color.PrimaryText)
+                    .lineLimit(2)
+                Text(book.authors.joined(separator: ", "))
+                    .bodyMedium()
+                    .foregroundStyle(Theme.Color.SecondaryText)
                 if let year = book.publishedDate {
-                    Text(year).font(.caption).foregroundStyle(Theme.Color.SecondaryText)
+                    Text(year)
+                        .labelMedium()
+                        .foregroundStyle(Theme.Color.SecondaryText)
                 }
             }
             Spacer()

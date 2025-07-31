@@ -8,29 +8,36 @@ struct LibraryView: View {
         
         var navigationTitle: String {
             switch self {
-            case .library:  "Library"
+            case .library:  "My Library"
             case .wishlist: "Wishlist"
             }
         }
         
         var emptyTitle: String {
             switch self {
-            case .library:  "Your Library is Empty"
-            case .wishlist: "Your Wishlist is Empty"
+            case .library:  "Your Library Awaits"
+            case .wishlist: "Your Reading Wishlist"
             }
         }
         
         var emptySystemImage: String {
             switch self {
-            case .library:  "book.closed"
-            case .wishlist: "wand.and.stars"
+            case .library:  "books.vertical"
+            case .wishlist: "heart.text.square"
             }
         }
         
         var emptyDescription: String {
             switch self {
-            case .library:  "Add a book from the Search tab to get started."
-            case .wishlist: "Add books you want to read to your wishlist."
+            case .library:  "Start building your personal library by discovering and adding books you love."
+            case .wishlist: "Save books you want to read for later. Your future self will thank you!"
+            }
+        }
+        
+        var emptyActionTitle: String {
+            switch self {
+            case .library:  "Discover Books"
+            case .wishlist: "Browse Books"
             }
         }
     }
@@ -40,6 +47,10 @@ struct LibraryView: View {
     @Environment(\.modelContext) private var modelContext
     @Query(sort: [SortDescriptor(\UserBook.dateAdded, order: .reverse)])
     private var allBooks: [UserBook]
+    
+    @State private var selectedSortOption: SortOption = .dateAdded
+    @State private var selectedViewMode: ViewMode = .grid
+    @State private var showingSortMenu = false
     
     private var displayedBooks: [UserBook] {
         let filtered = switch filter {
@@ -60,7 +71,7 @@ struct LibraryView: View {
             }
         }
         
-        return uniqueBooks
+        return sortBooks(uniqueBooks, by: selectedSortOption)
     }
     
     init(filter: Filter = .library) {
@@ -70,38 +81,13 @@ struct LibraryView: View {
     var body: some View {
         Group {
             if displayedBooks.isEmpty {
-                ContentUnavailableView {
-                    Label(filter.emptyTitle, systemImage: filter.emptySystemImage)
-                        .foregroundColor(Theme.Color.PrimaryText)
-                } description: {
-                    Text(filter.emptyDescription)
-                        .foregroundColor(Theme.Color.SecondaryText)
-                }
+                emptyStateView
             } else {
-                List {
-                    ForEach(displayedBooks, id: \.id) { book in
-                        NavigationLink(value: book) {
-                            BookListItem(book: book)
-                        }
-                        .buttonStyle(.plain)
-                        .swipeActions(edge: .trailing) {
-                            // Add swipe action for author search
-                            if let firstAuthor = book.metadata?.authors.first {
-                                NavigationLink(value: firstAuthor) {
-                                    Label("Author", systemImage: "person.fill")
-                                }
-                                .tint(Theme.Color.PrimaryAction)
-                            }
-                        }
-                    }
-                    .onDelete(perform: deleteItems)
-                }
-                .background(Theme.Color.Surface)
+                booksView
             }
         }
         .background(Theme.Color.Surface)
         .navigationTitle(filter.navigationTitle)
-        // Handle navigation destinations at the LibraryView level
         .navigationDestination(for: UserBook.self) { book in
             BookDetailsView(book: book)
         }
@@ -109,7 +95,141 @@ struct LibraryView: View {
             AuthorSearchResultsView(authorName: authorName)
         }
         .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
+            toolbarContent
+        }
+    }
+    
+    // MARK: - Empty State View
+    @ViewBuilder
+    private var emptyStateView: some View {
+        VStack(spacing: Theme.Spacing.xl) {
+            VStack(spacing: Theme.Spacing.lg) {
+                // Animated book stack illustration
+                ZStack {
+                    // Background books
+                    ForEach(0..<3, id: \.self) { index in
+                        RoundedRectangle(cornerRadius: Theme.CornerRadius.small)
+                            .fill(Theme.Color.PrimaryAction.opacity(0.1 + Double(index) * 0.1))
+                            .frame(width: 80 - CGFloat(index * 4), height: 120 - CGFloat(index * 6))
+                            .offset(x: CGFloat(index * 8), y: CGFloat(index * -4))
+                            .rotationEffect(.degrees(Double(index * 2)))
+                    }
+                    
+                    Image(systemName: filter.emptySystemImage)
+                        .font(.system(size: 40))
+                        .foregroundColor(Theme.Color.PrimaryAction)
+                }
+                .frame(height: 120)
+                
+                VStack(spacing: Theme.Spacing.sm) {
+                    Text(filter.emptyTitle)
+                        .headlineSmall()
+                        .foregroundColor(Theme.Color.PrimaryText)
+                    
+                    Text(filter.emptyDescription)
+                        .bodyMedium()
+                        .foregroundColor(Theme.Color.SecondaryText)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, Theme.Spacing.lg)
+                }
+            }
+            
+            // Action button
+            NavigationLink(destination: SearchView()) {
+                HStack(spacing: Theme.Spacing.sm) {
+                    Image(systemName: "magnifyingglass")
+                    Text(filter.emptyActionTitle)
+                }
+                .materialButton(style: .filled, size: .large)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+    
+    // MARK: - Books View
+    @ViewBuilder
+    private var booksView: some View {
+        ScrollView {
+            LazyVStack(spacing: Theme.Spacing.lg) {
+                // Header with stats
+                LibraryHeaderView(books: displayedBooks, filter: filter)
+                
+                // Books grid/list
+                if selectedViewMode == .grid {
+                    booksGrid
+                } else {
+                    booksListView
+                }
+            }
+            .padding(.horizontal, Theme.Spacing.md)
+            .padding(.bottom, Theme.Spacing.xl)
+        }
+    }
+    
+    @ViewBuilder
+    private var booksGrid: some View {
+        let columns = [
+            GridItem(.adaptive(minimum: 140, maximum: 160), spacing: Theme.Spacing.md)
+        ]
+        
+        LazyVGrid(columns: columns, spacing: Theme.Spacing.lg) {
+            ForEach(displayedBooks, id: \.id) { book in
+                NavigationLink(value: book) {
+                    BookCardView(book: book)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private var booksListView: some View {
+        LazyVStack(spacing: Theme.Spacing.sm) {
+            ForEach(displayedBooks, id: \.id) { book in
+                NavigationLink(value: book) {
+                    BookListItem(book: book)
+                        .materialCard()
+                        .padding(.horizontal, Theme.Spacing.xs)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+    
+    // MARK: - Toolbar Content
+    @ToolbarContentBuilder
+    private var toolbarContent: some ToolbarContent {
+        ToolbarItem(placement: .topBarTrailing) {
+            HStack(spacing: Theme.Spacing.sm) {
+                // View mode toggle
+                Button(action: {
+                    withAnimation(Theme.Animation.smooth) {
+                        selectedViewMode = selectedViewMode == .grid ? .list : .grid
+                    }
+                }) {
+                    Image(systemName: selectedViewMode == .grid ? "rectangle.grid.2x2" : "list.bullet")
+                        .font(.system(size: 16, weight: .medium))
+                }
+                
+                // Sort menu
+                Menu {
+                    ForEach(SortOption.allCases, id: \.self) { option in
+                        Button(action: {
+                            selectedSortOption = option
+                        }) {
+                            HStack {
+                                Text(option.displayName)
+                                if selectedSortOption == option {
+                                    Image(systemName: "checkmark")
+                                }
+                            }
+                        }
+                    }
+                } label: {
+                    Image(systemName: "arrow.up.arrow.down")
+                        .font(.system(size: 16, weight: .medium))
+                }
+                
                 if !displayedBooks.isEmpty && filter == .library {
                     EditButton()
                 }
@@ -117,20 +237,115 @@ struct LibraryView: View {
         }
     }
     
-    private func deleteItems(offsets: IndexSet) {
-        guard filter == .library else { return }   // Disallow delete from wishlist
-        withAnimation {
-            for index in offsets {
-                let bookToDelete = displayedBooks[index]
-                if let actualBook = allBooks.first(where: { $0.id == bookToDelete.id }) {
-                    modelContext.delete(actualBook)
-                }
+    // MARK: - Helper Functions
+    private func sortBooks(_ books: [UserBook], by option: SortOption) -> [UserBook] {
+        switch option {
+        case .dateAdded:
+            return books.sorted { $0.dateAdded > $1.dateAdded }
+        case .title:
+            return books.sorted { 
+                ($0.metadata?.title ?? "").localizedCaseInsensitiveCompare($1.metadata?.title ?? "") == .orderedAscending
             }
+        case .author:
+            return books.sorted {
+                let author1 = $0.metadata?.authors.first ?? ""
+                let author2 = $1.metadata?.authors.first ?? ""
+                return author1.localizedCaseInsensitiveCompare(author2) == .orderedAscending
+            }
+        case .rating:
+            return books.sorted { 
+                ($0.rating ?? 0) > ($1.rating ?? 0)
+            }
+        case .status:
+            return books.sorted { $0.readingStatus.rawValue < $1.readingStatus.rawValue }
         }
     }
 }
 
+// MARK: - Supporting Types
+enum ViewMode {
+    case grid
+    case list
+}
+
+enum SortOption: CaseIterable {
+    case dateAdded
+    case title
+    case author
+    case rating
+    case status
+    
+    var displayName: String {
+        switch self {
+        case .dateAdded: return "Date Added"
+        case .title: return "Title"
+        case .author: return "Author"
+        case .rating: return "Rating"
+        case .status: return "Status"
+        }
+    }
+}
+
+// MARK: - Library Header View
+struct LibraryHeaderView: View {
+    let books: [UserBook]
+    let filter: LibraryView.Filter
+    
+    private var totalBooks: Int { books.count }
+    private var readBooks: Int { books.filter { $0.readingStatus == .read }.count }
+    private var currentlyReading: Int { books.filter { $0.readingStatus == .reading }.count }
+    
+    var body: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+                Text("\(totalBooks) books")
+                    .titleLarge()
+                    .foregroundColor(Theme.Color.PrimaryText)
+                
+                if filter == .library {
+                    HStack(spacing: Theme.Spacing.md) {
+                        StatsPill(icon: "checkmark.circle.fill", value: readBooks, label: "Read", color: Theme.Color.Success)
+                        StatsPill(icon: "book.circle.fill", value: currentlyReading, label: "Reading", color: Theme.Color.AccentHighlight)
+                    }
+                }
+            }
+            
+            Spacer()
+        }
+        .padding(.horizontal, Theme.Spacing.xs)
+    }
+}
+
+struct StatsPill: View {
+    let icon: String
+    let value: Int
+    let label: String
+    let color: Color
+    
+    var body: some View {
+        HStack(spacing: Theme.Spacing.xs) {
+            Image(systemName: icon)
+                .font(.caption)
+                .foregroundColor(color)
+            
+            Text("\(max(0, value))") // Ensure non-negative values
+                .labelMedium()
+                .foregroundColor(Theme.Color.PrimaryText)
+            
+            Text(label)
+                .labelSmall()
+                .foregroundColor(Theme.Color.SecondaryText)
+        }
+        .padding(.horizontal, Theme.Spacing.sm)
+        .padding(.vertical, 4)
+        .background(color.opacity(0.1))
+        .cornerRadius(Theme.CornerRadius.large)
+    }
+}
+
 #Preview {
-    LibraryView()
-        .modelContainer(for: [UserBook.self, BookMetadata.self], inMemory: true)
+    NavigationStack {
+        LibraryView()
+            .modelContainer(for: [UserBook.self, BookMetadata.self], inMemory: true)
+    }
 }
