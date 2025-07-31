@@ -65,10 +65,8 @@ struct LibraryView: View {
                     }
                 } else {
                     List {
-                        ForEach(displayedBooks) { userBook in
-                            NavigationLink(value: userBook) {
-                                BookRowView(userBook: userBook)
-                            }
+                        ForEach(displayedBooks) { book in
+                            BookListItem(book: book)
                         }
                         .onDelete(perform: deleteItems)
                     }

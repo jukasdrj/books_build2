@@ -20,9 +20,7 @@ struct BookListItem: View {
                         .font(.headline)
                         .lineLimit(2)
                     
-                    Button(action: {
-                        print("Author search tapped for: \(book.metadata?.authors.joined(separator: ", ") ?? "")")
-                    }) {
+                    NavigationLink(destination: AuthorSearchResultsView(authorName: book.metadata?.authors.first ?? "")) {
                         Text(book.metadata?.authors.joined(separator: ", ") ?? "Unknown Author")
                             .font(.subheadline)
                             .foregroundColor(.blue)
