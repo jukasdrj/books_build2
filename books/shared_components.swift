@@ -7,55 +7,60 @@ struct BookListItem: View {
     let book: UserBook
     
     var body: some View {
-        NavigationLink(destination: BookDetailsView(book: book)) {
-            HStack(spacing: 12) {
+        HStack(spacing: 12) {
+            // COVER IMAGE ­→ Book details
+            NavigationLink(destination: BookDetailsView(book: book)) {
                 BookCoverImage(
                     imageURL: book.metadata?.imageURL?.absoluteString,
                     width: 50,
                     height: 70
                 )
-                
-                VStack(alignment: .leading, spacing: 4) {
+            }
+            .buttonStyle(.plain)
+            
+            VStack(alignment: .leading, spacing: 4) {
+                // TITLE ­→ Book details
+                NavigationLink(destination: BookDetailsView(book: book)) {
                     Text(book.metadata?.title ?? "Unknown Title")
                         .font(.headline)
                         .lineLimit(2)
+                }
+                .buttonStyle(.plain)
+                
+                // AUTHOR ­→ Author search
+                NavigationLink(destination: AuthorSearchResultsView(authorName: book.metadata?.authors.first ?? "")) {
+                    Text(book.metadata?.authors.joined(separator: ", ") ?? "Unknown Author")
+                        .font(.subheadline)
+                        .foregroundColor(.blue)
+                        .underline()
+                }
+                .buttonStyle(.plain)
+                
+                HStack {
+                    Text(book.readingStatus.rawValue)
+                        .font(.caption)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 2)
+                        .background(statusColor(for: book.readingStatus))
+                        .foregroundColor(.white)
+                        .clipShape(Capsule())
                     
-                    NavigationLink(destination: AuthorSearchResultsView(authorName: book.metadata?.authors.first ?? "")) {
-                        Text(book.metadata?.authors.joined(separator: ", ") ?? "Unknown Author")
-                            .font(.subheadline)
-                            .foregroundColor(.blue)
-                            .underline()
-                    }
-                    .buttonStyle(.plain)
+                    Spacer()
                     
-                    HStack {
-                        Text(book.readingStatus.rawValue)
-                            .font(.caption)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 2)
-                            .background(statusColor(for: book.readingStatus))
-                            .foregroundColor(.white)
-                            .clipShape(Capsule())
-                        
-                        Spacer()
-                        
-                        if let rating = book.rating, rating > 0 {
-                            HStack(spacing: 2) {
-                                ForEach(1...5, id: \.self) { star in
-                                    Image(systemName: star <= rating ? "star.fill" : "star")
-                                        .font(.caption)
-                                        .foregroundColor(.yellow)
-                                }
+                    if let rating = book.rating, rating > 0 {
+                        HStack(spacing: 2) {
+                            ForEach(1...5, id: \.self) { star in
+                                Image(systemName: star <= rating ? "star.fill" : "star")
+                                    .font(.caption)
+                                    .foregroundColor(.yellow)
                             }
                         }
                     }
                 }
-                
-                Spacer()
             }
-            .padding(.vertical, 4)
+            Spacer()
         }
-        .buttonStyle(.plain)
+        .padding(.vertical, 4)
     }
     
     private func statusColor(for status: ReadingStatus) -> Color {
