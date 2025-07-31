@@ -28,32 +28,8 @@ final class BookMetadata: Identifiable, @unchecked Sendable {
     var id: String { googleBooksID }
 
     init(googleBooksID: String, title: String, authors: [String], publishedDate: String? = nil, pageCount: Int? = nil, bookDescription: String? = nil, imageURL: URL? = nil, language: String? = nil, previewLink: URL? = nil, infoLink: URL? = nil, publisher: String? = nil, isbn: String? = nil, genre: [String]? = nil, originalLanguage: String? = nil, authorNationality: String? = nil, translator: String? = nil) {
-        // Validate title
-        let trimmedTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmedTitle.isEmpty && trimmedTitle.count <= 512 else {
-            fatalError("Title must be 1-512 characters")
-        }
-        
-        // Validate authors
-        guard !authors.isEmpty && authors.allSatisfy({ !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && $0.count <= 100 }) else {
-            fatalError("Must have at least 1 author, each max 100 characters")
-        }
-        
-        // Validate optional fields
-        if let description = bookDescription, description.count > 10000 {
-            fatalError("Book description must be max 10,000 characters")
-        }
-        
-        if let pages = pageCount, pages <= 0 {
-            fatalError("Page count must be positive")
-        }
-        
-        if let genres = genre, genres.count > 10 || genres.contains(where: { $0.count > 50 }) {
-            fatalError("Max 10 genres, each max 50 characters")
-        }
-        
         self.googleBooksID = googleBooksID
-        self.title = trimmedTitle
+        self.title = title.trimmingCharacters(in: .whitespacesAndNewlines)
         self.authors = authors
         self.publishedDate = publishedDate
         self.pageCount = pageCount
@@ -68,5 +44,32 @@ final class BookMetadata: Identifiable, @unchecked Sendable {
         self.originalLanguage = originalLanguage
         self.authorNationality = authorNationality
         self.translator = translator
+    }
+    
+    // Validation methods (non-fatal for migration safety)
+    func validateTitle() -> Bool {
+        let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        return !trimmed.isEmpty && trimmed.count <= 512
+    }
+    
+    func validateAuthors() -> Bool {
+        return !authors.isEmpty && authors.allSatisfy({ 
+            !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && $0.count <= 100 
+        })
+    }
+    
+    func validateDescription() -> Bool {
+        guard let description = bookDescription else { return true }
+        return description.count <= 10000
+    }
+    
+    func validatePageCount() -> Bool {
+        guard let pages = pageCount else { return true }
+        return pages > 0
+    }
+    
+    func validateGenres() -> Bool {
+        guard let genres = genre else { return true }
+        return genres.count <= 10 && genres.allSatisfy({ $0.count <= 50 })
     }
 }
