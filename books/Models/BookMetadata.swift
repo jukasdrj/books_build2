@@ -2,7 +2,7 @@ import Foundation
 import SwiftData
 
 @Model
-final class BookMetadata: Identifiable {
+final class BookMetadata: Identifiable, @unchecked Sendable {
     @Attribute(.unique) var googleBooksID: String
     var title: String
     var authors: [String]

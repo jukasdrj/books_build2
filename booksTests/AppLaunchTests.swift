@@ -49,20 +49,22 @@ struct AppLaunchTests {
         let schema = Schema([UserBook.self, BookMetadata.self])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
         let container = try ModelContainer(for: schema, configurations: [modelConfiguration])
-        #expect(container != nil)
         
+        // Test that we can create a context from the container
         let context = ModelContext(container)
-        #expect(context != nil)
+        
+        // Verify the container has the expected schema
+        #expect(container.schema.entities.count == 2)
+        #expect(container.schema.entities.contains { $0.name == "UserBook" })
+        #expect(container.schema.entities.contains { $0.name == "BookMetadata" })
     }
     
     @Test("ContentView Creation - Should initialize without errors")
     func testContentViewCreation() async throws {
         let container = try createTestContainer()
-        let contentView = ContentView().modelContainer(container)
-        #expect(contentView != nil)
+        let contentView = await ContentView().modelContainer(container)
         
         let hostingController = UIHostingController(rootView: contentView)
-        #expect(hostingController != nil)
         await #expect(hostingController.view != nil)
     }
     

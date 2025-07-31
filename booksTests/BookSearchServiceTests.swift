@@ -27,17 +27,16 @@ struct BookSearchServiceTests {
     }
     
     @Test("BookSearchService Initialization - Should create singleton")
-    func testBookSearchServiceInitialization() {
-        let service = BookSearchService.shared
-        #expect(service != nil)
+    func testBookSearchServiceInitialization() async {
+        let service = await BookSearchService.shared
         
-        let service2 = BookSearchService.shared
+        let service2 = await BookSearchService.shared
         #expect(service === service2, "BookSearchService should be a singleton")
     }
     
     @Test("Search Query - Should handle empty and whitespace queries gracefully")
     func testEmptySearchQuery() async throws {
-        let service = BookSearchService.shared
+        let service = await BookSearchService.shared
         
         // Test completely empty query
         let emptyResult = await service.search(query: "")

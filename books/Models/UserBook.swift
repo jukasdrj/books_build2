@@ -2,7 +2,7 @@ import Foundation
 import SwiftData
 
 @Model
-final class UserBook: Identifiable {
+final class UserBook: Identifiable, @unchecked Sendable {
     var id: UUID = UUID()
     var dateAdded: Date
     var dateStarted: Date?
@@ -41,7 +41,7 @@ final class UserBook: Identifiable {
     }
 }
 
-enum ReadingStatus: String, Codable, CaseIterable, Identifiable {
+enum ReadingStatus: String, Codable, CaseIterable, Identifiable, Sendable {
     case toRead = "To Read"
     case reading = "Reading"
     case read = "Read"
