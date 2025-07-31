@@ -68,32 +68,34 @@ struct LibraryView: View {
     }
     
     var body: some View {
-        NavigationStack {
-            Group {
-                if displayedBooks.isEmpty {
-                    ContentUnavailableView {
-                        Label(filter.emptyTitle, systemImage: filter.emptySystemImage)
-                    } description: {
-                        Text(filter.emptyDescription)
+        Group {
+            if displayedBooks.isEmpty {
+                ContentUnavailableView {
+                    Label(filter.emptyTitle, systemImage: filter.emptySystemImage)
+                } description: {
+                    Text(filter.emptyDescription)
+                }
+            } else {
+                List {
+                    ForEach(displayedBooks, id: \.id) { book in
+                        BookListItem(book: book)
                     }
-                } else {
-                    List {
-                        ForEach(displayedBooks, id: \.id) { book in
-                            BookListItem(book: book)
-                        }
-                        .onDelete(perform: deleteItems)
-                    }
+                    .onDelete(perform: deleteItems)
                 }
             }
-            .navigationTitle(filter.navigationTitle)
-            .navigationDestination(for: UserBook.self) { book in
-                BookDetailsView(book: book)
-            }
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    if !displayedBooks.isEmpty && filter == .library {
-                        EditButton()
-                    }
+        }
+        .navigationTitle(filter.navigationTitle)
+        // Handle navigation destinations at the LibraryView level
+        .navigationDestination(for: UserBook.self) { book in
+            BookDetailsView(book: book)
+        }
+        .navigationDestination(for: String.self) { authorName in
+            AuthorSearchResultsView(authorName: authorName)
+        }
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                if !displayedBooks.isEmpty && filter == .library {
+                    EditButton()
                 }
             }
         }

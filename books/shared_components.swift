@@ -8,8 +8,8 @@ struct BookListItem: View {
     
     var body: some View {
         HStack(spacing: 12) {
-            // COVER IMAGE ­→ Book details
-            NavigationLink(destination: BookDetailsView(book: book)) {
+            // Cover image - navigates to book details
+            NavigationLink(value: book) {
                 BookCoverImage(
                     imageURL: book.metadata?.imageURL?.absoluteString,
                     width: 50,
@@ -19,22 +19,29 @@ struct BookListItem: View {
             .buttonStyle(.plain)
             
             VStack(alignment: .leading, spacing: 4) {
-                // TITLE ­→ Book details
-                NavigationLink(destination: BookDetailsView(book: book)) {
+                // Title - navigates to book details  
+                NavigationLink(value: book) {
                     Text(book.metadata?.title ?? "Unknown Title")
                         .font(.headline)
                         .lineLimit(2)
+                        .foregroundColor(.primary)
                 }
                 .buttonStyle(.plain)
                 
-                // AUTHOR ­→ Author search
-                NavigationLink(destination: AuthorSearchResultsView(authorName: book.metadata?.authors.first ?? "")) {
-                    Text(book.metadata?.authors.joined(separator: ", ") ?? "Unknown Author")
+                // Author name - navigates to author search
+                if let firstAuthor = book.metadata?.authors.first {
+                    NavigationLink(value: firstAuthor) {
+                        Text(book.metadata?.authors.joined(separator: ", ") ?? "Unknown Author")
+                            .font(.subheadline)
+                            .foregroundColor(.blue)
+                            .underline()
+                    }
+                    .buttonStyle(.plain)
+                } else {
+                    Text("Unknown Author")
                         .font(.subheadline)
-                        .foregroundColor(.blue)
-                        .underline()
+                        .foregroundColor(.secondary)
                 }
-                .buttonStyle(.plain)
                 
                 HStack {
                     Text(book.readingStatus.rawValue)

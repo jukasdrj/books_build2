@@ -8,14 +8,11 @@ struct BookDetailsView: View {
     @Bindable var book: UserBook
     @State private var isEditing = false
     @State private var showingDeleteAlert = false
-    @State private var selectedAuthor: String?
     
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
-                BookHeaderSection(book: book, onAuthorTap: { authorName in
-                    selectedAuthor = authorName
-                })
+                BookHeaderSection(book: book)
                 
                 // Interactive controls for user data
                 HStack(spacing: 16) {
@@ -46,6 +43,10 @@ struct BookDetailsView: View {
         }
         .navigationTitle(book.metadata?.title ?? "Details")
         .navigationBarTitleDisplayMode(.inline)
+        // Handle author navigation from BookDetailsView
+        .navigationDestination(for: String.self) { authorName in
+            AuthorSearchResultsView(authorName: authorName)
+        }
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 ShareLink(item: book.shareableText) {
@@ -63,9 +64,6 @@ struct BookDetailsView: View {
             // Using the enhanced edit view now
             EnhancedEditBookView(book: book)
         }
-        .navigationDestination(item: $selectedAuthor) { authorName in
-            AuthorSearchResultsView(authorName: authorName)
-        }
     }
     
     private func deleteBook() {
@@ -77,7 +75,6 @@ struct BookDetailsView: View {
 // MARK: - Header Section
 struct BookHeaderSection: View {
     var book: UserBook
-    let onAuthorTap: (String) -> Void
     
     var body: some View {
         HStack(alignment: .top, spacing: 20) {
@@ -92,11 +89,9 @@ struct BookHeaderSection: View {
                 Text(book.metadata?.title ?? "Unknown Title")
                     .font(.title2.bold())
                 
-                // Make author name clickable to navigate to author search
+                // Author name navigation using NavigationLink with value
                 if let authors = book.metadata?.authors, !authors.isEmpty {
-                    Button(action: {
-                        onAuthorTap(authors.first ?? "")
-                    }) {
+                    NavigationLink(value: authors.first!) {
                         Text(authors.joined(separator: ", "))
                             .font(.headline)
                             .foregroundStyle(.blue)
