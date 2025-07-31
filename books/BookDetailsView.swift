@@ -8,11 +8,14 @@ struct BookDetailsView: View {
     @Bindable var book: UserBook
     @State private var isEditing = false
     @State private var showingDeleteAlert = false
+    @State private var selectedAuthor: String?
     
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
-                BookHeaderSection(book: book)
+                BookHeaderSection(book: book, onAuthorTap: { authorName in
+                    selectedAuthor = authorName
+                })
                 
                 // Interactive controls for user data
                 HStack(spacing: 16) {
@@ -60,6 +63,9 @@ struct BookDetailsView: View {
             // Using the enhanced edit view now
             EnhancedEditBookView(book: book)
         }
+        .navigationDestination(item: $selectedAuthor) { authorName in
+            AuthorSearchResultsView(authorName: authorName)
+        }
     }
     
     private func deleteBook() {
@@ -71,6 +77,7 @@ struct BookDetailsView: View {
 // MARK: - Header Section
 struct BookHeaderSection: View {
     var book: UserBook
+    let onAuthorTap: (String) -> Void
     
     var body: some View {
         HStack(alignment: .top, spacing: 20) {
@@ -87,7 +94,9 @@ struct BookHeaderSection: View {
                 
                 // Make author name clickable to navigate to author search
                 if let authors = book.metadata?.authors, !authors.isEmpty {
-                    NavigationLink(destination: AuthorSearchResultsView(authorName: authors.first ?? "")) {
+                    Button(action: {
+                        onAuthorTap(authors.first ?? "")
+                    }) {
                         Text(authors.joined(separator: ", "))
                             .font(.headline)
                             .foregroundStyle(.blue)
