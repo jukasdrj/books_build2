@@ -85,9 +85,20 @@ struct BookHeaderSection: View {
                 Text(book.metadata?.title ?? "Unknown Title")
                     .font(.title2.bold())
                 
-                Text(book.metadata?.authors.joined(separator: ", ") ?? "Unknown Author")
-                    .font(.headline)
-                    .foregroundStyle(.secondary)
+                // Make author name clickable to navigate to author search
+                if let authors = book.metadata?.authors, !authors.isEmpty {
+                    NavigationLink(destination: AuthorSearchResultsView(authorName: authors.first ?? "")) {
+                        Text(authors.joined(separator: ", "))
+                            .font(.headline)
+                            .foregroundStyle(.blue)
+                            .underline()
+                    }
+                    .buttonStyle(.plain)
+                } else {
+                    Text("Unknown Author")
+                        .font(.headline)
+                        .foregroundStyle(.secondary)
+                }
                 
                 if let genre = book.metadata?.genre?.first {
                     Text(genre)
