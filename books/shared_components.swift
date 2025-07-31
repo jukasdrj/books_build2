@@ -5,32 +5,34 @@ import SwiftData
 // MARK: - Book List Item (used in multiple views)
 struct BookListItem: View {
     let book: UserBook
+    let onAuthorTap: ((String) -> Void)?
+    
+    init(book: UserBook, onAuthorTap: ((String) -> Void)? = nil) {
+        self.book = book
+        self.onAuthorTap = onAuthorTap
+    }
     
     var body: some View {
         HStack(spacing: 12) {
-            // Cover image - navigates to book details
-            NavigationLink(value: book) {
-                BookCoverImage(
-                    imageURL: book.metadata?.imageURL?.absoluteString,
-                    width: 50,
-                    height: 70
-                )
-            }
-            .buttonStyle(.plain)
+            // Cover image
+            BookCoverImage(
+                imageURL: book.metadata?.imageURL?.absoluteString,
+                width: 50,
+                height: 70
+            )
             
             VStack(alignment: .leading, spacing: 4) {
-                // Title - navigates to book details  
-                NavigationLink(value: book) {
-                    Text(book.metadata?.title ?? "Unknown Title")
-                        .font(.headline)
-                        .lineLimit(2)
-                        .foregroundColor(.primary)
-                }
-                .buttonStyle(.plain)
+                // Title
+                Text(book.metadata?.title ?? "Unknown Title")
+                    .font(.headline)
+                    .lineLimit(2)
+                    .foregroundColor(.primary)
                 
-                // Author name - navigates to author search
-                if let firstAuthor = book.metadata?.authors.first {
-                    NavigationLink(value: firstAuthor) {
+                // Author name - clickable only if callback provided
+                if let firstAuthor = book.metadata?.authors.first, let onAuthorTap = onAuthorTap {
+                    Button(action: {
+                        onAuthorTap(firstAuthor)
+                    }) {
                         Text(book.metadata?.authors.joined(separator: ", ") ?? "Unknown Author")
                             .font(.subheadline)
                             .foregroundColor(.blue)
@@ -38,7 +40,7 @@ struct BookListItem: View {
                     }
                     .buttonStyle(.plain)
                 } else {
-                    Text("Unknown Author")
+                    Text(book.metadata?.authors.joined(separator: ", ") ?? "Unknown Author")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                 }

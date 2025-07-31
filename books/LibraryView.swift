@@ -78,7 +78,19 @@ struct LibraryView: View {
             } else {
                 List {
                     ForEach(displayedBooks, id: \.id) { book in
-                        BookListItem(book: book)
+                        NavigationLink(value: book) {
+                            BookListItem(book: book)
+                        }
+                        .buttonStyle(.plain)
+                        .swipeActions(edge: .trailing) {
+                            // Add swipe action for author search
+                            if let firstAuthor = book.metadata?.authors.first {
+                                NavigationLink(value: firstAuthor) {
+                                    Label("Author", systemImage: "person.fill")
+                                }
+                                .tint(.blue)
+                            }
+                        }
                     }
                     .onDelete(perform: deleteItems)
                 }
