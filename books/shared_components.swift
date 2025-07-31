@@ -26,7 +26,7 @@ struct BookListItem: View {
                 Text(book.metadata?.title ?? "Unknown Title")
                     .font(.headline)
                     .lineLimit(2)
-                    .foregroundColor(.primaryText)
+                    .foregroundColor(Theme.Color.PrimaryText)
                 
                 // Author name - clickable only if callback provided
                 if let firstAuthor = book.metadata?.authors.first, let onAuthorTap = onAuthorTap {
@@ -35,14 +35,14 @@ struct BookListItem: View {
                     }) {
                         Text(book.metadata?.authors.joined(separator: ", ") ?? "Unknown Author")
                             .font(.subheadline)
-                            .foregroundColor(.primaryAction)
+                            .foregroundColor(Theme.Color.PrimaryAction)
                             .underline()
                     }
                     .buttonStyle(.plain)
                 } else {
                     Text(book.metadata?.authors.joined(separator: ", ") ?? "Unknown Author")
                         .font(.subheadline)
-                        .foregroundColor(.secondaryText)
+                        .foregroundColor(Theme.Color.SecondaryText)
                 }
                 
                 HStack {
@@ -61,7 +61,7 @@ struct BookListItem: View {
                             ForEach(1...5, id: \.self) { star in
                                 Image(systemName: star <= rating ? "star.fill" : "star")
                                     .font(.caption)
-                                    .foregroundColor(.primaryAction)
+                                    .foregroundColor(Theme.Color.PrimaryAction)
                             }
                         }
                     }
@@ -74,9 +74,9 @@ struct BookListItem: View {
     
     private func statusColor(for status: ReadingStatus) -> Color {
         switch status {
-        case .read: return .primaryAction.opacity(0.8)
-        case .reading: return .accentHighlight
-        case .toRead: return .primaryAction.opacity(0.4)
+        case .read: return Theme.Color.PrimaryAction.opacity(0.8)
+        case .reading: return Theme.Color.AccentHighlight
+        case .toRead: return Theme.Color.PrimaryAction.opacity(0.4)
         }
     }
 }
@@ -143,7 +143,7 @@ struct AddBookView: View {
                             ForEach(1...5, id: \.self) { star in
                                 Button(action: { personalRating = star }) {
                                     Image(systemName: star <= personalRating ? "star.fill" : "star")
-                                        .foregroundColor(.primaryAction)
+                                        .foregroundColor(Theme.Color.PrimaryAction)
                                 }
                             }
                         }
@@ -160,7 +160,7 @@ struct AddBookView: View {
                     
                     Text("Personal notes are private and separate from the book's description.")
                         .font(.caption)
-                        .foregroundColor(.secondaryText)
+                        .foregroundColor(Theme.Color.SecondaryText)
                 }
             }
             .navigationTitle("Add Book")
@@ -175,6 +175,7 @@ struct AddBookView: View {
                         dismiss()
                     }
                     .disabled(title.isEmpty || authors.isEmpty)
+                    .tint(Theme.Color.PrimaryAction)
                 }
             }
         }

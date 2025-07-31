@@ -48,28 +48,28 @@ struct StatsQuickGrid: View {
                 title: "Total Books",
                 value: "\(books.count)",
                 icon: "books.vertical",
-                color: .primaryAction
+                color: Theme.Color.PrimaryAction
             )
             
             StatCard(
                 title: "Books Read",
                 value: "\(booksRead)",
                 icon: "checkmark.circle",
-                color: .primaryAction.opacity(0.8)
+                color: Theme.Color.PrimaryAction.opacity(0.8)
             )
             
             StatCard(
                 title: "Currently Reading",
                 value: "\(currentlyReading)",
                 icon: "book",
-                color: .primaryAction.opacity(0.6)
+                color: Theme.Color.PrimaryAction.opacity(0.6)
             )
             
             StatCard(
                 title: "Want to Read",
                 value: "\(wantToRead)",
                 icon: "heart",
-                color: .primaryAction.opacity(0.4)
+                color: Theme.Color.PrimaryAction.opacity(0.4)
             )
         }
     }
@@ -122,6 +122,7 @@ struct ReadingStatusBreakdown: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Reading Status")
                 .font(.headline)
+                .foregroundColor(Theme.Color.PrimaryText)
             
             VStack(spacing: 8) {
                 StatusRow(status: .read, count: booksRead, total: books.count)
@@ -130,7 +131,7 @@ struct ReadingStatusBreakdown: View {
             }
         }
         .padding()
-        .background(Color.subtleBackground)
+        .background(Theme.Color.CardBackground)
         .cornerRadius(12)
     }
     
@@ -156,17 +157,19 @@ struct StatusRow: View {
         HStack {
             Text(status.rawValue)
                 .font(.subheadline)
+                .foregroundColor(Theme.Color.PrimaryText)
             
             Spacer()
             
             Text("\(count)")
                 .font(.subheadline)
                 .fontWeight(.medium)
+                .foregroundColor(Theme.Color.PrimaryText)
             
             if total > 0 {
                 Text("(\(Int(Double(count) / Double(total) * 100))%)")
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(Theme.Color.SecondaryText)
             }
         }
     }
@@ -179,6 +182,7 @@ struct RecentBooksSection: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Recently Completed")
                 .font(.headline)
+                .foregroundColor(Theme.Color.PrimaryText)
             
             ForEach(books, id: \.self) { book in
                 HStack(spacing: 12) {
@@ -192,17 +196,18 @@ struct RecentBooksSection: View {
                         Text(book.metadata?.title ?? "Unknown Title")
                             .font(.subheadline)
                             .fontWeight(.medium)
+                            .foregroundColor(Theme.Color.PrimaryText)
                             .lineLimit(1)
                         
                         Text(book.metadata?.authors.joined(separator: ", ") ?? "Unknown Author")
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundColor(Theme.Color.SecondaryText)
                             .lineLimit(1)
                         
                         if let dateCompleted = book.dateCompleted {
                             Text("Completed \(dateCompleted.formatted(date: .abbreviated, time: .omitted))")
                                 .font(.caption2)
-                                .foregroundColor(.secondary)
+                                .foregroundColor(Theme.Color.SecondaryText)
                         }
                     }
                     
@@ -213,7 +218,7 @@ struct RecentBooksSection: View {
                             ForEach(1...rating, id: \.self) { _ in
                                 Image(systemName: "star.fill")
                                     .font(.caption2)
-                                    .foregroundColor(.primaryAction)
+                                    .foregroundColor(Theme.Color.AccentHighlight)
                             }
                         }
                     }
@@ -222,7 +227,7 @@ struct RecentBooksSection: View {
             }
         }
         .padding()
-        .background(Color.subtleBackground)
+        .background(Theme.Color.CardBackground)
         .cornerRadius(12)
     }
 }

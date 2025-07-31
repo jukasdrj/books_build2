@@ -37,12 +37,14 @@ struct SearchView: View {
                     switch searchState {
                     case .idle:
                         ContentUnavailableView("Search for a Book", systemImage: "books.vertical", description: Text("Find your next read by searching the online database."))
+                            .foregroundColor(Theme.Color.PrimaryText)
                     case .searching:
                         ProgressView("Searching...")
                             .padding()
                     case .results(let books):
                         if books.isEmpty {
                             ContentUnavailableView("No Results Found", systemImage: "questionmark.circle", description: Text("Try checking the spelling or using a different search term."))
+                                .foregroundColor(Theme.Color.PrimaryText)
                         } else {
                             // The List now handles navigation
                             List(books) { book in
@@ -50,11 +52,14 @@ struct SearchView: View {
                                     SearchResultRow(book: book)
                                 }
                             }
+                            .background(Theme.Color.Surface)
                         }
                     case .error(let message):
                         ContentUnavailableView("Search Error", systemImage: "exclamationmark.triangle", description: Text(message))
+                            .foregroundColor(Theme.Color.PrimaryText)
                     }
                 }
+                .background(Theme.Color.Surface)
                 Spacer()
             }
             .navigationTitle("Search Books")
@@ -92,10 +97,10 @@ struct SearchResultRow: View {
             BookCoverImage(imageURL: book.imageURL?.absoluteString, width: 50, height: 70)
             
             VStack(alignment: .leading) {
-                Text(book.title).font(.headline).lineLimit(2)
-                Text(book.authors.joined(separator: ", ")).font(.subheadline).foregroundStyle(.secondary)
+                Text(book.title).font(.headline).foregroundColor(Theme.Color.PrimaryText).lineLimit(2)
+                Text(book.authors.joined(separator: ", ")).font(.subheadline).foregroundStyle(Theme.Color.SecondaryText)
                 if let year = book.publishedDate {
-                    Text(year).font(.caption).foregroundStyle(.secondary)
+                    Text(year).font(.caption).foregroundStyle(Theme.Color.SecondaryText)
                 }
             }
             Spacer()

@@ -39,6 +39,8 @@ struct ContentView: View {
             }
             .tag(3)
         }
+        .background(Theme.Color.Surface)
+        .tint(Theme.Color.PrimaryAction)
     }
 }
 

@@ -84,20 +84,21 @@ struct BookHeaderSection: View {
             VStack(alignment: .leading, spacing: 8) {
                 Text(book.metadata?.title ?? "Unknown Title")
                     .font(.title2.bold())
+                    .foregroundColor(Theme.Color.PrimaryText)
                 
                 // Author name navigation using NavigationLink with value
                 if let authors = book.metadata?.authors, !authors.isEmpty {
                     NavigationLink(value: authors.first!) {
                         Text(authors.joined(separator: ", "))
                             .font(.headline)
-                            .foregroundStyle(.blue)
+                            .foregroundStyle(Theme.Color.PrimaryAction)
                             .underline()
                     }
                     .buttonStyle(.plain)
                 } else {
                     Text("Unknown Author")
                         .font(.headline)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Theme.Color.SecondaryText)
                 }
                 
                 if let genre = book.metadata?.genre?.first {
@@ -106,8 +107,8 @@ struct BookHeaderSection: View {
                         .fontWeight(.medium)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
-                        .background(Color.purple.opacity(0.2))
-                        .foregroundColor(.purple)
+                        .background(Theme.Color.PrimaryAction.opacity(0.2))
+                        .foregroundColor(Theme.Color.PrimaryAction)
                         .cornerRadius(8)
                 }
                 
@@ -144,7 +145,7 @@ struct FavoriteButton: View {
         }) {
             Image(systemName: isFavorited ? "heart.fill" : "heart")
                 .font(.title2)
-                .foregroundColor(isFavorited ? .pink : .secondary)
+                .foregroundColor(isFavorited ? Theme.Color.AccentHighlight : Theme.Color.SecondaryText)
         }
     }
 }
@@ -167,7 +168,7 @@ struct RatingSection: View {
                     }) {
                         Image(systemName: star <= (rating ?? 0) ? "star.fill" : "star")
                             .font(.title)
-                            .foregroundColor(.yellow)
+                            .foregroundColor(Theme.Color.AccentHighlight)
                     }
                 }
                 Spacer()
@@ -271,10 +272,11 @@ struct DetailRow: View {
         HStack(alignment: .top) {
             Text(label)
                 .font(.subheadline.bold())
-                .foregroundColor(.secondary)
+                .foregroundColor(Theme.Color.SecondaryText)
             Spacer()
             Text(value)
                 .font(.subheadline)
+                .foregroundColor(Theme.Color.PrimaryText)
                 .multilineTextAlignment(.trailing)
         }
     }
@@ -309,9 +311,9 @@ struct ActionButtonsSection: View {
 extension ReadingStatus {
     var color: Color {
         switch self {
-        case .read: .green
-        case .reading: .purple
-        case .toRead: .orange
+        case .read: Theme.Color.PrimaryAction
+        case .reading: Theme.Color.AccentHighlight  
+        case .toRead: Theme.Color.PrimaryAction.opacity(0.6)
         }
     }
 }

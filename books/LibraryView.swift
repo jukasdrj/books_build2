@@ -72,8 +72,10 @@ struct LibraryView: View {
             if displayedBooks.isEmpty {
                 ContentUnavailableView {
                     Label(filter.emptyTitle, systemImage: filter.emptySystemImage)
+                        .foregroundColor(Theme.Color.PrimaryText)
                 } description: {
                     Text(filter.emptyDescription)
+                        .foregroundColor(Theme.Color.SecondaryText)
                 }
             } else {
                 List {
@@ -88,14 +90,16 @@ struct LibraryView: View {
                                 NavigationLink(value: firstAuthor) {
                                     Label("Author", systemImage: "person.fill")
                                 }
-                                .tint(.primaryAction)
+                                .tint(Theme.Color.PrimaryAction)
                             }
                         }
                     }
                     .onDelete(perform: deleteItems)
                 }
+                .background(Theme.Color.Surface)
             }
         }
+        .background(Theme.Color.Surface)
         .navigationTitle(filter.navigationTitle)
         // Handle navigation destinations at the LibraryView level
         .navigationDestination(for: UserBook.self) { book in
