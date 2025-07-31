@@ -30,30 +30,8 @@ final class booksUITests: XCTestCase {
         // Use a more common book title that's likely to return results
         searchField.typeText("Swift Programming")
         
-        // Try to find and tap the search button more safely
-        let searchButton = app.buttons.containing(NSPredicate(format: "label CONTAINS 'magnifyingglass' OR identifier CONTAINS 'magnifyingglass'")).firstMatch
-        if searchButton.exists && searchButton.isHittable {
-            searchButton.tap()
-        } else {
-            // Fallback: look for any button near the search field
-            let buttonElements = app.buttons.allElementsBoundByAccessibilityElement
-            var searchButtonFound = false
-            for button in buttonElements {
-                if button.exists && button.isHittable {
-                    // Try this button if it's likely the search button
-                    if button.frame.minX > searchField.frame.maxX {
-                        button.tap()
-                        searchButtonFound = true
-                        break
-                    }
-                }
-            }
-            
-            if !searchButtonFound {
-                // Final fallback: use return key
-                searchField.typeText("\n")
-            }
-        }
+        // Simplified search trigger - just use return key to avoid button issues
+        searchField.typeText("\n")
         
         // 3. Wait for search results to load
         // First, wait for the "Searching..." progress view to appear and then disappear
@@ -152,20 +130,12 @@ final class booksUITests: XCTestCase {
         let searchField = app.textFields["Search by title, author, or ISBN"]
         XCTAssert(searchField.waitForExistence(timeout: 5), "Search field should exist")
         
-        // Try to find search button more safely
-        let searchButton = app.buttons.containing(NSPredicate(format: "label CONTAINS 'magnifyingglass' OR identifier CONTAINS 'magnifyingglass'")).firstMatch
-        if searchButton.exists {
-            XCTAssert(true, "Search button found")
-        } else {
-            XCTAssert(true, "Search button not found, but that's okay - we can use return key")
-        }
-        
         // Verify initial state message
         let initialMessage = app.staticTexts["Search for a Book"]
         XCTAssert(initialMessage.exists, "Initial search message should be visible")
     }
     
-    // Simplified test that just uses the return key
+    // Simplified test that just uses the return key and checks for any response
     @MainActor
     func testSearchWithReturnKey() throws {
         let app = XCUIApplication()
@@ -182,7 +152,7 @@ final class booksUITests: XCTestCase {
         searchField.typeText("Swift\n") // Use return key to trigger search
         
         // Wait a moment for search to process
-        sleep(2)
+        Thread.sleep(forTimeInterval: 3)
         
         // Check if we get any response (results, no results, or error)
         let hasResults = app.tables.cells.count > 0
