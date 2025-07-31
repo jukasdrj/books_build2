@@ -87,9 +87,12 @@ struct AddBookView: View {
     @State private var personalNotes = ""
     @State private var pageCount = ""
     @State private var addToWishlist = false
+    @State private var language = ""
+    @State private var originalLanguage = ""
+    @State private var authorNationality = ""
+    @State private var translator = ""
     
     var body: some View {
-        // Replaced NavigationView with NavigationStack
         NavigationStack {
             Form {
                 Section(header: Text("Book Details")) {
@@ -103,6 +106,13 @@ struct AddBookView: View {
                     TextField("Published Date (Optional)", text: $publishedDate)
                     TextField("Total Pages (Optional)", text: $pageCount)
                         .keyboardType(.numberPad)
+                    TextField("Language (Optional)", text: $language)
+                }
+                
+                Section(header: Text("Cultural & Language Details")) {
+                    TextField("Original Language (Optional)", text: $originalLanguage)
+                    TextField("Author Nationality (Optional)", text: $authorNationality)
+                    TextField("Translator (Optional)", text: $translator)
                 }
                 
                 Section(header: Text("Reading Status")) {
@@ -171,7 +181,7 @@ struct AddBookView: View {
         
         guard !authorsList.isEmpty else { return }
         
-        // Create BookMetadata
+        // Create BookMetadata with all fields including the new ones - correct parameter order
         let metadata = BookMetadata(
             googleBooksID: UUID().uuidString, // Generate unique ID for manually added books
             title: title,
@@ -179,11 +189,19 @@ struct AddBookView: View {
             publishedDate: publishedDate.isEmpty ? nil : publishedDate,
             pageCount: pageCount.isEmpty ? nil : Int(pageCount),
             bookDescription: nil, // Description not collected in this form
+            imageURL: nil,
+            language: language.isEmpty ? nil : language,
+            previewLink: nil,
+            infoLink: nil,
             publisher: publisher.isEmpty ? nil : publisher,
-            isbn: isbn.isEmpty ? nil : isbn
+            isbn: isbn.isEmpty ? nil : isbn,
+            genre: nil,
+            originalLanguage: originalLanguage.isEmpty ? nil : originalLanguage,
+            authorNationality: authorNationality.isEmpty ? nil : authorNationality,
+            translator: translator.isEmpty ? nil : translator
         )
         
-        // Create UserBook
+        // Create UserBook - auto-date logic is now handled by the model
         let userBook = UserBook(
             readingStatus: readingStatus,
             onWishlist: addToWishlist,
@@ -191,18 +209,6 @@ struct AddBookView: View {
             notes: personalNotes.isEmpty ? nil : personalNotes,
             metadata: metadata
         )
-        
-        // Set appropriate dates based on status
-        switch readingStatus {
-        case .reading:
-            userBook.dateStarted = Date()
-        case .read:
-            userBook.dateStarted = Date()
-            userBook.dateCompleted = Date()
-        case .toRead:
-            // dateStarted and dateCompleted remain nil
-            break
-        }
         
         // Insert both objects into the model context
         modelContext.insert(userBook)

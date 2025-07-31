@@ -52,7 +52,6 @@ struct DatePickerSheet: View {
     @State private var selectedDate = Date()
     
     var body: some View {
-        // Corrected from NavigationView
         NavigationStack {
             VStack(spacing: 20) {
                 VStack(spacing: 16) {
@@ -121,15 +120,14 @@ struct DatePickerSheet: View {
         switch dateType {
         case .started:
             book.dateStarted = selectedDate
+            // Status change will trigger auto-date logic
             if book.readingStatus == .toRead {
                 book.readingStatus = .reading
             }
         case .completed:
             book.dateCompleted = selectedDate
+            // Status change will trigger auto-date logic
             book.readingStatus = .read
-            if book.dateStarted == nil {
-                book.dateStarted = selectedDate
-            }
         case .added:
             book.dateAdded = selectedDate
         }
@@ -154,7 +152,6 @@ struct ProgressUpdateView: View {
     @State private var showingPageValidation = false
     
     var body: some View {
-        // Corrected from NavigationView
         NavigationStack {
             VStack(spacing: 24) {
                 VStack(spacing: 16) {
@@ -303,24 +300,16 @@ struct ProgressUpdateView: View {
             metadata.pageCount = totalPages
         }
         
+        // Let the model handle the auto-date logic by setting status
         if currentPage == 0 {
             book.readingStatus = .toRead
+            // Reset dates manually only for .toRead since it doesn't trigger auto-dates
             book.dateStarted = nil
             book.dateCompleted = nil
         } else if currentPage >= totalPages && totalPages > 0 {
-            book.readingStatus = .read
-            if book.dateCompleted == nil {
-                book.dateCompleted = Date()
-            }
-            if book.dateStarted == nil {
-                book.dateStarted = book.dateAdded
-            }
+            book.readingStatus = .read // Auto-date logic will handle dates
         } else {
-            book.readingStatus = .reading
-            if book.dateStarted == nil {
-                book.dateStarted = Date()
-            }
-            book.dateCompleted = nil
+            book.readingStatus = .reading // Auto-date logic will handle dates
         }
         
         do {
@@ -351,7 +340,6 @@ struct EnhancedEditBookView: View {
     @State private var newCategory: String = ""
     
     var body: some View {
-        // Corrected from NavigationView
         NavigationStack {
             ScrollView {
                 VStack(spacing: 24) {
@@ -611,24 +599,13 @@ struct BookStatusSelector: View {
     }
     
     private func updateStatus(to status: ReadingStatus) {
+        // Simple status change - let the model handle auto-date logic
         book.readingStatus = status
         
-        switch status {
-        case .toRead:
+        // Only manually handle .toRead since it clears dates
+        if status == .toRead {
             book.dateStarted = nil
             book.dateCompleted = nil
-        case .reading:
-            if book.dateStarted == nil {
-                book.dateStarted = Date()
-            }
-            book.dateCompleted = nil
-        case .read:
-            if book.dateStarted == nil {
-                book.dateStarted = book.dateAdded
-            }
-            if book.dateCompleted == nil {
-                book.dateCompleted = Date()
-            }
         }
         
         do {

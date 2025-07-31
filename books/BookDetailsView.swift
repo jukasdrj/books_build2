@@ -138,23 +138,8 @@ struct StatusSelector: View {
             }
         }
         .pickerStyle(.menu)
-        .onChange(of: book.readingStatus, handleStatusChange)
         .buttonStyle(.bordered)
         .tint(book.readingStatus.color)
-    }
-
-    private func handleStatusChange(from oldValue: ReadingStatus, to newValue: ReadingStatus) {
-        // Automatically set dates when status changes
-        if newValue == .reading && book.dateStarted == nil {
-            book.dateStarted = Date()
-        }
-        if newValue == .read && book.dateCompleted == nil {
-            book.dateCompleted = Date()
-            // If it was moved directly from "To Read", set start date too
-            if book.dateStarted == nil {
-                book.dateStarted = Date()
-            }
-        }
     }
 }
 

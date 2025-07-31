@@ -1,5 +1,4 @@
-
-# Data-Model Specification – Release v0.1
+# Data-Model Specification – Release v0.2
 
 This document defines the canonical schema for SwiftData entities used in the Books iOS app.
 
@@ -11,13 +10,20 @@ This document defines the canonical schema for SwiftData entities used in the Bo
 |------------------|---------|----------|---------|-------------------------------------------------------|
 | `googleBooksID`  | String  | ❌       | –       | Primary identifier when fetched online; UUID when manual. |
 | `title`          | String  | ❌       | –       | Trimmed, max 512 chars.                               |
-| `authors`        | [String]| ❌       | –       | ≥ 1 author. Normalized “Last, First” not enforced yet.|
+| `authors`        | [String]| ❌       | –       | ≥ 1 author. Normalized "Last, First" not enforced yet.|
 | `publishedDate`  | String  | ✅       | –       | Preferred ISO-8601 `yyyy-MM-dd`; may be year-only.    |
 | `pageCount`      | Int     | ✅       | –       | Positive integer.                                     |
 | `publisher`      | String  | ✅       | –       |                                                       |
 | `isbn`           | String  | ✅       | –       | 10 or 13 digits, no dashes; validation deferred.      |
 | `imageURL`       | URL     | ✅       | –       | Cover thumbnail.                                      |
-| `bookDescription`| String  | ✅       | –       | Plain-text/Markdown; max 10 k chars.                  |
+| `bookDescription`| String  | ✅       | –       | Plain-text/Markdown; max 10k chars.                   |
+| `language`       | String  | ✅       | –       | Primary language code (e.g., "en", "es").             |
+| `previewLink`    | URL     | ✅       | –       | Google Books preview URL.                             |
+| `infoLink`       | URL     | ✅       | –       | Google Books info page URL.                           |
+| `genre`          | [String]| ✅       | –       | Categories/genres from Google Books API.               |
+| `originalLanguage`| String | ✅       | –       | Original publication language if translated.           |
+| `authorNationality`| String| ✅      | –       | Primary author's nationality.                         |
+| `translator`     | String  | ✅       | –       | Translator name if applicable.                        |
 
 ### Relationships
 • _Zero-or-many_ `UserBook` objects reference a single `BookMetadata`.
@@ -30,13 +36,52 @@ This document defines the canonical schema for SwiftData entities used in the Bo
 | Field            | Type   | Optional | Default            | Notes                                                         |
 |------------------|--------|----------|--------------------|---------------------------------------------------------------|
 | `id`             | UUID   | ❌       | Auto-generated     | Primary key.                                                  |
-| `metadata`       | Link→BookMetadata | ❌ | –              | 1 : 1 required relationship.                                  |
+| `metadata`       | Link→BookMetadata | ❌ | –              | Many : 1 required relationship.                               |
 | `readingStatus`  | Enum(`toRead`,`reading`,`read`) | ❌ | `toRead` | Governs date rules below.                                     |
 | `onWishlist`     | Bool   | ❌       | `false`            | True → separate wishlist view.                                |
+| `isFavorited`    | Bool   | ❌       | `false`            | User's favorite books.                                        |
+| `owned`          | Bool   | ❌       | `true`             | Whether user physically owns the book.                        |
 | `rating`         | Int    | ✅       | –                  | 1-5 inclusive.                                                |
-| `notes`          | String | ✅       | –                  | Private; max 5 k chars.                                       |
+| `notes`          | String | ✅       | –                  | Private; max 5k chars.                                       |
+| `tags`           | [String]| ❌      | `[]`               | User-defined tags for organization.                           |
 | `dateAdded`      | Date   | ❌       | `Date()`           | Set on insertion.                                             |
 | `dateStarted`    | Date   | ✅       | –                  | Auto-set when status → `.reading` if nil.                     |
 | `dateCompleted`  | Date   | ✅       | –                  | Auto-set when status → `.read`.                               |
 
 ### Derived & Validation Rules
+
+**Status-Based Date Logic:**
+- When `readingStatus` changes to `.reading`: set `dateStarted = Date()` if currently nil
+- When `readingStatus` changes to `.read`: set `dateCompleted = Date()` and ensure `dateStarted` is set
+
+**Field Validation:**
+- `rating`: Must be 1-5 inclusive if not nil
+- `notes`: Max 5,000 characters
+- `tags`: Each tag max 50 characters, max 20 tags total
+- `metadata`: Required relationship
+
+**Relationship Rules:**
+- Each `UserBook` must reference exactly one `BookMetadata`
+- Multiple `UserBook` entries can reference the same `BookMetadata`
+- Deleting a `UserBook` does not affect its `BookMetadata`
+- `BookMetadata` should only be deleted when no `UserBook` references it
+
+---
+
+## 3. Validation & Business Logic
+
+### BookMetadata Validation:
+- `title`: Required, trimmed, 1-512 characters
+- `authors`: Required, ≥ 1 author, each author 1-100 characters
+- `bookDescription`: Max 10,000 characters if provided
+- `pageCount`: Must be positive integer if provided
+- `isbn`: Must be 10 or 13 digits (validation deferred to future release)
+- `genre`: Each genre max 50 characters, max 10 genres
+
+### UserBook Validation:
+- `rating`: 1-5 inclusive if provided
+- `notes`: Max 5,000 characters if provided
+- `tags`: Max 20 tags, each tag 1-50 characters
+
+### Auto-Date Setting:
+Implemented via property observers in the `UserBook` model to ensure consistency across all status changes.
