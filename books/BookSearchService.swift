@@ -49,7 +49,13 @@ class BookSearchService: ObservableObject {
         }
 
         do {
-            let (data, _) = try await URLSession.shared.data(from: url)
+            // Create URL session with better configuration
+            let configuration = URLSessionConfiguration.default
+            configuration.timeoutIntervalForRequest = 10.0
+            configuration.timeoutIntervalForResource = 30.0
+            let session = URLSession(configuration: configuration)
+            
+            let (data, _) = try await session.data(from: url)
             let searchResponse = try JSONDecoder().decode(GoogleBooksResponse.self, from: data)
             
             let metadataItems = searchResponse.items?.compactMap { $0.toBookMetadata() } ?? []

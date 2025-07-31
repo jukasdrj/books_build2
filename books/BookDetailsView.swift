@@ -43,10 +43,6 @@ struct BookDetailsView: View {
         }
         .navigationTitle(book.metadata?.title ?? "Details")
         .navigationBarTitleDisplayMode(.inline)
-        // Handle author navigation from BookDetailsView
-        .navigationDestination(for: String.self) { authorName in
-            AuthorSearchResultsView(authorName: authorName)
-        }
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 ShareLink(item: book.shareableText) {
