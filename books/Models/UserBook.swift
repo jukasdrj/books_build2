@@ -3,7 +3,7 @@ import SwiftData
 
 @Model
 final class UserBook: Identifiable, @unchecked Sendable {
-    var id: UUID = UUID()
+    var id: UUID
     var dateAdded: Date
     var dateStarted: Date?
     var dateCompleted: Date?
@@ -29,6 +29,7 @@ final class UserBook: Identifiable, @unchecked Sendable {
         tags: [String] = [],
         metadata: BookMetadata? = nil
     ) {
+        self.id = UUID() // Generate UUID once during initialization
         self.dateAdded = dateAdded
         self.readingStatus = readingStatus
         self.isFavorited = isFavorited

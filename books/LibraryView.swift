@@ -42,12 +42,25 @@ struct LibraryView: View {
     private var allBooks: [UserBook]
     
     private var displayedBooks: [UserBook] {
-        switch filter {
+        let filtered = switch filter {
         case .library:
             allBooks.filter { !$0.onWishlist && $0.readingStatus != .toRead }
         case .wishlist:
             allBooks.filter { $0.onWishlist }
         }
+        
+        // Remove any potential duplicates based on ID to prevent ForEach errors
+        var uniqueBooks: [UserBook] = []
+        var seenIDs: Set<UUID> = []
+        
+        for book in filtered {
+            if !seenIDs.contains(book.id) {
+                uniqueBooks.append(book)
+                seenIDs.insert(book.id)
+            }
+        }
+        
+        return uniqueBooks
     }
     
     init(filter: Filter = .library) {
@@ -65,7 +78,7 @@ struct LibraryView: View {
                     }
                 } else {
                     List {
-                        ForEach(displayedBooks) { book in
+                        ForEach(displayedBooks, id: \.id) { book in
                             BookListItem(book: book)
                         }
                         .onDelete(perform: deleteItems)
@@ -91,8 +104,8 @@ struct LibraryView: View {
         withAnimation {
             for index in offsets {
                 let bookToDelete = displayedBooks[index]
-                if let actualIndex = allBooks.firstIndex(of: bookToDelete) {
-                    modelContext.delete(allBooks[actualIndex])
+                if let actualBook = allBooks.first(where: { $0.id == bookToDelete.id }) {
+                    modelContext.delete(actualBook)
                 }
             }
         }
