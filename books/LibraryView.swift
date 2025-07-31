@@ -88,7 +88,7 @@ struct LibraryView: View {
                                 NavigationLink(value: firstAuthor) {
                                     Label("Author", systemImage: "person.fill")
                                 }
-                                .tint(.blue)
+                                .tint(.primaryAction)
                             }
                         }
                     }

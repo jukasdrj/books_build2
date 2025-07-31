@@ -48,28 +48,28 @@ struct StatsQuickGrid: View {
                 title: "Total Books",
                 value: "\(books.count)",
                 icon: "books.vertical",
-                color: .blue
+                color: .primaryAction
             )
             
             StatCard(
                 title: "Books Read",
                 value: "\(booksRead)",
                 icon: "checkmark.circle",
-                color: .green
+                color: .primaryAction.opacity(0.8)
             )
             
             StatCard(
                 title: "Currently Reading",
                 value: "\(currentlyReading)",
                 icon: "book",
-                color: .orange
+                color: .primaryAction.opacity(0.6)
             )
             
             StatCard(
                 title: "Want to Read",
                 value: "\(wantToRead)",
                 icon: "heart",
-                color: .red
+                color: .primaryAction.opacity(0.4)
             )
         }
     }
@@ -130,7 +130,7 @@ struct ReadingStatusBreakdown: View {
             }
         }
         .padding()
-        .background(Color(.systemGray6))
+        .background(Color.subtleBackground)
         .cornerRadius(12)
     }
     
@@ -213,7 +213,7 @@ struct RecentBooksSection: View {
                             ForEach(1...rating, id: \.self) { _ in
                                 Image(systemName: "star.fill")
                                     .font(.caption2)
-                                    .foregroundColor(.yellow)
+                                    .foregroundColor(.primaryAction)
                             }
                         }
                     }
@@ -222,7 +222,7 @@ struct RecentBooksSection: View {
             }
         }
         .padding()
-        .background(Color(.systemGray6))
+        .background(Color.subtleBackground)
         .cornerRadius(12)
     }
 }
