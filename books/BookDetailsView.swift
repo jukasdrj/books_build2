@@ -84,7 +84,7 @@ struct BookTagsDisplaySection: View {
                 HStack {
                     Text("Tags")
                         .titleSmall()
-                        .foregroundColor(SwiftUI.Color.theme.primaryText)
+                        .foregroundColor(Color.theme.primaryText)
                     
                     Spacer()
                     
@@ -92,14 +92,14 @@ struct BookTagsDisplaySection: View {
                         showingAddTag = true
                     }
                     .labelMedium()
-                    .foregroundColor(SwiftUI.Color.theme.primaryAction)
+                    .foregroundColor(Color.theme.primaryAction)
                 }
                 
                 // Tags display
                 if book.tags.isEmpty {
                     Text("No tags added")
                         .bodySmall()
-                        .foregroundColor(SwiftUI.Color.theme.secondaryText)
+                        .foregroundColor(Color.theme.secondaryText)
                         .italic()
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.vertical, Theme.Spacing.sm)
@@ -155,17 +155,17 @@ struct TagChip: View {
         HStack(spacing: 4) {
             Text(tag)
                 .labelSmall()
-                .foregroundColor(SwiftUI.Color.theme.primaryText)
+                .foregroundColor(Color.theme.primaryText)
             
             Button(action: onRemove) {
                 Image(systemName: "xmark")
                     .font(.caption2)
-                    .foregroundColor(SwiftUI.Color.theme.secondaryText)
+                    .foregroundColor(Color.theme.secondaryText)
             }
         }
         .padding(.horizontal, Theme.Spacing.sm)
         .padding(.vertical, 4)
-        .background(SwiftUI.Color.theme.surfaceVariant)
+        .background(Color.theme.surfaceVariant)
         .cornerRadius(Theme.CornerRadius.small)
     }
 }
@@ -242,21 +242,21 @@ struct BookHeaderSection: View {
             VStack(alignment: .leading, spacing: 8) {
                 Text(book.metadata?.title ?? "Unknown Title")
                     .headlineMedium()
-                    .foregroundColor(SwiftUI.Color.theme.primaryText)
+                    .foregroundColor(Color.theme.primaryText)
                 
                 // Author name navigation using NavigationLink with value
                 if let authors = book.metadata?.authors, !authors.isEmpty {
                     NavigationLink(value: authors.first!) {
                         Text(authors.joined(separator: ", "))
                             .titleMedium()
-                            .foregroundStyle(SwiftUI.Color.theme.primaryAction)
+                            .foregroundStyle(Color.theme.primaryAction)
                             .underline()
                     }
                     .buttonStyle(.plain)
                 } else {
                     Text("Unknown Author")
                         .titleMedium()
-                        .foregroundStyle(SwiftUI.Color.theme.secondaryText)
+                        .foregroundStyle(Color.theme.secondaryText)
                 }
                 
                 if let genre = book.metadata?.genre, !genre.isEmpty {
@@ -265,8 +265,8 @@ struct BookHeaderSection: View {
                         .fontWeight(.medium)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
-                        .background(SwiftUI.Color.theme.primaryAction.opacity(0.2))
-                        .foregroundColor(SwiftUI.Color.theme.primaryAction)
+                        .background(Color.theme.primaryAction.opacity(0.2))
+                        .foregroundColor(Color.theme.primaryAction)
                         .cornerRadius(8)
                 }
                 
@@ -287,7 +287,7 @@ struct FavoriteButton: View {
         }) {
             Image(systemName: isFavorited ? "heart.fill" : "heart")
                 .font(.title2)
-                .foregroundColor(isFavorited ? SwiftUI.Color.theme.accentHighlight : SwiftUI.Color.theme.secondaryText)
+                .foregroundColor(isFavorited ? Color.theme.accentHighlight : Color.theme.secondaryText)
         }
     }
 }
@@ -309,7 +309,7 @@ struct RatingSection: View {
                     }) {
                         Image(systemName: star <= (rating ?? 0) ? "star.fill" : "star")
                             .font(.title)
-                            .foregroundColor(SwiftUI.Color.theme.accentHighlight)
+                            .foregroundColor(Color.theme.accentHighlight)
                     }
                     .scaleEffect(star == rating ? 1.25 : 1.0)
                     .animation(Theme.Animation.bouncySpring, value: rating)
@@ -516,20 +516,20 @@ struct DetailRowView: View {
             if let icon = icon {
                 Image(systemName: icon)
                     .font(.caption)
-                    .foregroundColor(SwiftUI.Color.theme.primaryAction)
+                    .foregroundColor(Color.theme.primaryAction)
                     .frame(width: 16)
             }
             
             // Label
             Text(label)
                 .labelLarge()
-                .foregroundColor(SwiftUI.Color.theme.secondaryText)
+                .foregroundColor(Color.theme.secondaryText)
                 .frame(width: 120, alignment: .leading)
             
             // Value
             Text(value)
                 .bodyMedium()
-                .foregroundColor(isPlaceholder ? SwiftUI.Color.theme.secondaryText.opacity(0.7) : SwiftUI.Color.theme.primaryText)
+                .foregroundColor(isPlaceholder ? Color.theme.secondaryText.opacity(0.7) : Color.theme.primaryText)
                 .italic(isPlaceholder)
             
             Spacer()

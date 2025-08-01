@@ -115,9 +115,9 @@ The Books Reading Tracker project is organized into several main directories wit
 - **Purpose**: Wishlist management for future reading
 - **Responsibility**: Display and manage books marked for future reading
 - **Key Features**: Priority sorting, cultural goal tracking, quick add-to-library
-- **Related Files**: wishlist_view_file.swift (additional wishlist components)
+- **Related Components**: `WishlistComponents.swift` (Contains supporting UI elements for the wishlist view to keep the main view file clean).
 
-#### **enhanced_search_view.swift**
+#### **SearchView.swift**
 - **Purpose**: Google Books API integration and book discovery
 - **Responsibility**: Search external book database and add books to personal library
 - **Key Features**: Real-time search, book preview, cultural metadata enhancement, barcode scanning
@@ -175,6 +175,11 @@ The Books Reading Tracker project is organized into several main directories wit
 - **Responsibility**: Provide consistent interface elements (buttons, badges, form fields)
 - **Key Components**: StatusBadge, RatingView, FormField, BookListItem, AddBookView
 - **Usage**: Imported and used throughout the app for UI consistency
+
+#### **WishlistComponents.swift**
+- **Purpose**: Contains supporting UI elements for the `WishlistView`
+- **Responsibility**: Holds smaller, reusable views and components specific to the wishlist feature. This separation improves organization and keeps the main `WishlistView.swift` file focused on layout and primary logic.
+- **Usage**: Components are imported and used within `WishlistView.swift`.
 
 #### **SupportingViews.swift**
 - **Purpose**: Additional supporting views and utility components
@@ -282,7 +287,7 @@ The Books Reading Tracker project is organized into several main directories wit
 
 #### **ModelContainerTests.swift**
 - **Purpose**: SwiftData model and persistence testing
-- **Coverage**: Model creation, relationships, validation, migration
+-- **Coverage**: Model creation, relationships, validation, migration
 
 #### **ViewTests.swift**
 - **Purpose**: SwiftUI view testing

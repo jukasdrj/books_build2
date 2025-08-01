@@ -62,8 +62,7 @@ struct BookCardView: View {
                         .padding(Theme.Spacing.xs)
                         .background(
                             Circle()
-                                .fill(.regularMaterial)
-                                .frame(width: 24, height: 24)
+                                .fill(Material.regular)
                         )
                 }
             }

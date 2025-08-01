@@ -120,7 +120,7 @@ struct CulturalDiversityView: View {
                 
                 Text("\(culturalStats.keys.count)/\(CulturalRegion.allCases.count)")
                     .labelMedium()
-                    .foregroundColor(Color.theme.primary)
+                    .foregroundColor(Color.theme.primaryAction)
             }
             
             GeometryReader { geometry in
@@ -201,7 +201,7 @@ struct CulturalDiversityView: View {
                         
                         Text("\(count)")
                             .labelMedium()
-                            .foregroundColor(Color.theme.primary)
+                            .foregroundColor(Color.theme.primaryAction)
                         
                         Text("books")
                             .labelMedium()
@@ -228,12 +228,12 @@ struct CulturalDiversityView: View {
                 ForEach(genderDiversityStats.sorted(by: { $0.value > $1.value }), id: \.key) { gender, count in
                     VStack(spacing: Theme.Spacing.sm) {
                         Image(systemName: gender.icon)
-                            .foregroundColor(Color.theme.secondary)
+                            .foregroundColor(Color.theme.secondaryAction)
                             .frame(width: Theme.Size.iconLarge, height: Theme.Size.iconLarge)
                         
                         Text("\(count)")
                             .titleSmall()
-                            .foregroundColor(Color.theme.primary)
+                            .foregroundColor(Color.theme.primaryAction)
                         
                         Text(gender.rawValue)
                             .labelSmall()
@@ -281,7 +281,7 @@ struct CulturalDiversityView: View {
             HStack {
                 Text("\(progress)")
                     .titleMedium()
-                    .foregroundColor(Color.theme.primary)
+                    .foregroundColor(Color.theme.primaryAction)
                 
                 Text("/ \(target)")
                     .bodyMedium()
@@ -289,7 +289,7 @@ struct CulturalDiversityView: View {
             }
             
             ProgressView(value: Double(progress), total: Double(target))
-                .tint(Color.theme.primary)
+                .tint(Color.theme.primaryAction)
                 .scaleEffect(y: 0.5)
         }
         .padding(Theme.Spacing.md)
@@ -317,7 +317,7 @@ struct CulturalDiversityView: View {
                 VStack(spacing: Theme.Spacing.xs) {
                     Text("\(marginizedVoicesCount)")
                         .readingStats()
-                        .foregroundColor(Color.theme.secondary)
+                        .foregroundColor(Color.theme.secondaryAction)
                     
                     Text("Marginalized Voices")
                         .labelSmall()
