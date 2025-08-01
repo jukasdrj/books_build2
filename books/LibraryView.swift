@@ -169,17 +169,22 @@ struct LibraryView: View {
     @ViewBuilder
     private var booksGrid: some View {
         let columns = [
-            GridItem(.adaptive(minimum: 140, maximum: 160), spacing: Theme.Spacing.md)
+            GridItem(.flexible(minimum: 140, maximum: 160), spacing: Theme.Spacing.md),
+            GridItem(.flexible(minimum: 140, maximum: 160), spacing: Theme.Spacing.md)
         ]
         
-        LazyVGrid(columns: columns, spacing: Theme.Spacing.lg) {
-            ForEach(displayedBooks, id: \.id) { book in
+        LazyVGrid(columns: columns, spacing: Theme.Spacing.lg, pinnedViews: []) {
+            ForEach(Array(displayedBooks.enumerated()), id: \.element.id) { index, book in
                 NavigationLink(value: book) {
-                    BookCardView(book: book)
+                    BookCardView(
+                        book: book, 
+                        useFlexibleLayout: shouldUseFlexibleLayout(for: index, totalBooks: displayedBooks.count)
+                    )
                 }
                 .buttonStyle(.plain)
             }
         }
+        .animation(.none, value: displayedBooks) // Prevent animation glitches
     }
     
     @ViewBuilder
@@ -259,6 +264,15 @@ struct LibraryView: View {
         case .status:
             return books.sorted { $0.readingStatus.rawValue < $1.readingStatus.rawValue }
         }
+    }
+    
+    // MARK: - Helper function to determine layout type
+    private func shouldUseFlexibleLayout(for index: Int, totalBooks: Int) -> Bool {
+        // Check if this is the last book and it's alone on its row
+        let isLastBook = index == totalBooks - 1
+        let isOddTotal = totalBooks % 2 == 1
+        
+        return isLastBook && isOddTotal
     }
 }
 

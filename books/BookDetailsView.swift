@@ -16,13 +16,16 @@ struct BookDetailsView: View {
                 
                 // Interactive controls for user data
                 HStack(spacing: 16) {
-                    StatusSelector(book: book)
+                    BookStatusSelector(book: book)
                     Spacer()
                     FavoriteButton(isFavorited: $book.isFavorited)
                 }
                 .padding(.horizontal)
 
                 RatingSection(rating: $book.rating)
+                
+                // NEW: Tags Section
+                BookTagsDisplaySection(book: book)
                 
                 // Details sections
                 if let description = book.metadata?.bookDescription, !description.isEmpty {
@@ -57,21 +60,169 @@ struct BookDetailsView: View {
             Text("Are you sure you want to delete \"\(book.metadata?.title ?? "this book")\" from your library?")
         })
         .sheet(isPresented: $isEditing) {
-            // Fixed: Use correct parameter names for EditBookView
-            EditBookView(userBook: book, onSave: { updatedBook in
-                // The book is already updated by reference, just need to save context
-                do {
-                    try modelContext.save()
-                } catch {
-                    print("Error saving book: \(error)")
-                }
-            })
+            EnhancedEditBookView(book: book)
         }
     }
     
     private func deleteBook() {
         modelContext.delete(book)
         dismiss()
+    }
+}
+
+// MARK: - NEW: Tags Display Section
+struct BookTagsDisplaySection: View {
+    @Bindable var book: UserBook
+    @State private var showingTagsManager = false
+    @State private var newTag = ""
+    @State private var showingAddTag = false
+    
+    var body: some View {
+        GroupBox {
+            VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+                // Header with manage button
+                HStack {
+                    Text("Tags")
+                        .titleSmall()
+                        .foregroundColor(Color.theme.primaryText)
+                    
+                    Spacer()
+                    
+                    Button("Add Tag") {
+                        showingAddTag = true
+                    }
+                    .labelMedium()
+                    .foregroundColor(Color.theme.primaryAction)
+                }
+                
+                // Tags display
+                if book.tags.isEmpty {
+                    Text("No tags added")
+                        .bodySmall()
+                        .foregroundColor(Color.theme.secondaryText)
+                        .italic()
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.vertical, Theme.Spacing.sm)
+                } else {
+                    FlowLayout(spacing: Theme.Spacing.xs) {
+                        ForEach(book.tags, id: \.self) { tag in
+                            TagChip(
+                                tag: tag,
+                                onRemove: { removeTag(tag) }
+                            )
+                        }
+                    }
+                }
+            }
+        }
+        .alert("Add Tag", isPresented: $showingAddTag) {
+            TextField("Tag name", text: $newTag)
+            Button("Add", action: addTag)
+            Button("Cancel", role: .cancel) { 
+                newTag = ""
+            }
+        } message: {
+            Text("Enter a tag to organize this book")
+        }
+    }
+    
+    private func addTag() {
+        let trimmed = newTag.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty && !book.tags.contains(trimmed) else {
+            newTag = ""
+            return
+        }
+        
+        withAnimation(.easeInOut(duration: 0.25)) {
+            book.tags.append(trimmed)
+        }
+        newTag = ""
+    }
+    
+    private func removeTag(_ tag: String) {
+        withAnimation(.easeInOut(duration: 0.25)) {
+            book.tags = book.tags.filter { $0 != tag }
+        }
+    }
+}
+
+// MARK: - Tag Components
+struct TagChip: View {
+    let tag: String
+    let onRemove: () -> Void
+    
+    var body: some View {
+        HStack(spacing: 4) {
+            Text(tag)
+                .labelSmall()
+                .foregroundColor(Color.theme.primaryText)
+            
+            Button(action: onRemove) {
+                Image(systemName: "xmark")
+                    .font(.caption2)
+                    .foregroundColor(Color.theme.secondaryText)
+            }
+        }
+        .padding(.horizontal, Theme.Spacing.sm)
+        .padding(.vertical, 4)
+        .background(Color.theme.surfaceVariant)
+        .cornerRadius(Theme.CornerRadius.small)
+    }
+}
+
+// MARK: - Flow Layout for Tags
+struct FlowLayout: Layout {
+    let spacing: CGFloat
+    
+    init(spacing: CGFloat = 8) {
+        self.spacing = spacing
+    }
+    
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let containerWidth = proposal.width ?? 0
+        var height: CGFloat = 0
+        var rowWidth: CGFloat = 0
+        var rowHeight: CGFloat = 0
+        
+        for subview in subviews {
+            let subviewSize = subview.sizeThatFits(.unspecified)
+            
+            if rowWidth + subviewSize.width + spacing > containerWidth && rowWidth > 0 {
+                height += rowHeight + spacing
+                rowWidth = subviewSize.width
+                rowHeight = subviewSize.height
+            } else {
+                rowWidth += subviewSize.width + (rowWidth > 0 ? spacing : 0)
+                rowHeight = max(rowHeight, subviewSize.height)
+            }
+        }
+        
+        height += rowHeight
+        return CGSize(width: containerWidth, height: height)
+    }
+    
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        var rowWidth: CGFloat = 0
+        var rowHeight: CGFloat = 0
+        var y: CGFloat = bounds.minY
+        
+        for subview in subviews {
+            let subviewSize = subview.sizeThatFits(.unspecified)
+            
+            if rowWidth + subviewSize.width + spacing > bounds.width && rowWidth > 0 {
+                y += rowHeight + spacing
+                rowWidth = 0
+                rowHeight = 0
+            }
+            
+            subview.place(
+                at: CGPoint(x: bounds.minX + rowWidth, y: y),
+                proposal: ProposedViewSize(subviewSize)
+            )
+            
+            rowWidth += subviewSize.width + spacing
+            rowHeight = max(rowHeight, subviewSize.height)
+        }
     }
 }
 
@@ -91,33 +242,31 @@ struct BookHeaderSection: View {
             VStack(alignment: .leading, spacing: 8) {
                 Text(book.metadata?.title ?? "Unknown Title")
                     .headlineMedium()
-                    .foregroundColor(Theme.Color.PrimaryText)
+                    .foregroundColor(Color.theme.primaryText)
                 
                 // Author name navigation using NavigationLink with value
-                // Fixed: Check for non-empty array instead of nil
                 if let authors = book.metadata?.authors, !authors.isEmpty {
                     NavigationLink(value: authors.first!) {
                         Text(authors.joined(separator: ", "))
                             .titleMedium()
-                            .foregroundStyle(Theme.Color.PrimaryAction)
+                            .foregroundStyle(Color.theme.primaryAction)
                             .underline()
                     }
                     .buttonStyle(.plain)
                 } else {
                     Text("Unknown Author")
                         .titleMedium()
-                        .foregroundStyle(Theme.Color.SecondaryText)
+                        .foregroundStyle(Color.theme.secondaryText)
                 }
                 
-                // Fixed: Check for non-empty array instead of nil
                 if let genre = book.metadata?.genre, !genre.isEmpty {
                     Text(genre.first!)
                         .labelSmall()
                         .fontWeight(.medium)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
-                        .background(Theme.Color.PrimaryAction.opacity(0.2))
-                        .foregroundColor(Theme.Color.PrimaryAction)
+                        .background(Color.theme.primaryAction.opacity(0.2))
+                        .foregroundColor(Color.theme.primaryAction)
                         .cornerRadius(8)
                 }
                 
@@ -125,22 +274,6 @@ struct BookHeaderSection: View {
             }
             .frame(minHeight: 180)
         }
-    }
-}
-
-// MARK: - Status Selector
-struct StatusSelector: View {
-    @Bindable var book: UserBook
-    
-    var body: some View {
-        Picker("Status", selection: $book.readingStatus) {
-            ForEach(ReadingStatus.allCases) { status in
-                Text(status.rawValue).tag(status)
-            }
-        }
-        .pickerStyle(.menu)
-        .buttonStyle(.bordered)
-        .tint(book.readingStatus.color)
     }
 }
 
@@ -154,18 +287,17 @@ struct FavoriteButton: View {
         }) {
             Image(systemName: isFavorited ? "heart.fill" : "heart")
                 .font(.title2)
-                .foregroundColor(isFavorited ? Theme.Color.AccentHighlight : Theme.Color.SecondaryText)
+                .foregroundColor(isFavorited ? Color.theme.accentHighlight : Color.theme.secondaryText)
         }
     }
 }
-
 
 // MARK: - Rating Section
 struct RatingSection: View {
     @Binding var rating: Int?
     
     var body: some View {
-        GroupBox("Your Rating") {
+        GroupBox {
             HStack {
                 ForEach(1...5, id: \.self) { star in
                     Button(action: {
@@ -177,14 +309,16 @@ struct RatingSection: View {
                     }) {
                         Image(systemName: star <= (rating ?? 0) ? "star.fill" : "star")
                             .font(.title)
-                            .foregroundColor(Theme.Color.AccentHighlight)
+                            .foregroundColor(Color.theme.accentHighlight)
                     }
-                    .scaleEffect(star == rating ? 1.25 : 1.0) // Pop effect for selected star
-                    .animation(Theme.Animation.bouncy, value: rating) // Animate when rating changes
+                    .scaleEffect(star == rating ? 1.25 : 1.0)
+                    .animation(Theme.Animation.bouncy, value: rating)
                 }
                 Spacer()
             }
-            .frame(maxWidth: .infinity)
+        } label: {
+            Text("Your Rating")
+                .labelLarge()
         }
     }
 }
@@ -199,7 +333,7 @@ struct DescriptionSection: View {
     }
     
     var body: some View {
-        GroupBox("Description") {
+        GroupBox {
             VStack(alignment: .leading, spacing: 8) {
                 Text(description)
                     .bodyMedium()
@@ -216,6 +350,9 @@ struct DescriptionSection: View {
                     .frame(maxWidth: .infinity, alignment: .trailing)
                 }
             }
+        } label: {
+            Text("Description")
+                .labelLarge()
         }
     }
 }
@@ -225,7 +362,7 @@ struct NotesSection: View {
     @Binding var notes: String?
     
     var body: some View {
-        GroupBox("Personal Notes") {
+        GroupBox {
             TextField("Your thoughts on the book...", text: Binding(
                 get: { notes ?? "" },
                 set: { notes = $0.isEmpty ? nil : $0 }
@@ -233,52 +370,55 @@ struct NotesSection: View {
             .lineLimit(3...10)
             .textFieldStyle(.roundedBorder)
             .bodyMedium()
+        } label: {
+            Text("Personal Notes")
+                .labelLarge()
         }
     }
 }
-
 
 // MARK: - Publication Details Section
 struct PublicationDetailsSection: View {
     let book: UserBook
     
     var body: some View {
-        GroupBox("Details") {
-            // Two-column grid layout with Author Nationality always visible
-            Grid(alignment: .leading, horizontalSpacing: Theme.Spacing.lg, verticalSpacing: Theme.Spacing.md) {
-                // NEW: Always show Book Format like Author Nationality
+        GroupBox {
+            Grid(alignment: .leading,
+                 horizontalSpacing: Theme.Spacing.lg,
+                 verticalSpacing: Theme.Spacing.md) {
+                 
+                // Book Format
                 GridRow {
                     Text("Format")
                         .labelLarge()
-                        .foregroundColor(Theme.Color.SecondaryText)
+                        .foregroundColor(Color.theme.secondaryText)
                     if let format = book.metadata?.format {
                         HStack(spacing: Theme.Spacing.xs) {
                             Image(systemName: format.icon)
                                 .font(.caption)
-                                .foregroundColor(Theme.Color.PrimaryAction)
+                                .foregroundColor(Color.theme.primaryAction)
                             Text(format.rawValue)
                                 .bodyMedium()
-                                .foregroundColor(Theme.Color.PrimaryText)
+                                .foregroundColor(Color.theme.primaryText)
                         }
                         .gridCellAnchor(.leading)
                     } else {
                         Text("Not specified")
                             .bodyMedium()
-                            .foregroundColor(Theme.Color.SecondaryText.opacity(0.7))
+                            .foregroundColor(Color.theme.secondaryText.opacity(0.7))
                             .italic()
                             .gridCellAnchor(.leading)
                     }
                 }
                 
-                // Fixed: Check for non-empty array instead of nil
                 if let genre = book.metadata?.genre, !genre.isEmpty {
                     GridRow {
                         Text("Genre")
                             .labelLarge()
-                            .foregroundColor(Theme.Color.SecondaryText)
+                            .foregroundColor(Color.theme.secondaryText)
                         Text(genre.joined(separator: ", "))
                             .bodyMedium()
-                            .foregroundColor(Theme.Color.PrimaryText)
+                            .foregroundColor(Color.theme.primaryText)
                             .gridCellAnchor(.leading)
                     }
                 }
@@ -287,10 +427,10 @@ struct PublicationDetailsSection: View {
                     GridRow {
                         Text("Language")
                             .labelLarge()
-                            .foregroundColor(Theme.Color.SecondaryText)
+                            .foregroundColor(Color.theme.secondaryText)
                         Text(language)
                             .bodyMedium()
-                            .foregroundColor(Theme.Color.PrimaryText)
+                            .foregroundColor(Color.theme.primaryText)
                             .gridCellAnchor(.leading)
                     }
                 }
@@ -299,10 +439,10 @@ struct PublicationDetailsSection: View {
                     GridRow {
                         Text("Original Language")
                             .labelLarge()
-                            .foregroundColor(Theme.Color.SecondaryText)
+                            .foregroundColor(Color.theme.secondaryText)
                         Text(originalLanguage)
                             .bodyMedium()
-                            .foregroundColor(Theme.Color.PrimaryText)
+                            .foregroundColor(Color.theme.primaryText)
                             .gridCellAnchor(.leading)
                     }
                 }
@@ -311,22 +451,30 @@ struct PublicationDetailsSection: View {
                 GridRow {
                     Text("Author Nationality")
                         .labelLarge()
-                        .foregroundColor(Theme.Color.SecondaryText)
-                    Text(book.metadata?.authorNationality ?? "Not specified")
-                        .bodyMedium()
-                        .foregroundColor(book.metadata?.authorNationality != nil ? Theme.Color.PrimaryText : Theme.Color.SecondaryText.opacity(0.7))
-                        .italic(book.metadata?.authorNationality == nil)
-                        .gridCellAnchor(.leading)
+                        .foregroundColor(Color.theme.secondaryText)
+                    
+                    if let nationality = book.metadata?.authorNationality {
+                        Text(nationality)
+                            .bodyMedium()
+                            .foregroundColor(Color.theme.primaryText)
+                            .gridCellAnchor(.leading)
+                    } else {
+                        Text("Not specified")
+                            .bodyMedium()
+                            .italic()
+                            .foregroundColor(Color.theme.secondaryText.opacity(0.7))
+                            .gridCellAnchor(.leading)
+                    }
                 }
                 
                 if let translator = book.metadata?.translator, !translator.isEmpty {
                     GridRow {
                         Text("Translator")
                             .labelLarge()
-                            .foregroundColor(Theme.Color.SecondaryText)
+                            .foregroundColor(Color.theme.secondaryText)
                         Text(translator)
                             .bodyMedium()
-                            .foregroundColor(Theme.Color.PrimaryText)
+                            .foregroundColor(Color.theme.primaryText)
                             .gridCellAnchor(.leading)
                     }
                 }
@@ -335,10 +483,10 @@ struct PublicationDetailsSection: View {
                     GridRow {
                         Text("Publisher")
                             .labelLarge()
-                            .foregroundColor(Theme.Color.SecondaryText)
+                            .foregroundColor(Color.theme.secondaryText)
                         Text(publisher)
                             .bodyMedium()
-                            .foregroundColor(Theme.Color.PrimaryText)
+                            .foregroundColor(Color.theme.primaryText)
                             .gridCellAnchor(.leading)
                     }
                 }
@@ -347,10 +495,10 @@ struct PublicationDetailsSection: View {
                     GridRow {
                         Text("Published")
                             .labelLarge()
-                            .foregroundColor(Theme.Color.SecondaryText)
+                            .foregroundColor(Color.theme.secondaryText)
                         Text(publishedDate)
                             .bodyMedium()
-                            .foregroundColor(Theme.Color.PrimaryText)
+                            .foregroundColor(Color.theme.primaryText)
                             .gridCellAnchor(.leading)
                     }
                 }
@@ -359,10 +507,10 @@ struct PublicationDetailsSection: View {
                     GridRow {
                         Text("Pages")
                             .labelLarge()
-                            .foregroundColor(Theme.Color.SecondaryText)
+                            .foregroundColor(Color.theme.secondaryText)
                         Text("\(pageCount)")
                             .bodyMedium()
-                            .foregroundColor(Theme.Color.PrimaryText)
+                            .foregroundColor(Color.theme.primaryText)
                             .gridCellAnchor(.leading)
                     }
                 }
@@ -371,14 +519,17 @@ struct PublicationDetailsSection: View {
                     GridRow {
                         Text("ISBN")
                             .labelLarge()
-                            .foregroundColor(Theme.Color.SecondaryText)
+                            .foregroundColor(Color.theme.secondaryText)
                         Text(isbn)
                             .bodyMedium()
-                            .foregroundColor(Theme.Color.PrimaryText)
+                            .foregroundColor(Color.theme.primaryText)
                             .gridCellAnchor(.leading)
                     }
                 }
             }
+        } label: {
+            Text("Details")
+                .labelLarge()
         }
     }
 }
@@ -415,17 +566,7 @@ struct ActionButtonsSection: View {
     }
 }
 
-// MARK: - Extensions for Color and Shareable Text
-extension ReadingStatus {
-    var color: Color {
-        switch self {
-        case .read: Theme.Color.PrimaryAction
-        case .reading: Theme.Color.AccentHighlight  
-        case .toRead: Theme.Color.PrimaryAction.opacity(0.6)
-        }
-    }
-}
-
+// MARK: - Extensions for Shareable Text
 extension UserBook {
     var shareableText: String {
         var components: [String] = []
@@ -440,6 +581,9 @@ extension UserBook {
         }
         if let notes = notes, !notes.isEmpty {
             components.append("\nMy thoughts: \(notes)")
+        }
+        if !tags.isEmpty {
+            components.append("Tags: \(tags.joined(separator: ", "))")
         }
         return components.joined(separator: ". ")
     }
@@ -466,6 +610,7 @@ extension UserBook {
         isFavorited: true,
         rating: 5,
         notes: "An absolutely fantastic and though-provoking read!",
+        tags: ["Fiction", "Philosophy", "Favorite"],
         metadata: metadata
     )
     

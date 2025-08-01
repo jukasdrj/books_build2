@@ -1,88 +1,163 @@
 import SwiftUI
 
-// A central place for all our design system values
-enum Theme {
+// MARK: - Material Design 3 Theme System
+// Comprehensive design system following Material Design 3 guidelines
+// Optimized for reading tracking app with cultural diversity features
 
-    // MARK: - Colors
-    // This enum makes it easy and safe to use our custom colors from the Asset Catalog.
-    // Example Usage: `Theme.Color.PrimaryAction`
-    enum Color {
-        static let PrimaryAction = SwiftUI.Color("Theme/PrimaryAction")
-        static let Surface = SwiftUI.Color("Theme/Surface")
-        static let CardBackground = SwiftUI.Color("Theme/CardBackground")
-        static let PrimaryText = SwiftUI.Color("Theme/PrimaryText")
-        static let SecondaryText = SwiftUI.Color("Theme/SecondaryText")
-        static let AccentHighlight = SwiftUI.Color("Theme/AccentHighlight")
-        
-        // Additional Material Design 3 colors
-        static let Success = SwiftUI.Color.green
-        static let Warning = SwiftUI.Color.orange
-        static let Error = SwiftUI.Color.red
-        static let OnSurface = PrimaryText
-        static let Outline = SwiftUI.Color.gray.opacity(0.3)
-        static let SurfaceVariant = CardBackground
-    }
+enum Theme {
     
     // MARK: - Typography Scale (Material Design 3)
     enum Typography {
-        // Display styles
-        static let displayLarge = Font.system(size: 57, weight: .regular)
-        static let displayMedium = Font.system(size: 45, weight: .regular)
-        static let displaySmall = Font.system(size: 36, weight: .regular)
+        // Display styles - Large, prominent text
+        static let displayLarge = Font.system(size: 57, weight: .light, design: .default)
+        static let displayMedium = Font.system(size: 45, weight: .light, design: .default)
+        static let displaySmall = Font.system(size: 36, weight: .regular, design: .default)
         
-        // Headline styles
-        static let headlineLarge = Font.system(size: 32, weight: .regular)
-        static let headlineMedium = Font.system(size: 28, weight: .regular)
-        static let headlineSmall = Font.system(size: 24, weight: .regular)
+        // Headline styles - High-emphasis text
+        static let headlineLarge = Font.system(size: 32, weight: .medium, design: .default)
+        static let headlineMedium = Font.system(size: 28, weight: .medium, design: .default)
+        static let headlineSmall = Font.system(size: 24, weight: .medium, design: .default)
         
-        // Title styles
-        static let titleLarge = Font.system(size: 22, weight: .regular)
-        static let titleMedium = Font.system(size: 16, weight: .medium)
-        static let titleSmall = Font.system(size: 14, weight: .medium)
+        // Title styles - Medium-emphasis text
+        static let titleLarge = Font.system(size: 22, weight: .semibold, design: .default)
+        static let titleMedium = Font.system(size: 16, weight: .semibold, design: .default)
+        static let titleSmall = Font.system(size: 14, weight: .semibold, design: .default)
         
-        // Body styles
-        static let bodyLarge = Font.system(size: 16, weight: .regular)
-        static let bodyMedium = Font.system(size: 14, weight: .regular)
-        static let bodySmall = Font.system(size: 12, weight: .regular)
+        // Body styles - Main content text
+        static let bodyLarge = Font.system(size: 16, weight: .regular, design: .default)
+        static let bodyMedium = Font.system(size: 14, weight: .regular, design: .default)
+        static let bodySmall = Font.system(size: 12, weight: .regular, design: .default)
         
-        // Label styles
-        static let labelLarge = Font.system(size: 14, weight: .medium)
-        static let labelMedium = Font.system(size: 12, weight: .medium)
-        static let labelSmall = Font.system(size: 11, weight: .medium)
+        // Label styles - Component text
+        static let labelLarge = Font.system(size: 14, weight: .medium, design: .default)
+        static let labelMedium = Font.system(size: 12, weight: .medium, design: .default)
+        static let labelSmall = Font.system(size: 11, weight: .medium, design: .default)
+        
+        // Reading-specific typography
+        static let bookTitle = Font.system(size: 18, weight: .semibold, design: .serif)
+        static let authorName = Font.system(size: 14, weight: .medium, design: .default)
+        static let readingStats = Font.system(size: 16, weight: .semibold, design: .rounded)
+        static let culturalTag = Font.system(size: 12, weight: .medium, design: .default)
     }
     
-    // MARK: - Spacing System
+    // MARK: - Spacing System (8pt grid)
     enum Spacing {
-        static let xs: CGFloat = 4
-        static let sm: CGFloat = 8
-        static let md: CGFloat = 16
-        static let lg: CGFloat = 24
-        static let xl: CGFloat = 32
-        static let xxl: CGFloat = 48
+        static let xs: CGFloat = 4      // 0.5 units
+        static let sm: CGFloat = 8      // 1 unit
+        static let md: CGFloat = 16     // 2 units
+        static let lg: CGFloat = 24     // 3 units
+        static let xl: CGFloat = 32     // 4 units
+        static let xxl: CGFloat = 48    // 6 units
+        static let xxxl: CGFloat = 64   // 8 units
+        
+        // Component-specific spacing
+        static let cardPadding: CGFloat = 16
+        static let sectionSpacing: CGFloat = 24
+        static let itemSpacing: CGFloat = 12
+        static let iconSpacing: CGFloat = 8
     }
     
-    // MARK: - Corner Radius
+    // MARK: - Corner Radius System
     enum CornerRadius {
+        static let none: CGFloat = 0
         static let small: CGFloat = 8
         static let medium: CGFloat = 12
         static let large: CGFloat = 16
-        static let extraLarge: CGFloat = 24
+        static let extraLarge: CGFloat = 28
+        static let full: CGFloat = 1000  // For fully rounded elements
+        
+        // Component-specific radii
+        static let card: CGFloat = 12
+        static let button: CGFloat = 20
+        static let chip: CGFloat = 16
+        static let fab: CGFloat = 16
     }
     
-    // MARK: - Animations
+    // MARK: - Elevation System (Shadows)
+    enum Elevation {
+        static let level0 = (color: Color.black.opacity(0), radius: CGFloat(0), x: CGFloat(0), y: CGFloat(0))
+        static let level1 = (color: Color.black.opacity(0.05), radius: CGFloat(1), x: CGFloat(0), y: CGFloat(1))
+        static let level2 = (color: Color.black.opacity(0.08), radius: CGFloat(3), x: CGFloat(0), y: CGFloat(1))
+        static let level3 = (color: Color.black.opacity(0.11), radius: CGFloat(6), x: CGFloat(0), y: CGFloat(2))
+        static let level4 = (color: Color.black.opacity(0.12), radius: CGFloat(8), x: CGFloat(0), y: CGFloat(4))
+        static let level5 = (color: Color.black.opacity(0.14), radius: CGFloat(12), x: CGFloat(0), y: CGFloat(8))
+        
+        // Component-specific elevations
+        static let card = level1
+        static let fab = level3
+        static let navigationBar = level2
+        static let modal = level5
+    }
+    
+    // MARK: - Animation System
     enum Animation {
-        static let quick = SwiftUI.Animation.easeInOut(duration: 0.2)
-        static let smooth = SwiftUI.Animation.easeInOut(duration: 0.3)
-        static let gentle = SwiftUI.Animation.easeInOut(duration: 0.5)
-        static let spring = SwiftUI.Animation.spring(response: 0.5, dampingFraction: 0.8)
-        static let bouncy = SwiftUI.Animation.spring(response: 0.3, dampingFraction: 0.6)
+        // Duration constants
+        static let quick: TimeInterval = 0.1
+        static let standard: TimeInterval = 0.2
+        static let emphasized: TimeInterval = 0.5
+        static let extended: TimeInterval = 1.0
+        
+        // Animation presets
+        static let fastEaseIn = SwiftUI.Animation.easeIn(duration: quick)
+        static let fastEaseOut = SwiftUI.Animation.easeOut(duration: quick)
+        static let standardEaseInOut = SwiftUI.Animation.easeInOut(duration: standard)
+        static let emphasizedDecelerate = SwiftUI.Animation.easeOut(duration: emphasized)
+        static let emphasizedAccelerate = SwiftUI.Animation.easeIn(duration: emphasized)
+        
+        // Spring animations for organic feel
+        static let gentleSpring = SwiftUI.Animation.spring(response: 0.6, dampingFraction: 0.8)
+        static let bouncySpring = SwiftUI.Animation.spring(response: 0.4, dampingFraction: 0.6)
+        static let playfulSpring = SwiftUI.Animation.spring(response: 0.3, dampingFraction: 0.7)
+        
+        // Page transitions
+        static let pageTransition = SwiftUI.Animation.easeInOut(duration: 0.3)
+        static let modalPresentation = SwiftUI.Animation.spring(response: 0.5, dampingFraction: 0.9)
     }
     
-    // MARK: - Shadows
-    enum Shadow {
-        static let small = (color: SwiftUI.Color.black.opacity(0.08), radius: CGFloat(4), x: CGFloat(0), y: CGFloat(2))
-        static let medium = (color: SwiftUI.Color.black.opacity(0.12), radius: CGFloat(8), x: CGFloat(0), y: CGFloat(4))
-        static let large = (color: SwiftUI.Color.black.opacity(0.16), radius: CGFloat(16), x: CGFloat(0), y: CGFloat(8))
+    // MARK: - Size System
+    enum Size {
+        // Touch target sizes
+        static let minTouchTarget: CGFloat = 44
+        static let preferredTouchTarget: CGFloat = 48
+        
+        // Icon sizes
+        static let iconSmall: CGFloat = 16
+        static let iconMedium: CGFloat = 24
+        static let iconLarge: CGFloat = 32
+        static let iconXLarge: CGFloat = 48
+        
+        // Component heights
+        static let buttonHeight: CGFloat = 40
+        static let inputHeight: CGFloat = 48
+        static let navigationBarHeight: CGFloat = 56
+        static let tabBarHeight: CGFloat = 64
+        
+        // Card and layout sizes
+        static let cardMinHeight: CGFloat = 120
+        static let bookCoverWidth: CGFloat = 80
+        static let bookCoverHeight: CGFloat = 120
+        static let profileImageSize: CGFloat = 40
+    }
+    
+    // MARK: - Colors
+    // This enum makes it easy and safe to use our custom colors from the Asset Catalog.
+    // Example Usage: `Color.theme.primaryAction`
+    // The actual color definitions are in `Color+Extensions.swift`.
+    enum Color {
+        static let PrimaryAction = SwiftUI.Color.theme.primaryAction
+        static let Surface = SwiftUI.Color.theme.surface
+        static let CardBackground = SwiftUI.Color.theme.cardBackground
+        static let PrimaryText = SwiftUI.Color.theme.primaryText
+        static let SecondaryText = SwiftUI.Color.theme.secondaryText
+        static let AccentHighlight = SwiftUI.Color.theme.tertiary
+        
+        // Additional Material Design 3 colors
+        static let Success = SwiftUI.Color.theme.success
+        static let Warning = SwiftUI.Color.theme.warning
+        static let Error = SwiftUI.Color.theme.error
+        static let OnSurface = SwiftUI.Color.theme.onSurface
+        static let Outline = SwiftUI.Color.theme.outline
+        static let SurfaceVariant = SwiftUI.Color.theme.surfaceVariant
     }
 }
 
@@ -91,94 +166,203 @@ extension View {
     // Display styles
     func displayLarge() -> some View {
         self.font(Theme.Typography.displayLarge)
+            .foregroundColor(Color.theme.primaryText)
     }
     
     func displayMedium() -> some View {
         self.font(Theme.Typography.displayMedium)
+            .foregroundColor(Color.theme.primaryText)
     }
     
     func displaySmall() -> some View {
         self.font(Theme.Typography.displaySmall)
+            .foregroundColor(Color.theme.primaryText)
     }
     
     // Headline styles
     func headlineLarge() -> some View {
         self.font(Theme.Typography.headlineLarge)
+            .foregroundColor(Color.theme.primaryText)
     }
     
     func headlineMedium() -> some View {
         self.font(Theme.Typography.headlineMedium)
+            .foregroundColor(Color.theme.primaryText)
     }
     
     func headlineSmall() -> some View {
         self.font(Theme.Typography.headlineSmall)
+            .foregroundColor(Color.theme.primaryText)
     }
     
     // Title styles
     func titleLarge() -> some View {
         self.font(Theme.Typography.titleLarge)
+            .foregroundColor(Color.theme.primaryText)
     }
     
     func titleMedium() -> some View {
         self.font(Theme.Typography.titleMedium)
+            .foregroundColor(Color.theme.primaryText)
     }
     
     func titleSmall() -> some View {
         self.font(Theme.Typography.titleSmall)
+            .foregroundColor(Color.theme.primaryText)
     }
     
     // Body styles
     func bodyLarge() -> some View {
         self.font(Theme.Typography.bodyLarge)
+            .foregroundColor(Color.theme.primaryText)
     }
     
     func bodyMedium() -> some View {
         self.font(Theme.Typography.bodyMedium)
+            .foregroundColor(Color.theme.primaryText)
     }
     
     func bodySmall() -> some View {
         self.font(Theme.Typography.bodySmall)
+            .foregroundColor(Color.theme.secondaryText)
     }
     
     // Label styles
     func labelLarge() -> some View {
         self.font(Theme.Typography.labelLarge)
+            .foregroundColor(Color.theme.primaryText)
     }
     
     func labelMedium() -> some View {
         self.font(Theme.Typography.labelMedium)
+            .foregroundColor(Color.theme.secondaryText)
     }
     
     func labelSmall() -> some View {
         self.font(Theme.Typography.labelSmall)
+            .foregroundColor(Color.theme.secondaryText)
+    }
+    
+    // Reading-specific styles
+    func bookTitle() -> some View {
+        self.font(Theme.Typography.bookTitle)
+            .foregroundColor(Color.theme.primaryText)
+    }
+    
+    func authorName() -> some View {
+        self.font(Theme.Typography.authorName)
+            .foregroundColor(Color.theme.secondaryText)
+    }
+    
+    func readingStats() -> some View {
+        self.font(Theme.Typography.readingStats)
+            .foregroundColor(Color.theme.primary)
+    }
+    
+    func culturalTag() -> some View {
+        self.font(Theme.Typography.culturalTag)
+            .foregroundColor(Color.theme.onSecondaryContainer)
     }
 }
 
 // MARK: - Material Design 3 Component Styles
 extension View {
+    
+    // Card styles with proper elevation
     func materialCard(
-        backgroundColor: Color = Theme.Color.CardBackground,
-        cornerRadius: CGFloat = Theme.CornerRadius.medium,
-        shadow: Bool = true
+        backgroundColor: Color = Color.theme.cardBackground,
+        cornerRadius: CGFloat = Theme.CornerRadius.card,
+        elevation: (color: Color, radius: CGFloat, x: CGFloat, y: CGFloat) = Theme.Elevation.card
     ) -> some View {
         self
             .background(backgroundColor)
             .cornerRadius(cornerRadius)
-            .conditionalModifier(shadow) { view in
-                view.shadow(
-                    color: Theme.Shadow.medium.color,
-                    radius: Theme.Shadow.medium.radius,
-                    x: Theme.Shadow.medium.x,
-                    y: Theme.Shadow.medium.y
-                )
-            }
+            .shadow(
+                color: elevation.color,
+                radius: elevation.radius,
+                x: elevation.x,
+                y: elevation.y
+            )
     }
     
+    // Enhanced button styles
     func materialButton(
         style: MaterialButtonStyle = .filled,
-        size: MaterialButtonSize = .medium
+        size: MaterialButtonSize = .medium,
+        isEnabled: Bool = true
     ) -> some View {
-        self.modifier(MaterialButtonModifier(style: style, size: size))
+        self.modifier(MaterialButtonModifier(style: style, size: size, isEnabled: isEnabled))
+    }
+    
+    // Chip style for tags and categories
+    func materialChip(
+        isSelected: Bool = false,
+        backgroundColor: Color? = nil
+    ) -> some View {
+        self
+            .padding(.horizontal, Theme.Spacing.md)
+            .padding(.vertical, Theme.Spacing.sm)
+            .background(
+                backgroundColor ?? (isSelected ? Color.theme.secondaryContainer : Color.theme.surfaceVariant)
+            )
+            .foregroundColor(
+                isSelected ? Color.theme.onSecondaryContainer : Color.theme.onSurfaceVariant
+            )
+            .cornerRadius(Theme.CornerRadius.chip)
+            .overlay(
+                RoundedRectangle(cornerRadius: Theme.CornerRadius.chip)
+                    .stroke(Color.theme.outline.opacity(isSelected ? 0 : 0.5), lineWidth: 0.5)
+            )
+    }
+    
+    // Cultural diversity indicator
+    func culturalIndicator(region: String) -> some View {
+        self
+            .padding(.horizontal, Theme.Spacing.sm)
+            .padding(.vertical, Theme.Spacing.xs)
+            .background(region.culturalColor.opacity(0.12))
+            .foregroundColor(region.culturalColor)
+            .cornerRadius(Theme.CornerRadius.small)
+            .font(Theme.Typography.culturalTag)
+    }
+    
+    // Reading status indicator
+    func statusIndicator(status: ReadingStatus) -> some View {
+        self
+            .padding(.horizontal, Theme.Spacing.sm)
+            .padding(.vertical, Theme.Spacing.xs)
+            .background(status.containerColor)
+            .foregroundColor(status.textColor)
+            .cornerRadius(Theme.CornerRadius.small)
+            .font(Theme.Typography.labelSmall)
+    }
+    
+    // Floating Action Button
+    func materialFAB(
+        size: FABSize = .regular,
+        backgroundColor: Color = Color.theme.primaryAction
+    ) -> some View {
+        self
+            .frame(width: size.width, height: size.height)
+            .background(backgroundColor)
+            .foregroundColor(Color.theme.onPrimary)
+            .cornerRadius(Theme.CornerRadius.fab)
+            .shadow(
+                color: Theme.Elevation.fab.color,
+                radius: Theme.Elevation.fab.radius,
+                x: Theme.Elevation.fab.x,
+                y: Theme.Elevation.fab.y
+            )
+    }
+    
+    // Interactive state handling
+    func materialInteractive(
+        pressedColor: Color = Color.theme.pressed,
+        hoveredColor: Color = Color.theme.hovered
+    ) -> some View {
+        self
+            .scaleEffect(1.0) // Will be animated on press
+            .animation(Theme.Animation.fastEaseOut, value: false)
     }
     
     // Helper for conditional modifiers
@@ -195,12 +379,14 @@ extension View {
     }
 }
 
-// MARK: - Material Button Styles
+// MARK: - Enhanced Material Button System
 enum MaterialButtonStyle {
-    case filled
-    case tonal
-    case outlined
-    case text
+    case filled        // High emphasis
+    case tonal         // Medium emphasis  
+    case outlined      // Medium emphasis
+    case text          // Low emphasis
+    case destructive   // Error actions
+    case success       // Success actions
 }
 
 enum MaterialButtonSize {
@@ -212,15 +398,45 @@ enum MaterialButtonSize {
         switch self {
         case .small: return 32
         case .medium: return 40
-        case .large: return 48
+        case .large: return 56
         }
     }
     
     var padding: EdgeInsets {
         switch self {
-        case .small: return EdgeInsets(top: 6, leading: 12, bottom: 6, trailing: 12)
-        case .medium: return EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16)
-        case .large: return EdgeInsets(top: 12, leading: 24, bottom: 12, trailing: 24)
+        case .small: return EdgeInsets(top: 8, leading: 12, bottom: 8, trailing: 12)
+        case .medium: return EdgeInsets(top: 10, leading: 16, bottom: 10, trailing: 16)
+        case .large: return EdgeInsets(top: 16, leading: 24, bottom: 16, trailing: 24)
+        }
+    }
+    
+    var iconSize: CGFloat {
+        switch self {
+        case .small: return 16
+        case .medium: return 20
+        case .large: return 24
+        }
+    }
+}
+
+enum FABSize {
+    case small
+    case regular
+    case large
+    
+    var width: CGFloat {
+        switch self {
+        case .small: return 40
+        case .regular: return 56
+        case .large: return 96
+        }
+    }
+    
+    var height: CGFloat {
+        switch self {
+        case .small: return 40
+        case .regular: return 56
+        case .large: return 56
         }
     }
 }
@@ -228,6 +444,7 @@ enum MaterialButtonSize {
 struct MaterialButtonModifier: ViewModifier {
     let style: MaterialButtonStyle
     let size: MaterialButtonSize
+    let isEnabled: Bool
     
     func body(content: Content) -> some View {
         content
@@ -235,33 +452,58 @@ struct MaterialButtonModifier: ViewModifier {
             .frame(minHeight: size.height)
             .background(backgroundColor)
             .foregroundColor(foregroundColor)
-            .cornerRadius(Theme.CornerRadius.large)
+            .cornerRadius(Theme.CornerRadius.button)
             .overlay(
-                RoundedRectangle(cornerRadius: Theme.CornerRadius.large)
+                RoundedRectangle(cornerRadius: Theme.CornerRadius.button)
                     .stroke(borderColor, lineWidth: borderWidth)
             )
+            .opacity(isEnabled ? 1.0 : 0.38)
+            .disabled(!isEnabled)
+            .animation(Theme.Animation.standardEaseInOut, value: isEnabled)
     }
     
     private var backgroundColor: Color {
+        guard isEnabled else { return Color.theme.disabled }
+        
         switch style {
-        case .filled: return Theme.Color.PrimaryAction
-        case .tonal: return Theme.Color.PrimaryAction.opacity(0.12)
-        case .outlined, .text: return Color.clear
+        case .filled:
+            return Color.theme.primary
+        case .tonal:
+            return Color.theme.secondaryContainer
+        case .outlined, .text:
+            return Color.clear
+        case .destructive:
+            return Color.theme.error
+        case .success:
+            return Color.theme.success
         }
     }
     
     private var foregroundColor: Color {
+        guard isEnabled else { return Color.theme.disabledText }
+        
         switch style {
-        case .filled: return .white
-        case .tonal: return Theme.Color.PrimaryAction
-        case .outlined, .text: return Theme.Color.PrimaryAction
+        case .filled:
+            return Color.theme.onPrimary
+        case .tonal:
+            return Color.theme.onSecondaryContainer
+        case .outlined, .text:
+            return Color.theme.primary
+        case .destructive:
+            return Color.theme.onError
+        case .success:
+            return Color.theme.onSuccess
         }
     }
     
     private var borderColor: Color {
+        guard isEnabled else { return SwiftUI.Color.theme.outline.opacity(0.12) }
+        
         switch style {
-        case .outlined: return Theme.Color.Outline
-        default: return Color.clear
+        case .outlined:
+            return SwiftUI.Color.theme.outline
+        default:
+            return SwiftUI.Color.clear
         }
     }
     

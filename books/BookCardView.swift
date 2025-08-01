@@ -2,21 +2,35 @@ import SwiftUI
 
 struct BookCardView: View {
     let book: UserBook
+    let useFlexibleLayout: Bool
+    
+    // Define consistent dimensions
+    private let cardWidth: CGFloat = 140
+    private let imageHeight: CGFloat = 200
+    private let textAreaHeight: CGFloat = 85 // Fixed height for text area when in grid
+    
+    init(book: UserBook, useFlexibleLayout: Bool = false) {
+        self.book = book
+        self.useFlexibleLayout = useFlexibleLayout
+    }
     
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-            // Cover Image with Status Overlay
+            // Cover Image with Status Overlay (Always Fixed Height)
             ZStack(alignment: .topTrailing) {
                 BookCoverImage(
                     imageURL: book.metadata?.imageURL?.absoluteString,
-                    width: 140,
-                    height: 200
+                    width: cardWidth,
+                    height: imageHeight
                 )
                 .materialCard(shadow: true)
                 
-                // Status indicator
+                // Status indicator using the new centralized badge
                 if book.readingStatus != .toRead {
-                    StatusBadgeCompact(status: book.readingStatus)
+                    StatusBadge(status: book.readingStatus, style: .compact)
+                        .padding(4)
+                        .background(Color.black.opacity(0.3))
+                        .clipShape(Circle())
                         .offset(x: -Theme.Spacing.xs, y: Theme.Spacing.xs)
                 }
                 
@@ -24,7 +38,7 @@ struct BookCardView: View {
                 if book.isFavorited {
                     Image(systemName: "heart.fill")
                         .font(.caption)
-                        .foregroundColor(Theme.Color.AccentHighlight)
+                        .foregroundColor(Color.theme.accentHighlight)
                         .background(
                             Circle()
                                 .fill(.white)
@@ -33,19 +47,131 @@ struct BookCardView: View {
                         .offset(x: -Theme.Spacing.xs, y: Theme.Spacing.lg + 8)
                 }
             }
+            .frame(height: imageHeight) // Ensure consistent image area height
             
-            // Book Information
+            // Book Information - Smart Layout
+            if useFlexibleLayout {
+                flexibleBookInfo
+            } else {
+                fixedBookInfo
+            }
+        }
+        .frame(width: cardWidth)
+        .contentShape(Rectangle()) // Makes the entire card tappable
+    }
+    
+    // MARK: - Fixed Layout (for grid alignment)
+    @ViewBuilder
+    private var fixedBookInfo: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            // Title section (Fixed height)
+            Text(book.metadata?.title ?? "Unknown Title")
+                .titleSmall()
+                .foregroundColor(Color.theme.primaryText)
+                .lineLimit(2)
+                .multilineTextAlignment(.leading)
+                .frame(height: 36, alignment: .top) // Fixed height for 2 lines
+            
+            Spacer(minLength: 2)
+            
+            // Author section (Fixed height)
+            Text(book.metadata?.authors.joined(separator: ", ") ?? "Unknown Author")
+                .bodySmall()
+                .foregroundColor(Color.theme.secondaryText)
+                .lineLimit(1)
+                .frame(height: 16, alignment: .top) // Fixed height for 1 line
+            
+            Spacer(minLength: 4)
+            
+            // Bottom section - Cultural info, rating, or spacer (Fixed height)
+            VStack(alignment: .leading, spacing: 2) {
+                // Priority 1: Cultural information
+                if let originalLanguage = book.metadata?.originalLanguage,
+                   originalLanguage != book.metadata?.language {
+                    HStack(spacing: Theme.Spacing.xs) {
+                        Image(systemName: "globe")
+                            .font(.caption2)
+                            .foregroundColor(Color.theme.accentHighlight)
+                        
+                        Text(originalLanguage)
+                            .labelSmall()
+                            .foregroundColor(Color.theme.accentHighlight)
+                    }
+                    .frame(height: 16)
+                    
+                    // Rating on second line if space and rated
+                    if let rating = book.rating, rating > 0 {
+                        HStack(spacing: 2) {
+                            ForEach(1...5, id: \.self) { star in
+                                Image(systemName: star <= rating ? "star.fill" : "star")
+                                    .font(.caption2)
+                                    .foregroundColor(star <= rating ? Color.theme.accentHighlight : Color.theme.secondaryText.opacity(0.3))
+                            }
+                        }
+                        .frame(height: 12)
+                    } else {
+                        // Spacer to maintain consistent height
+                        Spacer()
+                            .frame(height: 12)
+                    }
+                }
+                // Priority 2: Rating only (if no cultural info)
+                else if let rating = book.rating, rating > 0 {
+                    HStack(spacing: 2) {
+                        ForEach(1...5, id: \.self) { star in
+                            Image(systemName: star <= rating ? "star.fill" : "star")
+                                .font(.caption2)
+                                .foregroundColor(star <= rating ? Color.theme.accentHighlight : Color.theme.secondaryText.opacity(0.3))
+                        }
+                    }
+                    .frame(height: 16)
+                    
+                    Spacer()
+                        .frame(height: 12)
+                }
+                // Priority 3: Empty space (maintains consistent height)
+                else {
+                    Spacer()
+                        .frame(height: 28) // Same total height as cultural info + rating
+                }
+            }
+            .frame(height: 28, alignment: .top) // Fixed height for bottom section
+        }
+        .frame(width: cardWidth, height: textAreaHeight, alignment: .top)
+    }
+    
+    // MARK: - Flexible Layout (for standalone cards)
+    @ViewBuilder
+    private var flexibleBookInfo: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+            // Title section (Natural height)
+            Text(book.metadata?.title ?? "Unknown Title")
+                .titleSmall()
+                .foregroundColor(Color.theme.primaryText)
+                .lineLimit(2)
+                .multilineTextAlignment(.leading)
+            
+            // Author section
+            Text(book.metadata?.authors.joined(separator: ", ") ?? "Unknown Author")
+                .bodySmall()
+                .foregroundColor(Color.theme.secondaryText)
+                .lineLimit(1)
+            
+            // Cultural information and rating with natural spacing
             VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
-                Text(book.metadata?.title ?? "Unknown Title")
-                    .titleSmall()
-                    .foregroundColor(Theme.Color.PrimaryText)
-                    .lineLimit(2)
-                    .multilineTextAlignment(.leading)
-                
-                Text(book.metadata?.authors.joined(separator: ", ") ?? "Unknown Author")
-                    .bodySmall()
-                    .foregroundColor(Theme.Color.SecondaryText)
-                    .lineLimit(1)
+                // Cultural information
+                if let originalLanguage = book.metadata?.originalLanguage,
+                   originalLanguage != book.metadata?.language {
+                    HStack(spacing: Theme.Spacing.xs) {
+                        Image(systemName: "globe")
+                            .font(.caption2)
+                            .foregroundColor(Color.theme.accentHighlight)
+                        
+                        Text(originalLanguage)
+                            .labelSmall()
+                            .foregroundColor(Color.theme.accentHighlight)
+                    }
+                }
                 
                 // Rating stars (if rated)
                 if let rating = book.rating, rating > 0 {
@@ -53,90 +179,63 @@ struct BookCardView: View {
                         ForEach(1...5, id: \.self) { star in
                             Image(systemName: star <= rating ? "star.fill" : "star")
                                 .font(.caption2)
-                                .foregroundColor(star <= rating ? Theme.Color.AccentHighlight : Theme.Color.SecondaryText.opacity(0.3))
+                                .foregroundColor(star <= rating ? Color.theme.accentHighlight : Color.theme.secondaryText.opacity(0.3))
                         }
                     }
-                    .padding(.top, 2)
-                }
-                
-                // Cultural information (if available)
-                if let originalLanguage = book.metadata?.originalLanguage,
-                   originalLanguage != book.metadata?.language {
-                    HStack(spacing: Theme.Spacing.xs) {
-                        Image(systemName: "globe")
-                            .font(.caption2)
-                            .foregroundColor(Theme.Color.AccentHighlight)
-                        
-                        Text(originalLanguage)
-                            .labelSmall()
-                            .foregroundColor(Theme.Color.AccentHighlight)
-                    }
-                    .padding(.top, 2)
                 }
             }
-            .frame(maxWidth: 140, alignment: .leading)
         }
-        .frame(width: 140)
-        .contentShape(Rectangle()) // Makes the entire card tappable
-    }
-}
-
-struct StatusBadgeCompact: View {
-    let status: ReadingStatus
-    
-    var body: some View {
-        HStack(spacing: 2) {
-            Circle()
-                .fill(statusColor)
-                .frame(width: 6, height: 6)
-            
-            Text(statusText)
-                .labelSmall()
-                .foregroundColor(.white)
-        }
-        .padding(.horizontal, Theme.Spacing.sm)
-        .padding(.vertical, 4)
-        .background(
-            Capsule()
-                .fill(.black.opacity(0.7))
-        )
-    }
-    
-    private var statusText: String {
-        switch status {
-        case .reading: return "Reading"
-        case .read: return "Read"
-        case .toRead: return "To Read"
-        }
-    }
-    
-    private var statusColor: Color {
-        switch status {
-        case .read: return Theme.Color.Success
-        case .reading: return Theme.Color.AccentHighlight  
-        case .toRead: return Theme.Color.SecondaryText
-        }
+        .frame(width: cardWidth, alignment: .leading)
     }
 }
 
 #Preview {
-    let metadata = BookMetadata(
-        googleBooksID: "preview-id",
-        title: "The Midnight Library: A Novel About Infinite Possibilities",
-        authors: ["Matt Haig"],
-        publishedDate: "2020",
-        pageCount: 304,
-        originalLanguage: "English"
-    )
-    
-    let sampleBook = UserBook(
-        readingStatus: .reading,
-        isFavorited: true,
-        rating: 5,
-        metadata: metadata
-    )
-    
-    return BookCardView(book: sampleBook)
-        .padding()
-        .background(Theme.Color.Surface)
+    VStack(spacing: Theme.Spacing.lg) {
+        // Grid alignment example
+        HStack(spacing: Theme.Spacing.md) {
+            BookCardView(book: UserBook(
+                readingStatus: .read,
+                metadata: BookMetadata(
+                    googleBooksID: "1",
+                    title: "Short",
+                    authors: ["Author One"]
+                )
+            ), useFlexibleLayout: false)
+            
+            BookCardView(book: UserBook(
+                readingStatus: .reading,
+                isFavorited: true,
+                rating: 5,
+                metadata: BookMetadata(
+                    googleBooksID: "2",
+                    title: "The Midnight Library: A Novel About Infinite Possibilities",
+                    authors: ["Matt Haig"],
+                    language: "English",
+                    originalLanguage: "Spanish"
+                )
+            ), useFlexibleLayout: false)
+        }
+        
+        Text("Fixed Layout (Grid)")
+            .labelSmall()
+            .foregroundColor(Theme.Color.SecondaryText)
+        
+        Divider()
+        
+        // Flexible layout example
+        BookCardView(book: UserBook(
+            readingStatus: .read,
+            metadata: BookMetadata(
+                googleBooksID: "3",
+                title: "Brief",
+                authors: ["Solo Author"]
+            )
+        ), useFlexibleLayout: true)
+        
+        Text("Flexible Layout (Standalone)")
+            .labelSmall()
+            .foregroundColor(Theme.Color.SecondaryText)
+    }
+    .padding()
+    .background(Color.theme.surface)
 }

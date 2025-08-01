@@ -19,6 +19,7 @@ struct EditBookView: View {
     @State private var authorNationality: String
     @State private var translator: String
     @State private var selectedFormat: BookFormat?
+    @State private var tags: String // NEW: Tags field
 
     init(userBook: UserBook, onSave: @escaping (UserBook) -> Void) {
         self.userBook = userBook
@@ -37,6 +38,7 @@ struct EditBookView: View {
         _authorNationality = State(initialValue: userBook.metadata?.authorNationality ?? "")
         _translator = State(initialValue: userBook.metadata?.translator ?? "")
         _selectedFormat = State(initialValue: userBook.metadata?.format)
+        _tags = State(initialValue: userBook.tags.joined(separator: ", ")) // NEW: Initialize tags
     }
     
     var body: some View {
@@ -44,96 +46,291 @@ struct EditBookView: View {
             Form {
                 // Basic Information Section
                 Section {
-                    TextField("Title", text: $title)
-                        .bodyMedium()
-                    TextField("Authors (comma separated)", text: $authors)
-                        .bodyMedium()
+                    VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+                        Text("Book Title")
+                            .labelMedium()
+                            .foregroundColor(Theme.Color.SecondaryText)
+                        TextField("Enter the book title", text: $title)
+                            .bodyMedium()
+                            .disabled(true)
+                            .foregroundColor(Theme.Color.SecondaryText)
+                            .background(Theme.Color.Surface.opacity(0.5))
+                    }
+                    
+                    VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+                        Text("Authors")
+                            .labelMedium()
+                            .foregroundColor(Theme.Color.SecondaryText)
+                        TextField("Enter author names (comma separated)", text: $authors)
+                            .bodyMedium()
+                            .disabled(true)
+                            .foregroundColor(Theme.Color.SecondaryText)
+                            .background(Theme.Color.Surface.opacity(0.5))
+                    }
                 } header: {
                     Text("Book Information")
                         .titleSmall()
                         .foregroundColor(Theme.Color.PrimaryText)
+                } footer: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "info.circle")
+                            .foregroundColor(Theme.Color.SecondaryText)
+                            .font(.caption)
+                        Text("Title and authors are provided by Google Books and cannot be edited.")
+                            .labelSmall()
+                            .foregroundColor(Theme.Color.SecondaryText)
+                    }
                 }
                 
                 // Format & Publication Section
                 Section {
-                    // NEW: Book Format Picker
+                    // Book Format Picker
                     VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-                        Text("Format")
-                            .bodyMedium()
-                            .foregroundColor(Theme.Color.PrimaryText)
+                        Text("Book Format")
+                            .labelMedium()
+                            .foregroundColor(Theme.Color.SecondaryText)
                         
                         LazyVGrid(columns: [
                             GridItem(.flexible()),
                             GridItem(.flexible()),
                             GridItem(.flexible())
                         ], spacing: Theme.Spacing.sm) {
-                            ForEach(BookFormat.allCases) { format in
-                                Button(action: {
-                                    selectedFormat = selectedFormat == format ? nil : format
-                                }) {
-                                    VStack(spacing: 4) {
-                                        Image(systemName: format.icon)
-                                            .font(.system(size: 20))
-                                            .foregroundColor(selectedFormat == format ? .white : Theme.Color.PrimaryAction)
-                                        
-                                        Text(format.rawValue)
-                                            .labelSmall()
-                                            .foregroundColor(selectedFormat == format ? .white : Theme.Color.PrimaryText)
-                                    }
-                                    .frame(height: 60)
-                                    .frame(maxWidth: .infinity)
-                                    .background(selectedFormat == format ? Theme.Color.PrimaryAction : Theme.Color.CardBackground)
-                                    .cornerRadius(Theme.CornerRadius.medium)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: Theme.CornerRadius.medium)
-                                            .stroke(selectedFormat == format ? Theme.Color.PrimaryAction : Theme.Color.Outline, lineWidth: 1)
-                                    )
+                            // Print Format (combining hardcover/paperback)
+                            Button(action: {
+                                if selectedFormat == .hardcover || selectedFormat == .paperback {
+                                    selectedFormat = nil
+                                } else {
+                                    selectedFormat = .hardcover // Default to hardcover for print
                                 }
-                                .buttonStyle(.plain)
+                            }) {
+                                VStack(spacing: 4) {
+                                    Image(systemName: "book.closed")
+                                        .font(.system(size: 20))
+                                        .foregroundColor((selectedFormat == .hardcover || selectedFormat == .paperback) ? .white : Theme.Color.PrimaryAction)
+                                    
+                                    Text("Print")
+                                        .labelSmall()
+                                        .foregroundColor((selectedFormat == .hardcover || selectedFormat == .paperback) ? .white : Theme.Color.PrimaryText)
+                                }
+                                .frame(height: 60)
+                                .frame(maxWidth: .infinity)
+                                .background((selectedFormat == .hardcover || selectedFormat == .paperback) ? Theme.Color.PrimaryAction : Theme.Color.CardBackground)
+                                .cornerRadius(Theme.CornerRadius.medium)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: Theme.CornerRadius.medium)
+                                        .stroke((selectedFormat == .hardcover || selectedFormat == .paperback) ? Theme.Color.PrimaryAction : Theme.Color.Outline, lineWidth: 1)
+                                )
                             }
+                            .buttonStyle(.plain)
+                            
+                            // E-book Format
+                            Button(action: {
+                                selectedFormat = selectedFormat == .ebook ? nil : .ebook
+                            }) {
+                                VStack(spacing: 4) {
+                                    Image(systemName: "tablet")
+                                        .font(.system(size: 20))
+                                        .foregroundColor(selectedFormat == .ebook ? .white : Theme.Color.PrimaryAction)
+                                    
+                                    Text("E-book")
+                                        .labelSmall()
+                                        .foregroundColor(selectedFormat == .ebook ? .white : Theme.Color.PrimaryText)
+                                }
+                                .frame(height: 60)
+                                .frame(maxWidth: .infinity)
+                                .background(selectedFormat == .ebook ? Theme.Color.PrimaryAction : Theme.Color.CardBackground)
+                                .cornerRadius(Theme.CornerRadius.medium)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: Theme.CornerRadius.medium)
+                                        .stroke(selectedFormat == .ebook ? Theme.Color.PrimaryAction : Theme.Color.Outline, lineWidth: 1)
+                                )
+                            }
+                            .buttonStyle(.plain)
+                            
+                            // Audiobook Format
+                            Button(action: {
+                                selectedFormat = selectedFormat == .audiobook ? nil : .audiobook
+                            }) {
+                                VStack(spacing: 4) {
+                                    Image(systemName: "headphones")
+                                        .font(.system(size: 20))
+                                        .foregroundColor(selectedFormat == .audiobook ? .white : Theme.Color.PrimaryAction)
+                                    
+                                    Text("Audiobook")
+                                        .labelSmall()
+                                        .foregroundColor(selectedFormat == .audiobook ? .white : Theme.Color.PrimaryText)
+                                }
+                                .frame(height: 60)
+                                .frame(maxWidth: .infinity)
+                                .background(selectedFormat == .audiobook ? Theme.Color.PrimaryAction : Theme.Color.CardBackground)
+                                .cornerRadius(Theme.CornerRadius.medium)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: Theme.CornerRadius.medium)
+                                        .stroke(selectedFormat == .audiobook ? Theme.Color.PrimaryAction : Theme.Color.Outline, lineWidth: 1)
+                                )
+                            }
+                            .buttonStyle(.plain)
                         }
                     }
                     
-                    TextField("Publisher", text: $publisher)
-                        .bodyMedium()
-                    TextField("Published Date", text: $publishedDate)
-                        .bodyMedium()
-                    TextField("Total Pages", text: $pageCount)
-                        .keyboardType(.numberPad)
-                        .bodyMedium()
-                    TextField("ISBN", text: $isbn)
-                        .bodyMedium()
+                    VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+                        Text("Publisher")
+                            .labelMedium()
+                            .foregroundColor(Theme.Color.SecondaryText)
+                        TextField("Enter publisher name", text: $publisher)
+                            .bodyMedium()
+                            .disabled(true)
+                            .foregroundColor(Theme.Color.SecondaryText)
+                            .background(Theme.Color.Surface.opacity(0.5))
+                    }
+                    
+                    VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+                        Text("Publication Date")
+                            .labelMedium()
+                            .foregroundColor(Theme.Color.SecondaryText)
+                        TextField("Enter publication date", text: $publishedDate)
+                            .bodyMedium()
+                            .disabled(true)
+                            .foregroundColor(Theme.Color.SecondaryText)
+                            .background(Theme.Color.Surface.opacity(0.5))
+                    }
+                    
+                    VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+                        Text("Page Count")
+                            .labelMedium()
+                            .foregroundColor(Theme.Color.SecondaryText)
+                        TextField("Enter number of pages", text: $pageCount)
+                            .keyboardType(.numberPad)
+                            .bodyMedium()
+                            .disabled(true)
+                            .foregroundColor(Theme.Color.SecondaryText)
+                            .background(Theme.Color.Surface.opacity(0.5))
+                    }
+                    
+                    VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+                        Text("ISBN")
+                            .labelMedium()
+                            .foregroundColor(Theme.Color.SecondaryText)
+                        TextField("Enter ISBN number", text: $isbn)
+                            .bodyMedium()
+                            .disabled(true)
+                            .foregroundColor(Theme.Color.SecondaryText)
+                            .background(Theme.Color.Surface.opacity(0.5))
+                    }
                 } header: {
                     Text("Format & Publication")
                         .titleSmall()
                         .foregroundColor(Theme.Color.PrimaryText)
+                } footer: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "globe")
+                            .foregroundColor(Theme.Color.SecondaryText)
+                            .font(.caption)
+                        Text("Publication details are provided by Google Books. Only format can be customized.")
+                            .labelSmall()
+                            .foregroundColor(Theme.Color.SecondaryText)
+                    }
                 }
                 
                 // Cultural & Language Section
                 Section {
-                    TextField("Language of this Edition", text: $language)
-                        .bodyMedium()
-                    TextField("Original Language", text: $originalLanguage)
-                        .bodyMedium()
-                    TextField("Author Nationality", text: $authorNationality)
-                        .bodyMedium()
-                    TextField("Translator", text: $translator)
-                        .bodyMedium()
+                    VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+                        Text("Edition Language")
+                            .labelMedium()
+                            .foregroundColor(Theme.Color.SecondaryText)
+                        TextField("Language of this edition", text: $language)
+                            .bodyMedium()
+                            .disabled(true)
+                            .foregroundColor(Theme.Color.SecondaryText)
+                            .background(Theme.Color.Surface.opacity(0.5))
+                    }
+                    
+                    VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+                        Text("Original Language")
+                            .labelMedium()
+                            .foregroundColor(Theme.Color.SecondaryText)
+                        TextField("Original publication language", text: $originalLanguage)
+                            .bodyMedium()
+                    }
+                    
+                    VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+                        Text("Author's Cultural Background")
+                            .labelMedium()
+                            .foregroundColor(Theme.Color.SecondaryText)
+                        TextField("Author's nationality or cultural origin", text: $authorNationality)
+                            .bodyMedium()
+                    }
+                    
+                    VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+                        Text("Translator")
+                            .labelMedium()
+                            .foregroundColor(Theme.Color.SecondaryText)
+                        TextField("Translator name (if applicable)", text: $translator)
+                            .bodyMedium()
+                    }
                 } header: {
                     Text("Cultural & Language Details")
                         .titleSmall()
                         .foregroundColor(Theme.Color.PrimaryText)
                 } footer: {
-                    Text("Help track the cultural diversity of your reading by adding author nationality and original language information.")
-                        .labelSmall()
-                        .foregroundColor(Theme.Color.SecondaryText)
+                    VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "info.circle")
+                                .foregroundColor(Theme.Color.SecondaryText)
+                                .font(.caption)
+                            Text("Edition language is from Google Books. Add your own cultural and translation details.")
+                                .labelSmall()
+                                .foregroundColor(Theme.Color.SecondaryText)
+                        }
+                        Text("Help track the cultural diversity of your reading by adding author nationality and original language information.")
+                            .labelSmall()
+                            .foregroundColor(Theme.Color.SecondaryText)
+                            .padding(.top, Theme.Spacing.xs)
+                    }
+                }
+                
+                // NEW: Tags Section
+                Section {
+                    VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+                        Text("Tags")
+                            .labelMedium()
+                            .foregroundColor(Theme.Color.SecondaryText)
+                        TextField("Enter tags separated by commas", text: $tags)
+                            .bodyMedium()
+                            .onSubmit {
+                                // Optional: Add tag validation or suggestions here
+                            }
+                    }
+                } header: {
+                    HStack {
+                        Image(systemName: "tag")
+                            .foregroundColor(Theme.Color.PrimaryAction)
+                        Text("Organization")
+                            .titleSmall()
+                            .foregroundColor(Theme.Color.PrimaryText)
+                    }
+                } footer: {
+                    VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+                        Text("Use tags to organize and categorize your books. Separate multiple tags with commas.")
+                            .labelSmall()
+                            .foregroundColor(Theme.Color.SecondaryText)
+                        Text("Examples: Fiction, Favorite, Philosophy, Must-Read, Book Club")
+                            .labelSmall()
+                            .foregroundColor(Theme.Color.SecondaryText.opacity(0.8))
+                            .italic()
+                    }
                 }
                 
                 // Personal Notes Section
                 Section {
-                    TextField("Your thoughts about this book...", text: $personalNotes, axis: .vertical)
-                        .lineLimit(3...8)
-                        .bodyMedium()
+                    VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+                        Text("Personal Reading Notes")
+                            .labelMedium()
+                            .foregroundColor(Theme.Color.SecondaryText)
+                        TextField("Your thoughts, reflections, and notes about this book...", text: $personalNotes, axis: .vertical)
+                            .lineLimit(3...8)
+                            .bodyMedium()
+                    }
                 } header: {
                     Text("Personal Notes")
                         .titleSmall()
@@ -183,7 +380,7 @@ struct EditBookView: View {
         metadata.originalLanguage = originalLanguage.nilIfEmptyAfterTrimming
         metadata.authorNationality = authorNationality.nilIfEmptyAfterTrimming
         metadata.translator = translator.nilIfEmptyAfterTrimming
-        metadata.format = selectedFormat // NEW: Save book format
+        metadata.format = selectedFormat
         
         // Handle page count conversion
         if let pages = Int(pageCount.trimmingCharacters(in: .whitespacesAndNewlines)) {
@@ -194,6 +391,12 @@ struct EditBookView: View {
 
         // Update user book notes
         userBook.notes = personalNotes.nilIfEmptyAfterTrimming
+        
+        // NEW: Update tags
+        let tagsList = tags.split(separator: ",")
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+        userBook.tags = tagsList
         
         // Trigger save callback
         onSave(userBook)
@@ -219,6 +422,7 @@ fileprivate extension String {
     
     let sampleBook = UserBook(
         readingStatus: .reading,
+        tags: ["Fiction", "Philosophy"],
         metadata: sampleMetadata
     )
     

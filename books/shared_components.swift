@@ -1,25 +1,5 @@
-// books-buildout-main/books/shared_components.swift
 import SwiftUI
 import SwiftData
-
-// MARK: - Detail Row Component (used in multiple views)
-struct DetailRow: View {
-    let label: String
-    let value: String
-    
-    var body: some View {
-        HStack(alignment: .top) {
-            Text(label)
-                .labelLarge()
-                .foregroundColor(Theme.Color.SecondaryText)
-            Spacer()
-            Text(value)
-                .bodyMedium()
-                .foregroundColor(Theme.Color.PrimaryText)
-                .multilineTextAlignment(.trailing)
-        }
-    }
-}
 
 // MARK: - Book List Item (used in multiple views)
 struct BookListItem: View {
@@ -45,34 +25,27 @@ struct BookListItem: View {
                 Text(book.metadata?.title ?? "Unknown Title")
                     .titleMedium()
                     .lineLimit(2)
-                    .foregroundColor(Theme.Color.PrimaryText)
+                    .foregroundColor(Color.theme.primaryText)
                 
                 // Author name - clickable only if callback provided
-                // Fixed: Check for non-empty array instead of nil
                 if let authors = book.metadata?.authors, !authors.isEmpty, let firstAuthor = authors.first, let onAuthorTap = onAuthorTap {
                     Button(action: {
                         onAuthorTap(firstAuthor)
                     }) {
                         Text(authors.joined(separator: ", "))
                             .bodyMedium()
-                            .foregroundColor(Theme.Color.PrimaryAction)
+                            .foregroundColor(Color.theme.primaryAction)
                             .underline()
                     }
                     .buttonStyle(.plain)
                 } else {
                     Text(book.metadata?.authors.joined(separator: ", ") ?? "Unknown Author")
                         .bodyMedium()
-                        .foregroundColor(Theme.Color.SecondaryText)
+                        .foregroundColor(Color.theme.secondaryText)
                 }
                 
                 HStack {
-                    Text(book.readingStatus.rawValue)
-                        .labelSmall()
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 2)
-                        .background(statusColor(for: book.readingStatus))
-                        .foregroundColor(.white)
-                        .clipShape(Capsule())
+                    StatusBadge(status: book.readingStatus, style: .capsule)
                     
                     Spacer()
                     
@@ -81,7 +54,7 @@ struct BookListItem: View {
                             ForEach(1...5, id: \.self) { star in
                                 Image(systemName: star <= rating ? "star.fill" : "star")
                                     .font(.caption)
-                                    .foregroundColor(Theme.Color.PrimaryAction)
+                                    .foregroundColor(Color.theme.accentHighlight)
                             }
                         }
                     }
@@ -90,14 +63,6 @@ struct BookListItem: View {
             Spacer()
         }
         .padding(.vertical, 4)
-    }
-    
-    private func statusColor(for status: ReadingStatus) -> Color {
-        switch status {
-        case .read: return Theme.Color.PrimaryAction.opacity(0.8)
-        case .reading: return Theme.Color.AccentHighlight
-        case .toRead: return Theme.Color.PrimaryAction.opacity(0.4)
-        }
     }
 }
 
@@ -189,7 +154,7 @@ struct AddBookView: View {
                             ForEach(1...5, id: \.self) { star in
                                 Button(action: { personalRating = star }) {
                                     Image(systemName: star <= personalRating ? "star.fill" : "star")
-                                        .foregroundColor(Theme.Color.PrimaryAction)
+                                        .foregroundColor(Color.theme.primaryAction)
                                 }
                             }
                         }
@@ -210,7 +175,7 @@ struct AddBookView: View {
                     
                     Text("Personal notes are private and separate from the book's description.")
                         .labelSmall()
-                        .foregroundColor(Theme.Color.SecondaryText)
+                        .foregroundColor(Color.theme.secondaryText)
                 } header: {
                     Text("Personal Notes")
                         .titleSmall()
@@ -229,7 +194,7 @@ struct AddBookView: View {
                         dismiss()
                     }
                     .disabled(title.isEmpty || authors.isEmpty)
-                    .tint(Theme.Color.PrimaryAction)
+                    .tint(Color.theme.primaryAction)
                     .labelLarge()
                 }
             }
@@ -246,7 +211,7 @@ struct AddBookView: View {
         
         guard !authorsList.isEmpty else { return }
         
-        // Create BookMetadata with all fields including the new ones - Fixed array parameters
+        // Create BookMetadata with all fields including the new ones
         let metadata = BookMetadata(
             googleBooksID: UUID().uuidString, // Generate unique ID for manually added books
             title: title,
@@ -260,7 +225,7 @@ struct AddBookView: View {
             infoLink: nil,
             publisher: publisher.isEmpty ? nil : publisher,
             isbn: isbn.isEmpty ? nil : isbn,
-            genre: [], // Fixed: Empty array instead of nil
+            genre: [],
             originalLanguage: originalLanguage.isEmpty ? nil : originalLanguage,
             authorNationality: authorNationality.isEmpty ? nil : authorNationality,
             translator: translator.isEmpty ? nil : translator

@@ -2,321 +2,45 @@ import SwiftUI
 import SwiftData
 
 // MARK: - Status Badge
+// A reusable view to display the reading status of a book, with different styles.
 struct StatusBadge: View {
     let status: ReadingStatus
+    let style: Style
+    
+    enum Style {
+        // Shows text and a colored dot (e.g., "Reading ●")
+        case full
+        // Shows only a colored dot, for compact spaces
+        case compact
+        // Shows text in a colored capsule
+        case capsule
+    }
     
     var body: some View {
-        Text(status.rawValue)
-            .font(.caption)
-            .fontWeight(.medium)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
-            .background(status.color.opacity(0.2))
-            .foregroundColor(status.color)
-            .cornerRadius(8)
-    }
-}
-
-// MARK: - Date Picker Types
-extension UserBook {
-    enum DatePickerType: String, CaseIterable {
-        case started = "Date Started"
-        case completed = "Date Completed"
-        case added = "Date Added"
-        
-        var title: String {
-            return self.rawValue
-        }
-        
-        var systemImage: String {
-            switch self {
-            case .started:
-                return "play.circle"
-            case .completed:
-                return "checkmark.circle"
-            case .added:
-                return "plus.circle"
+        switch style {
+        case .full:
+            HStack(spacing: 4) {
+                Text(status.rawValue)
+                    .labelMedium()
+                    .foregroundColor(Color.theme.primaryText)
+                Circle()
+                    .fill(status.color)
+                    .frame(width: 8, height: 8)
             }
-        }
-    }
-}
-
-// MARK: - Date Picker Sheet
-struct DatePickerSheet: View {
-    @Environment(\.dismiss) private var dismiss
-    @Environment(\.modelContext) private var modelContext
-    
-    @Bindable var book: UserBook
-    let dateType: UserBook.DatePickerType
-    
-    @State private var selectedDate = Date()
-    
-    var body: some View {
-        NavigationStack {
-            VStack(spacing: 20) {
-                VStack(spacing: 16) {
-                    Image(systemName: dateType.systemImage)
-                        .font(.largeTitle)
-                        .foregroundStyle(.blue)
-                    
-                    Text("Set \(dateType.title)")
-                        .font(.title2)
-                        .fontWeight(.semibold)
-                    
-                    DatePicker("Select Date", selection: $selectedDate, displayedComponents: .date)
-                        .datePickerStyle(.wheel)
-                        .padding()
-                        .background(Color(.systemGray6))
-                        .cornerRadius(12)
-                }
-                
-                Spacer()
-                
-                HStack(spacing: 16) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
-                    .buttonStyle(.bordered)
-                    .controlSize(.large)
-                    
-                    Button("Save") {
-                        saveDate()
-                        dismiss()
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.large)
-                }
-            }
-            .padding()
-            .navigationTitle(dateType.title)
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") {
-                        saveDate()
-                        dismiss()
-                    }
-                    .fontWeight(.semibold)
-                }
-            }
-        }
-        .onAppear {
-            selectedDate = currentDate
-        }
-    }
-    
-    private var currentDate: Date {
-        switch dateType {
-        case .started:
-            return book.dateStarted ?? book.dateAdded
-        case .completed:
-            return book.dateCompleted ?? Date()
-        case .added:
-            return book.dateAdded
-        }
-    }
-    
-    private func saveDate() {
-        switch dateType {
-        case .started:
-            book.dateStarted = selectedDate
-            // Status change will trigger auto-date logic
-            if book.readingStatus == .toRead {
-                book.readingStatus = .reading
-            }
-        case .completed:
-            book.dateCompleted = selectedDate
-            // Status change will trigger auto-date logic
-            book.readingStatus = .read
-        case .added:
-            book.dateAdded = selectedDate
-        }
-        
-        do {
-            try modelContext.save()
-        } catch {
-            print("Failed to save date: \(error)")
-        }
-    }
-}
-
-// MARK: - Progress Update View
-struct ProgressUpdateView: View {
-    @Environment(\.dismiss) private var dismiss
-    @Environment(\.modelContext) private var modelContext
-    
-    @Bindable var book: UserBook
-    
-    @State private var currentPage: Int = 0
-    @State private var totalPages: Int = 0
-    @State private var showingPageValidation = false
-    
-    var body: some View {
-        NavigationStack {
-            VStack(spacing: 24) {
-                VStack(spacing: 16) {
-                    Image(systemName: "book.pages")
-                        .font(.largeTitle)
-                        .foregroundStyle(.blue)
-                    
-                    Text("Update Reading Progress")
-                        .font(.title2)
-                        .fontWeight(.bold)
-                    
-                    if let title = book.metadata?.title {
-                        Text(title)
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                            .lineLimit(2)
-                            .multilineTextAlignment(.center)
-                    }
-                }
-                
-                VStack(spacing: 20) {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Total Pages")
-                            .font(.headline)
-                        
-                        TextField("Enter total pages", value: $totalPages, format: .number)
-                            .textFieldStyle(.roundedBorder)
-                            .keyboardType(.numberPad)
-                    }
-                    
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Current Page")
-                            .font(.headline)
-                        
-                        HStack {
-                            TextField("Page number", value: $currentPage, format: .number)
-                                .textFieldStyle(.roundedBorder)
-                                .keyboardType(.numberPad)
-                            
-                            Text("of \(totalPages)")
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                    
-                    if totalPages > 0 && currentPage >= 0 {
-                        VStack(spacing: 12) {
-                            ProgressView(value: min(Double(currentPage) / Double(totalPages), 1.0))
-                                .progressViewStyle(.linear)
-                                .scaleEffect(y: 3)
-                                .animation(.easeInOut(duration: 0.3), value: currentPage)
-                            
-                            HStack {
-                                Text("\(min(Int(Double(currentPage) / Double(totalPages) * 100), 100))% complete")
-                                    .font(.subheadline)
-                                    .fontWeight(.medium)
-                                
-                                Spacer()
-                                
-                                if currentPage >= totalPages && totalPages > 0 {
-                                    Text("🎉 Finished!")
-                                        .font(.subheadline)
-                                        .fontWeight(.medium)
-                                        .foregroundStyle(.green)
-                                }
-                            }
-                        }
-                        .padding()
-                        .background(Color(.systemGray6))
-                        .cornerRadius(12)
-                    }
-                }
-                .padding()
-                .background(Color(.systemBackground))
-                .cornerRadius(16)
-                .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
-                
-                Spacer()
-                
-                HStack(spacing: 16) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
-                    .buttonStyle(.bordered)
-                    .controlSize(.large)
-                    
-                    Button("Save Progress") {
-                        saveProgress()
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.large)
-                    .disabled(!isValidProgress)
-                }
-            }
-            .padding()
-            .navigationTitle("Reading Progress")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
-                }
-                
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Save") {
-                        saveProgress()
-                    }
-                    .disabled(!isValidProgress)
-                    .fontWeight(.semibold)
-                }
-            }
-        }
-        .onAppear {
-            setupInitialValues()
-        }
-        .alert("Invalid Progress", isPresented: $showingPageValidation) {
-            Button("OK") { }
-        } message: {
-            Text("Current page cannot be greater than total pages.")
-        }
-    }
-    
-    private var isValidProgress: Bool {
-        return totalPages > 0 && currentPage >= 0 && currentPage <= totalPages
-    }
-    
-    private func setupInitialValues() {
-        totalPages = book.metadata?.pageCount ?? 0
-        switch book.readingStatus {
-        case .toRead:
-            currentPage = 0
-        case .reading:
-            currentPage = totalPages / 3
-        case .read:
-            currentPage = totalPages
-        }
-    }
-    
-    private func saveProgress() {
-        guard isValidProgress else {
-            showingPageValidation = true
-            return
-        }
-        
-        if let metadata = book.metadata {
-            metadata.pageCount = totalPages
-        }
-        
-        // Let the model handle the auto-date logic by setting status
-        if currentPage == 0 {
-            book.readingStatus = .toRead
-            // Reset dates manually only for .toRead since it doesn't trigger auto-dates
-            book.dateStarted = nil
-            book.dateCompleted = nil
-        } else if currentPage >= totalPages && totalPages > 0 {
-            book.readingStatus = .read // Auto-date logic will handle dates
-        } else {
-            book.readingStatus = .reading // Auto-date logic will handle dates
-        }
-        
-        do {
-            try modelContext.save()
-            dismiss()
-        } catch {
-            print("Failed to save progress: \(error)")
+        case .compact:
+            Circle()
+                .fill(status.color)
+                .frame(width: 10, height: 10)
+                .shadow(radius: 1)
+        case .capsule:
+            Text(status.rawValue)
+                .font(.caption)
+                .fontWeight(.medium)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(status.color.opacity(0.2))
+                .foregroundColor(status.color)
+                .cornerRadius(Theme.CornerRadius.small)
         }
     }
 }
@@ -692,12 +416,12 @@ struct StyledTextField: View {
             HStack(spacing: Theme.Spacing.xs) {
                 Image(systemName: icon)
                     .font(.system(size: 16))
-                    .foregroundColor(Theme.Color.PrimaryAction)
+                    .foregroundColor(Color.theme.primaryAction)
                     .frame(width: 20)
                 
                 Text(label)
                     .labelLarge()
-                    .foregroundColor(Theme.Color.PrimaryText)
+                    .foregroundColor(Color.theme.primaryText)
             }
             
             TextField(placeholder, text: $text)
@@ -723,12 +447,12 @@ struct StyledTextEditor: View {
             HStack(spacing: Theme.Spacing.xs) {
                 Image(systemName: icon)
                     .font(.system(size: 16))
-                    .foregroundColor(Theme.Color.PrimaryAction)
+                    .foregroundColor(Color.theme.primaryAction)
                     .frame(width: 20)
                 
                 Text(label)
                     .labelLarge()
-                    .foregroundColor(Theme.Color.PrimaryText)
+                    .foregroundColor(Color.theme.primaryText)
             }
             
             TextField(placeholder, text: $text, axis: .vertical)
@@ -768,7 +492,7 @@ struct BookStatusSelector: View {
             }
         } label: {
             HStack {
-                StatusBadge(status: book.readingStatus)
+                StatusBadge(status: book.readingStatus, style: .capsule)
                 Image(systemName: "chevron.down")
                     .font(.caption)
                     .foregroundStyle(.secondary)

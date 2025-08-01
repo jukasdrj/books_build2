@@ -38,9 +38,18 @@ struct ContentView: View {
                 Label("Stats", systemImage: "chart.bar.xaxis")
             }
             .tag(3)
+            
+            NavigationStack {
+                CulturalDiversityView()
+            }
+            .tabItem {
+                Label("Diversity", systemImage: "globe")
+            }
+            .tag(4)
         }
-        .background(Theme.Color.Surface)
-        .tint(Theme.Color.PrimaryAction)
+        .background(Color.theme.background)
+        .tint(Color.theme.primaryAction)
+        .animation(Theme.Animation.pageTransition, value: selectedTab)
     }
 }
 

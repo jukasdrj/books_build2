@@ -59,9 +59,36 @@ final class UserBook: Identifiable, @unchecked Sendable {
         }
     }
     
+    // NEW: Add a property for storing quotes
+    var quotes: [String]?
+    
+    // NEW: Enhanced reading progress tracking
+    var currentPage: Int = 0 {
+        didSet {
+            // Auto-calculate progress percentage
+            updateReadingProgress()
+        }
+    }
+    var readingProgress: Double = 0.0 // 0.0 to 1.0
+    var estimatedFinishDate: Date?
+    var readingSessions: [ReadingSession] = []
+    var totalReadingTimeMinutes: Int = 0
+    var dailyReadingGoal: Int? // pages per day
+    var personalRating: Double? // 0.0 to 5.0 for more granular ratings
+    
+    // NEW: Cultural reading goals tracking
+    var contributesToCulturalGoal: Bool = false
+    var culturalGoalCategory: String? // e.g., "African Literature", "Translated Works"
+    
+    // NEW: Social and sharing features
+    var isPublic: Bool = false
+    var recommendedBy: String?
+    var wouldRecommend: Bool?
+    var discussionNotes: String? // for book clubs or discussions
+
     @Relationship(deleteRule: .nullify)
     var metadata: BookMetadata?
-    
+
     init(
         dateAdded: Date = .now,
         readingStatus: ReadingStatus = .toRead,
@@ -71,6 +98,16 @@ final class UserBook: Identifiable, @unchecked Sendable {
         rating: Int? = nil,
         notes: String? = nil,
         tags: [String] = [],
+        quotes: [String]? = nil,
+        currentPage: Int = 0,
+        dailyReadingGoal: Int? = nil,
+        personalRating: Double? = nil,
+        contributesToCulturalGoal: Bool = false,
+        culturalGoalCategory: String? = nil,
+        isPublic: Bool = false,
+        recommendedBy: String? = nil,
+        wouldRecommend: Bool? = nil,
+        discussionNotes: String? = nil,
         metadata: BookMetadata? = nil
     ) {
         self.id = UUID()
@@ -82,6 +119,16 @@ final class UserBook: Identifiable, @unchecked Sendable {
         self.rating = rating
         self.notes = notes
         self.tags = tags
+        self.quotes = quotes
+        self.currentPage = currentPage
+        self.dailyReadingGoal = dailyReadingGoal
+        self.personalRating = personalRating
+        self.contributesToCulturalGoal = contributesToCulturalGoal
+        self.culturalGoalCategory = culturalGoalCategory
+        self.isPublic = isPublic
+        self.recommendedBy = recommendedBy
+        self.wouldRecommend = wouldRecommend
+        self.discussionNotes = discussionNotes
         self.metadata = metadata
         
         // Set initial dates based on status (non-auto since didSet won't trigger in init)
@@ -91,6 +138,58 @@ final class UserBook: Identifiable, @unchecked Sendable {
             self.dateStarted = Date()
             self.dateCompleted = Date()
         }
+        
+        // Calculate initial progress
+        updateReadingProgress()
+    }
+    
+    // NEW: Enhanced progress tracking methods
+    func updateReadingProgress() {
+        guard let pageCount = metadata?.pageCount, pageCount > 0 else {
+            readingProgress = 0.0
+            return
+        }
+        
+        readingProgress = min(Double(currentPage) / Double(pageCount), 1.0)
+        
+        // Auto-complete if fully read
+        if readingProgress >= 1.0 && readingStatus != .read {
+            readingStatus = .read
+        }
+        
+        // Calculate estimated finish date based on current progress and reading pace
+        updateEstimatedFinishDate()
+    }
+    
+    private func updateEstimatedFinishDate() {
+        guard let pageCount = metadata?.pageCount,
+              let dailyGoal = dailyReadingGoal,
+              dailyGoal > 0,
+              readingProgress < 1.0 else {
+            estimatedFinishDate = nil
+            return
+        }
+        
+        let remainingPages = pageCount - currentPage
+        let daysToFinish = Double(remainingPages) / Double(dailyGoal)
+        estimatedFinishDate = Calendar.current.date(byAdding: .day, value: Int(ceil(daysToFinish)), to: Date())
+    }
+    
+    func addReadingSession(minutes: Int, pagesRead: Int) {
+        let session = ReadingSession(date: Date(), durationMinutes: minutes, pagesRead: pagesRead)
+        readingSessions.append(session)
+        totalReadingTimeMinutes += minutes
+        currentPage += pagesRead
+    }
+    
+    func averageReadingPace() -> Double? {
+        guard !readingSessions.isEmpty else { return nil }
+        
+        let totalPages = readingSessions.reduce(0) { $0 + $1.pagesRead }
+        let totalMinutes = readingSessions.reduce(0) { $0 + $1.durationMinutes }
+        
+        guard totalMinutes > 0 else { return nil }
+        return Double(totalPages) / Double(totalMinutes) * 60.0 // pages per hour
     }
     
     // Validation methods (non-fatal for migration safety)
@@ -109,10 +208,25 @@ final class UserBook: Identifiable, @unchecked Sendable {
     }
 }
 
+// NEW: Reading session tracking
+struct ReadingSession: Codable, Identifiable {
+    let id = UUID()
+    let date: Date
+    let durationMinutes: Int
+    let pagesRead: Int
+    
+    var pagesPerHour: Double {
+        guard durationMinutes > 0 else { return 0 }
+        return Double(pagesRead) / (Double(durationMinutes) / 60.0)
+    }
+}
+
 enum ReadingStatus: String, Codable, CaseIterable, Identifiable, Sendable {
     case toRead = "To Read"
     case reading = "Reading"
     case read = "Read"
+    case onHold = "On Hold"
+    case dnf = "Did Not Finish"
     
     var id: Self { self }
 }

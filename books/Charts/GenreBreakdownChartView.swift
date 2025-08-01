@@ -88,19 +88,21 @@ struct GenreBreakdownChartView: View {
                 }
                 .chartBackground { chartProxy in
                     GeometryReader { geometry in
-                        let frame = geometry[chartProxy.plotAreaFrame]
-                        VStack(spacing: 4) {
-                            Text("Total")
-                                .labelSmall()
-                                .foregroundColor(Theme.Color.SecondaryText)
-                            Text("\(totalBooks)")
-                                .titleMedium()
-                                .foregroundColor(Theme.Color.PrimaryText)
-                            Text("books")
-                                .labelSmall()
-                                .foregroundColor(Theme.Color.SecondaryText)
+                        if let plotFrame = chartProxy.plotFrame {
+                            let frame = geometry[plotFrame]
+                            VStack(spacing: 4) {
+                                Text("Total")
+                                    .labelSmall()
+                                    .foregroundColor(Theme.Color.SecondaryText)
+                                Text("\(totalBooks)")
+                                    .titleMedium()
+                                    .foregroundColor(Theme.Color.PrimaryText)
+                                Text("books")
+                                    .labelSmall()
+                                    .foregroundColor(Theme.Color.SecondaryText)
+                            }
+                            .position(x: frame.midX, y: frame.midY)
                         }
-                        .position(x: frame.midX, y: frame.midY)
                     }
                 }
                 .chartLegend(position: .bottom, alignment: .center, spacing: Theme.Spacing.sm) {

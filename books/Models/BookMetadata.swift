@@ -5,7 +5,10 @@ import SwiftData
 final class BookMetadata: Identifiable, @unchecked Sendable {
     @Attribute(.unique) var googleBooksID: String
     var title: String
-    var authors: [String] = [] // Fixed: Non-optional with default
+    
+    // Store authors as a comma-separated string for SwiftData compatibility
+    private var authorsString: String = ""
+    
     var publishedDate: String?
     var pageCount: Int?
     var bookDescription: String?
@@ -15,11 +18,32 @@ final class BookMetadata: Identifiable, @unchecked Sendable {
     var infoLink: URL?
     var publisher: String?
     var isbn: String?
-    var genre: [String] = [] // Fixed: Non-optional with default
+    
+    // Store genres as a comma-separated string for SwiftData compatibility  
+    private var genreString: String = ""
+    
     var originalLanguage: String?
     var authorNationality: String?
     var translator: String?
     var format: BookFormat?
+
+    // NEW: Enhanced cultural and diversity tracking
+    var authorGender: AuthorGender?
+    var authorEthnicity: String?
+    var culturalRegion: CulturalRegion?
+    var originalPublicationCountry: String?
+    var translatorNationality: String?
+    var culturalThemes: [String] = []
+    var indigenousAuthor: Bool = false
+    var marginizedVoice: Bool = false
+    
+    // NEW: Enhanced reading experience tracking
+    var readingDifficulty: ReadingDifficulty?
+    var timeToRead: Int? // estimated minutes
+    var contentWarnings: [String] = []
+    var awards: [String] = []
+    var series: String?
+    var seriesNumber: Int?
 
     // One-to-many relationship: BookMetadata can have multiple UserBooks
     @Relationship(inverse: \UserBook.metadata)
@@ -27,11 +51,32 @@ final class BookMetadata: Identifiable, @unchecked Sendable {
     
     @Transient
     var id: String { googleBooksID }
+    
+    // Computed property for authors array
+    var authors: [String] {
+        get {
+            guard !authorsString.isEmpty else { return [] }
+            return authorsString.components(separatedBy: "|||").map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }.filter { !$0.isEmpty }
+        }
+        set {
+            authorsString = newValue.map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }.filter { !$0.isEmpty }.joined(separator: "|||")
+        }
+    }
+    
+    // Computed property for genre array
+    var genre: [String] {
+        get {
+            guard !genreString.isEmpty else { return [] }
+            return genreString.components(separatedBy: "|||").map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }.filter { !$0.isEmpty }
+        }
+        set {
+            genreString = newValue.map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }.filter { !$0.isEmpty }.joined(separator: "|||")
+        }
+    }
 
-    init(googleBooksID: String, title: String, authors: [String] = [], publishedDate: String? = nil, pageCount: Int? = nil, bookDescription: String? = nil, imageURL: URL? = nil, language: String? = nil, previewLink: URL? = nil, infoLink: URL? = nil, publisher: String? = nil, isbn: String? = nil, genre: [String] = [], originalLanguage: String? = nil, authorNationality: String? = nil, translator: String? = nil, format: BookFormat? = nil) {
+    init(googleBooksID: String, title: String, authors: [String] = [], publishedDate: String? = nil, pageCount: Int? = nil, bookDescription: String? = nil, imageURL: URL? = nil, language: String? = nil, previewLink: URL? = nil, infoLink: URL? = nil, publisher: String? = nil, isbn: String? = nil, genre: [String] = [], originalLanguage: String? = nil, authorNationality: String? = nil, translator: String? = nil, format: BookFormat? = nil, authorGender: AuthorGender? = nil, authorEthnicity: String? = nil, culturalRegion: CulturalRegion? = nil, originalPublicationCountry: String? = nil, translatorNationality: String? = nil, culturalThemes: [String] = [], indigenousAuthor: Bool = false, marginizedVoice: Bool = false, readingDifficulty: ReadingDifficulty? = nil, timeToRead: Int? = nil, contentWarnings: [String] = [], awards: [String] = [], series: String? = nil, seriesNumber: Int? = nil) {
         self.googleBooksID = googleBooksID
         self.title = title.trimmingCharacters(in: .whitespacesAndNewlines)
-        self.authors = authors.isEmpty ? [] : authors
         self.publishedDate = publishedDate
         self.pageCount = pageCount
         self.bookDescription = bookDescription
@@ -41,11 +86,28 @@ final class BookMetadata: Identifiable, @unchecked Sendable {
         self.infoLink = infoLink
         self.publisher = publisher
         self.isbn = isbn
-        self.genre = genre.isEmpty ? [] : genre
         self.originalLanguage = originalLanguage
         self.authorNationality = authorNationality
         self.translator = translator
         self.format = format
+        self.authorGender = authorGender
+        self.authorEthnicity = authorEthnicity
+        self.culturalRegion = culturalRegion
+        self.originalPublicationCountry = originalPublicationCountry
+        self.translatorNationality = translatorNationality
+        self.culturalThemes = culturalThemes
+        self.indigenousAuthor = indigenousAuthor
+        self.marginizedVoice = marginizedVoice
+        self.readingDifficulty = readingDifficulty
+        self.timeToRead = timeToRead
+        self.contentWarnings = contentWarnings
+        self.awards = awards
+        self.series = series
+        self.seriesNumber = seriesNumber
+        
+        // Set the computed properties which will update the private strings
+        self.authors = authors
+        self.genre = genre
     }
     
     // Validation methods (non-fatal for migration safety)
@@ -94,6 +156,96 @@ enum BookFormat: String, Codable, CaseIterable, Identifiable, Sendable {
         case .audiobook: return "headphones"
         case .magazine: return "magazine"
         case .other: return "questionmark.square"
+        }
+    }
+}
+
+// NEW: Enhanced enums for cultural diversity tracking
+
+enum AuthorGender: String, Codable, CaseIterable, Identifiable, Sendable {
+    case female = "Female"
+    case male = "Male"
+    case nonBinary = "Non-binary"
+    case other = "Other"
+    case unknown = "Unknown"
+    
+    var id: Self { self }
+    
+    var icon: String {
+        switch self {
+        case .female: return "person.crop.circle.fill"
+        case .male: return "person.crop.circle"
+        case .nonBinary: return "person.crop.circle.badge.questionmark"
+        case .other: return "person.crop.circle.badge.plus"
+        case .unknown: return "questionmark.circle"
+        }
+    }
+}
+
+enum CulturalRegion: String, Codable, CaseIterable, Identifiable, Sendable {
+    case africa = "Africa"
+    case asia = "Asia"
+    case europe = "Europe"
+    case northAmerica = "North America"
+    case southAmerica = "South America"
+    case oceania = "Oceania"
+    case middleEast = "Middle East"
+    case caribbean = "Caribbean"
+    case centralAsia = "Central Asia"
+    case indigenous = "Indigenous"
+    
+    var id: Self { self }
+    
+    var color: Color {
+        switch self {
+        case .africa: return Color.theme.cultureAfrica
+        case .asia: return Color.theme.cultureAsia
+        case .europe: return Color.theme.cultureEurope
+        case .northAmerica, .southAmerica: return Color.theme.cultureAmericas
+        case .oceania: return Color.theme.cultureOceania
+        case .middleEast, .centralAsia: return Color.theme.cultureMiddleEast
+        case .caribbean: return Color.theme.cultureAmericas
+        case .indigenous: return Color.theme.cultureIndigenous
+        }
+    }
+    
+    var icon: String {
+        switch self {
+        case .africa: return "globe.africa.fill"
+        case .asia: return "globe.asia.australia.fill"
+        case .europe: return "globe.europe.africa.fill"
+        case .northAmerica, .southAmerica: return "globe.americas.fill"
+        case .oceania: return "globe.asia.australia.fill"
+        case .middleEast, .centralAsia: return "globe.europe.africa.fill"
+        case .caribbean: return "globe.americas.fill"
+        case .indigenous: return "leaf.fill"
+        }
+    }
+}
+
+enum ReadingDifficulty: String, Codable, CaseIterable, Identifiable, Sendable {
+    case easy = "Easy"
+    case moderate = "Moderate"
+    case challenging = "Challenging"
+    case advanced = "Advanced"
+    
+    var id: Self { self }
+    
+    var color: Color {
+        switch self {
+        case .easy: return Color.theme.success
+        case .moderate: return Color.theme.warning
+        case .challenging: return Color.theme.error
+        case .advanced: return Color.theme.primary
+        }
+    }
+    
+    var icon: String {
+        switch self {
+        case .easy: return "1.circle.fill"
+        case .moderate: return "2.circle.fill"
+        case .challenging: return "3.circle.fill"
+        case .advanced: return "4.circle.fill"
         }
     }
 }
