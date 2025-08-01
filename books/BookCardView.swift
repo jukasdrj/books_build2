@@ -57,7 +57,7 @@ struct BookCardView: View {
                 // Favorite indicator
                 if book.isFavorited {
                     Image(systemName: "heart.fill")
-                        .font(.caption)
+                        .labelSmall()
                         .foregroundColor(Color.theme.accentHighlight)
                         .padding(Theme.Spacing.xs)
                         .background(
@@ -106,7 +106,7 @@ struct BookCardView: View {
         VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
             // Title section (Natural height)
             Text(book.metadata?.title ?? "Unknown Title")
-                .titleSmall()
+                .titleSmall() // For standalone cards, .titleSmall() is more legible
                 .lineLimit(2)
                 .multilineTextAlignment(.leading)
             
@@ -168,11 +168,11 @@ struct BookCardView: View {
     private func culturalInfoBadge(language: String) -> some View {
         HStack(spacing: Theme.Spacing.xs) {
             Image(systemName: "globe")
-                .font(.caption2)
+                .labelSmall()
                 .foregroundColor(Color.theme.accentHighlight)
             
             Text(language)
-                .labelSmall()
+                .culturalTag()
                 .foregroundColor(Color.theme.accentHighlight)
         }
     }
@@ -182,7 +182,7 @@ struct BookCardView: View {
         HStack(spacing: 2) {
             ForEach(1...5, id: \.self) { star in
                 Image(systemName: star <= rating ? "star.fill" : "star")
-                    .font(.caption2)
+                    .labelSmall()
                     .foregroundColor(star <= rating ? Color.theme.accentHighlight : Color.theme.secondaryText.opacity(0.3))
             }
         }

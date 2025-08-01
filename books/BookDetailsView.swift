@@ -159,12 +159,11 @@ struct TagChip: View {
     var body: some View {
         HStack(spacing: 4) {
             Text(tag)
-                .labelSmall()
-                .foregroundColor(Color.theme.primaryText)
+                .culturalTag()
             
             Button(action: onRemove) {
                 Image(systemName: "xmark")
-                    .font(.caption2)
+                    .labelSmall()
                     .foregroundColor(Color.theme.secondaryText)
             }
         }
@@ -246,27 +245,27 @@ struct BookHeaderSection: View {
             
             VStack(alignment: .leading, spacing: 8) {
                 Text(book.metadata?.title ?? "Unknown Title")
-                    .headlineMedium()
+                    .bookTitle()
                     .foregroundColor(Color.theme.primaryText)
                 
                 // Author name navigation using NavigationLink with value
                 if let authors = book.metadata?.authors, !authors.isEmpty {
                     NavigationLink(value: authors.first!) {
                         Text(authors.joined(separator: ", "))
-                            .titleMedium()
+                            .authorName()
                             .foregroundStyle(Color.theme.primaryAction)
                             .underline()
                     }
                     .buttonStyle(.plain)
                 } else {
                     Text("Unknown Author")
-                        .titleMedium()
+                        .authorName()
                         .foregroundStyle(Color.theme.secondaryText)
                 }
                 
                 if let genre = book.metadata?.genre, !genre.isEmpty {
                     Text(genre.first!)
-                        .labelSmall()
+                        .culturalTag()
                         .fontWeight(.medium)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)

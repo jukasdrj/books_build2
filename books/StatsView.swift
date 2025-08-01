@@ -103,11 +103,11 @@ struct StatCard: View {
     var body: some View {
         VStack(spacing: 8) {
             Image(systemName: icon)
-                .font(.system(size: 24))
+                .labelLarge()
                 .foregroundColor(color)
             
             Text(value)
-                .headlineSmall()
+                .readingStats()
                 .fontWeight(.bold)
                 .foregroundColor(Theme.Color.PrimaryText)
             
@@ -176,7 +176,7 @@ struct StatusRow: View {
             
             if total > 0 {
                 Text("(\(Int(Double(count) / Double(total) * 100))%)")
-                    .labelMedium()
+                    .labelSmall()
                     .foregroundColor(Theme.Color.SecondaryText)
             }
         }
@@ -225,7 +225,7 @@ struct RecentBooksSection: View {
                         HStack(spacing: 2) {
                             ForEach(1...rating, id: \.self) { _ in
                                 Image(systemName: "star.fill")
-                                    .font(.caption2)
+                                    .labelSmall()
                                     .foregroundColor(Theme.Color.AccentHighlight)
                             }
                         }

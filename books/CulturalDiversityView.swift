@@ -157,19 +157,20 @@ struct CulturalDiversityView: View {
         VStack(spacing: Theme.Spacing.sm) {
             HStack {
                 Image(systemName: region.icon)
+                    .labelMedium()
                     .foregroundColor(region.color)
                     .frame(width: Theme.Size.iconMedium, height: Theme.Size.iconMedium)
                 
                 Spacer()
                 
                 Text("\(count)")
-                    .titleSmall()
+                    .readingStats()
                     .foregroundColor(region.color)
             }
             
             VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
                 Text(region.rawValue)
-                    .labelMedium()
+                    .culturalTag()
                     .frame(maxWidth: .infinity, alignment: .leading)
                 
                 Text("\(Int((Double(count) / Double(readBooks.count)) * 100))% of collection")

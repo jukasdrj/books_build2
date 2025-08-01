@@ -313,7 +313,7 @@ struct LibraryHeaderView: View {
         HStack {
             VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
                 Text("\(totalBooks) books")
-                    .titleLarge()
+                    .bookTitle()
                     .foregroundColor(Theme.Color.PrimaryText)
                 
                 if filter == .library {
