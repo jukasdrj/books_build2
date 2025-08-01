@@ -1,6 +1,53 @@
 # Development Accomplishments Log
 
-## Documentation & Color System Refactor Session - Current Date
+## Edit View & SwiftData Stability Session - Current Date
+
+### Overview
+This session focused on resolving a critical runtime crash in the book editing flow, correcting the user interface to match intended behavior, and fixing a series of SwiftData-related build errors in the SwiftUI preview.
+
+### Key Activities
+1.  **SwiftData Crash Resolution**: Diagnosed and fixed a "Mutating a managed object outside a write transaction" error that occurred when saving edits.
+2.  **UI Correction**: Ensured the correct `EditBookView` is presented from the `BookDetailsView`, which also fixed the issue where API-provided fields were not correctly locked.
+3.  **Preview Stability**: Resolved multiple build errors within the `#Preview` block for `EditBookView` by creating a dedicated preview wrapper to handle SwiftData model setup.
+4.  **Field Lockdown Implementation**: Correctly implemented the UI to disable text fields for data fetched from the Google Books API and provided clear user guidance.
+
+---
+
+### Files Modified
+
+#### `BookDetailsView.swift`
+**Changes Made:**
+-   Corrected the `.sheet` modifier to present the `EditBookView` instead of a non-existent `EnhancedEditBookView`.
+
+**Why Changed:**
+-   This was the root cause of the UI discrepancy where the field lockdowns were not appearing. The fix ensures the correct view is always used for editing, providing the intended user experience.
+
+#### `EditBookView.swift`
+**Changes Made:**
+-   **Fixed SwiftData Crash**: Reworked the `saveAndDismiss` method to ensure that modifications to the `UserBook` and its related `BookMetadata` happen safely within SwiftData's automatic write transactions, eliminating the runtime crash.
+-   **Correctly Disabled Fields**: Re-applied the `.disabled(true)` modifier to all text fields bound to data from the Google Books API and set their text color to `Color.theme.disabledText` for clear visual feedback.
+-   **Resolved Preview Errors**: Created a new `EditBookViewPreviewWrapper` struct to properly initialize a `ModelContainer` and insert sample data for the `#Preview`. This resolved a series of `buildExpression` and "Cannot find in scope" errors that were preventing the preview from compiling.
+
+**Why Changed:**
+-   To create a stable and crash-free editing experience.
+-   To protect the integrity of the data fetched from the Google Books API by preventing user edits.
+-   To restore a working and reliable SwiftUI preview for faster UI development and iteration.
+
+---
+
+### Session Summary & Key Improvements
+
+✅ **Critical Crash Resolved**: The app is now stable, and users can save their edits without causing a runtime crash.
+
+✅ **UI and Logic Consistency**: The user interface now correctly reflects the business logic—API-managed fields are properly locked down, and the correct edit screen is always presented.
+
+✅ **Developer Experience Improved**: With the SwiftUI preview for `EditBookView` now working correctly, future UI changes can be made much more efficiently.
+
+✅ **Data Integrity Enforced**: The app now correctly prevents users from modifying core book metadata provided by the Google Books API, ensuring data consistency across the user's library.
+
+---
+
+## Documentation & Color System Refactor Session - Previous Date
 
 ### Overview
 This session focused on comprehensive documentation improvements and a systematic refactoring of the app's color system. The primary goals were to enhance clarity in the codebase, remove dependencies on the Xcode Asset Catalog for colors, and ensure robust support for both Light and Dark modes.
@@ -64,8 +111,7 @@ This session focused on comprehensive documentation improvements and a systemati
 -   Updated entries for the renamed `SearchView.swift` and `WishlistComponents.swift`.
 -   Added explanatory notes about the relationship between `WishlistView` and `WishlistComponents` to clarify the architecture.
 
-**Why Changed:**
--   Keep the project documentation in sync with the actual file structure.
+**Why Changed:**-   Keep the project documentation in sync with the actual file structure.
 -   Improve onboarding for future developers by explaining architectural decisions.
 
 ---

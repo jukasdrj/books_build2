@@ -1,9 +1,11 @@
 import SwiftUI
+import SwiftData
 
 struct EditBookView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
     
-    let userBook: UserBook
+    @Bindable var userBook: UserBook
     let onSave: (UserBook) -> Void
     
     // State properties for UI
@@ -19,7 +21,7 @@ struct EditBookView: View {
     @State private var authorNationality: String
     @State private var translator: String
     @State private var selectedFormat: BookFormat?
-    @State private var tags: String // NEW: Tags field
+    @State private var tags: String
 
     init(userBook: UserBook, onSave: @escaping (UserBook) -> Void) {
         self.userBook = userBook
@@ -38,7 +40,7 @@ struct EditBookView: View {
         _authorNationality = State(initialValue: userBook.metadata?.authorNationality ?? "")
         _translator = State(initialValue: userBook.metadata?.translator ?? "")
         _selectedFormat = State(initialValue: userBook.metadata?.format)
-        _tags = State(initialValue: userBook.tags.joined(separator: ", ")) // NEW: Initialize tags
+        _tags = State(initialValue: userBook.tags.joined(separator: ", "))
     }
     
     var body: some View {
@@ -90,86 +92,28 @@ struct EditBookView: View {
                             .labelMedium()
                             .foregroundColor(Color.theme.secondaryText)
                         
-                        LazyVGrid(columns: [
-                            GridItem(.flexible()),
-                            GridItem(.flexible()),
-                            GridItem(.flexible())
-                        ], spacing: Theme.Spacing.sm) {
-                            // Print Format (combining hardcover/paperback)
-                            Button(action: {
-                                if selectedFormat == .hardcover || selectedFormat == .paperback {
-                                    selectedFormat = nil
-                                } else {
-                                    selectedFormat = .hardcover // Default to hardcover for print
+                        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: Theme.Spacing.sm) {
+                            ForEach(BookFormat.allCases, id: \.self) { format in
+                                Button(action: { selectedFormat = format == selectedFormat ? nil : format }) {
+                                    VStack(spacing: 4) {
+                                        Image(systemName: format.icon)
+                                            .font(.system(size: 20))
+                                            .foregroundColor(selectedFormat == format ? Color.theme.onPrimary : Color.theme.primaryAction)
+                                        Text(format.rawValue)
+                                            .labelSmall()
+                                            .foregroundColor(selectedFormat == format ? Color.theme.onPrimary : Color.theme.primaryText)
+                                    }
+                                    .frame(height: 60)
+                                    .frame(maxWidth: .infinity)
+                                    .background(selectedFormat == format ? Color.theme.primaryAction : Color.theme.cardBackground)
+                                    .cornerRadius(Theme.CornerRadius.medium)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: Theme.CornerRadius.medium)
+                                            .stroke(selectedFormat == format ? Color.theme.primaryAction : Color.theme.outline, lineWidth: 1)
+                                    )
                                 }
-                            }) {
-                                VStack(spacing: 4) {
-                                    Image(systemName: "book.closed")
-                                        .font(.system(size: 20))
-                                        .foregroundColor((selectedFormat == .hardcover || selectedFormat == .paperback) ? .white : Color.theme.primaryAction)
-                                    
-                                    Text("Print")
-                                        .labelSmall()
-                                        .foregroundColor((selectedFormat == .hardcover || selectedFormat == .paperback) ? .white : Color.theme.primaryText)
-                                }
-                                .frame(height: 60)
-                                .frame(maxWidth: .infinity)
-                                .background((selectedFormat == .hardcover || selectedFormat == .paperback) ? Color.theme.primaryAction : Color.theme.cardBackground)
-                                .cornerRadius(Theme.CornerRadius.medium)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: Theme.CornerRadius.medium)
-                                        .stroke((selectedFormat == .hardcover || selectedFormat == .paperback) ? Color.theme.primaryAction : Color.theme.outline, lineWidth: 1)
-                                )
+                                .buttonStyle(.plain)
                             }
-                            .buttonStyle(.plain)
-                            
-                            // E-book Format
-                            Button(action: {
-                                selectedFormat = selectedFormat == .ebook ? nil : .ebook
-                            }) {
-                                VStack(spacing: 4) {
-                                    Image(systemName: "tablet")
-                                        .font(.system(size: 20))
-                                        .foregroundColor(selectedFormat == .ebook ? .white : Color.theme.primaryAction)
-                                    
-                                    Text("E-book")
-                                        .labelSmall()
-                                        .foregroundColor(selectedFormat == .ebook ? .white : Color.theme.primaryText)
-                                }
-                                .frame(height: 60)
-                                .frame(maxWidth: .infinity)
-                                .background(selectedFormat == .ebook ? Color.theme.primaryAction : Color.theme.cardBackground)
-                                .cornerRadius(Theme.CornerRadius.medium)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: Theme.CornerRadius.medium)
-                                        .stroke(selectedFormat == .ebook ? Color.theme.primaryAction : Color.theme.outline, lineWidth: 1)
-                                )
-                            }
-                            .buttonStyle(.plain)
-                            
-                            // Audiobook Format
-                            Button(action: {
-                                selectedFormat = selectedFormat == .audiobook ? nil : .audiobook
-                            }) {
-                                VStack(spacing: 4) {
-                                    Image(systemName: "headphones")
-                                        .font(.system(size: 20))
-                                        .foregroundColor(selectedFormat == .audiobook ? .white : Color.theme.primaryAction)
-                                    
-                                    Text("Audiobook")
-                                        .labelSmall()
-                                        .foregroundColor(selectedFormat == .audiobook ? .white : Color.theme.primaryText)
-                                }
-                                .frame(height: 60)
-                                .frame(maxWidth: .infinity)
-                                .background(selectedFormat == .audiobook ? Color.theme.primaryAction : Color.theme.cardBackground)
-                                .cornerRadius(Theme.CornerRadius.medium)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: Theme.CornerRadius.medium)
-                                        .stroke(selectedFormat == .audiobook ? Color.theme.primaryAction : Color.theme.outline, lineWidth: 1)
-                                )
-                            }
-                            .buttonStyle(.plain)
                         }
                     }
                     
@@ -278,18 +222,14 @@ struct EditBookView: View {
                             Image(systemName: "info.circle")
                                 .foregroundColor(Color.theme.secondaryText)
                                 .font(.caption)
-                            Text("Edition language is from Google Books. Add your own cultural and translation details.")
+                            Text("Add your own cultural and translation details to help track the diversity of your reading.")
                                 .labelSmall()
                                 .foregroundColor(Color.theme.secondaryText)
                         }
-                        Text("Help track the cultural diversity of your reading by adding author nationality and original language information.")
-                            .labelSmall()
-                            .foregroundColor(Color.theme.secondaryText)
-                            .padding(.top, Theme.Spacing.xs)
                     }
                 }
                 
-                // NEW: Tags Section
+                // Tags Section
                 Section {
                     VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
                         Text("Tags")
@@ -297,28 +237,15 @@ struct EditBookView: View {
                             .foregroundColor(Color.theme.secondaryText)
                         TextField("Enter tags separated by commas", text: $tags)
                             .bodyMedium()
-                            .onSubmit {
-                                // Optional: Add tag validation or suggestions here
-                            }
                     }
                 } header: {
-                    HStack {
-                        Image(systemName: "tag")
-                            .foregroundColor(Color.theme.primaryAction)
-                        Text("Organization")
-                            .titleSmall()
-                            .foregroundColor(Color.theme.primaryText)
-                    }
+                    Text("Organization")
+                        .titleSmall()
+                        .foregroundColor(Color.theme.primaryText)
                 } footer: {
-                    VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
-                        Text("Use tags to organize and categorize your books. Separate multiple tags with commas.")
-                            .labelSmall()
-                            .foregroundColor(Color.theme.secondaryText)
-                        Text("Examples: Fiction, Favorite, Philosophy, Must-Read, Book Club")
-                            .labelSmall()
-                            .foregroundColor(Color.theme.secondaryText.opacity(0.8))
-                            .italic()
-                    }
+                    Text("Use tags to organize and categorize your books. Example: Fiction, Favorite, Philosophy, Must-Read")
+                        .labelSmall()
+                        .foregroundColor(Color.theme.secondaryText)
                 }
                 
                 // Personal Notes Section
@@ -327,7 +254,7 @@ struct EditBookView: View {
                         Text("Personal Reading Notes")
                             .labelMedium()
                             .foregroundColor(Color.theme.secondaryText)
-                        TextField("Your thoughts, reflections, and notes about this book...", text: $personalNotes, axis: .vertical)
+                        TextField("Your thoughts, reflections, and notes...", text: $personalNotes, axis: .vertical)
                             .lineLimit(3...8)
                             .bodyMedium()
                     }
@@ -335,10 +262,6 @@ struct EditBookView: View {
                     Text("Personal Notes")
                         .titleSmall()
                         .foregroundColor(Color.theme.primaryText)
-                } footer: {
-                    Text("Your personal notes are private and separate from the book's description.")
-                        .labelSmall()
-                        .foregroundColor(Color.theme.secondaryText)
                 }
             }
             .background(Color.theme.surface)
@@ -347,19 +270,15 @@ struct EditBookView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { 
-                        dismiss() 
-                    }
-                    .bodyMedium()
-                    .foregroundColor(Color.theme.secondaryText)
+                    Button("Cancel") { dismiss() }
+                        .bodyMedium()
+                        .foregroundColor(Color.theme.secondaryText)
                 }
                 
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
-                        saveBook()
-                        dismiss()
+                        saveAndDismiss()
                     }
-                    .disabled(title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                     .labelLarge()
                     .foregroundColor(Color.theme.primaryAction)
                 }
@@ -367,39 +286,33 @@ struct EditBookView: View {
         }
     }
     
-    private func saveBook() {
-        guard let metadata = userBook.metadata else { return }
+    private func saveAndDismiss() {
+        guard let metadata = userBook.metadata else {
+            dismiss()
+            return
+        }
 
-        // Update metadata with form values
-        metadata.title = title.trimmingCharacters(in: .whitespacesAndNewlines)
-        metadata.authors = authors.components(separatedBy: ",").map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }.filter { !$0.isEmpty }
-        metadata.publisher = publisher.nilIfEmptyAfterTrimming
-        metadata.publishedDate = publishedDate.nilIfEmptyAfterTrimming
-        metadata.language = language.nilIfEmptyAfterTrimming
-        metadata.isbn = isbn.nilIfEmptyAfterTrimming
+        // The modifications are wrapped in a single block.
+        // SwiftData automatically handles this as a single transaction.
+        
+        // Update user-editable metadata
         metadata.originalLanguage = originalLanguage.nilIfEmptyAfterTrimming
         metadata.authorNationality = authorNationality.nilIfEmptyAfterTrimming
         metadata.translator = translator.nilIfEmptyAfterTrimming
         metadata.format = selectedFormat
         
-        // Handle page count conversion
-        if let pages = Int(pageCount.trimmingCharacters(in: .whitespacesAndNewlines)) {
-            metadata.pageCount = pages
-        } else {
-            metadata.pageCount = nil
-        }
-
-        // Update user book notes
+        // Update user-specific data
         userBook.notes = personalNotes.nilIfEmptyAfterTrimming
         
-        // NEW: Update tags
         let tagsList = tags.split(separator: ",")
             .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
             .filter { !$0.isEmpty }
         userBook.tags = tagsList
         
-        // Trigger save callback
+        // No need for explicit modelContext.save() if using @Bindable and SwiftData handles the environment
+        
         onSave(userBook)
+        dismiss()
     }
 }
 
@@ -411,22 +324,44 @@ fileprivate extension String {
     }
 }
 
+
+// MARK: - Preview Wrapper
+struct EditBookViewPreviewWrapper: View {
+    @State private var sampleBook: UserBook
+    private let container: ModelContainer
+
+    init() {
+        let config = ModelConfiguration(isStoredInMemoryOnly: true)
+        let container = try! ModelContainer(for: UserBook.self, configurations: config)
+        
+        let sampleMetadata = BookMetadata(
+            googleBooksID: "preview-id",
+            title: "Sample Book",
+            authors: ["Sample Author"],
+            format: .hardcover
+        )
+        
+        let book = UserBook(
+            readingStatus: .reading,
+            tags: ["Fiction", "Philosophy"],
+            metadata: sampleMetadata
+        )
+        
+        container.mainContext.insert(book)
+        
+        _sampleBook = State(initialValue: book)
+        self.container = container
+    }
+
+    var body: some View {
+        EditBookView(userBook: sampleBook) { _ in
+            // Preview save action
+        }
+        .modelContainer(container)
+    }
+}
+
 // MARK: - Preview
 #Preview {
-    let sampleMetadata = BookMetadata(
-        googleBooksID: "preview-id",
-        title: "Sample Book",
-        authors: ["Sample Author"],
-        format: .hardcover
-    )
-    
-    let sampleBook = UserBook(
-        readingStatus: .reading,
-        tags: ["Fiction", "Philosophy"],
-        metadata: sampleMetadata
-    )
-    
-    return EditBookView(userBook: sampleBook) { _ in 
-        // Preview save action
-    }
+    EditBookViewPreviewWrapper()
 }

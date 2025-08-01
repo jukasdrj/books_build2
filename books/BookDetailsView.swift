@@ -60,7 +60,12 @@ struct BookDetailsView: View {
             Text("Are you sure you want to delete \"\(book.metadata?.title ?? "this book")\" from your library?")
         })
         .sheet(isPresented: $isEditing) {
-            EnhancedEditBookView(book: book)
+            EditBookView(userBook: book, onSave: { updatedBook in
+                // This closure is called when the edit view saves.
+                // Because `userBook` is a reference type, the changes
+                // will already be reflected. We just need to handle dismissal.
+                isEditing = false
+            })
         }
     }
     
