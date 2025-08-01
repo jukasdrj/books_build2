@@ -17,7 +17,7 @@ struct ContentView: View {
             .tag(0)
             
             NavigationStack {
-                WishlistView()
+                LibraryView(filter: .wishlist)
             }
             .tabItem {
                 Label("Wishlist", systemImage: selectedTab == 1 ? "wand.and.stars" : "wand.and.stars")
