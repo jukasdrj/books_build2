@@ -1,5 +1,6 @@
 import Foundation
 import SwiftData
+import SwiftUI
 
 @Model
 final class BookMetadata: Identifiable, @unchecked Sendable {

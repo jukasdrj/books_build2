@@ -46,7 +46,7 @@ struct SearchResultDetailView: View {
                                 .fontWeight(.medium)
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 4)
-                                .background(Color.purple.opacity(0.2))
+                                .background(SwiftUI.Color.purple.opacity(0.2))
                                 .foregroundColor(.purple)
                                 .cornerRadius(8)
                         }
@@ -139,5 +139,27 @@ struct SearchResultDetailView: View {
         
         // Dismiss this view to return to the search results
         dismiss()
+    }
+}
+
+// MARK: - DetailRow Component
+struct DetailRow: View {
+    let label: String
+    let value: String
+    
+    var body: some View {
+        HStack {
+            Text(label)
+                .font(.subheadline)
+                .foregroundColor(Theme.Color.SecondaryText)
+                .frame(width: 80, alignment: .leading)
+            
+            Text(value)
+                .font(.subheadline)
+                .foregroundColor(Theme.Color.PrimaryText)
+            
+            Spacer()
+        }
+        .padding(.vertical, 2)
     }
 }

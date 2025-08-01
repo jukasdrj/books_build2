@@ -84,7 +84,7 @@ struct BookTagsDisplaySection: View {
                 HStack {
                     Text("Tags")
                         .titleSmall()
-                        .foregroundColor(Color.theme.primaryText)
+                        .foregroundColor(SwiftUI.Color.theme.primaryText)
                     
                     Spacer()
                     
@@ -92,14 +92,14 @@ struct BookTagsDisplaySection: View {
                         showingAddTag = true
                     }
                     .labelMedium()
-                    .foregroundColor(Color.theme.primaryAction)
+                    .foregroundColor(SwiftUI.Color.theme.primaryAction)
                 }
                 
                 // Tags display
                 if book.tags.isEmpty {
                     Text("No tags added")
                         .bodySmall()
-                        .foregroundColor(Color.theme.secondaryText)
+                        .foregroundColor(SwiftUI.Color.theme.secondaryText)
                         .italic()
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.vertical, Theme.Spacing.sm)
@@ -155,17 +155,17 @@ struct TagChip: View {
         HStack(spacing: 4) {
             Text(tag)
                 .labelSmall()
-                .foregroundColor(Color.theme.primaryText)
+                .foregroundColor(SwiftUI.Color.theme.primaryText)
             
             Button(action: onRemove) {
                 Image(systemName: "xmark")
                     .font(.caption2)
-                    .foregroundColor(Color.theme.secondaryText)
+                    .foregroundColor(SwiftUI.Color.theme.secondaryText)
             }
         }
         .padding(.horizontal, Theme.Spacing.sm)
         .padding(.vertical, 4)
-        .background(Color.theme.surfaceVariant)
+        .background(SwiftUI.Color.theme.surfaceVariant)
         .cornerRadius(Theme.CornerRadius.small)
     }
 }
@@ -242,21 +242,21 @@ struct BookHeaderSection: View {
             VStack(alignment: .leading, spacing: 8) {
                 Text(book.metadata?.title ?? "Unknown Title")
                     .headlineMedium()
-                    .foregroundColor(Color.theme.primaryText)
+                    .foregroundColor(SwiftUI.Color.theme.primaryText)
                 
                 // Author name navigation using NavigationLink with value
                 if let authors = book.metadata?.authors, !authors.isEmpty {
                     NavigationLink(value: authors.first!) {
                         Text(authors.joined(separator: ", "))
                             .titleMedium()
-                            .foregroundStyle(Color.theme.primaryAction)
+                            .foregroundStyle(SwiftUI.Color.theme.primaryAction)
                             .underline()
                     }
                     .buttonStyle(.plain)
                 } else {
                     Text("Unknown Author")
                         .titleMedium()
-                        .foregroundStyle(Color.theme.secondaryText)
+                        .foregroundStyle(SwiftUI.Color.theme.secondaryText)
                 }
                 
                 if let genre = book.metadata?.genre, !genre.isEmpty {
@@ -265,8 +265,8 @@ struct BookHeaderSection: View {
                         .fontWeight(.medium)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
-                        .background(Color.theme.primaryAction.opacity(0.2))
-                        .foregroundColor(Color.theme.primaryAction)
+                        .background(SwiftUI.Color.theme.primaryAction.opacity(0.2))
+                        .foregroundColor(SwiftUI.Color.theme.primaryAction)
                         .cornerRadius(8)
                 }
                 
@@ -287,7 +287,7 @@ struct FavoriteButton: View {
         }) {
             Image(systemName: isFavorited ? "heart.fill" : "heart")
                 .font(.title2)
-                .foregroundColor(isFavorited ? Color.theme.accentHighlight : Color.theme.secondaryText)
+                .foregroundColor(isFavorited ? SwiftUI.Color.theme.accentHighlight : SwiftUI.Color.theme.secondaryText)
         }
     }
 }
@@ -309,10 +309,10 @@ struct RatingSection: View {
                     }) {
                         Image(systemName: star <= (rating ?? 0) ? "star.fill" : "star")
                             .font(.title)
-                            .foregroundColor(Color.theme.accentHighlight)
+                            .foregroundColor(SwiftUI.Color.theme.accentHighlight)
                     }
                     .scaleEffect(star == rating ? 1.25 : 1.0)
-                    .animation(Theme.Animation.bouncy, value: rating)
+                    .animation(Theme.Animation.bouncySpring, value: rating)
                 }
                 Spacer()
             }
@@ -377,155 +377,21 @@ struct NotesSection: View {
     }
 }
 
-// MARK: - Publication Details Section
+// MARK: - Publication Details Section - SIMPLIFIED
 struct PublicationDetailsSection: View {
     let book: UserBook
     
     var body: some View {
         GroupBox {
-            Grid(alignment: .leading,
-                 horizontalSpacing: Theme.Spacing.lg,
-                 verticalSpacing: Theme.Spacing.md) {
-                 
-                // Book Format
-                GridRow {
-                    Text("Format")
-                        .labelLarge()
-                        .foregroundColor(Color.theme.secondaryText)
-                    if let format = book.metadata?.format {
-                        HStack(spacing: Theme.Spacing.xs) {
-                            Image(systemName: format.icon)
-                                .font(.caption)
-                                .foregroundColor(Color.theme.primaryAction)
-                            Text(format.rawValue)
-                                .bodyMedium()
-                                .foregroundColor(Color.theme.primaryText)
-                        }
-                        .gridCellAnchor(.leading)
-                    } else {
-                        Text("Not specified")
-                            .bodyMedium()
-                            .foregroundColor(Color.theme.secondaryText.opacity(0.7))
-                            .italic()
-                            .gridCellAnchor(.leading)
-                    }
-                }
+            VStack(alignment: .leading, spacing: Theme.Spacing.md) {
+                // Basic Details
+                BasicDetailsView(book: book)
                 
-                if let genre = book.metadata?.genre, !genre.isEmpty {
-                    GridRow {
-                        Text("Genre")
-                            .labelLarge()
-                            .foregroundColor(Color.theme.secondaryText)
-                        Text(genre.joined(separator: ", "))
-                            .bodyMedium()
-                            .foregroundColor(Color.theme.primaryText)
-                            .gridCellAnchor(.leading)
-                    }
-                }
+                // Cultural Details  
+                CulturalDetailsView(book: book)
                 
-                if let language = book.metadata?.language, !language.isEmpty {
-                    GridRow {
-                        Text("Language")
-                            .labelLarge()
-                            .foregroundColor(Color.theme.secondaryText)
-                        Text(language)
-                            .bodyMedium()
-                            .foregroundColor(Color.theme.primaryText)
-                            .gridCellAnchor(.leading)
-                    }
-                }
-                
-                if let originalLanguage = book.metadata?.originalLanguage, !originalLanguage.isEmpty {
-                    GridRow {
-                        Text("Original Language")
-                            .labelLarge()
-                            .foregroundColor(Color.theme.secondaryText)
-                        Text(originalLanguage)
-                            .bodyMedium()
-                            .foregroundColor(Color.theme.primaryText)
-                            .gridCellAnchor(.leading)
-                    }
-                }
-                
-                // ALWAYS show Author Nationality - even when null - for cultural diversity tracking
-                GridRow {
-                    Text("Author Nationality")
-                        .labelLarge()
-                        .foregroundColor(Color.theme.secondaryText)
-                    
-                    if let nationality = book.metadata?.authorNationality {
-                        Text(nationality)
-                            .bodyMedium()
-                            .foregroundColor(Color.theme.primaryText)
-                            .gridCellAnchor(.leading)
-                    } else {
-                        Text("Not specified")
-                            .bodyMedium()
-                            .italic()
-                            .foregroundColor(Color.theme.secondaryText.opacity(0.7))
-                            .gridCellAnchor(.leading)
-                    }
-                }
-                
-                if let translator = book.metadata?.translator, !translator.isEmpty {
-                    GridRow {
-                        Text("Translator")
-                            .labelLarge()
-                            .foregroundColor(Color.theme.secondaryText)
-                        Text(translator)
-                            .bodyMedium()
-                            .foregroundColor(Color.theme.primaryText)
-                            .gridCellAnchor(.leading)
-                    }
-                }
-                
-                if let publisher = book.metadata?.publisher, !publisher.isEmpty {
-                    GridRow {
-                        Text("Publisher")
-                            .labelLarge()
-                            .foregroundColor(Color.theme.secondaryText)
-                        Text(publisher)
-                            .bodyMedium()
-                            .foregroundColor(Color.theme.primaryText)
-                            .gridCellAnchor(.leading)
-                    }
-                }
-                
-                if let publishedDate = book.metadata?.publishedDate, !publishedDate.isEmpty {
-                    GridRow {
-                        Text("Published")
-                            .labelLarge()
-                            .foregroundColor(Color.theme.secondaryText)
-                        Text(publishedDate)
-                            .bodyMedium()
-                            .foregroundColor(Color.theme.primaryText)
-                            .gridCellAnchor(.leading)
-                    }
-                }
-                
-                if let pageCount = book.metadata?.pageCount, pageCount > 0 {
-                    GridRow {
-                        Text("Pages")
-                            .labelLarge()
-                            .foregroundColor(Color.theme.secondaryText)
-                        Text("\(pageCount)")
-                            .bodyMedium()
-                            .foregroundColor(Color.theme.primaryText)
-                            .gridCellAnchor(.leading)
-                    }
-                }
-                
-                if let isbn = book.metadata?.isbn {
-                    GridRow {
-                        Text("ISBN")
-                            .labelLarge()
-                            .foregroundColor(Color.theme.secondaryText)
-                        Text(isbn)
-                            .bodyMedium()
-                            .foregroundColor(Color.theme.primaryText)
-                            .gridCellAnchor(.leading)
-                    }
-                }
+                // Publication Info
+                PublicationInfoView(book: book)
             }
         } label: {
             Text("Details")
@@ -534,6 +400,142 @@ struct PublicationDetailsSection: View {
     }
 }
 
+// MARK: - Broken down detail views
+struct BasicDetailsView: View {
+    let book: UserBook
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+            if let format = book.metadata?.format {
+                DetailRowView(
+                    label: "Format",
+                    value: format.rawValue,
+                    icon: format.icon
+                )
+            }
+            
+            if let genre = book.metadata?.genre, !genre.isEmpty {
+                DetailRowView(
+                    label: "Genre",
+                    value: genre.joined(separator: ", ")
+                )
+            }
+            
+            if let pageCount = book.metadata?.pageCount, pageCount > 0 {
+                DetailRowView(
+                    label: "Pages",
+                    value: "\(pageCount)"
+                )
+            }
+        }
+    }
+}
+
+struct CulturalDetailsView: View {
+    let book: UserBook
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+            if let language = book.metadata?.language, !language.isEmpty {
+                DetailRowView(
+                    label: "Language",
+                    value: language,
+                    icon: "globe"
+                )
+            }
+            
+            if let originalLanguage = book.metadata?.originalLanguage, !originalLanguage.isEmpty {
+                DetailRowView(
+                    label: "Original Language",
+                    value: originalLanguage,
+                    icon: "globe.americas"
+                )
+            }
+            
+            // Always show Author Nationality for cultural tracking
+            DetailRowView(
+                label: "Author Nationality",
+                value: book.metadata?.authorNationality ?? "Not specified",
+                icon: "flag",
+                isPlaceholder: book.metadata?.authorNationality == nil
+            )
+            
+            if let translator = book.metadata?.translator, !translator.isEmpty {
+                DetailRowView(
+                    label: "Translator",
+                    value: translator,
+                    icon: "textbook"
+                )
+            }
+        }
+    }
+}
+
+struct PublicationInfoView: View {
+    let book: UserBook
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+            if let publisher = book.metadata?.publisher, !publisher.isEmpty {
+                DetailRowView(
+                    label: "Publisher",
+                    value: publisher,
+                    icon: "building.2"
+                )
+            }
+            
+            if let publishedDate = book.metadata?.publishedDate, !publishedDate.isEmpty {
+                DetailRowView(
+                    label: "Published",
+                    value: publishedDate,
+                    icon: "calendar"
+                )
+            }
+            
+            if let isbn = book.metadata?.isbn {
+                DetailRowView(
+                    label: "ISBN",
+                    value: isbn,
+                    icon: "barcode"
+                )
+            }
+        }
+    }
+}
+
+// MARK: - Simple Detail Row View
+struct DetailRowView: View {
+    let label: String
+    let value: String
+    var icon: String? = nil
+    var isPlaceholder: Bool = false
+    
+    var body: some View {
+        HStack(alignment: .top, spacing: Theme.Spacing.sm) {
+            // Icon
+            if let icon = icon {
+                Image(systemName: icon)
+                    .font(.caption)
+                    .foregroundColor(SwiftUI.Color.theme.primaryAction)
+                    .frame(width: 16)
+            }
+            
+            // Label
+            Text(label)
+                .labelLarge()
+                .foregroundColor(SwiftUI.Color.theme.secondaryText)
+                .frame(width: 120, alignment: .leading)
+            
+            // Value
+            Text(value)
+                .bodyMedium()
+                .foregroundColor(isPlaceholder ? SwiftUI.Color.theme.secondaryText.opacity(0.7) : SwiftUI.Color.theme.primaryText)
+                .italic(isPlaceholder)
+            
+            Spacer()
+        }
+    }
+}
 
 // MARK: - Action Buttons Section
 struct ActionButtonsSection: View {

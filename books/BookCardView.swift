@@ -23,13 +23,13 @@ struct BookCardView: View {
                     width: cardWidth,
                     height: imageHeight
                 )
-                .materialCard(shadow: true)
+                .materialCard()
                 
                 // Status indicator using the new centralized badge
                 if book.readingStatus != .toRead {
                     StatusBadge(status: book.readingStatus, style: .compact)
                         .padding(4)
-                        .background(Color.black.opacity(0.3))
+                        .background(SwiftUI.Color.black.opacity(0.3))
                         .clipShape(Circle())
                         .offset(x: -Theme.Spacing.xs, y: Theme.Spacing.xs)
                 }
@@ -38,7 +38,7 @@ struct BookCardView: View {
                 if book.isFavorited {
                     Image(systemName: "heart.fill")
                         .font(.caption)
-                        .foregroundColor(Color.theme.accentHighlight)
+                        .foregroundColor(SwiftUI.Color.theme.accentHighlight)
                         .background(
                             Circle()
                                 .fill(.white)
@@ -67,7 +67,7 @@ struct BookCardView: View {
             // Title section (Fixed height)
             Text(book.metadata?.title ?? "Unknown Title")
                 .titleSmall()
-                .foregroundColor(Color.theme.primaryText)
+                .foregroundColor(SwiftUI.Color.theme.primaryText)
                 .lineLimit(2)
                 .multilineTextAlignment(.leading)
                 .frame(height: 36, alignment: .top) // Fixed height for 2 lines
@@ -77,7 +77,7 @@ struct BookCardView: View {
             // Author section (Fixed height)
             Text(book.metadata?.authors.joined(separator: ", ") ?? "Unknown Author")
                 .bodySmall()
-                .foregroundColor(Color.theme.secondaryText)
+                .foregroundColor(SwiftUI.Color.theme.secondaryText)
                 .lineLimit(1)
                 .frame(height: 16, alignment: .top) // Fixed height for 1 line
             
@@ -91,11 +91,11 @@ struct BookCardView: View {
                     HStack(spacing: Theme.Spacing.xs) {
                         Image(systemName: "globe")
                             .font(.caption2)
-                            .foregroundColor(Color.theme.accentHighlight)
+                            .foregroundColor(SwiftUI.Color.theme.accentHighlight)
                         
                         Text(originalLanguage)
                             .labelSmall()
-                            .foregroundColor(Color.theme.accentHighlight)
+                            .foregroundColor(SwiftUI.Color.theme.accentHighlight)
                     }
                     .frame(height: 16)
                     
@@ -105,7 +105,7 @@ struct BookCardView: View {
                             ForEach(1...5, id: \.self) { star in
                                 Image(systemName: star <= rating ? "star.fill" : "star")
                                     .font(.caption2)
-                                    .foregroundColor(star <= rating ? Color.theme.accentHighlight : Color.theme.secondaryText.opacity(0.3))
+                                    .foregroundColor(star <= rating ? SwiftUI.Color.theme.accentHighlight : SwiftUI.Color.theme.secondaryText.opacity(0.3))
                             }
                         }
                         .frame(height: 12)
@@ -121,7 +121,7 @@ struct BookCardView: View {
                         ForEach(1...5, id: \.self) { star in
                             Image(systemName: star <= rating ? "star.fill" : "star")
                                 .font(.caption2)
-                                .foregroundColor(star <= rating ? Color.theme.accentHighlight : Color.theme.secondaryText.opacity(0.3))
+                                .foregroundColor(star <= rating ? SwiftUI.Color.theme.accentHighlight : SwiftUI.Color.theme.secondaryText.opacity(0.3))
                         }
                     }
                     .frame(height: 16)
@@ -147,14 +147,14 @@ struct BookCardView: View {
             // Title section (Natural height)
             Text(book.metadata?.title ?? "Unknown Title")
                 .titleSmall()
-                .foregroundColor(Color.theme.primaryText)
+                .foregroundColor(SwiftUI.Color.theme.primaryText)
                 .lineLimit(2)
                 .multilineTextAlignment(.leading)
             
             // Author section
             Text(book.metadata?.authors.joined(separator: ", ") ?? "Unknown Author")
                 .bodySmall()
-                .foregroundColor(Color.theme.secondaryText)
+                .foregroundColor(SwiftUI.Color.theme.secondaryText)
                 .lineLimit(1)
             
             // Cultural information and rating with natural spacing
@@ -165,11 +165,11 @@ struct BookCardView: View {
                     HStack(spacing: Theme.Spacing.xs) {
                         Image(systemName: "globe")
                             .font(.caption2)
-                            .foregroundColor(Color.theme.accentHighlight)
+                            .foregroundColor(SwiftUI.Color.theme.accentHighlight)
                         
                         Text(originalLanguage)
                             .labelSmall()
-                            .foregroundColor(Color.theme.accentHighlight)
+                            .foregroundColor(SwiftUI.Color.theme.accentHighlight)
                     }
                 }
                 
@@ -179,7 +179,7 @@ struct BookCardView: View {
                         ForEach(1...5, id: \.self) { star in
                             Image(systemName: star <= rating ? "star.fill" : "star")
                                 .font(.caption2)
-                                .foregroundColor(star <= rating ? Color.theme.accentHighlight : Color.theme.secondaryText.opacity(0.3))
+                                .foregroundColor(star <= rating ? SwiftUI.Color.theme.accentHighlight : SwiftUI.Color.theme.secondaryText.opacity(0.3))
                         }
                     }
                 }
@@ -237,5 +237,5 @@ struct BookCardView: View {
             .foregroundColor(Theme.Color.SecondaryText)
     }
     .padding()
-    .background(Color.theme.surface)
+    .background(SwiftUI.Color.theme.surface)
 }

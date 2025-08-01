@@ -48,24 +48,24 @@ struct AppColorTheme {
     let warningContainer = Color("md3_warning_container") ?? Color(red: 0.98, green: 0.93, blue: 0.84)
     let onWarningContainer = Color("md3_on_warning_container") ?? Color(red: 0.29, green: 0.18, blue: 0.03)
     
-    // Surface Colors
-    let surface = Color("md3_surface") ?? (Color.primary.colorScheme == .dark ? Color(red: 0.06, green: 0.06, blue: 0.09) : Color(red: 0.99, green: 0.98, blue: 1.0))
-    let onSurface = Color("md3_on_surface") ?? (Color.primary.colorScheme == .dark ? Color(red: 0.90, green: 0.90, blue: 0.92) : Color(red: 0.10, green: 0.10, blue: 0.11))
-    let surfaceVariant = Color("md3_surface_variant") ?? (Color.primary.colorScheme == .dark ? Color(red: 0.20, green: 0.18, blue: 0.22) : Color(red: 0.89, green: 0.87, blue: 0.92))
-    let onSurfaceVariant = Color("md3_on_surface_variant") ?? (Color.primary.colorScheme == .dark ? Color(red: 0.79, green: 0.76, blue: 0.82) : Color(red: 0.29, green: 0.26, blue: 0.32))
+    // Surface Colors - Using adaptive system colors for proper dark mode support
+    let surface = Color("md3_surface") ?? Color(.systemBackground)
+    let onSurface = Color("md3_on_surface") ?? Color(.label)
+    let surfaceVariant = Color("md3_surface_variant") ?? Color(.secondarySystemBackground)
+    let onSurfaceVariant = Color("md3_on_surface_variant") ?? Color(.secondaryLabel)
     
-    // Inverse Colors
-    let inverseSurface = Color("md3_inverse_surface") ?? (Color.primary.colorScheme == .dark ? Color(red: 0.90, green: 0.90, blue: 0.92) : Color(red: 0.18, green: 0.18, blue: 0.20))
-    let inverseOnSurface = Color("md3_inverse_on_surface") ?? (Color.primary.colorScheme == .dark ? Color(red: 0.18, green: 0.18, blue: 0.20) : Color(red: 0.94, green: 0.94, blue: 0.96))
-    let inversePrimary = Color("md3_inverse_primary") ?? (Color.primary.colorScheme == .dark ? Color(red: 0.38, green: 0.35, blue: 0.80) : Color(red: 0.70, green: 0.68, blue: 1.0))
+    // Inverse Colors - Using adaptive system colors
+    let inverseSurface = Color("md3_inverse_surface") ?? Color(.label)
+    let inverseOnSurface = Color("md3_inverse_on_surface") ?? Color(.systemBackground)
+    let inversePrimary = Color("md3_inverse_primary") ?? Color(red: 0.70, green: 0.68, blue: 1.0)
     
-    // Outline Colors
-    let outline = Color("md3_outline") ?? (Color.primary.colorScheme == .dark ? Color(red: 0.55, green: 0.52, blue: 0.58) : Color(red: 0.46, green: 0.43, blue: 0.49))
-    let outlineVariant = Color("md3_outline_variant") ?? (Color.primary.colorScheme == .dark ? Color(red: 0.29, green: 0.26, blue: 0.32) : Color(red: 0.79, green: 0.76, blue: 0.82))
+    // Outline Colors - Using adaptive system colors
+    let outline = Color("md3_outline") ?? Color(.separator)
+    let outlineVariant = Color("md3_outline_variant") ?? Color(.opaqueSeparator)
     
-    // Background Colors
-    let background = Color("md3_background") ?? (Color.primary.colorScheme == .dark ? Color(red: 0.06, green: 0.06, blue: 0.09) : Color(red: 0.99, green: 0.98, blue: 1.0))
-    let onBackground = Color("md3_on_background") ?? (Color.primary.colorScheme == .dark ? Color(red: 0.90, green: 0.90, blue: 0.92) : Color(red: 0.10, green: 0.10, blue: 0.11))
+    // Background Colors - Using adaptive system colors
+    let background = Color("md3_background") ?? Color(.systemBackground)
+    let onBackground = Color("md3_on_background") ?? Color(.label)
     
     // MARK: - Reading Status Colors
     // Vibrant, culturally-inspired colors for reading status
@@ -98,11 +98,9 @@ struct AppColorTheme {
     
     // MARK: - Component-Specific Colors
     
-    // Card colors with elevation
+    // Card colors with elevation - Using adaptive colors
     var cardBackground: Color {
-        Color.primary.colorScheme == .dark ? 
-            Color(red: 0.11, green: 0.11, blue: 0.13) : 
-            Color.white
+        Color("md3_card_background") ?? Color(.tertiarySystemBackground)
     }
     
     var cardBorder: Color {
@@ -114,17 +112,20 @@ struct AppColorTheme {
     var secondaryAction: Color { secondary }
     var destructiveAction: Color { error }
     
-    // Text colors with hierarchy
-    var primaryText: Color { onSurface }
-    var secondaryText: Color { onSurfaceVariant }
-    var disabledText: Color { onSurface.opacity(0.38) }
+    // Text colors with hierarchy - Using adaptive colors
+    var primaryText: Color { Color(.label) }
+    var secondaryText: Color { Color(.secondaryLabel) }
+    var disabledText: Color { Color(.tertiaryLabel) }
     
-    // Interactive states
-    var pressed: Color { onSurface.opacity(0.12) }
-    var hovered: Color { onSurface.opacity(0.08) }
-    var focused: Color { onSurface.opacity(0.12) }
+    // Interactive states - Using adaptive colors
+    var pressed: Color { Color(.label).opacity(0.12) }
+    var hovered: Color { Color(.label).opacity(0.08) }
+    var focused: Color { Color(.label).opacity(0.12) }
     var selected: Color { primary.opacity(0.12) }
-    var disabled: Color { onSurface.opacity(0.12) }
+    var disabled: Color { Color(.systemFill) }
+    
+    // MARK: - Additional Helper Colors
+    var accentHighlight: Color { tertiary }
 }
 
 // MARK: - Reading Status Color Extension

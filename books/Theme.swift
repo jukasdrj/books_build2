@@ -75,12 +75,12 @@ enum Theme {
     
     // MARK: - Elevation System (Shadows)
     enum Elevation {
-        static let level0 = (color: Color.black.opacity(0), radius: CGFloat(0), x: CGFloat(0), y: CGFloat(0))
-        static let level1 = (color: Color.black.opacity(0.05), radius: CGFloat(1), x: CGFloat(0), y: CGFloat(1))
-        static let level2 = (color: Color.black.opacity(0.08), radius: CGFloat(3), x: CGFloat(0), y: CGFloat(1))
-        static let level3 = (color: Color.black.opacity(0.11), radius: CGFloat(6), x: CGFloat(0), y: CGFloat(2))
-        static let level4 = (color: Color.black.opacity(0.12), radius: CGFloat(8), x: CGFloat(0), y: CGFloat(4))
-        static let level5 = (color: Color.black.opacity(0.14), radius: CGFloat(12), x: CGFloat(0), y: CGFloat(8))
+        static let level0 = (color: SwiftUI.Color.black.opacity(0), radius: CGFloat(0), x: CGFloat(0), y: CGFloat(0))
+        static let level1 = (color: SwiftUI.Color.black.opacity(0.05), radius: CGFloat(1), x: CGFloat(0), y: CGFloat(1))
+        static let level2 = (color: SwiftUI.Color.black.opacity(0.08), radius: CGFloat(3), x: CGFloat(0), y: CGFloat(1))
+        static let level3 = (color: SwiftUI.Color.black.opacity(0.11), radius: CGFloat(6), x: CGFloat(0), y: CGFloat(2))
+        static let level4 = (color: SwiftUI.Color.black.opacity(0.12), radius: CGFloat(8), x: CGFloat(0), y: CGFloat(4))
+        static let level5 = (color: SwiftUI.Color.black.opacity(0.14), radius: CGFloat(12), x: CGFloat(0), y: CGFloat(8))
         
         // Component-specific elevations
         static let card = level1
@@ -112,6 +112,9 @@ enum Theme {
         // Page transitions
         static let pageTransition = SwiftUI.Animation.easeInOut(duration: 0.3)
         static let modalPresentation = SwiftUI.Animation.spring(response: 0.5, dampingFraction: 0.9)
+        
+        // Add smooth animation
+        static let smooth = SwiftUI.Animation.easeInOut(duration: standard)
     }
     
     // MARK: - Size System
@@ -139,7 +142,7 @@ enum Theme {
         static let profileImageSize: CGFloat = 40
     }
     
-    // MARK: - Colors
+    // MARK: - Color Aliases
     // This enum makes it easy and safe to use our custom colors from the Asset Catalog.
     // Example Usage: `Color.theme.primaryAction`
     // The actual color definitions are in `Color+Extensions.swift`.
@@ -166,102 +169,102 @@ extension View {
     // Display styles
     func displayLarge() -> some View {
         self.font(Theme.Typography.displayLarge)
-            .foregroundColor(Color.theme.primaryText)
+            .foregroundColor(SwiftUI.Color.theme.primaryText)
     }
     
     func displayMedium() -> some View {
         self.font(Theme.Typography.displayMedium)
-            .foregroundColor(Color.theme.primaryText)
+            .foregroundColor(SwiftUI.Color.theme.primaryText)
     }
     
     func displaySmall() -> some View {
         self.font(Theme.Typography.displaySmall)
-            .foregroundColor(Color.theme.primaryText)
+            .foregroundColor(SwiftUI.Color.theme.primaryText)
     }
     
     // Headline styles
     func headlineLarge() -> some View {
         self.font(Theme.Typography.headlineLarge)
-            .foregroundColor(Color.theme.primaryText)
+            .foregroundColor(SwiftUI.Color.theme.primaryText)
     }
     
     func headlineMedium() -> some View {
         self.font(Theme.Typography.headlineMedium)
-            .foregroundColor(Color.theme.primaryText)
+            .foregroundColor(SwiftUI.Color.theme.primaryText)
     }
     
     func headlineSmall() -> some View {
         self.font(Theme.Typography.headlineSmall)
-            .foregroundColor(Color.theme.primaryText)
+            .foregroundColor(SwiftUI.Color.theme.primaryText)
     }
     
     // Title styles
     func titleLarge() -> some View {
         self.font(Theme.Typography.titleLarge)
-            .foregroundColor(Color.theme.primaryText)
+            .foregroundColor(SwiftUI.Color.theme.primaryText)
     }
     
     func titleMedium() -> some View {
         self.font(Theme.Typography.titleMedium)
-            .foregroundColor(Color.theme.primaryText)
+            .foregroundColor(SwiftUI.Color.theme.primaryText)
     }
     
     func titleSmall() -> some View {
         self.font(Theme.Typography.titleSmall)
-            .foregroundColor(Color.theme.primaryText)
+            .foregroundColor(SwiftUI.Color.theme.primaryText)
     }
     
     // Body styles
     func bodyLarge() -> some View {
         self.font(Theme.Typography.bodyLarge)
-            .foregroundColor(Color.theme.primaryText)
+            .foregroundColor(SwiftUI.Color.theme.primaryText)
     }
     
     func bodyMedium() -> some View {
         self.font(Theme.Typography.bodyMedium)
-            .foregroundColor(Color.theme.primaryText)
+            .foregroundColor(SwiftUI.Color.theme.primaryText)
     }
     
     func bodySmall() -> some View {
         self.font(Theme.Typography.bodySmall)
-            .foregroundColor(Color.theme.secondaryText)
+            .foregroundColor(SwiftUI.Color.theme.secondaryText)
     }
     
     // Label styles
     func labelLarge() -> some View {
         self.font(Theme.Typography.labelLarge)
-            .foregroundColor(Color.theme.primaryText)
+            .foregroundColor(SwiftUI.Color.theme.primaryText)
     }
     
     func labelMedium() -> some View {
         self.font(Theme.Typography.labelMedium)
-            .foregroundColor(Color.theme.secondaryText)
+            .foregroundColor(SwiftUI.Color.theme.secondaryText)
     }
     
     func labelSmall() -> some View {
         self.font(Theme.Typography.labelSmall)
-            .foregroundColor(Color.theme.secondaryText)
+            .foregroundColor(SwiftUI.Color.theme.secondaryText)
     }
     
     // Reading-specific styles
     func bookTitle() -> some View {
         self.font(Theme.Typography.bookTitle)
-            .foregroundColor(Color.theme.primaryText)
+            .foregroundColor(SwiftUI.Color.theme.primaryText)
     }
     
     func authorName() -> some View {
         self.font(Theme.Typography.authorName)
-            .foregroundColor(Color.theme.secondaryText)
+            .foregroundColor(SwiftUI.Color.theme.secondaryText)
     }
     
     func readingStats() -> some View {
         self.font(Theme.Typography.readingStats)
-            .foregroundColor(Color.theme.primary)
+            .foregroundColor(SwiftUI.Color.theme.primary)
     }
     
     func culturalTag() -> some View {
         self.font(Theme.Typography.culturalTag)
-            .foregroundColor(Color.theme.onSecondaryContainer)
+            .foregroundColor(SwiftUI.Color.theme.onSecondaryContainer)
     }
 }
 
@@ -270,9 +273,9 @@ extension View {
     
     // Card styles with proper elevation
     func materialCard(
-        backgroundColor: Color = Color.theme.cardBackground,
+        backgroundColor: SwiftUI.Color = SwiftUI.Color.theme.cardBackground,
         cornerRadius: CGFloat = Theme.CornerRadius.card,
-        elevation: (color: Color, radius: CGFloat, x: CGFloat, y: CGFloat) = Theme.Elevation.card
+        elevation: (color: SwiftUI.Color, radius: CGFloat, x: CGFloat, y: CGFloat) = Theme.Elevation.card
     ) -> some View {
         self
             .background(backgroundColor)
@@ -297,21 +300,21 @@ extension View {
     // Chip style for tags and categories
     func materialChip(
         isSelected: Bool = false,
-        backgroundColor: Color? = nil
+        backgroundColor: SwiftUI.Color? = nil
     ) -> some View {
         self
             .padding(.horizontal, Theme.Spacing.md)
             .padding(.vertical, Theme.Spacing.sm)
             .background(
-                backgroundColor ?? (isSelected ? Color.theme.secondaryContainer : Color.theme.surfaceVariant)
+                backgroundColor ?? (isSelected ? SwiftUI.Color.theme.secondaryContainer : SwiftUI.Color.theme.surfaceVariant)
             )
             .foregroundColor(
-                isSelected ? Color.theme.onSecondaryContainer : Color.theme.onSurfaceVariant
+                isSelected ? SwiftUI.Color.theme.onSecondaryContainer : SwiftUI.Color.theme.onSurfaceVariant
             )
             .cornerRadius(Theme.CornerRadius.chip)
             .overlay(
                 RoundedRectangle(cornerRadius: Theme.CornerRadius.chip)
-                    .stroke(Color.theme.outline.opacity(isSelected ? 0 : 0.5), lineWidth: 0.5)
+                    .stroke(SwiftUI.Color.theme.outline.opacity(isSelected ? 0 : 0.5), lineWidth: 0.5)
             )
     }
     
@@ -340,12 +343,12 @@ extension View {
     // Floating Action Button
     func materialFAB(
         size: FABSize = .regular,
-        backgroundColor: Color = Color.theme.primaryAction
+        backgroundColor: SwiftUI.Color = SwiftUI.Color.theme.primaryAction
     ) -> some View {
         self
             .frame(width: size.width, height: size.height)
             .background(backgroundColor)
-            .foregroundColor(Color.theme.onPrimary)
+            .foregroundColor(SwiftUI.Color.theme.onPrimary)
             .cornerRadius(Theme.CornerRadius.fab)
             .shadow(
                 color: Theme.Elevation.fab.color,
@@ -357,8 +360,8 @@ extension View {
     
     // Interactive state handling
     func materialInteractive(
-        pressedColor: Color = Color.theme.pressed,
-        hoveredColor: Color = Color.theme.hovered
+        pressedColor: SwiftUI.Color = SwiftUI.Color.theme.pressed,
+        hoveredColor: SwiftUI.Color = SwiftUI.Color.theme.hovered
     ) -> some View {
         self
             .scaleEffect(1.0) // Will be animated on press
@@ -462,41 +465,41 @@ struct MaterialButtonModifier: ViewModifier {
             .animation(Theme.Animation.standardEaseInOut, value: isEnabled)
     }
     
-    private var backgroundColor: Color {
-        guard isEnabled else { return Color.theme.disabled }
+    private var backgroundColor: SwiftUI.Color {
+        guard isEnabled else { return SwiftUI.Color.theme.disabled }
         
         switch style {
         case .filled:
-            return Color.theme.primary
+            return SwiftUI.Color.theme.primary
         case .tonal:
-            return Color.theme.secondaryContainer
+            return SwiftUI.Color.theme.secondaryContainer
         case .outlined, .text:
-            return Color.clear
+            return SwiftUI.Color.clear
         case .destructive:
-            return Color.theme.error
+            return SwiftUI.Color.theme.error
         case .success:
-            return Color.theme.success
+            return SwiftUI.Color.theme.success
         }
     }
     
-    private var foregroundColor: Color {
-        guard isEnabled else { return Color.theme.disabledText }
+    private var foregroundColor: SwiftUI.Color {
+        guard isEnabled else { return SwiftUI.Color.theme.disabledText }
         
         switch style {
         case .filled:
-            return Color.theme.onPrimary
+            return SwiftUI.Color.theme.onPrimary
         case .tonal:
-            return Color.theme.onSecondaryContainer
+            return SwiftUI.Color.theme.onSecondaryContainer
         case .outlined, .text:
-            return Color.theme.primary
+            return SwiftUI.Color.theme.primary
         case .destructive:
-            return Color.theme.onError
+            return SwiftUI.Color.theme.onError
         case .success:
-            return Color.theme.onSuccess
+            return SwiftUI.Color.theme.onSuccess
         }
     }
     
-    private var borderColor: Color {
+    private var borderColor: SwiftUI.Color {
         guard isEnabled else { return SwiftUI.Color.theme.outline.opacity(0.12) }
         
         switch style {
