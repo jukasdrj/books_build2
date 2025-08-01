@@ -15,25 +15,23 @@ struct BookRowView: View {
             VStack(alignment: .leading) {
                 Text(userBook.metadata?.title ?? "Unknown Title")
                     .titleMedium()
-                    .foregroundColor(Theme.Color.PrimaryText)
                     .lineLimit(2)
                 Text(userBook.metadata?.authors.joined(separator: ", ") ?? "Unknown Author")
                     .bodyMedium()
-                    .foregroundStyle(Theme.Color.SecondaryText)
+                    .foregroundStyle(Color.theme.secondaryText)
                 
                 if userBook.readingStatus != .toRead {
-                    Text(userBook.readingStatus.rawValue)
-                        .labelSmall()
-                        .fontWeight(.medium)
-                        .padding(.vertical, 2)
-                        .padding(.horizontal, 6)
-                        .background(Theme.Color.PrimaryAction.opacity(0.2))
-                        .foregroundColor(Theme.Color.PrimaryAction)
-                        .clipShape(Capsule())
+                    StatusBadge(status: userBook.readingStatus, style: .capsule)
                         .padding(.top, 2)
                 }
             }
+            
+            Spacer()
         }
         .padding(.vertical, 4)
+        .contentShape(Rectangle())
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(userBook.metadata?.title ?? "Unknown Title") by \(userBook.metadata?.authors.joined(separator: ", ") ?? "Unknown Author")")
+        .accessibilityHint("Double tap to view book details")
     }
 }

@@ -16,38 +16,8 @@ struct BookCardView: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-            // Cover Image with Status Overlay (Always Fixed Height)
-            ZStack(alignment: .topTrailing) {
-                BookCoverImage(
-                    imageURL: book.metadata?.imageURL?.absoluteString,
-                    width: cardWidth,
-                    height: imageHeight
-                )
-                .materialCard()
-                
-                // Status indicator using the new centralized badge
-                if book.readingStatus != .toRead {
-                    StatusBadge(status: book.readingStatus, style: .compact)
-                        .padding(4)
-                        .background(SwiftUI.Color.black.opacity(0.3))
-                        .clipShape(Circle())
-                        .offset(x: -Theme.Spacing.xs, y: Theme.Spacing.xs)
-                }
-                
-                // Favorite indicator
-                if book.isFavorited {
-                    Image(systemName: "heart.fill")
-                        .font(.caption)
-                        .foregroundColor(SwiftUI.Color.theme.accentHighlight)
-                        .background(
-                            Circle()
-                                .fill(.white)
-                                .frame(width: 20, height: 20)
-                        )
-                        .offset(x: -Theme.Spacing.xs, y: Theme.Spacing.lg + 8)
-                }
-            }
-            .frame(height: imageHeight) // Ensure consistent image area height
+            // Cover Image with Status Overlay
+            coverImageWithOverlay
             
             // Book Information - Smart Layout
             if useFlexibleLayout {
@@ -58,6 +28,48 @@ struct BookCardView: View {
         }
         .frame(width: cardWidth)
         .contentShape(Rectangle()) // Makes the entire card tappable
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(accessibilityDescription)
+        .accessibilityHint("Double tap to view book details")
+    }
+    
+    // MARK: - Cover Image with Overlay
+    @ViewBuilder
+    private var coverImageWithOverlay: some View {
+        ZStack(alignment: .topTrailing) {
+            BookCoverImage(
+                imageURL: book.metadata?.imageURL?.absoluteString,
+                width: cardWidth,
+                height: imageHeight
+            )
+            .materialCard()
+            
+            // Status and favorite indicators
+            VStack(alignment: .trailing, spacing: Theme.Spacing.xs) {
+                // Status indicator
+                if book.readingStatus != .toRead {
+                    StatusBadge(status: book.readingStatus, style: .compact)
+                        .padding(Theme.Spacing.xs)
+                        .background(Color.black.opacity(0.3))
+                        .clipShape(Circle())
+                }
+                
+                // Favorite indicator
+                if book.isFavorited {
+                    Image(systemName: "heart.fill")
+                        .font(.caption)
+                        .foregroundColor(Color.theme.accentHighlight)
+                        .padding(Theme.Spacing.xs)
+                        .background(
+                            Circle()
+                                .fill(.regularMaterial)
+                                .frame(width: 24, height: 24)
+                        )
+                }
+            }
+            .padding(Theme.Spacing.xs)
+        }
+        .frame(height: imageHeight) // Ensure consistent image area height
     }
     
     // MARK: - Fixed Layout (for grid alignment)
@@ -67,75 +79,24 @@ struct BookCardView: View {
             // Title section (Fixed height)
             Text(book.metadata?.title ?? "Unknown Title")
                 .titleSmall()
-                .foregroundColor(SwiftUI.Color.theme.primaryText)
                 .lineLimit(2)
                 .multilineTextAlignment(.leading)
-                .frame(height: 36, alignment: .top) // Fixed height for 2 lines
+                .frame(height: 36, alignment: .top)
             
             Spacer(minLength: 2)
             
             // Author section (Fixed height)
             Text(book.metadata?.authors.joined(separator: ", ") ?? "Unknown Author")
                 .bodySmall()
-                .foregroundColor(SwiftUI.Color.theme.secondaryText)
+                .foregroundColor(Color.theme.secondaryText)
                 .lineLimit(1)
-                .frame(height: 16, alignment: .top) // Fixed height for 1 line
+                .frame(height: 16, alignment: .top)
             
             Spacer(minLength: 4)
             
             // Bottom section - Cultural info, rating, or spacer (Fixed height)
-            VStack(alignment: .leading, spacing: 2) {
-                // Priority 1: Cultural information
-                if let originalLanguage = book.metadata?.originalLanguage,
-                   originalLanguage != book.metadata?.language {
-                    HStack(spacing: Theme.Spacing.xs) {
-                        Image(systemName: "globe")
-                            .font(.caption2)
-                            .foregroundColor(SwiftUI.Color.theme.accentHighlight)
-                        
-                        Text(originalLanguage)
-                            .labelSmall()
-                            .foregroundColor(SwiftUI.Color.theme.accentHighlight)
-                    }
-                    .frame(height: 16)
-                    
-                    // Rating on second line if space and rated
-                    if let rating = book.rating, rating > 0 {
-                        HStack(spacing: 2) {
-                            ForEach(1...5, id: \.self) { star in
-                                Image(systemName: star <= rating ? "star.fill" : "star")
-                                    .font(.caption2)
-                                    .foregroundColor(star <= rating ? SwiftUI.Color.theme.accentHighlight : SwiftUI.Color.theme.secondaryText.opacity(0.3))
-                            }
-                        }
-                        .frame(height: 12)
-                    } else {
-                        // Spacer to maintain consistent height
-                        Spacer()
-                            .frame(height: 12)
-                    }
-                }
-                // Priority 2: Rating only (if no cultural info)
-                else if let rating = book.rating, rating > 0 {
-                    HStack(spacing: 2) {
-                        ForEach(1...5, id: \.self) { star in
-                            Image(systemName: star <= rating ? "star.fill" : "star")
-                                .font(.caption2)
-                                .foregroundColor(star <= rating ? SwiftUI.Color.theme.accentHighlight : SwiftUI.Color.theme.secondaryText.opacity(0.3))
-                        }
-                    }
-                    .frame(height: 16)
-                    
-                    Spacer()
-                        .frame(height: 12)
-                }
-                // Priority 3: Empty space (maintains consistent height)
-                else {
-                    Spacer()
-                        .frame(height: 28) // Same total height as cultural info + rating
-                }
-            }
-            .frame(height: 28, alignment: .top) // Fixed height for bottom section
+            bottomInfoSection
+                .frame(height: 28, alignment: .top)
         }
         .frame(width: cardWidth, height: textAreaHeight, alignment: .top)
     }
@@ -147,14 +108,13 @@ struct BookCardView: View {
             // Title section (Natural height)
             Text(book.metadata?.title ?? "Unknown Title")
                 .titleSmall()
-                .foregroundColor(SwiftUI.Color.theme.primaryText)
                 .lineLimit(2)
                 .multilineTextAlignment(.leading)
             
             // Author section
             Text(book.metadata?.authors.joined(separator: ", ") ?? "Unknown Author")
                 .bodySmall()
-                .foregroundColor(SwiftUI.Color.theme.secondaryText)
+                .foregroundColor(Color.theme.secondaryText)
                 .lineLimit(1)
             
             // Cultural information and rating with natural spacing
@@ -162,30 +122,82 @@ struct BookCardView: View {
                 // Cultural information
                 if let originalLanguage = book.metadata?.originalLanguage,
                    originalLanguage != book.metadata?.language {
-                    HStack(spacing: Theme.Spacing.xs) {
-                        Image(systemName: "globe")
-                            .font(.caption2)
-                            .foregroundColor(SwiftUI.Color.theme.accentHighlight)
-                        
-                        Text(originalLanguage)
-                            .labelSmall()
-                            .foregroundColor(SwiftUI.Color.theme.accentHighlight)
-                    }
+                    culturalInfoBadge(language: originalLanguage)
                 }
                 
                 // Rating stars (if rated)
                 if let rating = book.rating, rating > 0 {
-                    HStack(spacing: 2) {
-                        ForEach(1...5, id: \.self) { star in
-                            Image(systemName: star <= rating ? "star.fill" : "star")
-                                .font(.caption2)
-                                .foregroundColor(star <= rating ? SwiftUI.Color.theme.accentHighlight : SwiftUI.Color.theme.secondaryText.opacity(0.3))
-                        }
-                    }
+                    ratingStars(rating: rating)
                 }
             }
         }
         .frame(width: cardWidth, alignment: .leading)
+    }
+    
+    // MARK: - Helper Components
+    @ViewBuilder
+    private var bottomInfoSection: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            // Priority 1: Cultural information
+            if let originalLanguage = book.metadata?.originalLanguage,
+               originalLanguage != book.metadata?.language {
+                culturalInfoBadge(language: originalLanguage)
+                    .frame(height: 16)
+                
+                // Rating on second line if space and rated
+                if let rating = book.rating, rating > 0 {
+                    ratingStars(rating: rating)
+                        .frame(height: 12)
+                } else {
+                    Spacer().frame(height: 12)
+                }
+            }
+            // Priority 2: Rating only (if no cultural info)
+            else if let rating = book.rating, rating > 0 {
+                ratingStars(rating: rating)
+                    .frame(height: 16)
+                Spacer().frame(height: 12)
+            }
+            // Priority 3: Empty space (maintains consistent height)
+            else {
+                Spacer().frame(height: 28)
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private func culturalInfoBadge(language: String) -> some View {
+        HStack(spacing: Theme.Spacing.xs) {
+            Image(systemName: "globe")
+                .font(.caption2)
+                .foregroundColor(Color.theme.accentHighlight)
+            
+            Text(language)
+                .labelSmall()
+                .foregroundColor(Color.theme.accentHighlight)
+        }
+    }
+    
+    @ViewBuilder
+    private func ratingStars(rating: Int) -> some View {
+        HStack(spacing: 2) {
+            ForEach(1...5, id: \.self) { star in
+                Image(systemName: star <= rating ? "star.fill" : "star")
+                    .font(.caption2)
+                    .foregroundColor(star <= rating ? Color.theme.accentHighlight : Color.theme.secondaryText.opacity(0.3))
+            }
+        }
+    }
+    
+    // MARK: - Accessibility
+    private var accessibilityDescription: String {
+        let title = book.metadata?.title ?? "Unknown Title"
+        let author = book.metadata?.authors.joined(separator: ", ") ?? "Unknown Author"
+        let status = book.readingStatus.rawValue
+        let rating = book.rating != nil ? "\(book.rating!) star rating" : "No rating"
+        let favorite = book.isFavorited ? "Favorited" : ""
+        
+        return "\(title) by \(author). Status: \(status). \(rating). \(favorite)"
     }
 }
 
@@ -218,7 +230,7 @@ struct BookCardView: View {
         
         Text("Fixed Layout (Grid)")
             .labelSmall()
-            .foregroundColor(Theme.Color.SecondaryText)
+            .foregroundColor(Color.theme.secondaryText)
         
         Divider()
         
@@ -234,8 +246,9 @@ struct BookCardView: View {
         
         Text("Flexible Layout (Standalone)")
             .labelSmall()
-            .foregroundColor(Theme.Color.SecondaryText)
+            .foregroundColor(Color.theme.secondaryText)
     }
     .padding()
-    .background(SwiftUI.Color.theme.surface)
+    .background(Color.theme.surface)
+    .preferredColorScheme(.dark) // Test dark mode
 }

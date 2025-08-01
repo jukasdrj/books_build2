@@ -12,8 +12,8 @@ struct AppColorTheme {
     
     // MARK: - Material Design 3 Core Colors
     
-    // Primary Colors - Main brand colors
-    let primary = Color("md3_primary") ?? Color(red: 0.38, green: 0.35, blue: 0.80) // Deep purple
+    // Primary Colors - Main brand colors with proper dark mode support
+    let primary = Color("md3_primary") ?? Color(red: 0.38, green: 0.35, blue: 0.80)
     let onPrimary = Color("md3_on_primary") ?? Color.white
     let primaryContainer = Color("md3_primary_container") ?? Color(red: 0.90, green: 0.88, blue: 1.0)
     let onPrimaryContainer = Color("md3_on_primary_container") ?? Color(red: 0.13, green: 0.11, blue: 0.29)
@@ -48,34 +48,77 @@ struct AppColorTheme {
     let warningContainer = Color("md3_warning_container") ?? Color(red: 0.98, green: 0.93, blue: 0.84)
     let onWarningContainer = Color("md3_on_warning_container") ?? Color(red: 0.29, green: 0.18, blue: 0.03)
     
+    // MARK: - Adaptive Colors for Dark Mode Support
+    
     // Surface Colors - Using adaptive system colors for proper dark mode support
-    let surface = Color("md3_surface") ?? Color(.systemBackground)
-    let onSurface = Color("md3_on_surface") ?? Color(.label)
-    let surfaceVariant = Color("md3_surface_variant") ?? Color(.secondarySystemBackground)
-    let onSurfaceVariant = Color("md3_on_surface_variant") ?? Color(.secondaryLabel)
+    var surface: Color { 
+        Color(.systemBackground)
+    }
+    
+    var onSurface: Color { 
+        Color(.label)
+    }
+    
+    var surfaceVariant: Color { 
+        Color(.secondarySystemBackground)
+    }
+    
+    var onSurfaceVariant: Color { 
+        Color(.secondaryLabel)
+    }
     
     // Inverse Colors - Using adaptive system colors
-    let inverseSurface = Color("md3_inverse_surface") ?? Color(.label)
-    let inverseOnSurface = Color("md3_inverse_on_surface") ?? Color(.systemBackground)
+    var inverseSurface: Color { 
+        Color(.label)
+    }
+    
+    var inverseOnSurface: Color { 
+        Color(.systemBackground)
+    }
+    
     let inversePrimary = Color("md3_inverse_primary") ?? Color(red: 0.70, green: 0.68, blue: 1.0)
     
     // Outline Colors - Using adaptive system colors
-    let outline = Color("md3_outline") ?? Color(.separator)
-    let outlineVariant = Color("md3_outline_variant") ?? Color(.opaqueSeparator)
+    var outline: Color { 
+        Color(.separator)
+    }
+    
+    var outlineVariant: Color { 
+        Color(.opaqueSeparator)
+    }
     
     // Background Colors - Using adaptive system colors
-    let background = Color("md3_background") ?? Color(.systemBackground)
-    let onBackground = Color("md3_on_background") ?? Color(.label)
+    var background: Color { 
+        Color(.systemBackground)
+    }
     
-    // MARK: - Reading Status Colors
+    var onBackground: Color { 
+        Color(.label)
+    }
+    
+    // MARK: - Reading Status Colors with Dark Mode Support
     // Vibrant, culturally-inspired colors for reading status
-    let statusToRead = Color(red: 0.46, green: 0.43, blue: 0.49) // Neutral gray
-    let statusReading = Color(red: 0.25, green: 0.46, blue: 0.85) // Vibrant blue
-    let statusRead = Color(red: 0.15, green: 0.55, blue: 0.32) // Success green
-    let statusOnHold = Color(red: 0.85, green: 0.52, blue: 0.09) // Warning orange
-    let statusDNF = Color(red: 0.73, green: 0.11, blue: 0.14) // Error red
+    var statusToRead: Color { 
+        Color(.tertiaryLabel) 
+    }
     
-    // MARK: - Cultural Theme Colors
+    var statusReading: Color { 
+        Color(red: 0.25, green: 0.46, blue: 0.85) 
+    }
+    
+    var statusRead: Color { 
+        Color(red: 0.15, green: 0.55, blue: 0.32) 
+    }
+    
+    var statusOnHold: Color { 
+        Color(red: 0.85, green: 0.52, blue: 0.09) 
+    }
+    
+    var statusDNF: Color { 
+        Color(red: 0.73, green: 0.11, blue: 0.14) 
+    }
+    
+    // MARK: - Cultural Theme Colors with Dark Mode Considerations
     // Colors inspired by different cultures for the diversity tracking feature
     let cultureAfrica = Color(red: 0.85, green: 0.32, blue: 0.09) // Warm terracotta
     let cultureAsia = Color(red: 0.73, green: 0.11, blue: 0.32) // Deep crimson
@@ -96,11 +139,11 @@ struct AppColorTheme {
     let genreBiography = Color(red: 0.85, green: 0.52, blue: 0.09)
     let genreHistory = Color(red: 0.73, green: 0.55, blue: 0.32)
     
-    // MARK: - Component-Specific Colors
+    // MARK: - Component-Specific Colors with Dark Mode Support
     
     // Card colors with elevation - Using adaptive colors
     var cardBackground: Color {
-        Color("md3_card_background") ?? Color(.tertiarySystemBackground)
+        Color(.tertiarySystemBackground)
     }
     
     var cardBorder: Color {
@@ -117,18 +160,32 @@ struct AppColorTheme {
     var secondaryText: Color { Color(.secondaryLabel) }
     var disabledText: Color { Color(.tertiaryLabel) }
     
-    // Interactive states - Using adaptive colors
-    var pressed: Color { Color(.label).opacity(0.12) }
-    var hovered: Color { Color(.label).opacity(0.08) }
-    var focused: Color { Color(.label).opacity(0.12) }
-    var selected: Color { primary.opacity(0.12) }
-    var disabled: Color { Color(.systemFill) }
+    // Interactive states - Using adaptive colors with better contrast
+    var pressed: Color { 
+        Color(.systemFill)
+    }
+    
+    var hovered: Color { 
+        Color(.systemFill).opacity(0.5)
+    }
+    
+    var focused: Color { 
+        primary.opacity(0.12)
+    }
+    
+    var selected: Color { 
+        primary.opacity(0.12) 
+    }
+    
+    var disabled: Color { 
+        Color(.systemFill) 
+    }
     
     // MARK: - Additional Helper Colors
     var accentHighlight: Color { tertiary }
 }
 
-// MARK: - Reading Status Color Extension
+// MARK: - Reading Status Color Extension with Dark Mode Support
 extension ReadingStatus {
     var color: Color {
         switch self {

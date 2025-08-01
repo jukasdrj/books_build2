@@ -12,7 +12,7 @@ struct BookListItem: View {
     }
     
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: Theme.Spacing.md) {
             // Cover image
             BookCoverImage(
                 imageURL: book.metadata?.imageURL?.absoluteString,
@@ -20,12 +20,11 @@ struct BookListItem: View {
                 height: 70
             )
             
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
                 // Title
                 Text(book.metadata?.title ?? "Unknown Title")
                     .titleMedium()
                     .lineLimit(2)
-                    .foregroundColor(Color.theme.primaryText)
                 
                 // Author name - clickable only if callback provided
                 if let authors = book.metadata?.authors, !authors.isEmpty, let firstAuthor = authors.first, let onAuthorTap = onAuthorTap {
@@ -35,7 +34,7 @@ struct BookListItem: View {
                         Text(authors.joined(separator: ", "))
                             .bodyMedium()
                             .foregroundColor(Color.theme.primaryAction)
-                            .underline()
+                            .underline(true)
                     }
                     .buttonStyle(.plain)
                 } else {
@@ -44,7 +43,7 @@ struct BookListItem: View {
                         .foregroundColor(Color.theme.secondaryText)
                 }
                 
-                HStack {
+                HStack(spacing: Theme.Spacing.sm) {
                     StatusBadge(status: book.readingStatus, style: .capsule)
                     
                     Spacer()
@@ -54,19 +53,34 @@ struct BookListItem: View {
                             ForEach(1...5, id: \.self) { star in
                                 Image(systemName: star <= rating ? "star.fill" : "star")
                                     .font(.caption)
-                                    .foregroundColor(Color.theme.accentHighlight)
+                                    .foregroundColor(star <= rating ? Color.theme.accentHighlight : Color.theme.secondaryText.opacity(0.3))
                             }
                         }
+                        .accessibilityLabel("\(rating) out of 5 stars")
                     }
                 }
             }
+            
             Spacer()
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, Theme.Spacing.xs)
+        .contentShape(Rectangle())
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(accessibilityDescription)
+        .accessibilityHint("Double tap to view book details")
+    }
+    
+    private var accessibilityDescription: String {
+        let title = book.metadata?.title ?? "Unknown Title"
+        let author = book.metadata?.authors.joined(separator: ", ") ?? "Unknown Author"
+        let status = book.readingStatus.rawValue
+        let rating = book.rating != nil ? "\(book.rating!) star rating" : "No rating"
+        
+        return "\(title) by \(author). Status: \(status). \(rating)"
     }
 }
 
-// MARK: - Add Book View
+// MARK: - Add Book View (Enhanced)
 struct AddBookView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
@@ -86,106 +100,32 @@ struct AddBookView: View {
     @State private var authorNationality = ""
     @State private var translator = ""
     
+    // Form validation
+    private var isFormValid: Bool {
+        !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+        !authors.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+    
     var body: some View {
         NavigationStack {
             Form {
-                Section {
-                    TextField("Title", text: $title)
-                        .bodyMedium()
-                    TextField("Authors (comma separated)", text: $authors)
-                        .bodyMedium()
-                    TextField("ISBN (Optional)", text: $isbn)
-                        .bodyMedium()
-                } header: {
-                    Text("Book Details")
-                        .titleSmall()
-                }
-                
-                Section {
-                    TextField("Publisher (Optional)", text: $publisher)
-                        .bodyMedium()
-                    TextField("Published Date (Optional)", text: $publishedDate)
-                        .bodyMedium()
-                    TextField("Total Pages (Optional)", text: $pageCount)
-                        .keyboardType(.numberPad)
-                        .bodyMedium()
-                    TextField("Language (Optional)", text: $language)
-                        .bodyMedium()
-                } header: {
-                    Text("Publication Details")
-                        .titleSmall()
-                }
-                
-                Section {
-                    TextField("Original Language (Optional)", text: $originalLanguage)
-                        .bodyMedium()
-                    TextField("Author Nationality (Optional)", text: $authorNationality)
-                        .bodyMedium()
-                    TextField("Translator (Optional)", text: $translator)
-                        .bodyMedium()
-                } header: {
-                    Text("Cultural & Language Details")
-                        .titleSmall()
-                }
-                
-                Section {
-                    Picker("Status", selection: $readingStatus) {
-                        ForEach(ReadingStatus.allCases, id: \.self) { status in
-                            Text(status.rawValue)
-                                .bodyMedium()
-                                .tag(status)
-                        }
-                    }
-                    .pickerStyle(.menu)
-                    
-                    Toggle("Add to Wishlist", isOn: $addToWishlist)
-                        .bodyMedium()
-                } header: {
-                    Text("Reading Status")
-                        .titleSmall()
-                }
-                
-                Section {
-                    HStack {
-                        Text("Rating:")
-                            .bodyMedium()
-                        Spacer()
-                        HStack(spacing: 4) {
-                            ForEach(1...5, id: \.self) { star in
-                                Button(action: { personalRating = star }) {
-                                    Image(systemName: star <= personalRating ? "star.fill" : "star")
-                                        .foregroundColor(Color.theme.primaryAction)
-                                }
-                            }
-                        }
-                        Button("Clear") {
-                            personalRating = 0
-                        }
-                        .labelSmall()
-                    }
-                } header: {
-                    Text("Rating")
-                        .titleSmall()
-                }
-                
-                Section {
-                    TextField("Your thoughts about this book...", text: $personalNotes, axis: .vertical)
-                        .lineLimit(3...6)
-                        .bodyMedium()
-                    
-                    Text("Personal notes are private and separate from the book's description.")
-                        .labelSmall()
-                        .foregroundColor(Color.theme.secondaryText)
-                } header: {
-                    Text("Personal Notes")
-                        .titleSmall()
-                }
+                bookDetailsSection
+                publicationDetailsSection
+                culturalDetailsSection
+                readingStatusSection
+                ratingSection
+                personalNotesSection
             }
+            .background(Color.theme.surface)
+            .scrollContentBackground(.hidden)
             .navigationTitle("Add Book")
+            .navigationBarTitleDisplayMode(.large)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
-                        .bodyMedium()
+                    Button("Cancel") { 
+                        dismiss() 
+                    }
+                    .bodyMedium()
                 }
                 
                 ToolbarItem(placement: .confirmationAction) {
@@ -193,16 +133,228 @@ struct AddBookView: View {
                         saveBook()
                         dismiss()
                     }
-                    .disabled(title.isEmpty || authors.isEmpty)
-                    .tint(Color.theme.primaryAction)
+                    .disabled(!isFormValid)
                     .labelLarge()
+                    .foregroundColor(isFormValid ? Color.theme.primaryAction : Color.theme.disabledText)
                 }
             }
         }
     }
     
+    // MARK: - Form Sections
+    @ViewBuilder
+    private var bookDetailsSection: some View {
+        Section {
+            VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+                FormField(
+                    label: "Title",
+                    icon: "textformat",
+                    text: $title,
+                    placeholder: "Enter book title",
+                    isRequired: true
+                )
+                
+                FormField(
+                    label: "Authors",
+                    icon: "person.2",
+                    text: $authors,
+                    placeholder: "Separate multiple authors with commas",
+                    isRequired: true
+                )
+                
+                FormField(
+                    label: "ISBN",
+                    icon: "barcode",
+                    text: $isbn,
+                    placeholder: "International Standard Book Number"
+                )
+            }
+        } header: {
+            Text("Book Details")
+                .titleSmall()
+        }
+    }
+    
+    @ViewBuilder
+    private var publicationDetailsSection: some View {
+        Section {
+            VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+                FormField(
+                    label: "Publisher",
+                    icon: "building.2",
+                    text: $publisher,
+                    placeholder: "Publishing company"
+                )
+                
+                FormField(
+                    label: "Published Date",
+                    icon: "calendar",
+                    text: $publishedDate,
+                    placeholder: "Year or full date"
+                )
+                
+                FormField(
+                    label: "Total Pages",
+                    icon: "doc.text",
+                    text: $pageCount,
+                    placeholder: "Number of pages",
+                    keyboardType: .numberPad
+                )
+                
+                FormField(
+                    label: "Language",
+                    icon: "globe",
+                    text: $language,
+                    placeholder: "Language of this edition"
+                )
+            }
+        } header: {
+            Text("Publication Details")
+                .titleSmall()
+        }
+    }
+    
+    @ViewBuilder
+    private var culturalDetailsSection: some View {
+        Section {
+            VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+                FormField(
+                    label: "Original Language",
+                    icon: "globe.americas",
+                    text: $originalLanguage,
+                    placeholder: "Language originally published in"
+                )
+                
+                FormField(
+                    label: "Author Nationality",
+                    icon: "flag",
+                    text: $authorNationality,
+                    placeholder: "Author's country or nationality"
+                )
+                
+                FormField(
+                    label: "Translator",
+                    icon: "textbook",
+                    text: $translator,
+                    placeholder: "If this is a translated work"
+                )
+            }
+        } header: {
+            Text("Cultural & Language Details")
+                .titleSmall()
+        } footer: {
+            Text("Help track the cultural diversity of your reading by adding author nationality and original language information.")
+                .labelSmall()
+                .foregroundColor(Color.theme.secondaryText)
+        }
+    }
+    
+    @ViewBuilder
+    private var readingStatusSection: some View {
+        Section {
+            VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+                HStack {
+                    Image(systemName: "book.closed")
+                        .foregroundColor(Color.theme.primaryAction)
+                        .frame(width: 20)
+                    Text("Status")
+                        .labelLarge()
+                }
+                
+                Picker("Status", selection: $readingStatus) {
+                    ForEach(ReadingStatus.allCases, id: \.self) { status in
+                        Text(status.rawValue)
+                            .bodyMedium()
+                            .tag(status)
+                    }
+                }
+                .pickerStyle(.segmented)
+                
+                Toggle("Add to Wishlist", isOn: $addToWishlist)
+                    .bodyMedium()
+            }
+        } header: {
+            Text("Reading Status")
+                .titleSmall()
+        }
+    }
+    
+    @ViewBuilder
+    private var ratingSection: some View {
+        Section {
+            VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+                HStack {
+                    Image(systemName: "star")
+                        .foregroundColor(Color.theme.primaryAction)
+                        .frame(width: 20)
+                    Text("Rating")
+                        .labelLarge()
+                }
+                
+                HStack(spacing: Theme.Spacing.sm) {
+                    HStack(spacing: 4) {
+                        ForEach(1...5, id: \.self) { star in
+                            Button(action: { 
+                                personalRating = personalRating == star ? 0 : star 
+                            }) {
+                                Image(systemName: star <= personalRating ? "star.fill" : "star")
+                                    .foregroundColor(star <= personalRating ? Color.theme.accentHighlight : Color.theme.secondaryText)
+                                    .font(.title3)
+                            }
+                            .buttonStyle(.plain)
+                            .scaleEffect(star <= personalRating ? 1.1 : 1.0)
+                            .animation(Theme.Animation.gentleSpring, value: personalRating)
+                        }
+                    }
+                    
+                    Spacer()
+                    
+                    if personalRating > 0 {
+                        Button("Clear") {
+                            personalRating = 0
+                        }
+                        .labelSmall()
+                        .foregroundColor(Color.theme.secondaryText)
+                    }
+                }
+                .accessibilityElement()
+                .accessibilityLabel("Rating")
+                .accessibilityValue(personalRating > 0 ? "\(personalRating) out of 5 stars" : "No rating")
+            }
+        } header: {
+            Text("Rating")
+                .titleSmall()
+        }
+    }
+    
+    @ViewBuilder
+    private var personalNotesSection: some View {
+        Section {
+            VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+                HStack {
+                    Image(systemName: "note.text")
+                        .foregroundColor(Color.theme.primaryAction)
+                        .frame(width: 20)
+                    Text("Personal Notes")
+                        .labelLarge()
+                }
+                
+                TextField("Your thoughts about this book...", text: $personalNotes, axis: .vertical)
+                    .lineLimit(3...6)
+                    .bodyMedium()
+            }
+        } header: {
+            Text("Personal Notes")
+                .titleSmall()
+        } footer: {
+            Text("Personal notes are private and separate from the book's description.")
+                .labelSmall()
+                .foregroundColor(Color.theme.secondaryText)
+        }
+    }
+    
     private func saveBook() {
-        guard !title.isEmpty else { return }
+        guard isFormValid else { return }
         
         // Parse authors from comma-separated string
         let authorsList = authors.split(separator: ",")
@@ -214,7 +366,7 @@ struct AddBookView: View {
         // Create BookMetadata with all fields including the new ones
         let metadata = BookMetadata(
             googleBooksID: UUID().uuidString, // Generate unique ID for manually added books
-            title: title,
+            title: title.trimmingCharacters(in: .whitespacesAndNewlines),
             authors: authorsList,
             publishedDate: publishedDate.isEmpty ? nil : publishedDate,
             pageCount: pageCount.isEmpty ? nil : Int(pageCount),
@@ -250,4 +402,46 @@ struct AddBookView: View {
             print("Error saving book: \(error)")
         }
     }
+}
+
+// MARK: - Form Field Component
+struct FormField: View {
+    let label: String
+    let icon: String
+    @Binding var text: String
+    let placeholder: String
+    var keyboardType: UIKeyboardType = .default
+    var isRequired: Bool = false
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+            HStack(spacing: Theme.Spacing.xs) {
+                Image(systemName: icon)
+                    .font(.system(size: 16))
+                    .foregroundColor(Color.theme.primaryAction)
+                    .frame(width: 20)
+                
+                Text(label)
+                    .labelLarge()
+                    .foregroundColor(Color.theme.primaryText)
+                
+                if isRequired {
+                    Text("*")
+                        .foregroundColor(Color.theme.error)
+                        .labelLarge()
+                }
+            }
+            
+            TextField(placeholder, text: $text)
+                .bodyMedium()
+                .keyboardType(keyboardType)
+                .padding(.leading, 24) // Align with label text
+        }
+    }
+}
+
+#Preview {
+    AddBookView()
+        .modelContainer(for: [UserBook.self, BookMetadata.self], inMemory: true)
+        .preferredColorScheme(.dark)
 }
