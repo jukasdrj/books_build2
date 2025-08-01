@@ -56,27 +56,6 @@ struct ContentView: View {
     }
 }
 
-// TEMP WORKAROUND: If SearchView is missing/undefined, provide a local stub to allow compilation
-#if canImport(SwiftUI) && !canImport(SearchView)
-struct SearchView: View {
-    var body: some View {
-        VStack {
-            Image(systemName: "magnifyingglass")
-                .resizable()
-                .frame(width: 80, height: 80)
-                .foregroundColor(.gray)
-                .padding(.top, 100)
-            Text("Search Coming Soon")
-                .font(.title2)
-                .padding(.top, 30)
-                .foregroundColor(.secondary)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.theme.background)
-    }
-}
-#endif
-
 #Preview("Light Mode") {
     ContentView()
         .modelContainer(for: [UserBook.self, BookMetadata.self], inMemory: true)

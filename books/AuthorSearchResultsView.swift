@@ -58,19 +58,3 @@ struct AuthorSearchResultsView: View {
         }
     }
 }
-
-// If SearchResultRow is not available in this file's scope, provide a fallback to avoid compilation error.
-#if !canImport(SearchResultRow)
-fileprivate struct SearchResultRow: View {
-    let book: BookMetadata
-    var body: some View {
-        VStack(alignment: .leading) {
-            Text(book.title)
-                .font(.headline)
-            Text(book.authors.joined(separator: ", "))
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-        }
-    }
-}
-#endif
