@@ -34,7 +34,7 @@ struct StatusBadge: View {
                 .shadow(radius: 1)
         case .capsule:
             Text(status.rawValue)
-                .font(.caption)
+                .labelSmall()
                 .fontWeight(.medium)
                 .padding(.horizontal, 8)
                 .padding(.vertical, 4)
@@ -99,7 +99,7 @@ struct EnhancedEditBookView: View {
                     VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
                         HStack(spacing: Theme.Spacing.xs) {
                             Image(systemName: "doc.richtext")
-                                .font(.system(size: 16))
+                                .labelMedium()
                                 .foregroundColor(Theme.Color.PrimaryAction)
                             Text("Format")
                                 .labelLarge()
@@ -273,18 +273,25 @@ struct EnhancedEditBookView: View {
                 
                 // Personal Notes Section
                 Section {
-                    StyledTextEditor(
-                        label: "Personal Notes",
-                        text: $personalNotes,
-                        icon: "note.text",
-                        placeholder: "Your thoughts, quotes, or reflections about this book"
-                    )
+                    VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+                        HStack {
+                            Image(systemName: "note.text")
+                                .labelMedium()
+                                .foregroundColor(Theme.Color.PrimaryAction)
+                                .frame(width: 20)
+                            Text("Personal Notes")
+                                .labelLarge()
+                        }
+                        TextField("Your thoughts about this book...", text: $personalNotes, axis: .vertical)
+                            .lineLimit(3...6)
+                            .bodyMedium()
+                    }
                 } header: {
                     Text("Personal Notes")
                         .titleSmall()
                         .foregroundColor(Theme.Color.PrimaryText)
                 } footer: {
-                    Text("Your personal notes are private and separate from the book's description.")
+                    Text("Personal notes are private and separate from the book's description.")
                         .labelSmall()
                         .foregroundColor(Theme.Color.SecondaryText)
                 }

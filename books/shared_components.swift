@@ -23,7 +23,7 @@ struct BookListItem: View {
             VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
                 // Title
                 Text(book.metadata?.title ?? "Unknown Title")
-                    .titleMedium()
+                    .bookTitle()
                     .lineLimit(2)
                 
                 // Author name - clickable only if callback provided
@@ -32,14 +32,14 @@ struct BookListItem: View {
                         onAuthorTap(firstAuthor)
                     }) {
                         Text(authors.joined(separator: ", "))
-                            .bodyMedium()
+                            .authorName()
                             .foregroundColor(Color.theme.primaryAction)
                             .underline(true)
                     }
                     .buttonStyle(.plain)
                 } else {
                     Text(book.metadata?.authors.joined(separator: ", ") ?? "Unknown Author")
-                        .bodyMedium()
+                        .authorName() // Use .authorName() even for plain display
                         .foregroundColor(Color.theme.secondaryText)
                 }
                 
@@ -52,7 +52,7 @@ struct BookListItem: View {
                         HStack(spacing: 2) {
                             ForEach(1...5, id: \.self) { star in
                                 Image(systemName: star <= rating ? "star.fill" : "star")
-                                    .font(.caption)
+                                    .labelSmall()
                                     .foregroundColor(star <= rating ? Color.theme.accentHighlight : Color.theme.secondaryText.opacity(0.3))
                             }
                         }
@@ -417,7 +417,7 @@ struct FormField: View {
         VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
             HStack(spacing: Theme.Spacing.xs) {
                 Image(systemName: icon)
-                    .font(.system(size: 16))
+                    .labelMedium()
                     .foregroundColor(Color.theme.primaryAction)
                     .frame(width: 20)
                 
@@ -427,8 +427,8 @@ struct FormField: View {
                 
                 if isRequired {
                     Text("*")
-                        .foregroundColor(Color.theme.error)
                         .labelLarge()
+                        .foregroundColor(Color.theme.error)
                 }
             }
             

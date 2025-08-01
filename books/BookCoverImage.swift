@@ -203,7 +203,7 @@ struct LoadingPlaceholder: View {
             
             if height > 60 {
                 Text("Loading...")
-                    .font(.caption2)
+                    .labelSmall()
                     .foregroundColor(Color.theme.secondaryText)
             }
         }
@@ -239,7 +239,7 @@ struct ErrorPlaceholder: View {
             if showDetails {
                 VStack(spacing: 2) {
                     Text(errorMessage)
-                        .font(.caption2)
+                        .labelSmall()
                         .foregroundColor(Color.theme.secondaryText)
                         .multilineTextAlignment(.center)
                         .lineLimit(2)
@@ -247,7 +247,7 @@ struct ErrorPlaceholder: View {
                     Button("Retry") {
                         onRetry()
                     }
-                    .font(.caption2)
+                    .labelSmall()
                     .foregroundColor(Color.theme.primaryAction)
                 }
             }
@@ -278,7 +278,7 @@ struct PlaceholderBookCover: View {
             
             if height > 60 {
                 Text("No Cover")
-                    .font(.caption2)
+                    .labelSmall()
                     .foregroundColor(Color.theme.secondaryText)
             }
         }
@@ -325,7 +325,7 @@ struct PlaceholderBookCover: View {
             Spacer()
             Text("No URL")
         }
-        .font(.caption)
+        .labelSmall()
         .foregroundColor(Color.theme.secondaryText)
     }
     .padding()

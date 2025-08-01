@@ -48,7 +48,7 @@ struct ProgressIndicator: View {
     var height: CGFloat = 6
     var color: Color = .blue
     var showPercentage: Bool = false
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             GeometryReader { geometry in
@@ -90,7 +90,7 @@ struct ProgressIndicator: View {
             
             if showPercentage {
                 Text("\(Int(progress * 100))%")
-                    .font(.caption2)
+                    .labelSmall()
                     .foregroundColor(.secondary)
             }
         }
@@ -130,7 +130,7 @@ struct LoadingView: View {
             }
             
             Text(message)
-                .font(.subheadline)
+                .bodyMedium()
                 .foregroundColor(.secondary)
         }
         .onAppear {
@@ -148,20 +148,20 @@ struct ErrorView: View {
     var body: some View {
         VStack(spacing: 16) {
             Image(systemName: "exclamationmark.triangle.fill")
-                .font(.system(size: 50))
+                .labelLarge()
                 .foregroundColor(.orange)
             
             Text("Something went wrong")
-                .font(.headline)
+                .titleMedium()
             
             Text(error.localizedDescription)
-                .font(.subheadline)
+                .bodyMedium()
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal)
             
             Button("Try Again", action: retry)
-                .buttonStyle(.borderedProminent)
+                .materialButton(style: .outlined)
         }
         .padding()
         .cardStyle()
@@ -195,16 +195,16 @@ struct EmptyStateView: View {
         VStack(spacing: 24) {
             VStack(spacing: 16) {
                 Image(systemName: icon)
-                    .font(.system(size: 60))
+                    .labelLarge()
                     .foregroundColor(.gray)
                 
                 VStack(spacing: 8) {
                     Text(title)
-                        .font(.title2)
+                        .titleMedium()
                         .fontWeight(.semibold)
                     
                     Text(message)
-                        .font(.body)
+                        .bodyMedium()
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal)
@@ -213,7 +213,7 @@ struct EmptyStateView: View {
             
             if let actionTitle = actionTitle, let action = action {
                 Button(actionTitle, action: action)
-                    .buttonStyle(.borderedProminent)
+                    .materialButton(style: .filled)
             }
         }
         .frame(maxWidth: 300)

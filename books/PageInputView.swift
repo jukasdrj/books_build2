@@ -31,16 +31,20 @@ struct PageInputView: View {
                 Section("Current Progress") {
                     HStack {
                         Text("Current Page")
+                            .labelMedium()
                         Spacer()
                         TextField("0", text: $currentPageText)
                             .frame(width: 80)
+                            .bodyMedium()
                     }
                     
                     HStack {
                         Text("Total Pages")
+                            .labelMedium()
                         Spacer()
                         TextField("0", text: $totalPagesText)
                             .frame(width: 80)
+                            .bodyMedium()
                     }
                 }
                 
@@ -51,7 +55,7 @@ struct PageInputView: View {
                                 .progressViewStyle(.linear)
                             
                             Text("\(Int(Double(current) / Double(total) * 100))% complete")
-                                .font(.caption)
+                                .labelSmall()
                                 .foregroundColor(.secondary)
                         }
                     }
