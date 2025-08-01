@@ -43,26 +43,13 @@ final class UserBook: Identifiable, @unchecked Sendable {
             }
         }
     }
-    var tags: [String] {
-        didSet {
-            // Validate tags
-            if tags.count > 20 {
-                tags = Array(tags.prefix(20)) // Truncate to 20 tags
-            }
-            // Validate individual tag lengths
-            tags = tags.map { tag in
-                if tag.count > 50 {
-                    return String(tag.prefix(50))
-                }
-                return tag
-            }.filter { !$0.isEmpty }
-        }
-    }
     
-    // NEW: Add a property for storing quotes
-    var quotes: [String]?
+    // Store arrays as strings for SwiftData compatibility
+    private var tagsString: String = ""
+    private var quotesString: String = ""
+    private var readingSessionsData: String = ""
     
-    // NEW: Enhanced reading progress tracking
+    // Enhanced reading progress tracking
     var currentPage: Int = 0 {
         didSet {
             // Auto-calculate progress percentage
@@ -71,16 +58,15 @@ final class UserBook: Identifiable, @unchecked Sendable {
     }
     var readingProgress: Double = 0.0 // 0.0 to 1.0
     var estimatedFinishDate: Date?
-    var readingSessions: [ReadingSession] = []
     var totalReadingTimeMinutes: Int = 0
     var dailyReadingGoal: Int? // pages per day
     var personalRating: Double? // 0.0 to 5.0 for more granular ratings
     
-    // NEW: Cultural reading goals tracking
+    // Cultural reading goals tracking
     var contributesToCulturalGoal: Bool = false
     var culturalGoalCategory: String? // e.g., "African Literature", "Translated Works"
     
-    // NEW: Social and sharing features
+    // Social and sharing features
     var isPublic: Bool = false
     var recommendedBy: String?
     var wouldRecommend: Bool?
@@ -88,6 +74,62 @@ final class UserBook: Identifiable, @unchecked Sendable {
 
     @Relationship(deleteRule: .nullify)
     var metadata: BookMetadata?
+
+    // Computed property for tags array
+    var tags: [String] {
+        get {
+            guard !tagsString.isEmpty else { return [] }
+            return tagsString.components(separatedBy: "|||").map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }.filter { !$0.isEmpty }
+        }
+        set {
+            let validatedTags = newValue.map { tag in
+                if tag.count > 50 {
+                    return String(tag.prefix(50))
+                }
+                return tag.trimmingCharacters(in: .whitespacesAndNewlines)
+            }.filter { !$0.isEmpty }
+            
+            let limitedTags = Array(validatedTags.prefix(20)) // Limit to 20 tags
+            tagsString = limitedTags.joined(separator: "|||")
+        }
+    }
+    
+    // Computed property for quotes array
+    var quotes: [String]? {
+        get {
+            guard !quotesString.isEmpty else { return nil }
+            let quotesArray = quotesString.components(separatedBy: "†††").map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }.filter { !$0.isEmpty }
+            return quotesArray.isEmpty ? nil : quotesArray
+        }
+        set {
+            if let quotes = newValue, !quotes.isEmpty {
+                quotesString = quotes.map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }.filter { !$0.isEmpty }.joined(separator: "†††")
+            } else {
+                quotesString = ""
+            }
+        }
+    }
+    
+    // Computed property for reading sessions array
+    var readingSessions: [ReadingSession] {
+        get {
+            guard !readingSessionsData.isEmpty else { return [] }
+            guard let data = readingSessionsData.data(using: .utf8) else { return [] }
+            do {
+                return try JSONDecoder().decode([ReadingSession].self, from: data)
+            } catch {
+                return []
+            }
+        }
+        set {
+            do {
+                let data = try JSONEncoder().encode(newValue)
+                readingSessionsData = String(data: data, encoding: .utf8) ?? ""
+            } catch {
+                readingSessionsData = ""
+            }
+        }
+    }
 
     init(
         dateAdded: Date = .now,
@@ -118,9 +160,6 @@ final class UserBook: Identifiable, @unchecked Sendable {
         self.onWishlist = onWishlist
         self.rating = rating
         self.notes = notes
-        self.tags = tags
-        self.quotes = quotes
-        self.currentPage = currentPage
         self.dailyReadingGoal = dailyReadingGoal
         self.personalRating = personalRating
         self.contributesToCulturalGoal = contributesToCulturalGoal
@@ -130,6 +169,11 @@ final class UserBook: Identifiable, @unchecked Sendable {
         self.wouldRecommend = wouldRecommend
         self.discussionNotes = discussionNotes
         self.metadata = metadata
+        
+        // Set the computed properties which will update the private strings
+        self.tags = tags
+        self.quotes = quotes
+        self.readingSessions = []
         
         // Set initial dates based on status (non-auto since didSet won't trigger in init)
         if readingStatus == .reading {
@@ -143,7 +187,7 @@ final class UserBook: Identifiable, @unchecked Sendable {
         updateReadingProgress()
     }
     
-    // NEW: Enhanced progress tracking methods
+    // Enhanced progress tracking methods
     func updateReadingProgress() {
         guard let pageCount = metadata?.pageCount, pageCount > 0 else {
             readingProgress = 0.0
@@ -177,7 +221,9 @@ final class UserBook: Identifiable, @unchecked Sendable {
     
     func addReadingSession(minutes: Int, pagesRead: Int) {
         let session = ReadingSession(date: Date(), durationMinutes: minutes, pagesRead: pagesRead)
-        readingSessions.append(session)
+        var sessions = readingSessions
+        sessions.append(session)
+        readingSessions = sessions
         totalReadingTimeMinutes += minutes
         currentPage += pagesRead
     }
@@ -208,7 +254,7 @@ final class UserBook: Identifiable, @unchecked Sendable {
     }
 }
 
-// NEW: Reading session tracking
+// Reading session tracking
 struct ReadingSession: Codable, Identifiable {
     let id = UUID()
     let date: Date

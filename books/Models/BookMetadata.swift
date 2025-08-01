@@ -34,15 +34,23 @@ final class BookMetadata: Identifiable, @unchecked Sendable {
     var culturalRegion: CulturalRegion?
     var originalPublicationCountry: String?
     var translatorNationality: String?
-    var culturalThemes: [String] = []
+    
+    // Store cultural themes as a comma-separated string for SwiftData compatibility
+    private var culturalThemesString: String = ""
+    
     var indigenousAuthor: Bool = false
     var marginizedVoice: Bool = false
     
     // NEW: Enhanced reading experience tracking
     var readingDifficulty: ReadingDifficulty?
     var timeToRead: Int? // estimated minutes
-    var contentWarnings: [String] = []
-    var awards: [String] = []
+    
+    // Store content warnings as a comma-separated string for SwiftData compatibility
+    private var contentWarningsString: String = ""
+    
+    // Store awards as a comma-separated string for SwiftData compatibility
+    private var awardsString: String = ""
+    
     var series: String?
     var seriesNumber: Int?
 
@@ -74,6 +82,39 @@ final class BookMetadata: Identifiable, @unchecked Sendable {
             genreString = newValue.map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }.filter { !$0.isEmpty }.joined(separator: "|||")
         }
     }
+    
+    // Computed property for cultural themes array
+    var culturalThemes: [String] {
+        get {
+            guard !culturalThemesString.isEmpty else { return [] }
+            return culturalThemesString.components(separatedBy: "|||").map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }.filter { !$0.isEmpty }
+        }
+        set {
+            culturalThemesString = newValue.map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }.filter { !$0.isEmpty }.joined(separator: "|||")
+        }
+    }
+    
+    // Computed property for content warnings array
+    var contentWarnings: [String] {
+        get {
+            guard !contentWarningsString.isEmpty else { return [] }
+            return contentWarningsString.components(separatedBy: "|||").map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }.filter { !$0.isEmpty }
+        }
+        set {
+            contentWarningsString = newValue.map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }.filter { !$0.isEmpty }.joined(separator: "|||")
+        }
+    }
+    
+    // Computed property for awards array
+    var awards: [String] {
+        get {
+            guard !awardsString.isEmpty else { return [] }
+            return awardsString.components(separatedBy: "|||").map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }.filter { !$0.isEmpty }
+        }
+        set {
+            awardsString = newValue.map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }.filter { !$0.isEmpty }.joined(separator: "|||")
+        }
+    }
 
     init(googleBooksID: String, title: String, authors: [String] = [], publishedDate: String? = nil, pageCount: Int? = nil, bookDescription: String? = nil, imageURL: URL? = nil, language: String? = nil, previewLink: URL? = nil, infoLink: URL? = nil, publisher: String? = nil, isbn: String? = nil, genre: [String] = [], originalLanguage: String? = nil, authorNationality: String? = nil, translator: String? = nil, format: BookFormat? = nil, authorGender: AuthorGender? = nil, authorEthnicity: String? = nil, culturalRegion: CulturalRegion? = nil, originalPublicationCountry: String? = nil, translatorNationality: String? = nil, culturalThemes: [String] = [], indigenousAuthor: Bool = false, marginizedVoice: Bool = false, readingDifficulty: ReadingDifficulty? = nil, timeToRead: Int? = nil, contentWarnings: [String] = [], awards: [String] = [], series: String? = nil, seriesNumber: Int? = nil) {
         self.googleBooksID = googleBooksID
@@ -96,19 +137,19 @@ final class BookMetadata: Identifiable, @unchecked Sendable {
         self.culturalRegion = culturalRegion
         self.originalPublicationCountry = originalPublicationCountry
         self.translatorNationality = translatorNationality
-        self.culturalThemes = culturalThemes
         self.indigenousAuthor = indigenousAuthor
         self.marginizedVoice = marginizedVoice
         self.readingDifficulty = readingDifficulty
         self.timeToRead = timeToRead
-        self.contentWarnings = contentWarnings
-        self.awards = awards
         self.series = series
         self.seriesNumber = seriesNumber
         
         // Set the computed properties which will update the private strings
         self.authors = authors
         self.genre = genre
+        self.culturalThemes = culturalThemes
+        self.contentWarnings = contentWarnings
+        self.awards = awards
     }
     
     // Validation methods (non-fatal for migration safety)
