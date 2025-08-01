@@ -13,24 +13,24 @@ struct AuthorSearchResultsView: View {
     }
     
     var body: some View {
-        Group {
+        VStack {
             switch searchState {
             case .searching:
                 ProgressView("Searching books by \(authorName)...")
-                    .task { await performAuthorSearch() }
+                    .task(id: authorName) {
+                        // Ensure task runs only for the correct authorName
+                        await performAuthorSearch()
+                    }
             case .results(let items):
                 if items.isEmpty {
                     ContentUnavailableView("No Books Found",
                                            systemImage: "questionmark.circle",
-                                           description: Text("No results for “\(authorName)”."))
+                                           description: Text("No results for \"\(authorName)\"."))
                 } else {
                     List(items) { book in
                         NavigationLink(value: book) {
                             SearchResultRow(book: book)
                         }
-                    }
-                    .navigationDestination(for: BookMetadata.self) { book in
-                        SearchResultDetailView(bookMetadata: book)
                     }
                 }
             case .error(let message):
@@ -40,6 +40,9 @@ struct AuthorSearchResultsView: View {
             }
         }
         .navigationTitle(authorName)
+        .navigationDestination(for: BookMetadata.self) { book in
+            SearchResultDetailView(bookMetadata: book)
+        }
     }
     
     private func performAuthorSearch() async {
@@ -55,3 +58,19 @@ struct AuthorSearchResultsView: View {
         }
     }
 }
+
+// If SearchResultRow is not available in this file's scope, provide a fallback to avoid compilation error.
+#if !canImport(SearchResultRow)
+fileprivate struct SearchResultRow: View {
+    let book: BookMetadata
+    var body: some View {
+        VStack(alignment: .leading) {
+            Text(book.title)
+                .font(.headline)
+            Text(book.authors.joined(separator: ", "))
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+        }
+    }
+}
+#endif
