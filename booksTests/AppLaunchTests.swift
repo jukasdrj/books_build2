@@ -51,7 +51,7 @@ struct AppLaunchTests {
         let container = try ModelContainer(for: schema, configurations: [modelConfiguration])
         
         // Test that we can create a context from the container
-        let context = ModelContext(container)
+        _ = ModelContext(container)
         
         // Verify the container has the expected schema
         #expect(container.schema.entities.count == 2)
@@ -64,7 +64,7 @@ struct AppLaunchTests {
         let container = try createTestContainer()
         let contentView = await ContentView().modelContainer(container)
         
-        let hostingController = UIHostingController(rootView: contentView)
+        let hostingController = await UIHostingController(rootView: contentView)
         await #expect(hostingController.view != nil)
     }
     

@@ -163,4 +163,46 @@ final class booksUITests: XCTestCase {
         XCTAssert(hasResults || hasNoResults || hasError || isSearching, 
                  "Search should show results, no results, error, or searching state")
     }
+
+    @MainActor
+    func testDarkModeToggleAndUIVisibility() throws {
+        let app = XCUIApplication()
+        app.launch()
+
+        // 1. Verify initial UI elements are visible in Light Mode
+        let libraryButton = app.tabBars.buttons["Library"]
+        XCTAssert(libraryButton.exists, "Library tab button should exist in light mode.")
+
+        // 2. Use the device's appearance settings to toggle dark mode
+        // This is a more robust way to test dark mode than trying to find a toggle in the app UI
+        let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
+        
+        // Go to home screen
+        XCUIDevice.shared.press(.home)
+        
+        // Open Settings app
+        springboard.webViews.icons["Settings"].tap()
+        
+        // Navigate to Display & Brightness
+        let settingsTable = XCUIApplication(bundleIdentifier: "com.apple.Preferences").tables
+        settingsTable.staticTexts["Display & Brightness"].tap()
+        
+        // Tap the "Dark" appearance button
+        settingsTable.buttons["Dark"].tap()
+        
+        // 3. Relaunch the app to ensure it picks up the dark mode setting
+        app.activate()
+        
+        // Allow time for the app to relaunch and render in dark mode
+        Thread.sleep(forTimeInterval: 2)
+
+        // 4. Verify UI elements are still visible in Dark Mode
+        XCTAssert(libraryButton.exists, "Library tab button should still exist after toggling to dark mode.")
+        
+        // 5. Clean up by returning to Light Mode
+        XCUIDevice.shared.press(.home)
+        springboard.activate()
+        settingsTable.buttons["Light"].tap()
+        app.activate()
+    }
 }

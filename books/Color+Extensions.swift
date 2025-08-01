@@ -8,147 +8,108 @@ extension Color {
     static let theme = AppColorTheme()
 }
 
+// Helper to create adaptive colors for light/dark mode
+private func adaptiveColor(light: UIColor, dark: UIColor) -> Color {
+    return Color(UIColor { traitCollection in
+        traitCollection.userInterfaceStyle == .dark ? dark : light
+    })
+}
+
 struct AppColorTheme {
     
     // MARK: - Material Design 3 Core Colors
     
     // Primary Colors - Main brand colors with proper dark mode support
-    let primary = Color("md3_primary") ?? Color(red: 0.38, green: 0.35, blue: 0.80)
-    let onPrimary = Color("md3_on_primary") ?? Color.white
-    let primaryContainer = Color("md3_primary_container") ?? Color(red: 0.90, green: 0.88, blue: 1.0)
-    let onPrimaryContainer = Color("md3_on_primary_container") ?? Color(red: 0.13, green: 0.11, blue: 0.29)
+    let primary = adaptiveColor(light: UIColor(red: 0.38, green: 0.35, blue: 0.80, alpha: 1.0), dark: UIColor(red: 0.70, green: 0.68, blue: 1.0, alpha: 1.0))
+    let onPrimary = adaptiveColor(light: .white, dark: UIColor(red: 0.23, green: 0.20, blue: 0.49, alpha: 1.0))
+    let primaryContainer = adaptiveColor(light: UIColor(red: 0.90, green: 0.88, blue: 1.0, alpha: 1.0), dark: UIColor(red: 0.31, green: 0.29, blue: 0.63, alpha: 1.0))
+    let onPrimaryContainer = adaptiveColor(light: UIColor(red: 0.13, green: 0.11, blue: 0.29, alpha: 1.0), dark: UIColor(red: 0.90, green: 0.88, blue: 1.0, alpha: 1.0))
     
     // Secondary Colors - Supporting colors
-    let secondary = Color("md3_secondary") ?? Color(red: 0.38, green: 0.35, blue: 0.55)
-    let onSecondary = Color("md3_on_secondary") ?? Color.white
-    let secondaryContainer = Color("md3_secondary_container") ?? Color(red: 0.90, green: 0.88, blue: 0.96)
-    let onSecondaryContainer = Color("md3_on_secondary_container") ?? Color(red: 0.13, green: 0.11, blue: 0.23)
+    let secondary = adaptiveColor(light: UIColor(red: 0.38, green: 0.35, blue: 0.55, alpha: 1.0), dark: UIColor(red: 0.79, green: 0.76, blue: 0.92, alpha: 1.0))
+    let onSecondary = adaptiveColor(light: .white, dark: UIColor(red: 0.23, green: 0.20, blue: 0.36, alpha: 1.0))
+    let secondaryContainer = adaptiveColor(light: UIColor(red: 0.90, green: 0.88, blue: 0.96, alpha: 1.0), dark: UIColor(red: 0.31, green: 0.29, blue: 0.44, alpha: 1.0))
+    let onSecondaryContainer = adaptiveColor(light: UIColor(red: 0.13, green: 0.11, blue: 0.23, alpha: 1.0), dark: UIColor(red: 0.90, green: 0.88, blue: 0.97, alpha: 1.0))
     
     // Tertiary Colors - Accent colors
-    let tertiary = Color("md3_tertiary") ?? Color(red: 0.55, green: 0.35, blue: 0.55)
-    let onTertiary = Color("md3_on_tertiary") ?? Color.white
-    let tertiaryContainer = Color("md3_tertiary_container") ?? Color(red: 0.96, green: 0.88, blue: 0.96)
-    let onTertiaryContainer = Color("md3_on_tertiary_container") ?? Color(red: 0.23, green: 0.11, blue: 0.23)
+    let tertiary = adaptiveColor(light: UIColor(red: 0.55, green: 0.35, blue: 0.55, alpha: 1.0), dark: UIColor(red: 0.93, green: 0.74, blue: 0.93, alpha: 1.0))
+    let onTertiary = adaptiveColor(light: .white, dark: UIColor(red: 0.36, green: 0.19, blue: 0.36, alpha: 1.0))
+    let tertiaryContainer = adaptiveColor(light: UIColor(red: 0.96, green: 0.88, blue: 0.96, alpha: 1.0), dark: UIColor(red: 0.48, green: 0.27, blue: 0.48, alpha: 1.0))
+    let onTertiaryContainer = adaptiveColor(light: UIColor(red: 0.23, green: 0.11, blue: 0.23, alpha: 1.0), dark: UIColor(red: 0.96, green: 0.88, blue: 0.96, alpha: 1.0))
     
     // Error Colors
-    let error = Color("md3_error") ?? Color(red: 0.73, green: 0.11, blue: 0.14)
-    let onError = Color("md3_on_error") ?? Color.white
-    let errorContainer = Color("md3_error_container") ?? Color(red: 0.98, green: 0.85, blue: 0.85)
-    let onErrorContainer = Color("md3_on_error_container") ?? Color(red: 0.25, green: 0.05, blue: 0.06)
+    let error = adaptiveColor(light: UIColor(red: 0.73, green: 0.11, blue: 1.14, alpha: 1.0), dark: UIColor(red: 0.98, green: 0.70, blue: 0.67, alpha: 1.0))
+    let onError = adaptiveColor(light: .white, dark: UIColor(red: 0.38, green: 0.0, blue: 0.05, alpha: 1.0))
+    let errorContainer = adaptiveColor(light: UIColor(red: 0.98, green: 0.85, blue: 0.85, alpha: 1.0), dark: UIColor(red: 0.58, green: 0.06, blue: 0.09, alpha: 1.0))
+    let onErrorContainer = adaptiveColor(light: UIColor(red: 0.25, green: 0.05, blue: 0.06, alpha: 1.0), dark: UIColor(red: 0.98, green: 0.85, blue: 0.85, alpha: 1.0))
     
     // Success Colors (Custom addition for reading app)
-    let success = Color("md3_success") ?? Color(red: 0.15, green: 0.55, blue: 0.32)
-    let onSuccess = Color("md3_on_success") ?? Color.white
-    let successContainer = Color("md3_success_container") ?? Color(red: 0.85, green: 0.95, blue: 0.88)
-    let onSuccessContainer = Color("md3_on_success_container") ?? Color(red: 0.05, green: 0.20, blue: 0.11)
+    let success = adaptiveColor(light: UIColor(red: 0.15, green: 0.55, blue: 0.32, alpha: 1.0), dark: UIColor(red: 0.45, green: 0.85, blue: 0.62, alpha: 1.0))
+    let onSuccess = adaptiveColor(light: .white, dark: UIColor(red: 0.0, green: 0.22, blue: 0.11, alpha: 1.0))
+    let successContainer = adaptiveColor(light: UIColor(red: 0.85, green: 0.95, blue: 0.88, alpha: 1.0), dark: UIColor(red: 0.0, green: 0.33, blue: 0.17, alpha: 1.0))
+    let onSuccessContainer = adaptiveColor(light: UIColor(red: 0.05, green: 0.20, blue: 0.11, alpha: 1.0), dark: UIColor(red: 0.85, green: 0.95, blue: 0.88, alpha: 1.0))
     
     // Warning Colors (Custom addition)
-    let warning = Color("md3_warning") ?? Color(red: 0.85, green: 0.52, blue: 0.09)
-    let onWarning = Color("md3_on_warning") ?? Color.white
-    let warningContainer = Color("md3_warning_container") ?? Color(red: 0.98, green: 0.93, blue: 0.84)
-    let onWarningContainer = Color("md3_on_warning_container") ?? Color(red: 0.29, green: 0.18, blue: 0.03)
+    let warning = adaptiveColor(light: UIColor(red: 0.85, green: 0.52, blue: 0.09, alpha: 1.0), dark: UIColor(red: 1.0, green: 0.72, blue: 0.45, alpha: 1.0))
+    let onWarning = adaptiveColor(light: .white, dark: UIColor(red: 0.35, green: 0.21, blue: 0.0, alpha: 1.0))
+    let warningContainer = adaptiveColor(light: UIColor(red: 0.98, green: 0.93, blue: 0.84, alpha: 1.0), dark: UIColor(red: 0.5, green: 0.32, blue: 0.0, alpha: 1.0))
+    let onWarningContainer = adaptiveColor(light: UIColor(red: 0.29, green: 0.18, blue: 0.03, alpha: 1.0), dark: UIColor(red: 0.98, green: 0.93, blue: 0.84, alpha: 1.0))
     
     // MARK: - Adaptive Colors for Dark Mode Support
     
     // Surface Colors - Using adaptive system colors for proper dark mode support
-    var surface: Color { 
-        Color(.systemBackground)
-    }
-    
-    var onSurface: Color { 
-        Color(.label)
-    }
-    
-    var surfaceVariant: Color { 
-        Color(.secondarySystemBackground)
-    }
-    
-    var onSurfaceVariant: Color { 
-        Color(.secondaryLabel)
-    }
+    var surface: Color { Color(.systemBackground) }
+    var onSurface: Color { Color(.label) }
+    var surfaceVariant: Color { Color(.secondarySystemBackground) }
+    var onSurfaceVariant: Color { Color(.secondaryLabel) }
     
     // Inverse Colors - Using adaptive system colors
-    var inverseSurface: Color { 
-        Color(.label)
-    }
-    
-    var inverseOnSurface: Color { 
-        Color(.systemBackground)
-    }
-    
-    let inversePrimary = Color("md3_inverse_primary") ?? Color(red: 0.70, green: 0.68, blue: 1.0)
+    var inverseSurface: Color { Color(.label) }
+    var inverseOnSurface: Color { Color(.systemBackground) }
+    let inversePrimary = adaptiveColor(light: UIColor(red: 0.70, green: 0.68, blue: 1.0, alpha: 1.0), dark: UIColor(red: 0.38, green: 0.35, blue: 0.80, alpha: 1.0))
     
     // Outline Colors - Using adaptive system colors
-    var outline: Color { 
-        Color(.separator)
-    }
-    
-    var outlineVariant: Color { 
-        Color(.opaqueSeparator)
-    }
+    var outline: Color { Color(.separator) }
+    var outlineVariant: Color { Color(.opaqueSeparator) }
     
     // Background Colors - Using adaptive system colors
-    var background: Color { 
-        Color(.systemBackground)
-    }
-    
-    var onBackground: Color { 
-        Color(.label)
-    }
+    var background: Color { Color(.systemBackground) }
+    var onBackground: Color { Color(.label) }
     
     // MARK: - Reading Status Colors with Dark Mode Support
     // Vibrant, culturally-inspired colors for reading status
-    var statusToRead: Color { 
-        Color(.tertiaryLabel) 
-    }
-    
-    var statusReading: Color { 
-        Color(red: 0.25, green: 0.46, blue: 0.85) 
-    }
-    
-    var statusRead: Color { 
-        Color(red: 0.15, green: 0.55, blue: 0.32) 
-    }
-    
-    var statusOnHold: Color { 
-        Color(red: 0.85, green: 0.52, blue: 0.09) 
-    }
-    
-    var statusDNF: Color { 
-        Color(red: 0.73, green: 0.11, blue: 0.14) 
-    }
+    var statusToRead: Color { Color(.tertiaryLabel) }
+    var statusReading: Color { adaptiveColor(light: UIColor(red: 0.25, green: 0.46, blue: 0.85, alpha: 1.0), dark: UIColor(red: 0.65, green: 0.76, blue: 1.0, alpha: 1.0)) }
+    var statusRead: Color { success }
+    var statusOnHold: Color { warning }
+    var statusDNF: Color { error }
     
     // MARK: - Cultural Theme Colors with Dark Mode Considerations
     // Colors inspired by different cultures for the diversity tracking feature
-    let cultureAfrica = Color(red: 0.85, green: 0.32, blue: 0.09) // Warm terracotta
-    let cultureAsia = Color(red: 0.73, green: 0.11, blue: 0.32) // Deep crimson
-    let cultureEurope = Color(red: 0.25, green: 0.46, blue: 0.85) // Royal blue
-    let cultureAmericas = Color(red: 0.15, green: 0.55, blue: 0.32) // Forest green
-    let cultureOceania = Color(red: 0.38, green: 0.70, blue: 0.85) // Ocean blue
-    let cultureMiddleEast = Color(red: 0.55, green: 0.35, blue: 0.85) // Rich purple
-    let cultureIndigenous = Color(red: 0.85, green: 0.65, blue: 0.13) // Warm gold
+    let cultureAfrica = adaptiveColor(light: UIColor(red: 0.85, green: 0.32, blue: 0.09, alpha: 1.0), dark: UIColor(red: 1.0, green: 0.55, blue: 0.40, alpha: 1.0)) // Warm terracotta
+    let cultureAsia = adaptiveColor(light: UIColor(red: 0.73, green: 0.11, blue: 0.32, alpha: 1.0), dark: UIColor(red: 1.0, green: 0.60, blue: 0.65, alpha: 1.0)) // Deep crimson
+    let cultureEurope = adaptiveColor(light: UIColor(red: 0.25, green: 0.46, blue: 0.85, alpha: 1.0), dark: UIColor(red: 0.65, green: 0.76, blue: 1.0, alpha: 1.0)) // Royal blue
+    let cultureAmericas = adaptiveColor(light: UIColor(red: 0.15, green: 0.55, blue: 0.32, alpha: 1.0), dark: UIColor(red: 0.45, green: 0.85, blue: 0.62, alpha: 1.0)) // Forest green
+    let cultureOceania = adaptiveColor(light: UIColor(red: 0.38, green: 0.70, blue: 0.85, alpha: 1.0), dark: UIColor(red: 0.58, green: 0.90, blue: 1.0, alpha: 1.0)) // Ocean blue
+    let cultureMiddleEast = adaptiveColor(light: UIColor(red: 0.55, green: 0.35, blue: 0.85, alpha: 1.0), dark: UIColor(red: 0.85, green: 0.65, blue: 1.0, alpha: 1.0)) // Rich purple
+    let cultureIndigenous = adaptiveColor(light: UIColor(red: 0.85, green: 0.65, blue: 0.13, alpha: 1.0), dark: UIColor(red: 1.0, green: 0.85, blue: 0.43, alpha: 1.0)) // Warm gold
     
     // MARK: - Genre Colors
     // Distinct colors for different book genres
-    let genreFiction = Color(red: 0.55, green: 0.35, blue: 0.85)
-    let genreNonfiction = Color(red: 0.15, green: 0.55, blue: 0.32)
-    let genreMystery = Color(red: 0.29, green: 0.26, blue: 0.32)
-    let genreRomance = Color(red: 0.85, green: 0.32, blue: 0.46)
-    let genreSciFi = Color(red: 0.25, green: 0.46, blue: 0.85)
-    let genreFantasy = Color(red: 0.55, green: 0.32, blue: 0.85)
-    let genreBiography = Color(red: 0.85, green: 0.52, blue: 0.09)
-    let genreHistory = Color(red: 0.73, green: 0.55, blue: 0.32)
+    let genreFiction = adaptiveColor(light: UIColor(red: 0.55, green: 0.35, blue: 0.85, alpha: 1.0), dark: UIColor(red: 0.85, green: 0.65, blue: 1.0, alpha: 1.0))
+    let genreNonfiction = adaptiveColor(light: UIColor(red: 0.15, green: 0.55, blue: 0.32, alpha: 1.0), dark: UIColor(red: 0.45, green: 0.85, blue: 0.62, alpha: 1.0))
+    let genreMystery = adaptiveColor(light: UIColor(red: 0.29, green: 0.26, blue: 0.32, alpha: 1.0), dark: UIColor(red: 0.89, green: 0.86, blue: 0.92, alpha: 1.0))
+    let genreRomance = adaptiveColor(light: UIColor(red: 0.85, green: 0.32, blue: 0.46, alpha: 1.0), dark: UIColor(red: 1.0, green: 0.60, blue: 0.70, alpha: 1.0))
+    let genreSciFi = adaptiveColor(light: UIColor(red: 0.25, green: 0.46, blue: 0.85, alpha: 1.0), dark: UIColor(red: 0.65, green: 0.76, blue: 1.0, alpha: 1.0))
+    let genreFantasy = adaptiveColor(light: UIColor(red: 0.55, green: 0.32, blue: 0.85, alpha: 1.0), dark: UIColor(red: 0.85, green: 0.62, blue: 1.0, alpha: 1.0))
+    let genreBiography = adaptiveColor(light: UIColor(red: 0.85, green: 0.52, blue: 0.09, alpha: 1.0), dark: UIColor(red: 1.0, green: 0.72, blue: 0.45, alpha: 1.0))
+    let genreHistory = adaptiveColor(light: UIColor(red: 0.73, green: 0.55, blue: 0.32, alpha: 1.0), dark: UIColor(red: 1.0, green: 0.80, blue: 0.60, alpha: 1.0))
     
     // MARK: - Component-Specific Colors with Dark Mode Support
     
     // Card colors with elevation - Using adaptive colors
-    var cardBackground: Color {
-        Color(.tertiarySystemBackground)
-    }
-    
-    var cardBorder: Color {
-        outlineVariant.opacity(0.5)
-    }
+    var cardBackground: Color { Color(.secondarySystemBackground) }
+    var cardBorder: Color { outlineVariant.opacity(0.5) }
     
     // Action colors
     var primaryAction: Color { primary }
@@ -161,25 +122,11 @@ struct AppColorTheme {
     var disabledText: Color { Color(.tertiaryLabel) }
     
     // Interactive states - Using adaptive colors with better contrast
-    var pressed: Color { 
-        Color(.systemFill)
-    }
-    
-    var hovered: Color { 
-        Color(.systemFill).opacity(0.5)
-    }
-    
-    var focused: Color { 
-        primary.opacity(0.12)
-    }
-    
-    var selected: Color { 
-        primary.opacity(0.12) 
-    }
-    
-    var disabled: Color { 
-        Color(.systemFill) 
-    }
+    var pressed: Color { Color(.systemFill) }
+    var hovered: Color { Color(.systemFill).opacity(0.5) }
+    var focused: Color { primary.opacity(0.12) }
+    var selected: Color { primary.opacity(0.12) }
+    var disabled: Color { Color(.systemFill) }
     
     // MARK: - Additional Helper Colors
     var accentHighlight: Color { tertiary }
@@ -205,9 +152,9 @@ extension ReadingStatus {
     var containerColor: Color {
         switch self {
         case .toRead:
-            return Color.theme.statusToRead.opacity(0.12)
+            return Color.theme.onSurface.opacity(0.08)
         case .reading:
-            return Color.theme.statusReading.opacity(0.12)
+            return Color.theme.statusReading.opacity(0.15)
         case .read:
             return Color.theme.successContainer
         case .onHold:
@@ -220,7 +167,7 @@ extension ReadingStatus {
     var textColor: Color {
         switch self {
         case .toRead:
-            return Color.theme.statusToRead
+            return Color.theme.secondaryText
         case .reading:
             return Color.theme.statusReading
         case .read:

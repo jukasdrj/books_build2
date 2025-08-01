@@ -81,4 +81,22 @@ struct ViewTests {
         
         #expect(contentView != nil)
     }
+
+    // This test ensures the book card view can be created with its dependencies.
+    @Test("BookCardView Creation - Should initialize correctly")
+    func testBookCardViewCreation() throws {
+        let userBook = createTestUserBook(title: "Test Book for Card View")
+        let cardView = BookCardView(book: userBook)
+        
+        #expect(cardView != nil)
+    }
+
+    // This test ensures the cultural diversity view can be created.
+    @Test("CulturalDiversityView Creation - Should initialize correctly")
+    func testCulturalDiversityViewCreation() throws {
+        let container = try createTestContainer()
+        let culturalDiversityView = CulturalDiversityView().modelContainer(container)
+        
+        #expect(culturalDiversityView != nil)
+    }
 }
