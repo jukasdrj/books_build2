@@ -120,8 +120,17 @@ The Books Reading Tracker project is organized into several main directories wit
 #### **SearchView.swift**
 - **Purpose**: Google Books API integration and book discovery
 - **Responsibility**: Search external book database and add books to personal library
-- **Key Features**: Real-time search, book preview, cultural metadata enhancement, barcode scanning
+- **Key Features**: 
+  - Comprehensive search interface with Material Design 3 styling
+  - Real-time search with responsive UI and proper loading states
+  - Enhanced SearchResultRow component with book covers and metadata
+  - User-friendly error handling for network issues
+  - Full dark mode support with adaptive colors
+  - Accessibility compliance with VoiceOver support
+  - Integration with BookSearchService for API calls
 - **API Integration**: Google Books API with proper error handling and retry logic
+- **Components**: SearchResultRow for displaying search results
+- **Navigation**: Integrates with SearchResultDetailView for book details
 
 #### **StatsView.swift**
 - **Purpose**: Reading analytics and progress visualization
