@@ -74,7 +74,7 @@ struct BookSearchServiceTests {
         #expect(metadata.authors == ["Test Author"])
         #expect(metadata.googleBooksID == "test123")
         #expect(metadata.isbn == "1234567890123")
-        #expect(metadata.genre?.contains("Technology") == true)
+        #expect(metadata.genre.contains("Technology") == true)
     }
     
     @Test("BookMetadata Creation - Should handle missing optional fields")

@@ -321,186 +321,271 @@ struct ProgressUpdateView: View {
     }
 }
 
-// MARK: - Enhanced Edit Book View
+// MARK: - Enhanced Edit Book View - UPDATED with Stylized Field Labels
 struct EnhancedEditBookView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     
     @Bindable var book: UserBook
     
+    // State properties for UI
     @State private var title: String = ""
-    @State private var authors: [String] = []
-    @State private var authorText: String = ""
-    @State private var publisher: String = ""
-    @State private var publishedDate: String = ""
-    @State private var pageCount: Int = 0
-    @State private var bookDescription: String = ""
+    @State private var authors: String = ""
     @State private var isbn: String = ""
+    @State private var personalNotes: String = ""
+    @State private var pageCount: String = ""
+    @State private var publisher: String = ""
+    @State private var language: String = ""
+    @State private var publishedDate: String = ""
+    @State private var originalLanguage: String = ""
+    @State private var authorNationality: String = ""
+    @State private var translator: String = ""
+    @State private var selectedFormat: BookFormat?
+    @State private var bookDescription: String = ""
     @State private var categories: [String] = []
     @State private var newCategory: String = ""
     
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: 24) {
-                    VStack(spacing: 8) {
-                        Image(systemName: "square.and.pencil")
-                            .font(.largeTitle)
-                            .foregroundStyle(.blue)
-                        
-                        Text("Edit Book Details")
-                            .font(.title2)
-                            .fontWeight(.bold)
-                    }
+            Form {
+                // Basic Information Section
+                Section {
+                    StyledTextField(
+                        label: "Title",
+                        text: $title,
+                        icon: "textformat",
+                        placeholder: "Enter book title"
+                    )
                     
-                    GroupBox("Basic Information") {
-                        VStack(spacing: 16) {
-                            VStack(alignment: .leading, spacing: 8) {
-                                Text("Title")
-                                    .font(.subheadline)
-                                    .fontWeight(.medium)
-                                TextField("Book title", text: $title)
-                                    .textFieldStyle(.roundedBorder)
-                            }
-                            
-                            VStack(alignment: .leading, spacing: 8) {
-                                Text("Authors")
-                                    .font(.subheadline)
-                                    .fontWeight(.medium)
-                                TextField("Author names (comma separated)", text: $authorText)
-                                    .textFieldStyle(.roundedBorder)
-                                    .onChange(of: authorText) { _, newValue in
-                                        authors = newValue.split(separator: ",")
-                                            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-                                            .filter { !$0.isEmpty }
-                                    }
-                            }
-                            
-                            HStack {
-                                VStack(alignment: .leading, spacing: 8) {
-                                    Text("Pages")
-                                        .font(.subheadline)
-                                        .fontWeight(.medium)
-                                    TextField("0", value: $pageCount, format: .number)
-                                        .textFieldStyle(.roundedBorder)
-                                        .keyboardType(.numberPad)
-                                }
-                                
-                                VStack(alignment: .leading, spacing: 8) {
-                                    Text("Published")
-                                        .font(.subheadline)
-                                        .fontWeight(.medium)
-                                    TextField("Year", text: $publishedDate)
-                                        .textFieldStyle(.roundedBorder)
-                                        .keyboardType(.numberPad)
-                                }
-                            }
-                        }
-                    }
-                    
-                    GroupBox("Publication Details") {
-                        VStack(spacing: 16) {
-                            VStack(alignment: .leading, spacing: 8) {
-                                Text("Publisher")
-                                    .font(.subheadline)
-                                    .fontWeight(.medium)
-                                TextField("Publisher name", text: $publisher)
-                                    .textFieldStyle(.roundedBorder)
-                            }
-                            
-                            VStack(alignment: .leading, spacing: 8) {
-                                Text("ISBN")
-                                    .font(.subheadline)
-                                    .fontWeight(.medium)
-                                TextField("ISBN number", text: $isbn)
-                                    .textFieldStyle(.roundedBorder)
-                                    .keyboardType(.numberPad)
-                            }
-                        }
-                    }
-                    
-                    GroupBox("Categories") {
-                        VStack(spacing: 12) {
-                            HStack {
-                                TextField("Add category", text: $newCategory)
-                                    .textFieldStyle(.roundedBorder)
-                                    .onSubmit(addCategory)
-                                
-                                Button("Add", action: addCategory)
-                                    .buttonStyle(.borderedProminent)
-                                    .controlSize(.small)
-                                    .disabled(newCategory.isEmpty)
-                            }
-                            
-                            if !categories.isEmpty {
-                                LazyVGrid(columns: [GridItem(.adaptive(minimum: 100))], spacing: 8) {
-                                    ForEach(categories, id: \.self) { category in
-                                        HStack(spacing: 4) {
-                                            Text(category)
-                                                .font(.caption)
-                                            
-                                            Button(action: {
-                                                categories.removeAll { $0 == category }
-                                            }) {
-                                                Image(systemName: "xmark.circle.fill")
-                                                    .font(.caption)
-                                            }
-                                        }
-                                        .padding(.horizontal, 8)
-                                        .padding(.vertical, 4)
-                                        .background(Color.blue.opacity(0.1))
-                                        .cornerRadius(8)
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    
-                    GroupBox("Description") {
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Book Description")
-                                .font(.subheadline)
-                                .fontWeight(.medium)
-                            
-                            TextField("Enter book description...", text: $bookDescription, axis: .vertical)
-                                .textFieldStyle(.roundedBorder)
-                                .lineLimit(3...6)
-                        }
-                    }
-                    
-                    HStack(spacing: 16) {
-                        Button("Cancel") {
-                            dismiss()
-                        }
-                        .buttonStyle(.bordered)
-                        .controlSize(.large)
-                        
-                        Button("Save Changes") {
-                            saveChanges()
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .controlSize(.large)
-                        .disabled(title.isEmpty || authors.isEmpty)
-                    }
-                    .padding(.top)
-                }
-                .padding()
-            }
-            .navigationTitle("Edit Book")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
+                    StyledTextField(
+                        label: "Authors", 
+                        text: $authors,
+                        icon: "person.2",
+                        placeholder: "Separate multiple authors with commas"
+                    )
+                } header: {
+                    Text("Book Information")
+                        .titleSmall()
+                        .foregroundColor(Theme.Color.PrimaryText)
                 }
                 
-                ToolbarItem(placement: .topBarTrailing) {
+                // Format & Publication Section
+                Section {
+                    // Book Format Picker
+                    VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+                        HStack(spacing: Theme.Spacing.xs) {
+                            Image(systemName: "doc.richtext")
+                                .font(.system(size: 16))
+                                .foregroundColor(Theme.Color.PrimaryAction)
+                            Text("Format")
+                                .labelLarge()
+                                .foregroundColor(Theme.Color.PrimaryText)
+                        }
+                        
+                        LazyVGrid(columns: [
+                            GridItem(.flexible()),
+                            GridItem(.flexible()),
+                            GridItem(.flexible())
+                        ], spacing: Theme.Spacing.sm) {
+                            ForEach(BookFormat.allCases) { format in
+                                Button(action: {
+                                    selectedFormat = selectedFormat == format ? nil : format
+                                }) {
+                                    VStack(spacing: 4) {
+                                        Image(systemName: format.icon)
+                                            .font(.system(size: 20))
+                                            .foregroundColor(selectedFormat == format ? .white : Theme.Color.PrimaryAction)
+                                        
+                                        Text(format.rawValue)
+                                            .labelSmall()
+                                            .foregroundColor(selectedFormat == format ? .white : Theme.Color.PrimaryText)
+                                    }
+                                    .frame(height: 60)
+                                    .frame(maxWidth: .infinity)
+                                    .background(selectedFormat == format ? Theme.Color.PrimaryAction : Theme.Color.CardBackground)
+                                    .cornerRadius(Theme.CornerRadius.medium)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: Theme.CornerRadius.medium)
+                                            .stroke(selectedFormat == format ? Theme.Color.PrimaryAction : Theme.Color.Outline, lineWidth: 1)
+                                    )
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                    }
+                    
+                    StyledTextField(
+                        label: "Publisher",
+                        text: $publisher,
+                        icon: "building.2",
+                        placeholder: "Publishing company"
+                    )
+                    
+                    StyledTextField(
+                        label: "Published Date",
+                        text: $publishedDate,
+                        icon: "calendar",
+                        placeholder: "Year or full date"
+                    )
+                    
+                    StyledTextField(
+                        label: "Total Pages",
+                        text: $pageCount,
+                        icon: "doc.text",
+                        placeholder: "Number of pages",
+                        keyboardType: .numberPad
+                    )
+                    
+                    StyledTextField(
+                        label: "ISBN",
+                        text: $isbn,
+                        icon: "barcode",
+                        placeholder: "International Standard Book Number"
+                    )
+                } header: {
+                    Text("Format & Publication")
+                        .titleSmall()
+                        .foregroundColor(Theme.Color.PrimaryText)
+                }
+                
+                // Cultural & Language Section
+                Section {
+                    StyledTextField(
+                        label: "Language",
+                        text: $language,
+                        icon: "globe",
+                        placeholder: "Language of this edition"
+                    )
+                    
+                    StyledTextField(
+                        label: "Original Language",
+                        text: $originalLanguage,
+                        icon: "globe.americas",
+                        placeholder: "Language originally published in"
+                    )
+                    
+                    StyledTextField(
+                        label: "Author Nationality",
+                        text: $authorNationality,
+                        icon: "flag",
+                        placeholder: "Author's country or nationality"
+                    )
+                    
+                    StyledTextField(
+                        label: "Translator",
+                        text: $translator,
+                        icon: "textbook",
+                        placeholder: "If this is a translated work"
+                    )
+                } header: {
+                    Text("Cultural & Language Details")
+                        .titleSmall()
+                        .foregroundColor(Theme.Color.PrimaryText)
+                } footer: {
+                    Text("Help track the cultural diversity of your reading by adding author nationality and original language information.")
+                        .labelSmall()
+                        .foregroundColor(Theme.Color.SecondaryText)
+                }
+                
+                // Categories Section
+                Section {
+                    VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+                        HStack {
+                            StyledTextField(
+                                label: "Add Category",
+                                text: $newCategory,
+                                icon: "tag",
+                                placeholder: "Genre, topic, or theme",
+                                onSubmit: addCategory
+                            )
+                            
+                            Button("Add", action: addCategory)
+                                .materialButton(style: .tonal, size: .small)
+                                .disabled(newCategory.isEmpty)
+                        }
+                        
+                        if !categories.isEmpty {
+                            LazyVGrid(columns: [GridItem(.adaptive(minimum: 100))], spacing: 8) {
+                                ForEach(categories, id: \.self) { category in
+                                    HStack(spacing: 4) {
+                                        Text(category)
+                                            .labelSmall()
+                                        
+                                        Button(action: {
+                                            categories.removeAll { $0 == category }
+                                        }) {
+                                            Image(systemName: "xmark.circle.fill")
+                                                .font(.caption)
+                                        }
+                                    }
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 4)
+                                    .background(Theme.Color.PrimaryAction.opacity(0.1))
+                                    .foregroundColor(Theme.Color.PrimaryAction)
+                                    .cornerRadius(8)
+                                }
+                            }
+                        }
+                    }
+                } header: {
+                    Text("Categories")
+                        .titleSmall()
+                        .foregroundColor(Theme.Color.PrimaryText)
+                }
+                
+                // Description Section
+                Section {
+                    StyledTextEditor(
+                        label: "Description",
+                        text: $bookDescription,
+                        icon: "text.alignleft",
+                        placeholder: "Book summary or description"
+                    )
+                } header: {
+                    Text("Description")
+                        .titleSmall()
+                        .foregroundColor(Theme.Color.PrimaryText)
+                }
+                
+                // Personal Notes Section
+                Section {
+                    StyledTextEditor(
+                        label: "Personal Notes",
+                        text: $personalNotes,
+                        icon: "note.text",
+                        placeholder: "Your thoughts, quotes, or reflections about this book"
+                    )
+                } header: {
+                    Text("Personal Notes")
+                        .titleSmall()
+                        .foregroundColor(Theme.Color.PrimaryText)
+                } footer: {
+                    Text("Your personal notes are private and separate from the book's description.")
+                        .labelSmall()
+                        .foregroundColor(Theme.Color.SecondaryText)
+                }
+            }
+            .background(Theme.Color.Surface)
+            .scrollContentBackground(.hidden)
+            .navigationTitle("Edit Book Details")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { 
+                        dismiss() 
+                    }
+                    .bodyMedium()
+                    .foregroundColor(Theme.Color.SecondaryText)
+                }
+                
+                ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
                         saveChanges()
+                        dismiss()
                     }
-                    .disabled(title.isEmpty || authors.isEmpty)
-                    .fontWeight(.semibold)
+                    .disabled(title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    .labelLarge()
+                    .foregroundColor(Theme.Color.PrimaryAction)
                 }
             }
         }
@@ -520,52 +605,145 @@ struct EnhancedEditBookView: View {
     private func loadBookData() {
         if let metadata = book.metadata {
             title = metadata.title
-            authors = metadata.authors
-            authorText = metadata.authors.joined(separator: ", ")
+            authors = metadata.authors.joined(separator: ", ")
             publisher = metadata.publisher ?? ""
             publishedDate = metadata.publishedDate ?? ""
-            pageCount = metadata.pageCount ?? 0
+            pageCount = metadata.pageCount != nil ? "\(metadata.pageCount!)" : ""
             bookDescription = metadata.bookDescription ?? ""
             isbn = metadata.isbn ?? ""
-            categories = metadata.genre ?? [] // Use genre now
+            categories = metadata.genre
+            language = metadata.language ?? ""
+            originalLanguage = metadata.originalLanguage ?? ""
+            authorNationality = metadata.authorNationality ?? ""
+            translator = metadata.translator ?? ""
+            selectedFormat = metadata.format
         }
+        personalNotes = book.notes ?? ""
     }
     
     private func saveChanges() {
-        guard !title.isEmpty, !authors.isEmpty else { return }
+        guard !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
         
         if let existingMetadata = book.metadata {
-            existingMetadata.title = title
-            existingMetadata.authors = authors
-            existingMetadata.publisher = publisher.isEmpty ? nil : publisher
-            existingMetadata.publishedDate = publishedDate.isEmpty ? nil : publishedDate
-            existingMetadata.pageCount = pageCount > 0 ? pageCount : nil
-            existingMetadata.bookDescription = bookDescription.isEmpty ? nil : bookDescription
-            existingMetadata.isbn = isbn.isEmpty ? nil : isbn
-            existingMetadata.genre = categories.isEmpty ? nil : categories // Save to genre
+            // Update existing metadata
+            existingMetadata.title = title.trimmingCharacters(in: .whitespacesAndNewlines)
+            existingMetadata.authors = authors.components(separatedBy: ",").map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }.filter { !$0.isEmpty }
+            existingMetadata.publisher = publisher.nilIfEmptyAfterTrimming
+            existingMetadata.publishedDate = publishedDate.nilIfEmptyAfterTrimming
+            existingMetadata.bookDescription = bookDescription.nilIfEmptyAfterTrimming
+            existingMetadata.isbn = isbn.nilIfEmptyAfterTrimming
+            existingMetadata.genre = categories
+            existingMetadata.language = language.nilIfEmptyAfterTrimming
+            existingMetadata.originalLanguage = originalLanguage.nilIfEmptyAfterTrimming
+            existingMetadata.authorNationality = authorNationality.nilIfEmptyAfterTrimming
+            existingMetadata.translator = translator.nilIfEmptyAfterTrimming
+            existingMetadata.format = selectedFormat
+            
+            // Handle page count conversion
+            if let pages = Int(pageCount.trimmingCharacters(in: .whitespacesAndNewlines)) {
+                existingMetadata.pageCount = pages
+            } else {
+                existingMetadata.pageCount = nil
+            }
         } else {
+            // Create new metadata
             let newMetadata = BookMetadata(
                 googleBooksID: UUID().uuidString,
-                title: title,
-                authors: authors,
-                publishedDate: publishedDate.isEmpty ? nil : publishedDate,
-                pageCount: pageCount > 0 ? pageCount : nil,
-                bookDescription: bookDescription.isEmpty ? nil : bookDescription,
-                publisher: publisher.isEmpty ? nil : publisher,
-                isbn: isbn.isEmpty ? nil : isbn,
-                genre: categories.isEmpty ? nil : categories // Save to genre
+                title: title.trimmingCharacters(in: .whitespacesAndNewlines),
+                authors: authors.components(separatedBy: ",").map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }.filter { !$0.isEmpty },
+                publishedDate: publishedDate.nilIfEmptyAfterTrimming,
+                pageCount: Int(pageCount.trimmingCharacters(in: .whitespacesAndNewlines)),
+                bookDescription: bookDescription.nilIfEmptyAfterTrimming,
+                publisher: publisher.nilIfEmptyAfterTrimming,
+                isbn: isbn.nilIfEmptyAfterTrimming,
+                genre: categories,
+                originalLanguage: originalLanguage.nilIfEmptyAfterTrimming,
+                authorNationality: authorNationality.nilIfEmptyAfterTrimming,
+                translator: translator.nilIfEmptyAfterTrimming,
+                format: selectedFormat
             )
             
             book.metadata = newMetadata
             modelContext.insert(newMetadata)
         }
         
+        // Update user book notes
+        book.notes = personalNotes.nilIfEmptyAfterTrimming
+        
         do {
             try modelContext.save()
-            dismiss()
         } catch {
             print("Failed to save book changes: \(error)")
         }
+    }
+}
+
+// MARK: - Styled Text Field Component
+struct StyledTextField: View {
+    let label: String
+    @Binding var text: String
+    let icon: String
+    let placeholder: String
+    var keyboardType: UIKeyboardType = .default
+    var onSubmit: (() -> Void)? = nil
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+            HStack(spacing: Theme.Spacing.xs) {
+                Image(systemName: icon)
+                    .font(.system(size: 16))
+                    .foregroundColor(Theme.Color.PrimaryAction)
+                    .frame(width: 20)
+                
+                Text(label)
+                    .labelLarge()
+                    .foregroundColor(Theme.Color.PrimaryText)
+            }
+            
+            TextField(placeholder, text: $text)
+                .bodyMedium()
+                .keyboardType(keyboardType)
+                .onSubmit {
+                    onSubmit?()
+                }
+        }
+        .padding(.vertical, 2)
+    }
+}
+
+// MARK: - Styled Text Editor Component
+struct StyledTextEditor: View {
+    let label: String
+    @Binding var text: String
+    let icon: String
+    let placeholder: String
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+            HStack(spacing: Theme.Spacing.xs) {
+                Image(systemName: icon)
+                    .font(.system(size: 16))
+                    .foregroundColor(Theme.Color.PrimaryAction)
+                    .frame(width: 20)
+                
+                Text(label)
+                    .labelLarge()
+                    .foregroundColor(Theme.Color.PrimaryText)
+            }
+            
+            TextField(placeholder, text: $text, axis: .vertical)
+                .lineLimit(3...8)
+                .bodyMedium()
+        }
+        .padding(.vertical, 2)
+    }
+}
+
+// MARK: - Helper Extension
+fileprivate extension String {
+    var nilIfEmptyAfterTrimming: String? {
+        let trimmed = self.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? nil : trimmed
     }
 }
 

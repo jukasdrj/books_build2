@@ -8,11 +8,18 @@ struct StatsView: View {
     var body: some View {
         NavigationView {
             ScrollView {
-                LazyVStack(spacing: 24) {
+                LazyVStack(spacing: Theme.Spacing.lg) {
                     // Quick Stats Grid
                     StatsQuickGrid(books: allBooks)
                     
-                    // Simple stats sections
+                    // NEW: Charts Section
+                    if !allBooks.isEmpty {
+                        MonthlyReadsChartView(books: allBooks)
+                        
+                        GenreBreakdownChartView(books: allBooks)
+                    }
+                    
+                    // Enhanced stats sections
                     ReadingStatusBreakdown(books: allBooks)
                     
                     // Recent Activity

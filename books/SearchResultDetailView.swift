@@ -39,8 +39,9 @@ struct SearchResultDetailView: View {
                             .font(.headline)
                             .foregroundStyle(.secondary)
                         
-                        if let genre = bookMetadata.genre?.first {
-                            Text(genre)
+                        // Fixed: genre is no longer optional
+                        if !bookMetadata.genre.isEmpty {
+                            Text(bookMetadata.genre.first!)
                                 .font(.caption)
                                 .fontWeight(.medium)
                                 .padding(.horizontal, 8)

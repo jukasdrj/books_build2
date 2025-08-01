@@ -6,7 +6,7 @@ struct EditBookView: View {
     let userBook: UserBook
     let onSave: (UserBook) -> Void
     
-    // State properties remain non-optional Strings for the UI
+    // State properties for UI
     @State private var title: String
     @State private var authors: String
     @State private var isbn: String
@@ -18,12 +18,13 @@ struct EditBookView: View {
     @State private var originalLanguage: String
     @State private var authorNationality: String
     @State private var translator: String
+    @State private var selectedFormat: BookFormat?
 
     init(userBook: UserBook, onSave: @escaping (UserBook) -> Void) {
         self.userBook = userBook
         self.onSave = onSave
         
-        // Initialize state from the model, providing empty strings for nil values
+        // Initialize state from the model
         _title = State(initialValue: userBook.metadata?.title ?? "")
         _authors = State(initialValue: userBook.metadata?.authors.joined(separator: ", ") ?? "")
         _isbn = State(initialValue: userBook.metadata?.isbn ?? "")
@@ -35,46 +36,135 @@ struct EditBookView: View {
         _originalLanguage = State(initialValue: userBook.metadata?.originalLanguage ?? "")
         _authorNationality = State(initialValue: userBook.metadata?.authorNationality ?? "")
         _translator = State(initialValue: userBook.metadata?.translator ?? "")
+        _selectedFormat = State(initialValue: userBook.metadata?.format)
     }
     
     var body: some View {
         NavigationStack {
             Form {
-                Section(header: Text("Book Information")) {
+                // Basic Information Section
+                Section {
                     TextField("Title", text: $title)
+                        .bodyMedium()
                     TextField("Authors (comma separated)", text: $authors)
+                        .bodyMedium()
+                } header: {
+                    Text("Book Information")
+                        .titleSmall()
+                        .foregroundColor(Theme.Color.PrimaryText)
                 }
                 
-                Section(header: Text("Publication Details")) {
+                // Format & Publication Section
+                Section {
+                    // NEW: Book Format Picker
+                    VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+                        Text("Format")
+                            .bodyMedium()
+                            .foregroundColor(Theme.Color.PrimaryText)
+                        
+                        LazyVGrid(columns: [
+                            GridItem(.flexible()),
+                            GridItem(.flexible()),
+                            GridItem(.flexible())
+                        ], spacing: Theme.Spacing.sm) {
+                            ForEach(BookFormat.allCases) { format in
+                                Button(action: {
+                                    selectedFormat = selectedFormat == format ? nil : format
+                                }) {
+                                    VStack(spacing: 4) {
+                                        Image(systemName: format.icon)
+                                            .font(.system(size: 20))
+                                            .foregroundColor(selectedFormat == format ? .white : Theme.Color.PrimaryAction)
+                                        
+                                        Text(format.rawValue)
+                                            .labelSmall()
+                                            .foregroundColor(selectedFormat == format ? .white : Theme.Color.PrimaryText)
+                                    }
+                                    .frame(height: 60)
+                                    .frame(maxWidth: .infinity)
+                                    .background(selectedFormat == format ? Theme.Color.PrimaryAction : Theme.Color.CardBackground)
+                                    .cornerRadius(Theme.CornerRadius.medium)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: Theme.CornerRadius.medium)
+                                            .stroke(selectedFormat == format ? Theme.Color.PrimaryAction : Theme.Color.Outline, lineWidth: 1)
+                                    )
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                    }
+                    
                     TextField("Publisher", text: $publisher)
+                        .bodyMedium()
                     TextField("Published Date", text: $publishedDate)
-                    TextField("Total Pages", text: $pageCount).keyboardType(.numberPad)
+                        .bodyMedium()
+                    TextField("Total Pages", text: $pageCount)
+                        .keyboardType(.numberPad)
+                        .bodyMedium()
                     TextField("ISBN", text: $isbn)
+                        .bodyMedium()
+                } header: {
+                    Text("Format & Publication")
+                        .titleSmall()
+                        .foregroundColor(Theme.Color.PrimaryText)
                 }
                 
-                Section(header: Text("Cultural & Language Details")) {
+                // Cultural & Language Section
+                Section {
                     TextField("Language of this Edition", text: $language)
+                        .bodyMedium()
                     TextField("Original Language", text: $originalLanguage)
+                        .bodyMedium()
                     TextField("Author Nationality", text: $authorNationality)
+                        .bodyMedium()
                     TextField("Translator", text: $translator)
+                        .bodyMedium()
+                } header: {
+                    Text("Cultural & Language Details")
+                        .titleSmall()
+                        .foregroundColor(Theme.Color.PrimaryText)
+                } footer: {
+                    Text("Help track the cultural diversity of your reading by adding author nationality and original language information.")
+                        .labelSmall()
+                        .foregroundColor(Theme.Color.SecondaryText)
                 }
                 
-                Section(header: Text("Personal Notes")) {
+                // Personal Notes Section
+                Section {
                     TextField("Your thoughts about this book...", text: $personalNotes, axis: .vertical)
-                        .lineLimit(3...6)
+                        .lineLimit(3...8)
+                        .bodyMedium()
+                } header: {
+                    Text("Personal Notes")
+                        .titleSmall()
+                        .foregroundColor(Theme.Color.PrimaryText)
+                } footer: {
+                    Text("Your personal notes are private and separate from the book's description.")
+                        .labelSmall()
+                        .foregroundColor(Theme.Color.SecondaryText)
                 }
             }
-            .navigationTitle("Edit Book")
+            .background(Theme.Color.Surface)
+            .scrollContentBackground(.hidden)
+            .navigationTitle("Edit Book Details")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
+                    Button("Cancel") { 
+                        dismiss() 
+                    }
+                    .bodyMedium()
+                    .foregroundColor(Theme.Color.SecondaryText)
                 }
+                
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
                         saveBook()
                         dismiss()
                     }
                     .disabled(title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    .labelLarge()
+                    .foregroundColor(Theme.Color.PrimaryAction)
                 }
             }
         }
@@ -83,10 +173,9 @@ struct EditBookView: View {
     private func saveBook() {
         guard let metadata = userBook.metadata else { return }
 
-        // --- THE IMPROVEMENT ---
-        // Use the new extension for clean, safe optional assignment.
-        metadata.title = title.trimmingCharacters(in: .whitespacesAndNewlines) // Title is not optional
-        metadata.authors = authors.components(separatedBy: ",").map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+        // Update metadata with form values
+        metadata.title = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        metadata.authors = authors.components(separatedBy: ",").map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }.filter { !$0.isEmpty }
         metadata.publisher = publisher.nilIfEmptyAfterTrimming
         metadata.publishedDate = publishedDate.nilIfEmptyAfterTrimming
         metadata.language = language.nilIfEmptyAfterTrimming
@@ -94,27 +183,46 @@ struct EditBookView: View {
         metadata.originalLanguage = originalLanguage.nilIfEmptyAfterTrimming
         metadata.authorNationality = authorNationality.nilIfEmptyAfterTrimming
         metadata.translator = translator.nilIfEmptyAfterTrimming
+        metadata.format = selectedFormat // NEW: Save book format
         
-        // Handle conversion from String to Int for pageCount
+        // Handle page count conversion
         if let pages = Int(pageCount.trimmingCharacters(in: .whitespacesAndNewlines)) {
             metadata.pageCount = pages
         } else {
             metadata.pageCount = nil
         }
 
-        // Assign to the UserBook's optional notes property
+        // Update user book notes
         userBook.notes = personalNotes.nilIfEmptyAfterTrimming
         
-        // onSave will trigger the actual save in the parent view's context
+        // Trigger save callback
         onSave(userBook)
     }
 }
 
-// You can place this helper extension in its own file or right here.
+// MARK: - Helper Extension
 fileprivate extension String {
-    /// Returns the string with leading/trailing whitespace removed. If the result is empty, returns nil.
     var nilIfEmptyAfterTrimming: String? {
         let trimmed = self.trimmingCharacters(in: .whitespacesAndNewlines)
         return trimmed.isEmpty ? nil : trimmed
+    }
+}
+
+// MARK: - Preview
+#Preview {
+    let sampleMetadata = BookMetadata(
+        googleBooksID: "preview-id",
+        title: "Sample Book",
+        authors: ["Sample Author"],
+        format: .hardcover
+    )
+    
+    let sampleBook = UserBook(
+        readingStatus: .reading,
+        metadata: sampleMetadata
+    )
+    
+    return EditBookView(userBook: sampleBook) { _ in 
+        // Preview save action
     }
 }

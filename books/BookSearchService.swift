@@ -85,7 +85,7 @@ private struct VolumeItem: Codable, Sendable {
         return BookMetadata(
             googleBooksID: self.id,
             title: volumeInfo.title,
-            authors: volumeInfo.authors ?? ["Unknown Author"],
+            authors: volumeInfo.authors ?? [], // Fixed: Empty array instead of ["Unknown Author"]
             publishedDate: volumeInfo.publishedDate,
             pageCount: volumeInfo.pageCount,
             bookDescription: volumeInfo.description,
@@ -95,7 +95,7 @@ private struct VolumeItem: Codable, Sendable {
             infoLink: URL(string: volumeInfo.infoLink ?? ""),
             publisher: volumeInfo.publisher,
             isbn: isbn13 ?? isbn10,
-            genre: volumeInfo.categories
+            genre: volumeInfo.categories ?? [] // Fixed: Empty array instead of nil
             // Note: originalLanguage, authorNationality, and translator are left nil
             // as they are not provided by this API and require manual entry.
         )

@@ -114,7 +114,7 @@ struct AppLaunchTests {
         #expect(savedBook.notes == "Test notes for validation")
         #expect(savedBook.isFavorited == true)
         #expect(savedBook.metadata?.isbn == "1234567890123")
-        #expect(savedBook.metadata?.genre?.contains("Fiction") == true)
+        #expect(savedBook.metadata?.genre.contains("Fiction") == true)
     }
     
     @Test("BookMetadata Model - Should handle comprehensive metadata")
@@ -148,6 +148,6 @@ struct AppLaunchTests {
         
         let saved = savedMetadata.first!
         #expect(saved.title == "Comprehensive Metadata Test")
-        #expect(saved.genre?.count == 3)
+        #expect(saved.genre.count == 3)
     }
 }

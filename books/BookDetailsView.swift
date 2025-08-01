@@ -57,8 +57,15 @@ struct BookDetailsView: View {
             Text("Are you sure you want to delete \"\(book.metadata?.title ?? "this book")\" from your library?")
         })
         .sheet(isPresented: $isEditing) {
-            // Using the enhanced edit view now
-            EnhancedEditBookView(book: book)
+            // Fixed: Use correct parameter names for EditBookView
+            EditBookView(userBook: book, onSave: { updatedBook in
+                // The book is already updated by reference, just need to save context
+                do {
+                    try modelContext.save()
+                } catch {
+                    print("Error saving book: \(error)")
+                }
+            })
         }
     }
     
@@ -87,6 +94,7 @@ struct BookHeaderSection: View {
                     .foregroundColor(Theme.Color.PrimaryText)
                 
                 // Author name navigation using NavigationLink with value
+                // Fixed: Check for non-empty array instead of nil
                 if let authors = book.metadata?.authors, !authors.isEmpty {
                     NavigationLink(value: authors.first!) {
                         Text(authors.joined(separator: ", "))
@@ -101,8 +109,9 @@ struct BookHeaderSection: View {
                         .foregroundStyle(Theme.Color.SecondaryText)
                 }
                 
-                if let genre = book.metadata?.genre?.first {
-                    Text(genre)
+                // Fixed: Check for non-empty array instead of nil
+                if let genre = book.metadata?.genre, !genre.isEmpty {
+                    Text(genre.first!)
                         .labelSmall()
                         .fontWeight(.medium)
                         .padding(.horizontal, 8)
@@ -170,6 +179,8 @@ struct RatingSection: View {
                             .font(.title)
                             .foregroundColor(Theme.Color.AccentHighlight)
                     }
+                    .scaleEffect(star == rating ? 1.25 : 1.0) // Pop effect for selected star
+                    .animation(Theme.Animation.bouncy, value: rating) // Animate when rating changes
                 }
                 Spacer()
             }
@@ -233,53 +244,141 @@ struct PublicationDetailsSection: View {
     
     var body: some View {
         GroupBox("Details") {
-            VStack(spacing: 10) {
+            // Two-column grid layout with Author Nationality always visible
+            Grid(alignment: .leading, horizontalSpacing: Theme.Spacing.lg, verticalSpacing: Theme.Spacing.md) {
+                // NEW: Always show Book Format like Author Nationality
+                GridRow {
+                    Text("Format")
+                        .labelLarge()
+                        .foregroundColor(Theme.Color.SecondaryText)
+                    if let format = book.metadata?.format {
+                        HStack(spacing: Theme.Spacing.xs) {
+                            Image(systemName: format.icon)
+                                .font(.caption)
+                                .foregroundColor(Theme.Color.PrimaryAction)
+                            Text(format.rawValue)
+                                .bodyMedium()
+                                .foregroundColor(Theme.Color.PrimaryText)
+                        }
+                        .gridCellAnchor(.leading)
+                    } else {
+                        Text("Not specified")
+                            .bodyMedium()
+                            .foregroundColor(Theme.Color.SecondaryText.opacity(0.7))
+                            .italic()
+                            .gridCellAnchor(.leading)
+                    }
+                }
+                
+                // Fixed: Check for non-empty array instead of nil
                 if let genre = book.metadata?.genre, !genre.isEmpty {
-                    DetailRow(label: "Genre", value: genre.joined(separator: ", "))
+                    GridRow {
+                        Text("Genre")
+                            .labelLarge()
+                            .foregroundColor(Theme.Color.SecondaryText)
+                        Text(genre.joined(separator: ", "))
+                            .bodyMedium()
+                            .foregroundColor(Theme.Color.PrimaryText)
+                            .gridCellAnchor(.leading)
+                    }
                 }
+                
                 if let language = book.metadata?.language, !language.isEmpty {
-                    DetailRow(label: "Language", value: language)
+                    GridRow {
+                        Text("Language")
+                            .labelLarge()
+                            .foregroundColor(Theme.Color.SecondaryText)
+                        Text(language)
+                            .bodyMedium()
+                            .foregroundColor(Theme.Color.PrimaryText)
+                            .gridCellAnchor(.leading)
+                    }
                 }
+                
                 if let originalLanguage = book.metadata?.originalLanguage, !originalLanguage.isEmpty {
-                    DetailRow(label: "Original Language", value: originalLanguage)
+                    GridRow {
+                        Text("Original Language")
+                            .labelLarge()
+                            .foregroundColor(Theme.Color.SecondaryText)
+                        Text(originalLanguage)
+                            .bodyMedium()
+                            .foregroundColor(Theme.Color.PrimaryText)
+                            .gridCellAnchor(.leading)
+                    }
                 }
+                
+                // ALWAYS show Author Nationality - even when null - for cultural diversity tracking
+                GridRow {
+                    Text("Author Nationality")
+                        .labelLarge()
+                        .foregroundColor(Theme.Color.SecondaryText)
+                    Text(book.metadata?.authorNationality ?? "Not specified")
+                        .bodyMedium()
+                        .foregroundColor(book.metadata?.authorNationality != nil ? Theme.Color.PrimaryText : Theme.Color.SecondaryText.opacity(0.7))
+                        .italic(book.metadata?.authorNationality == nil)
+                        .gridCellAnchor(.leading)
+                }
+                
                 if let translator = book.metadata?.translator, !translator.isEmpty {
-                    DetailRow(label: "Translator", value: translator)
+                    GridRow {
+                        Text("Translator")
+                            .labelLarge()
+                            .foregroundColor(Theme.Color.SecondaryText)
+                        Text(translator)
+                            .bodyMedium()
+                            .foregroundColor(Theme.Color.PrimaryText)
+                            .gridCellAnchor(.leading)
+                    }
                 }
-                if let authorNationality = book.metadata?.authorNationality, !authorNationality.isEmpty {
-                    DetailRow(label: "Author Nationality", value: authorNationality)
-                }
+                
                 if let publisher = book.metadata?.publisher, !publisher.isEmpty {
-                    DetailRow(label: "Publisher", value: publisher)
+                    GridRow {
+                        Text("Publisher")
+                            .labelLarge()
+                            .foregroundColor(Theme.Color.SecondaryText)
+                        Text(publisher)
+                            .bodyMedium()
+                            .foregroundColor(Theme.Color.PrimaryText)
+                            .gridCellAnchor(.leading)
+                    }
                 }
+                
                 if let publishedDate = book.metadata?.publishedDate, !publishedDate.isEmpty {
-                    DetailRow(label: "Published", value: publishedDate)
+                    GridRow {
+                        Text("Published")
+                            .labelLarge()
+                            .foregroundColor(Theme.Color.SecondaryText)
+                        Text(publishedDate)
+                            .bodyMedium()
+                            .foregroundColor(Theme.Color.PrimaryText)
+                            .gridCellAnchor(.leading)
+                    }
                 }
+                
                 if let pageCount = book.metadata?.pageCount, pageCount > 0 {
-                    DetailRow(label: "Pages", value: "\(pageCount)")
+                    GridRow {
+                        Text("Pages")
+                            .labelLarge()
+                            .foregroundColor(Theme.Color.SecondaryText)
+                        Text("\(pageCount)")
+                            .bodyMedium()
+                            .foregroundColor(Theme.Color.PrimaryText)
+                            .gridCellAnchor(.leading)
+                    }
                 }
+                
                 if let isbn = book.metadata?.isbn {
-                    DetailRow(label: "ISBN", value: isbn)
+                    GridRow {
+                        Text("ISBN")
+                            .labelLarge()
+                            .foregroundColor(Theme.Color.SecondaryText)
+                        Text(isbn)
+                            .bodyMedium()
+                            .foregroundColor(Theme.Color.PrimaryText)
+                            .gridCellAnchor(.leading)
+                    }
                 }
             }
-        }
-    }
-}
-
-struct DetailRow: View {
-    let label: String
-    let value: String
-    
-    var body: some View {
-        HStack(alignment: .top) {
-            Text(label)
-                .labelLarge()
-                .foregroundColor(Theme.Color.SecondaryText)
-            Spacer()
-            Text(value)
-                .bodyMedium()
-                .foregroundColor(Theme.Color.PrimaryText)
-                .multilineTextAlignment(.trailing)
         }
     }
 }

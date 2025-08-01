@@ -59,7 +59,7 @@ struct ModelContainerTests {
         let savedMetadata = savedBook.metadata
         
         #expect(savedMetadata?.title == "Comprehensive Test Book")
-        #expect(savedMetadata?.genre?.contains("Fiction") == true)
+        #expect(savedMetadata?.genre.contains("Fiction") == true)
         #expect(savedMetadata?.originalLanguage == "Klingon")
         #expect(savedMetadata?.authorNationality == "Qo'noS")
         #expect(savedMetadata?.translator == "Worf")
