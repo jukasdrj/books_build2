@@ -100,9 +100,6 @@ The Books Reading Tracker project is organized into several main directories wit
 - **SupportingViews.swift**: Additional supporting views and utility components.
 - **shared_components.swift**: Collection of reusable UI components.
 
-#### **Forms (/books/Views/Forms/)**
-- **Purpose**: Form-specific views and components (directory created for future expansion).
-
 ---
 
 ### **🔧 Services & Utilities**
