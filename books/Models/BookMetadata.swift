@@ -179,25 +179,19 @@ final class BookMetadata: Identifiable, @unchecked Sendable {
     }
 }
 
-// Book format enum
+// Book format enum - Simplified to 3 essential formats
 enum BookFormat: String, Codable, CaseIterable, Identifiable, Sendable {
-    case hardcover = "Hardcover"
-    case paperback = "Paperback"
+    case physical = "Physical"
     case ebook = "E-book"
     case audiobook = "Audiobook"
-    case magazine = "Magazine"
-    case other = "Other"
     
     var id: Self { self }
     
     var icon: String {
         switch self {
-        case .hardcover: return "book.closed"
-        case .paperback: return "book"
+        case .physical: return "book.closed"
         case .ebook: return "tablet"
         case .audiobook: return "headphones"
-        case .magazine: return "magazine"
-        case .other: return "questionmark.square"
         }
     }
 }

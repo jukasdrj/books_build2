@@ -53,18 +53,6 @@ struct BookCardView: View {
                         .background(Color.black.opacity(0.3))
                         .clipShape(Circle())
                 }
-                
-                // Favorite indicator
-                if book.isFavorited {
-                    Image(systemName: "heart.fill")
-                        .labelSmall()
-                        .foregroundColor(Color.theme.accentHighlight)
-                        .padding(Theme.Spacing.xs)
-                        .background(
-                            Circle()
-                                .fill(Material.regular)
-                        )
-                }
             }
             .padding(Theme.Spacing.xs)
         }
@@ -194,9 +182,8 @@ struct BookCardView: View {
         let author = book.metadata?.authors.joined(separator: ", ") ?? "Unknown Author"
         let status = book.readingStatus.rawValue
         let rating = book.rating != nil ? "\(book.rating!) star rating" : "No rating"
-        let favorite = book.isFavorited ? "Favorited" : ""
         
-        return "\(title) by \(author). Status: \(status). \(rating). \(favorite)"
+        return "\(title) by \(author). Status: \(status). \(rating)."
     }
 }
 
@@ -215,7 +202,6 @@ struct BookCardView: View {
             
             BookCardView(book: UserBook(
                 readingStatus: .reading,
-                isFavorited: true,
                 rating: 5,
                 metadata: BookMetadata(
                     googleBooksID: "2",

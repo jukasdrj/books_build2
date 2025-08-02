@@ -14,14 +14,6 @@ struct BookDetailsView: View {
             VStack(alignment: .leading, spacing: 24) {
                 BookHeaderSection(book: book)
                 
-                // Interactive controls for user data
-                HStack(spacing: 16) {
-                    BookStatusSelector(book: book)
-                    Spacer()
-                    FavoriteButton(isFavorited: $book.isFavorited)
-                }
-                .padding(.horizontal)
-
                 RatingSection(rating: $book.rating)
                 
                 // NEW: Tags Section
@@ -88,8 +80,8 @@ struct BookTagsDisplaySection: View {
                 // Header with manage button
                 HStack {
                     Text("Tags")
-                        .titleSmall()
-                        .foregroundColor(Color.theme.primaryText)
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(Color.theme.secondaryText)
                     
                     Spacer()
                     
@@ -274,24 +266,13 @@ struct BookHeaderSection: View {
                         .cornerRadius(8)
                 }
                 
+                // Status selector - prominent placement below genre
+                BookStatusSelector(book: book)
+                    .padding(.top, 4)
+                
                 Spacer()
             }
             .frame(minHeight: 180)
-        }
-    }
-}
-
-// MARK: - Favorite Button
-struct FavoriteButton: View {
-    @Binding var isFavorited: Bool
-    
-    var body: some View {
-        Button(action: {
-            isFavorited.toggle()
-        }) {
-            Image(systemName: isFavorited ? "heart.fill" : "heart")
-                .font(.title2)
-                .foregroundColor(isFavorited ? Color.theme.accentHighlight : Color.theme.secondaryText)
         }
     }
 }
@@ -322,7 +303,8 @@ struct RatingSection: View {
             }
         } label: {
             Text("Your Rating")
-                .labelLarge()
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundColor(Color.theme.secondaryText)
         }
     }
 }
@@ -356,7 +338,8 @@ struct DescriptionSection: View {
             }
         } label: {
             Text("Description")
-                .labelLarge()
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundColor(Color.theme.secondaryText)
         }
     }
 }
@@ -376,31 +359,92 @@ struct NotesSection: View {
             .bodyMedium()
         } label: {
             Text("Personal Notes")
-                .labelLarge()
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundColor(Color.theme.secondaryText)
         }
     }
 }
 
-// MARK: - Publication Details Section - SIMPLIFIED
+// MARK: - Publication Details Section - ENHANCED
 struct PublicationDetailsSection: View {
     let book: UserBook
     
     var body: some View {
         GroupBox {
-            VStack(alignment: .leading, spacing: Theme.Spacing.md) {
+            VStack(alignment: .leading, spacing: 0) {
                 // Basic Details
                 BasicDetailsView(book: book)
                 
+                // Divider between sections
+                if hasBasicInfo(book: book) && (hasCulturalInfo(book: book) || hasPublicationInfo(book: book)) {
+                    Divider()
+                        .padding(.vertical, Theme.Spacing.md)
+                }
+                
                 // Cultural Details  
                 CulturalDetailsView(book: book)
+                
+                // Divider between sections
+                if hasCulturalInfo(book: book) && hasPublicationInfo(book: book) {
+                    Divider()
+                        .padding(.vertical, Theme.Spacing.md)
+                }
                 
                 // Publication Info
                 PublicationInfoView(book: book)
             }
         } label: {
             Text("Details")
-                .labelLarge()
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundColor(Color.theme.secondaryText)
         }
+    }
+    
+    private func hasBasicInfo(book: UserBook) -> Bool {
+        return book.metadata?.format != nil ||
+               !(book.metadata?.genre.isEmpty ?? true) ||
+               book.metadata?.pageCount != nil
+    }
+    
+    private func hasCulturalInfo(book: UserBook) -> Bool {
+        return !(book.metadata?.language?.isEmpty ?? true) ||
+               !(book.metadata?.originalLanguage?.isEmpty ?? true) ||
+               book.metadata?.authorNationality != nil ||
+               !(book.metadata?.translator?.isEmpty ?? true)
+    }
+    
+    private func hasPublicationInfo(book: UserBook) -> Bool {
+        return !(book.metadata?.publisher?.isEmpty ?? true) ||
+               !(book.metadata?.publishedDate?.isEmpty ?? true) ||
+               book.metadata?.isbn != nil
+    }
+}
+
+// MARK: - Enhanced Detail Row View - iOS Settings Style
+struct DetailRowView: View {
+    let label: String
+    let value: String
+    var icon: String? = nil
+    var isPlaceholder: Bool = false
+    
+    var body: some View {
+        HStack(alignment: .center, spacing: Theme.Spacing.md) {
+            // Label - iOS Settings style (left-aligned, lighter weight)
+            Text(label)
+                .font(.system(size: 16, weight: .regular))
+                .foregroundColor(Color.theme.primaryText)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            
+            // Value - Right-aligned with more prominence
+            Text(value)
+                .font(.system(size: 16, weight: .medium))
+                .foregroundColor(isPlaceholder ? Color.theme.secondaryText.opacity(0.7) : Color.theme.secondaryText)
+                .italic(isPlaceholder)
+                .multilineTextAlignment(.trailing)
+                .frame(maxWidth: .infinity, alignment: .trailing)
+        }
+        .padding(.vertical, 12) // iOS Settings-like spacing
+        .contentShape(Rectangle())
     }
 }
 
@@ -409,12 +453,11 @@ struct BasicDetailsView: View {
     let book: UserBook
     
     var body: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+        VStack(alignment: .leading, spacing: 0) {
             if let format = book.metadata?.format {
                 DetailRowView(
                     label: "Format",
-                    value: format.rawValue,
-                    icon: format.icon
+                    value: format.rawValue
                 )
             }
             
@@ -439,20 +482,18 @@ struct CulturalDetailsView: View {
     let book: UserBook
     
     var body: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+        VStack(alignment: .leading, spacing: 0) {
             if let language = book.metadata?.language, !language.isEmpty {
                 DetailRowView(
                     label: "Language",
-                    value: language,
-                    icon: "globe"
+                    value: language
                 )
             }
             
             if let originalLanguage = book.metadata?.originalLanguage, !originalLanguage.isEmpty {
                 DetailRowView(
                     label: "Original Language",
-                    value: originalLanguage,
-                    icon: "globe.americas"
+                    value: originalLanguage
                 )
             }
             
@@ -460,15 +501,13 @@ struct CulturalDetailsView: View {
             DetailRowView(
                 label: "Author Nationality",
                 value: book.metadata?.authorNationality ?? "Not specified",
-                icon: "flag",
                 isPlaceholder: book.metadata?.authorNationality == nil
             )
             
             if let translator = book.metadata?.translator, !translator.isEmpty {
                 DetailRowView(
                     label: "Translator",
-                    value: translator,
-                    icon: "textbook"
+                    value: translator
                 )
             }
         }
@@ -479,64 +518,27 @@ struct PublicationInfoView: View {
     let book: UserBook
     
     var body: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+        VStack(alignment: .leading, spacing: 0) {
             if let publisher = book.metadata?.publisher, !publisher.isEmpty {
                 DetailRowView(
                     label: "Publisher",
-                    value: publisher,
-                    icon: "building.2"
+                    value: publisher
                 )
             }
             
             if let publishedDate = book.metadata?.publishedDate, !publishedDate.isEmpty {
                 DetailRowView(
                     label: "Published",
-                    value: publishedDate,
-                    icon: "calendar"
+                    value: publishedDate
                 )
             }
             
             if let isbn = book.metadata?.isbn {
                 DetailRowView(
                     label: "ISBN",
-                    value: isbn,
-                    icon: "barcode"
+                    value: isbn
                 )
             }
-        }
-    }
-}
-
-// MARK: - Simple Detail Row View
-struct DetailRowView: View {
-    let label: String
-    let value: String
-    var icon: String? = nil
-    var isPlaceholder: Bool = false
-    
-    var body: some View {
-        HStack(alignment: .top, spacing: Theme.Spacing.sm) {
-            // Icon
-            if let icon = icon {
-                Image(systemName: icon)
-                    .font(.caption)
-                    .foregroundColor(Color.theme.primaryAction)
-                    .frame(width: 16)
-            }
-            
-            // Label
-            Text(label)
-                .labelLarge()
-                .foregroundColor(Color.theme.secondaryText)
-                .frame(width: 120, alignment: .leading)
-            
-            // Value
-            Text(value)
-                .bodyMedium()
-                .foregroundColor(isPlaceholder ? Color.theme.secondaryText.opacity(0.7) : Color.theme.primaryText)
-                .italic(isPlaceholder)
-            
-            Spacer()
         }
     }
 }
@@ -613,10 +615,9 @@ extension UserBook {
     
     let sampleBook = UserBook(
         readingStatus: .reading,
-        isFavorited: true,
         rating: 5,
         notes: "An absolutely fantastic and though-provoking read!",
-        tags: ["Fiction", "Philosophy", "Favorite"],
+        tags: ["Fiction", "Philosophy"],
         metadata: metadata
     )
     

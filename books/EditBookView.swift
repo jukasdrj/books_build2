@@ -338,7 +338,7 @@ struct EditBookViewPreviewWrapper: View {
             googleBooksID: "preview-id",
             title: "Sample Book",
             authors: ["Sample Author"],
-            format: .hardcover
+            format: .physical
         )
         
         let book = UserBook(

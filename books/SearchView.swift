@@ -193,8 +193,8 @@ struct SearchResultRow: View {
                     .lineLimit(1)
                 
                 HStack(spacing: Theme.Spacing.md) {
-                    if let year = book.publishedDate {
-                        Label(year, systemImage: "calendar")
+                    if let publishedYear = extractYear(from: book.publishedDate) {
+                        Label(publishedYear, systemImage: "calendar")
                             .labelSmall()
                             .foregroundStyle(Color.theme.secondaryText)
                     }
@@ -208,16 +208,33 @@ struct SearchResultRow: View {
             }
             
             Spacer()
-            
-            Image(systemName: "chevron.right")
-                .font(.caption)
-                .foregroundColor(Color.theme.disabledText)
         }
         .padding(.vertical, Theme.Spacing.xs)
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(book.title) by \(book.authors.joined(separator: ", "))")
         .accessibilityHint("Double tap to view book details")
+    }
+    
+    // Helper function to extract year from various date formats
+    private func extractYear(from dateString: String?) -> String? {
+        guard let dateString = dateString, !dateString.isEmpty else { return nil }
+        
+        // If it's already just a year (4 digits), return as-is
+        if dateString.count == 4, Int(dateString) != nil {
+            return dateString
+        }
+        
+        // Extract first 4 characters as year from formats like "2011-10-18"
+        if dateString.count >= 4 {
+            let yearSubstring = String(dateString.prefix(4))
+            if Int(yearSubstring) != nil {
+                return yearSubstring
+            }
+        }
+        
+        // Fallback: return the original string if we can't parse it
+        return dateString
     }
 }
 
