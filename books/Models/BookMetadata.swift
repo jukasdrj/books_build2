@@ -3,7 +3,7 @@ import SwiftData
 import SwiftUI
 
 @Model
-final class BookMetadata: Identifiable, @unchecked Sendable {
+final class BookMetadata: Identifiable, Hashable, @unchecked Sendable {
     @Attribute(.unique) var googleBooksID: String
     var title: String
     
@@ -150,6 +150,15 @@ final class BookMetadata: Identifiable, @unchecked Sendable {
         self.culturalThemes = culturalThemes
         self.contentWarnings = contentWarnings
         self.awards = awards
+    }
+    
+    // MARK: - Hashable Conformance
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(googleBooksID)
+    }
+    
+    static func == (lhs: BookMetadata, rhs: BookMetadata) -> Bool {
+        return lhs.googleBooksID == rhs.googleBooksID
     }
     
     // Validation methods (non-fatal for migration safety)
