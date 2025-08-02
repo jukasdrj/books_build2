@@ -199,7 +199,7 @@ enum BookFormat: String, Codable, CaseIterable, Identifiable, Sendable {
     var icon: String {
         switch self {
         case .physical: return "book.closed"
-        case .ebook: return "tablet"
+        case .ebook: return "ipad"
         case .audiobook: return "headphones"
         }
     }
