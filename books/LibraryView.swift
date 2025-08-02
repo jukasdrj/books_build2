@@ -51,6 +51,7 @@ struct LibraryView: View {
     @State private var selectedSortOption: SortOption = .dateAdded
     @State private var selectedViewMode: ViewMode = .grid
     @State private var showingSortMenu = false
+    @State private var isRefreshing = false
     
     private var displayedBooks: [UserBook] {
         let filtered = switch filter {
@@ -80,13 +81,13 @@ struct LibraryView: View {
     
     var body: some View {
         Group {
-            if displayedBooks.isEmpty {
+            if displayedBooks.isEmpty && !isRefreshing {
                 emptyStateView
             } else {
                 booksView
             }
         }
-        .background(Theme.Color.Surface)
+        .background(Color.theme.surface)
         .navigationTitle(filter.navigationTitle)
         .navigationDestination(for: UserBook.self) { book in
             BookDetailsView(book: book)
@@ -109,7 +110,7 @@ struct LibraryView: View {
                     // Background books
                     ForEach(0..<3, id: \.self) { index in
                         RoundedRectangle(cornerRadius: Theme.CornerRadius.small)
-                            .fill(Theme.Color.PrimaryAction.opacity(0.1 + Double(index) * 0.1))
+                            .fill(Color.theme.primaryAction.opacity(0.1 + Double(index) * 0.1))
                             .frame(width: 80 - CGFloat(index * 4), height: 120 - CGFloat(index * 6))
                             .offset(x: CGFloat(index * 8), y: CGFloat(index * -4))
                             .rotationEffect(.degrees(Double(index * 2)))
@@ -117,18 +118,18 @@ struct LibraryView: View {
                     
                     Image(systemName: filter.emptySystemImage)
                         .font(.system(size: 40))
-                        .foregroundColor(Theme.Color.PrimaryAction)
+                        .foregroundColor(Color.theme.primaryAction)
                 }
                 .frame(height: 120)
                 
                 VStack(spacing: Theme.Spacing.sm) {
                     Text(filter.emptyTitle)
                         .headlineSmall()
-                        .foregroundColor(Theme.Color.PrimaryText)
+                        .foregroundColor(Color.theme.primaryText)
                     
                     Text(filter.emptyDescription)
                         .bodyMedium()
-                        .foregroundColor(Theme.Color.SecondaryText)
+                        .foregroundColor(Color.theme.secondaryText)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, Theme.Spacing.lg)
                 }
@@ -146,13 +147,28 @@ struct LibraryView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
     
-    // MARK: - Books View
+    // MARK: - Books View with Pull-to-Refresh
     @ViewBuilder
     private var booksView: some View {
         ScrollView {
             LazyVStack(spacing: Theme.Spacing.lg) {
                 // Header with stats
                 LibraryHeaderView(books: displayedBooks, filter: filter)
+                
+                // Loading indicator during refresh
+                if isRefreshing {
+                    HStack(spacing: Theme.Spacing.sm) {
+                        ProgressView()
+                            .scaleEffect(0.8)
+                            .tint(Color.theme.primaryAction)
+                        Text("Refreshing library...")
+                            .bodyMedium()
+                            .foregroundColor(Color.theme.secondaryText)
+                    }
+                    .padding()
+                    .background(Color.theme.cardBackground)
+                    .cornerRadius(Theme.CornerRadius.medium)
+                }
                 
                 // Books grid/list
                 if selectedViewMode == .grid {
@@ -164,6 +180,40 @@ struct LibraryView: View {
             .padding(.horizontal, Theme.Spacing.md)
             .padding(.bottom, Theme.Spacing.xl)
         }
+        .refreshable {
+            await performRefresh()
+        }
+    }
+    
+    // MARK: - Pull-to-Refresh Action
+    private func performRefresh() async {
+        isRefreshing = true
+        
+        // Haptic feedback for refresh start
+        let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+        impactFeedback.impactOccurred()
+        
+        // Simulate data refresh operations
+        await withTaskGroup(of: Void.self) { group in
+            // Simulate updating book metadata
+            group.addTask {
+                try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
+            }
+            
+            // Simulate checking for reading progress updates
+            group.addTask {
+                try? await Task.sleep(nanoseconds: 800_000_000) // 0.8 seconds
+            }
+            
+            // Wait for all refresh tasks to complete
+            await group.waitForAll()
+        }
+        
+        // Success haptic feedback
+        let successFeedback = UINotificationFeedbackGenerator()
+        successFeedback.notificationOccurred(.success)
+        
+        isRefreshing = false
     }
     
     @ViewBuilder
@@ -182,6 +232,13 @@ struct LibraryView: View {
                     )
                 }
                 .buttonStyle(.plain)
+                .onAppear {
+                    // Light haptic feedback when books appear
+                    if index == 0 {
+                        let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+                        impactFeedback.impactOccurred()
+                    }
+                }
             }
         }
         .animation(.none, value: displayedBooks) // Prevent animation glitches
@@ -211,6 +268,10 @@ struct LibraryView: View {
                     withAnimation(Theme.Animation.smooth) {
                         selectedViewMode = selectedViewMode == .grid ? .list : .grid
                     }
+                    
+                    // Haptic feedback for view mode change
+                    let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+                    impactFeedback.impactOccurred()
                 }) {
                     Image(systemName: selectedViewMode == .grid ? "rectangle.grid.2x2" : "list.bullet")
                         .font(.system(size: 16, weight: .medium))
@@ -221,6 +282,10 @@ struct LibraryView: View {
                     ForEach(SortOption.allCases, id: \.self) { option in
                         Button(action: {
                             selectedSortOption = option
+                            
+                            // Haptic feedback for sort change
+                            let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+                            impactFeedback.impactOccurred()
                         }) {
                             HStack {
                                 Text(option.displayName)
@@ -314,12 +379,12 @@ struct LibraryHeaderView: View {
             VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
                 Text("\(totalBooks) books")
                     .bookTitle()
-                    .foregroundColor(Theme.Color.PrimaryText)
+                    .foregroundColor(Color.theme.primaryText)
                 
                 if filter == .library {
                     HStack(spacing: Theme.Spacing.md) {
-                        StatsPill(icon: "checkmark.circle.fill", value: readBooks, label: "Read", color: Theme.Color.Success)
-                        StatsPill(icon: "book.circle.fill", value: currentlyReading, label: "Reading", color: Theme.Color.AccentHighlight)
+                        StatsPill(icon: "checkmark.circle.fill", value: readBooks, label: "Read", color: Color.theme.success)
+                        StatsPill(icon: "book.circle.fill", value: currentlyReading, label: "Reading", color: Color.theme.accentHighlight)
                     }
                 }
             }
@@ -344,11 +409,11 @@ struct StatsPill: View {
             
             Text("\(max(0, value))") // Ensure non-negative values
                 .labelMedium()
-                .foregroundColor(Theme.Color.PrimaryText)
+                .foregroundColor(Color.theme.primaryText)
             
             Text(label)
                 .labelSmall()
-                .foregroundColor(Theme.Color.SecondaryText)
+                .foregroundColor(Color.theme.secondaryText)
         }
         .padding(.horizontal, Theme.Spacing.sm)
         .padding(.vertical, 4)

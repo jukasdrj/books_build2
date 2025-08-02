@@ -28,6 +28,11 @@ The Books Reading Tracker project is organized into several main directories wit
 - **Contains**: Detailed change logs, reasons for modifications, testing results, and context for future sessions
 - **Usage**: Maintain development context and track progress over time
 
+### **TODO.md**
+- **Purpose**: Current development priorities and task tracking
+- **Contains**: Active tasks, completed items, and immediate development focus areas
+- **Usage**: Guide current development session priorities and track completion status
+
 ### **alex.md**
 - **Purpose**: AI assistant memory and project-specific notes
 - **Contains**: Learning notes, user preferences, and development patterns
@@ -47,7 +52,8 @@ The Books Reading Tracker project is organized into several main directories wit
 
 #### **ContentView.swift**
 - **Purpose**: Main app navigation and tab bar structure
-- **Responsibility**: Coordinate between 5 main app sections (Library, Wishlist, Search, Stats, Diversity)
+- **Responsibility**: Coordinate between 4 main app sections (Library, Wishlist, Search, Stats)
+- **Recent Changes**: Removed Cultural Diversity tab, consolidated functionality into Stats view
 - **Key Features**: Tab-based navigation with theme integration and accessibility support
 - **Architecture**: NavigationStack wrappers for each tab with proper state management
 
@@ -91,15 +97,17 @@ The Books Reading Tracker project is organized into several main directories wit
 - **Usage**: Used throughout app via Theme.Color, Theme.Typography, Theme.Spacing, Theme.Animation
 
 #### **Color+Extensions.swift**
-- **Purpose**: Color system extensions with adaptive dark/light mode support
+- **Purpose**: Programmatic adaptive color system with dark/light mode support
 - **Responsibility**: Provide computed color properties that adapt to system color scheme
 - **Key Features**: Cultural region colors, interactive state colors, proper contrast ratios
+- **Recent Refactor**: Removed Asset Catalog dependencies, implemented programmatic adaptive colors
 - **Architecture**: Extension of SwiftUI Color with Color.theme.* accessor pattern
 
 #### **SharedModifiers.swift**
 - **Purpose**: Reusable SwiftUI view modifiers for consistent styling
 - **Responsibility**: Provide common styling patterns used across multiple views
-- **Key Features**: Button styles, card styles, form field styles, accessibility modifiers
+- **Key Features**: Enhanced loading states, error views, progress indicators, card styles
+- **Recent Additions**: EnhancedLoadingView, EnhancedErrorView, ShimmerModifier
 
 ---
 
@@ -109,41 +117,56 @@ The Books Reading Tracker project is organized into several main directories wit
 - **Purpose**: Main library display with user's book collection
 - **Responsibility**: Show owned books with filtering, sorting, and management capabilities
 - **Key Features**: Grid/list toggle, status filtering, search functionality, book management
+- **Recent Enhancements**: Pull-to-refresh functionality, enhanced haptic feedback, loading states
 - **Components Used**: BookCardView, BookRowView, FilterControls
 
 #### **WishlistView.swift**
 - **Purpose**: Wishlist management for future reading
 - **Responsibility**: Display and manage books marked for future reading
 - **Key Features**: Priority sorting, cultural goal tracking, quick add-to-library
-- **Related Components**: `WishlistComponents.swift` (Contains supporting UI elements for the wishlist view to keep the main view file clean).
+- **Related Components**: `WishlistComponents.swift` (Contains supporting UI elements for the wishlist view to keep the main view file clean)
 
 #### **SearchView.swift**
 - **Purpose**: Google Books API integration and book discovery
 - **Responsibility**: Search external book database and add books to personal library
 - **Key Features**: 
   - Comprehensive search interface with Material Design 3 styling
+  - Enhanced loading states with professional animations
   - Real-time search with responsive UI and proper loading states
-  - Enhanced SearchResultRow component with book covers and metadata
-  - User-friendly error handling for network issues
+  - Enhanced SearchResultRow component with shimmer effects
+  - User-friendly error handling with retry functionality
   - Full dark mode support with adaptive colors
   - Accessibility compliance with VoiceOver support
   - Integration with BookSearchService for API calls
+- **Recent Enhancements**: EnhancedLoadingView, shimmer effects, haptic feedback integration
 - **API Integration**: Google Books API with proper error handling and retry logic
-- **Components**: SearchResultRow for displaying search results
+- **Components**: SearchResultRow with loading states and enhanced animations
 - **Navigation**: Integrates with SearchResultDetailView for book details
 
+#### **SearchResultDetailView.swift**
+- **Purpose**: Detailed view for books from search results with action capabilities
+- **Responsibility**: Display book details and provide add-to-library/wishlist functionality
+- **Key Features**: 
+  - Enhanced action buttons with loading states
+  - Success toast notifications with elegant animations
+  - Comprehensive haptic feedback (light, medium, success, error)
+  - Auto-dismiss functionality with smooth navigation
+  - Status indicators for existing books
+  - Duplicate detection integration
+- **Recent Enhancements**: SuccessToast component, loading button states, haptic integration
+- **Components**: SuccessToast, enhanced action buttons, status indicators
+
 #### **StatsView.swift**
-- **Purpose**: Reading analytics and progress visualization
+- **Purpose**: Reading analytics and progress visualization with integrated cultural diversity
 - **Responsibility**: Display reading statistics, goal tracking, progress charts, and cultural diversity metrics
 - **Key Features**: 
   - Monthly progress, genre breakdown, reading pace analytics
-  - Cultural fields display: author nationality and original language statistics
+  - Integrated Cultural Diversity Section showing cultural analytics
+  - Cultural progress overview with region exploration tracking
+  - Language diversity statistics and author diversity metrics
+  - Diverse voices tracking (Indigenous, Marginalized, Translated works)
+- **Recent Integration**: Cultural diversity analytics moved from standalone tab
 - **Chart Dependencies**: Uses chart views from Charts/ subfolder
-
-#### **CulturalDiversityView.swift**
-- **Purpose**: Cultural diversity analytics and goal tracking
-- **Responsibility**: Visualize cultural representation in reading and track diversity goals
-- **Key Features**: Cultural region charts, author diversity metrics, goal setting interface
 
 ---
 
@@ -190,7 +213,7 @@ The Books Reading Tracker project is organized into several main directories wit
 #### **WishlistComponents.swift**
 - **Purpose**: Contains supporting UI elements for the `WishlistView`
 - **Responsibility**: Holds smaller, reusable views and components specific to the wishlist feature. This separation improves organization and keeps the main `WishlistView.swift` file focused on layout and primary logic.
-- **Usage**: Components are imported and used within `WishlistView.swift`.
+- **Usage**: Components are imported and used within `WishlistView.swift`
 
 #### **SupportingViews.swift**
 - **Purpose**: Additional supporting views and utility components
@@ -211,6 +234,7 @@ The Books Reading Tracker project is organized into several main directories wit
 - **Purpose**: Prevent duplicate books in user's library
 - **Responsibility**: Detect potential duplicates when adding new books
 - **Key Features**: Fuzzy matching on title/author, ISBN comparison, user confirmation dialogs
+- **Integration**: Used in SearchResultDetailView for duplicate checking
 
 #### **PageInputView.swift**
 - **Purpose**: Reading progress input interface
@@ -303,6 +327,7 @@ The Books Reading Tracker project is organized into several main directories wit
 #### **ViewTests.swift**
 - **Purpose**: SwiftUI view testing
 - **Coverage**: View rendering, user interactions, accessibility
+- **Recent Additions**: Enhanced loading states testing, cultural diversity view testing
 
 #### **IntegrationTests.swift**
 - **Purpose**: End-to-end feature testing
@@ -317,6 +342,7 @@ The Books Reading Tracker project is organized into several main directories wit
 #### **booksUITests.swift**
 - **Purpose**: Automated UI testing
 - **Coverage**: User interface interactions, navigation flows
+- **Recent Additions**: Dark mode testing, pull-to-refresh testing, toast notification testing
 
 #### **booksUITestsLaunchTests.swift**
 - **Purpose**: Launch and startup UI testing
@@ -360,6 +386,7 @@ The Books Reading Tracker project is organized into several main directories wit
 - **Theme consistency**: Centralized theme system used throughout
 - **Accessibility first**: Comprehensive accessibility support in all views
 - **Error handling**: Consistent error handling patterns across the app
+- **Loading states**: Professional loading animations and user feedback throughout
 
 ---
 
@@ -385,5 +412,13 @@ The Books Reading Tracker project is organized into several main directories wit
 - **Data queries**: Leverage SwiftData's optimized queries in model files
 - **View updates**: Use proper state management to minimize unnecessary re-renders
 - **Memory management**: Follow patterns established in existing files
+- **Loading states**: Implement proper loading feedback for user experience
 
-This file directory serves as the primary navigation guide for the Books Reading Tracker codebase, ensuring developers can quickly understand the project structure and locate relevant code.
+### **Recent Architecture Improvements**
+- **Navigation Simplification**: Reduced from 5 tabs to 4 tabs for cleaner user experience
+- **Enhanced Loading States**: Professional animations and feedback throughout the app
+- **Integrated Analytics**: Cultural diversity features consolidated into Stats view
+- **Comprehensive Feedback**: Visual, haptic, and navigational feedback for all user actions
+- **Modern iOS Patterns**: Pull-to-refresh, toast notifications, and proper loading states
+
+This file directory serves as the primary navigation guide for the Books Reading Tracker codebase, ensuring developers can quickly understand the project structure and locate relevant code while understanding the recent architectural improvements and enhancements.

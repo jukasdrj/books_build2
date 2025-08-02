@@ -39,14 +39,6 @@ struct ContentView: View {
                 Label("Stats", systemImage: selectedTab == 3 ? "chart.bar.xaxis" : "chart.bar.xaxis")
             }
             .tag(3)
-            
-            NavigationStack {
-                CulturalDiversityView()
-            }
-            .tabItem {
-                Label("Diversity", systemImage: selectedTab == 4 ? "globe" : "globe")
-            }
-            .tag(4)
         }
         .background(Color.theme.background)
         .tint(Color.theme.primaryAction)
