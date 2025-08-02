@@ -1,4 +1,4 @@
-# Data-Model Specification – Release v0.2
+# Data-Model Specification – Release v1.0
 
 This document defines the canonical schema for SwiftData entities used in the Books iOS app.
 
@@ -24,6 +24,7 @@ This document defines the canonical schema for SwiftData entities used in the Bo
 | `originalLanguage`| String | ✅       | –       | Original publication language if translated.           |
 | `authorNationality`| String| ✅      | –       | Primary author's nationality.                         |
 | `translator`     | String  | ✅       | –       | Translator name if applicable.                        |
+| `format`         | Enum    | ✅       | –       | Physical, digital, audiobook format.                 |
 
 ### Relationships
 • _Zero-or-many_ `UserBook` objects reference a single `BookMetadata`.
@@ -33,11 +34,12 @@ This document defines the canonical schema for SwiftData entities used in the Bo
 
 ## 2. Entity: `UserBook`
 
+### Core Fields
 | Field            | Type   | Optional | Default            | Notes                                                         |
 |------------------|--------|----------|--------------------|---------------------------------------------------------------|
 | `id`             | UUID   | ❌       | Auto-generated     | Primary key.                                                  |
-| `metadata`       | Link→BookMetadata | ❌ | –              | Many : 1 required relationship.                               |
-| `readingStatus`  | Enum(`toRead`,`reading`,`read`) | ❌ | `toRead` | Governs date rules below.                                     |
+| `metadata`       | Link→BookMetadata | ✅ | –              | Many : 1 relationship (optional for initialization).          |
+| `readingStatus`  | Enum   | ❌       | `toRead`           | `.toRead`, `.reading`, `.read`, `.onHold`, `.dnf`             |
 | `onWishlist`     | Bool   | ❌       | `false`            | True → separate wishlist view.                                |
 | `isFavorited`    | Bool   | ❌       | `false`            | User's favorite books.                                        |
 | `owned`          | Bool   | ❌       | `true`             | Whether user physically owns the book.                        |
@@ -48,40 +50,38 @@ This document defines the canonical schema for SwiftData entities used in the Bo
 | `dateStarted`    | Date   | ✅       | –                  | Auto-set when status → `.reading` if nil.                     |
 | `dateCompleted`  | Date   | ✅       | –                  | Auto-set when status → `.read`.                               |
 
-### Derived & Validation Rules
+### Enhanced Reading Progress Tracking
+| Field                | Type   | Optional | Default | Notes                                                     |
+|---------------------|--------|----------|---------|-----------------------------------------------------------|
+| `currentPage`       | Int    | ❌       | `0`     | Current reading position; triggers progress calculation.   |
+| `readingProgress`   | Double | ❌       | `0.0`   | 0.0 to 1.0 calculated from currentPage/totalPages.       |
+| `estimatedFinishDate` | Date | ✅       | –       | Calculated from reading pace and daily goals.            |
+| `totalReadingTimeMinutes` | Int | ❌   | `0`     | Cumulative reading time across all sessions.             |
+| `dailyReadingGoal`  | Int    | ✅       | –       | Target pages per day.                                     |
+| `personalRating`    | Double | ✅       | –       | 0.0 to 5.0 for more granular ratings.                    |
 
-**Status-Based Date Logic:**
-- When `readingStatus` changes to `.reading`: set `dateStarted = Date()` if currently nil
-- When `readingStatus` changes to `.read`: set `dateCompleted = Date()` and ensure `dateStarted` is set
+### Cultural Diversity Tracking
+| Field                      | Type   | Optional | Default | Notes                                        |
+|---------------------------|--------|----------|---------|----------------------------------------------|
+| `contributesToCulturalGoal` | Bool   | ❌       | `false` | Whether book counts toward diversity goals.  |
+| `culturalGoalCategory`     | String | ✅       | –       | e.g., "African Literature", "Translated Works" |
 
-**Field Validation:**
-- `rating`: Must be 1-5 inclusive if not nil
-- `notes`: Max 5,000 characters
-- `tags`: Each tag max 50 characters, max 20 tags total
-- `metadata`: Required relationship
+### Social and Sharing Features
+| Field              | Type   | Optional | Default | Notes                                      |
+|-------------------|--------|----------|---------|--------------------------------------------|
+| `isPublic`        | Bool   | ❌       | `false` | Whether reading data is publicly visible. |
+| `recommendedBy`   | String | ✅       | –       | Who recommended this book.                 |
+| `wouldRecommend`  | Bool   | ✅       | –       | User's recommendation status.              |
+| `discussionNotes` | String | ✅       | –       | Notes for book clubs or discussions.       |
 
-**Relationship Rules:**
-- Each `UserBook` must reference exactly one `BookMetadata`
-- Multiple `UserBook` entries can reference the same `BookMetadata`
-- Deleting a `UserBook` does not affect its `BookMetadata`
-- `BookMetadata` should only be deleted when no `UserBook` references it
+### Complex Data (Stored as JSON Strings)
+| Field               | Computed Type      | Storage Type | Notes                                    |
+|--------------------|-------------------|--------------|------------------------------------------|
+| `quotes`           | [String]?         | String       | Separated by "†††", max content varies. |
+| `readingSessions`  | [ReadingSession]  | String       | JSON-encoded reading session data.      |
 
 ---
 
-## 3. Validation & Business Logic
+## 3. Supporting Types
 
-### BookMetadata Validation:
-- `title`: Required, trimmed, 1-512 characters
-- `authors`: Required, ≥ 1 author, each author 1-100 characters
-- `bookDescription`: Max 10,000 characters if provided
-- `pageCount`: Must be positive integer if provided
-- `isbn`: Must be 10 or 13 digits (validation deferred to future release)
-- `genre`: Each genre max 50 characters, max 10 genres
-
-### UserBook Validation:
-- `rating`: 1-5 inclusive if provided
-- `notes`: Max 5,000 characters if provided
-- `tags`: Max 20 tags, each tag 1-50 characters
-
-### Auto-Date Setting:
-Implemented via property observers in the `UserBook` model to ensure consistency across all status changes.
+### ReadingStatus Enum

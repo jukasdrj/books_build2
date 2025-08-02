@@ -256,10 +256,38 @@ final class UserBook: Identifiable, @unchecked Sendable {
 
 // Reading session tracking
 struct ReadingSession: Codable, Identifiable {
-    let id = UUID()
+    let id: UUID
     let date: Date
     let durationMinutes: Int
     let pagesRead: Int
+    
+    // Custom initializer to handle UUID generation
+    init(date: Date, durationMinutes: Int, pagesRead: Int) {
+        self.id = UUID()
+        self.date = date
+        self.durationMinutes = durationMinutes
+        self.pagesRead = pagesRead
+    }
+    
+    // Custom decoder to handle the id property
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        
+        // Try to decode id, or generate new one if missing
+        if let existingId = try? container.decode(UUID.self, forKey: .id) {
+            self.id = existingId
+        } else {
+            self.id = UUID()
+        }
+        
+        self.date = try container.decode(Date.self, forKey: .date)
+        self.durationMinutes = try container.decode(Int.self, forKey: .durationMinutes)
+        self.pagesRead = try container.decode(Int.self, forKey: .pagesRead)
+    }
+    
+    private enum CodingKeys: String, CodingKey {
+        case id, date, durationMinutes, pagesRead
+    }
     
     var pagesPerHour: Double {
         guard durationMinutes > 0 else { return 0 }
