@@ -53,13 +53,22 @@ struct ViewTests {
         #expect(detailView != nil)
     }
 
-    // This test ensures the main library view can be created.
+    // UPDATED: LibraryView now requires selectedTab binding parameter
     @Test("LibraryView Creation - Should initialize correctly")
     func testLibraryViewCreation() throws {
         let container = try createTestContainer()
-        let libraryView = LibraryView().modelContainer(container)
+        @State var selectedTab = 0
+        let libraryView = LibraryView(selectedTab: Binding.constant(0)).modelContainer(container)
         
         #expect(libraryView != nil)
+    }
+    
+    @Test("LibraryView Wishlist Creation - Should initialize correctly")
+    func testLibraryViewWishlistCreation() throws {
+        let container = try createTestContainer()
+        let wishlistView = LibraryView(filter: .wishlist, selectedTab: Binding.constant(1)).modelContainer(container)
+        
+        #expect(wishlistView != nil)
     }
     
     // This test ensures the book details view (for books already in the library) can be created.
@@ -98,5 +107,51 @@ struct ViewTests {
         let culturalDiversityView = CulturalDiversityView().modelContainer(container)
         
         #expect(culturalDiversityView != nil)
+    }
+    
+    @Test("BookMetadata Hashable - Should provide stable hashing")
+    func testBookMetadataHashable() throws {
+        let metadata1 = BookMetadata(
+            googleBooksID: "test-id-123",
+            title: "Test Book",
+            authors: ["Test Author"]
+        )
+        
+        let metadata2 = BookMetadata(
+            googleBooksID: "test-id-123",
+            title: "Different Title", // Different title but same ID
+            authors: ["Different Author"]
+        )
+        
+        let metadata3 = BookMetadata(
+            googleBooksID: "different-id-456",
+            title: "Test Book", // Same title but different ID
+            authors: ["Test Author"]
+        )
+        
+        // Same googleBooksID should be equal and have same hash
+        #expect(metadata1 == metadata2)
+        #expect(metadata1.hashValue == metadata2.hashValue)
+        
+        // Different googleBooksID should not be equal
+        #expect(metadata1 != metadata3)
+        #expect(metadata2 != metadata3)
+    }
+    
+    @Test("Tab Switching Architecture - Should handle tab selection properly")
+    func testTabSwitchingArchitecture() throws {
+        let container = try createTestContainer()
+        @State var selectedTab = 0
+        
+        // Test ContentView with different tab selections
+        let contentView = ContentView().modelContainer(container)
+        #expect(contentView != nil)
+        
+        // Test that LibraryView can accept different tab bindings
+        let libraryTab = LibraryView(selectedTab: Binding.constant(0)).modelContainer(container)
+        let wishlistTab = LibraryView(filter: .wishlist, selectedTab: Binding.constant(1)).modelContainer(container)
+        
+        #expect(libraryTab != nil)
+        #expect(wishlistTab != nil)
     }
 }

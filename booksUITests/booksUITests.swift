@@ -109,6 +109,86 @@ final class booksUITests: XCTestCase {
         }
     }
     
+    // NEW: Test the empty wishlist to search navigation flow that was fixed
+    @MainActor
+    func testEmptyWishlistToSearchNavigation() throws {
+        let app = XCUIApplication()
+        app.launch()
+        
+        // 1. Navigate to the Wishlist tab
+        app.tabBars.buttons["Wishlist"].tap()
+        
+        // 2. Look for the empty state "Browse Books" button
+        let browseButton = app.buttons["Browse Books"]
+        if browseButton.waitForExistence(timeout: 5) {
+            // 3. Tap the Browse Books button - this should switch to Search tab
+            browseButton.tap()
+            
+            // 4. Verify we're now on the Search tab
+            let searchField = app.textFields["Search by title, author, or ISBN"]
+            XCTAssert(searchField.waitForExistence(timeout: 5), "Should navigate to Search tab with search field visible")
+            
+            // 5. Verify the Search tab is selected
+            let searchTab = app.tabBars.buttons["Search"]
+            XCTAssert(searchTab.isSelected, "Search tab should be selected after tapping Browse Books")
+            
+            // 6. Test that search still works from this flow
+            searchField.tap()
+            searchField.typeText("Test\n")
+            
+            // Wait for search to process (success, error, or no results are all valid)
+            Thread.sleep(forTimeInterval: 2)
+            let hasResponse = app.tables.cells.count > 0 || 
+                            app.staticTexts["No Results Found"].exists || 
+                            app.staticTexts.containing(NSPredicate(format: "label CONTAINS[c] 'error'")).firstMatch.exists
+            
+            XCTAssert(hasResponse, "Search should work after navigating from empty wishlist")
+        } else {
+            // If wishlist isn't empty, this test doesn't apply
+            print("Wishlist is not empty - skipping empty state navigation test")
+        }
+    }
+    
+    // NEW: Test navigation destination stability (the core issue that was fixed)
+    @MainActor
+    func testSearchResultDetailViewStability() throws {
+        let app = XCUIApplication()
+        app.launch()
+        
+        // Navigate to Search tab
+        app.tabBars.buttons["Search"].tap()
+        
+        let searchField = app.textFields["Search by title, author, or ISBN"]
+        XCTAssert(searchField.waitForExistence(timeout: 5), "Search field should exist")
+        
+        searchField.tap()
+        searchField.typeText("Swift\n")
+        
+        // Wait for results
+        Thread.sleep(forTimeInterval: 3)
+        
+        // If we have results, tap on the first one
+        let firstResult = app.tables.cells.firstMatch
+        if firstResult.waitForExistence(timeout: 5) {
+            firstResult.tap()
+            
+            // The key test: verify the detail view stays open and doesn't immediately dismiss
+            let bookDetailsTitle = app.navigationBars["Book Details"]
+            XCTAssert(bookDetailsTitle.waitForExistence(timeout: 5), "Book details view should appear")
+            
+            // Wait a moment to ensure the view doesn't auto-dismiss
+            Thread.sleep(forTimeInterval: 2)
+            XCTAssert(bookDetailsTitle.exists, "Book details view should remain stable and not auto-dismiss")
+            
+            // Verify we can interact with the detail view
+            let addToLibraryButton = app.buttons["Add to Library"]
+            let addToWishlistButton = app.buttons["Add to Wishlist"]
+            
+            XCTAssert(addToLibraryButton.exists || addToWishlistButton.exists, 
+                     "Detail view should have actionable buttons")
+        }
+    }
+    
     @MainActor
     func testLaunchPerformance() throws {
         // This measures how long it takes to launch your application.
