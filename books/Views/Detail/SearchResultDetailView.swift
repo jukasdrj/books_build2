@@ -35,16 +35,16 @@ struct SearchResultDetailView: View {
                         
                         VStack(alignment: .leading, spacing: 8) {
                             Text(bookMetadata.title)
-                                .font(.title2.bold())
+                                .titleLarge()
                             
                             Text(bookMetadata.authors.joined(separator: ", "))
-                                .font(.headline)
+                                .headlineMedium()
                                 .foregroundStyle(.secondary)
                             
                             // Fixed: genre is no longer optional
                             if !bookMetadata.genre.isEmpty {
                                 Text(bookMetadata.genre.first!)
-                                    .font(.caption)
+                                    .labelMedium()
                                     .fontWeight(.medium)
                                     .padding(.horizontal, 8)
                                     .padding(.vertical, 4)
@@ -119,16 +119,16 @@ struct SearchResultDetailView: View {
                     if let description = bookMetadata.bookDescription, !description.isEmpty {
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Description")
-                                .font(.headline)
+                                .headlineMedium()
                             Text(description)
-                                .font(.body)
+                                .bodyMedium()
                         }
                     }
                     
                     // Other Details
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Details")
-                            .font(.headline)
+                            .headlineMedium()
                         DetailRow(label: "Published", value: bookMetadata.publishedDate ?? "N/A")
                         DetailRow(label: "Publisher", value: bookMetadata.publisher ?? "N/A")
                         DetailRow(label: "Pages", value: bookMetadata.pageCount != nil ? "\(bookMetadata.pageCount!)" : "N/A")
@@ -252,11 +252,11 @@ struct SuccessToast: View {
     var body: some View {
         HStack(spacing: 12) {
             Image(systemName: "checkmark.circle.fill")
-                .font(.title2)
+                .titleMedium()
                 .foregroundColor(Color.theme.success)
             
             Text(message)
-                .font(.headline)
+                .headlineMedium()
                 .foregroundColor(Color.theme.primaryText)
             
             Spacer()
@@ -272,20 +272,27 @@ struct SuccessToast: View {
         .shadow(color: .black.opacity(0.15), radius: 10, x: 0, y: 5)
         .scaleEffect(scale)
         .opacity(opacity)
+        .allowsHitTesting(false)
         .onAppear {
-            withAnimation(.spring(response: 0.4, dampingFraction: 0.6)) {
+            withAnimation(UIAccessibility.isReduceMotionEnabled ? 
+                         Animation.linear(duration: 0.1) : 
+                         Animation.spring(response: 0.4, dampingFraction: 0.6)) {
                 scale = 1.0
                 opacity = 1.0
             }
         }
         .onChange(of: isShowing) { _, newValue in
             if !newValue {
-                withAnimation(.easeOut(duration: 0.3)) {
+                withAnimation(UIAccessibility.isReduceMotionEnabled ? 
+                             Animation.linear(duration: 0.1) : 
+                             Animation.easeOut(duration: 0.3)) {
                     scale = 0.8
                     opacity = 0
                 }
             }
         }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(message)
     }
 }
 
@@ -297,17 +304,19 @@ struct DetailRow: View {
     var body: some View {
         HStack {
             Text(label)
-                .font(.subheadline)
+                .bodyMedium()
                 .foregroundColor(Color.theme.secondaryText)
                 .frame(width: 80, alignment: .leading)
             
             Text(value)
-                .font(.subheadline)
+                .bodyMedium()
                 .foregroundColor(Color.theme.primaryText)
             
             Spacer()
         }
         .padding(.vertical, 2)
+        .frame(minHeight: 44)
+        .contentShape(Rectangle())
     }
 }
 

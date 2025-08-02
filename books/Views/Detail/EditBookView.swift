@@ -52,22 +52,26 @@ struct EditBookView: View {
                         Text("Book Title")
                             .labelMedium()
                             .foregroundColor(Color.theme.secondaryText)
-                        TextField("Enter the book title", text: $title)
+                        Text(title)
                             .bodyMedium()
-                            .disabled(true)
-                            .foregroundColor(Color.theme.disabledText)
-                            .background(Color.theme.surface.opacity(0.5))
+                            .textSelection(.enabled)
+                            .foregroundColor(Color.theme.primaryText)
+                            .padding(.vertical, 8)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .accessibilityHint("Read-only book metadata")
                     }
                     
                     VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
                         Text("Authors")
                             .labelMedium()
                             .foregroundColor(Color.theme.secondaryText)
-                        TextField("Enter author names (comma separated)", text: $authors)
+                        Text(authors)
                             .bodyMedium()
-                            .disabled(true)
-                            .foregroundColor(Color.theme.disabledText)
-                            .background(Color.theme.surface.opacity(0.5))
+                            .textSelection(.enabled)
+                            .foregroundColor(Color.theme.primaryText)
+                            .padding(.vertical, 8)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .accessibilityHint("Read-only book metadata")
                     }
                 } header: {
                     Text("Book Information")
@@ -121,45 +125,52 @@ struct EditBookView: View {
                         Text("Publisher")
                             .labelMedium()
                             .foregroundColor(Color.theme.secondaryText)
-                        TextField("Enter publisher name", text: $publisher)
+                        Text(publisher.isEmpty ? "Not available" : publisher)
                             .bodyMedium()
-                            .disabled(true)
-                            .foregroundColor(Color.theme.disabledText)
-                            .background(Color.theme.surface.opacity(0.5))
+                            .textSelection(.enabled)
+                            .foregroundColor(Color.theme.primaryText)
+                            .padding(.vertical, 8)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .accessibilityHint("Read-only book metadata")
                     }
                     
                     VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
                         Text("Publication Date")
                             .labelMedium()
                             .foregroundColor(Color.theme.secondaryText)
-                        TextField("Enter publication date", text: $publishedDate)
+                        Text(publishedDate.isEmpty ? "Not available" : publishedDate)
                             .bodyMedium()
-                            .disabled(true)
-                            .foregroundColor(Color.theme.disabledText)
-                            .background(Color.theme.surface.opacity(0.5))
+                            .textSelection(.enabled)
+                            .foregroundColor(Color.theme.primaryText)
+                            .padding(.vertical, 8)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .accessibilityHint("Read-only book metadata")
                     }
                     
                     VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
                         Text("Page Count")
                             .labelMedium()
                             .foregroundColor(Color.theme.secondaryText)
-                        TextField("Enter number of pages", text: $pageCount)
-                            .keyboardType(.numberPad)
+                        Text(pageCount.isEmpty ? "Not available" : "\(pageCount) pages")
                             .bodyMedium()
-                            .disabled(true)
-                            .foregroundColor(Color.theme.disabledText)
-                            .background(Color.theme.surface.opacity(0.5))
+                            .textSelection(.enabled)
+                            .foregroundColor(Color.theme.primaryText)
+                            .padding(.vertical, 8)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .accessibilityHint("Read-only book metadata")
                     }
                     
                     VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
                         Text("ISBN")
                             .labelMedium()
                             .foregroundColor(Color.theme.secondaryText)
-                        TextField("Enter ISBN number", text: $isbn)
+                        Text(isbn.isEmpty ? "Not available" : isbn)
                             .bodyMedium()
-                            .disabled(true)
-                            .foregroundColor(Color.theme.disabledText)
-                            .background(Color.theme.surface.opacity(0.5))
+                            .textSelection(.enabled)
+                            .foregroundColor(Color.theme.primaryText)
+                            .padding(.vertical, 8)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .accessibilityHint("Read-only book metadata")
                     }
                 } header: {
                     Text("Format & Publication")
@@ -182,11 +193,13 @@ struct EditBookView: View {
                         Text("Edition Language")
                             .labelMedium()
                             .foregroundColor(Color.theme.secondaryText)
-                        TextField("Language of this edition", text: $language)
+                        Text(language.isEmpty ? "Not available" : language)
                             .bodyMedium()
-                            .disabled(true)
-                            .foregroundColor(Color.theme.disabledText)
-                            .background(Color.theme.surface.opacity(0.5))
+                            .textSelection(.enabled)
+                            .foregroundColor(Color.theme.primaryText)
+                            .padding(.vertical, 8)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .accessibilityHint("Read-only book metadata")
                     }
                     
                     VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
@@ -195,6 +208,7 @@ struct EditBookView: View {
                             .foregroundColor(Color.theme.secondaryText)
                         TextField("Original publication language", text: $originalLanguage)
                             .bodyMedium()
+                            .frame(minHeight: 44)
                     }
                     
                     VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
@@ -203,6 +217,7 @@ struct EditBookView: View {
                             .foregroundColor(Color.theme.secondaryText)
                         TextField("Author's nationality or cultural origin", text: $authorNationality)
                             .bodyMedium()
+                            .frame(minHeight: 44)
                     }
                     
                     VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
@@ -211,6 +226,7 @@ struct EditBookView: View {
                             .foregroundColor(Color.theme.secondaryText)
                         TextField("Translator name (if applicable)", text: $translator)
                             .bodyMedium()
+                            .frame(minHeight: 44)
                     }
                 } header: {
                     Text("Cultural & Language Details")
@@ -237,6 +253,7 @@ struct EditBookView: View {
                             .foregroundColor(Color.theme.secondaryText)
                         TextField("Enter tags separated by commas", text: $tags)
                             .bodyMedium()
+                            .frame(minHeight: 44)
                     }
                 } header: {
                     Text("Organization")
@@ -257,6 +274,7 @@ struct EditBookView: View {
                         TextField("Your thoughts, reflections, and notes...", text: $personalNotes, axis: .vertical)
                             .lineLimit(3...8)
                             .bodyMedium()
+                            .frame(minHeight: 44)
                     }
                 } header: {
                     Text("Personal Notes")

@@ -75,8 +75,8 @@ struct SearchView: View {
         HStack(spacing: Theme.Spacing.sm) {
             HStack(spacing: Theme.Spacing.sm) {
                 Image(systemName: "magnifyingglass")
-                    .foregroundColor(Color.theme.secondaryText)
-                    .font(.system(size: 16))
+                    .foregroundStyle(.primary)
+                    .labelMedium()
                 
                 TextField("Search by title, author, or ISBN", text: $searchText)
                     .bodyMedium()
@@ -86,10 +86,13 @@ struct SearchView: View {
                 if !searchText.isEmpty {
                     Button(action: clearSearch) {
                         Image(systemName: "xmark.circle.fill")
-                            .foregroundColor(Color.theme.secondaryText)
-                            .font(.system(size: 16))
+                            .foregroundStyle(.primary)
+                            .labelMedium()
                     }
                     .buttonStyle(.plain)
+                    .frame(minWidth: 44, minHeight: 44)
+                    .contentShape(Rectangle())
+                    .accessibilityLabel("Clear search")
                 }
             }
             .padding(.horizontal, Theme.Spacing.md)
@@ -109,7 +112,10 @@ struct SearchView: View {
                 }
             }
             .materialButton(style: .filled, size: .medium)
+            .frame(minHeight: 44)
             .disabled(searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || searchState == .searching)
+            .accessibilityLabel("Search for books")
+            .accessibilityHint("Searches the online database for books matching your query")
         }
     }
     
@@ -136,9 +142,11 @@ struct SearchView: View {
         
         searchState = .searching
         
-        // Add haptic feedback
-        let impactFeedback = UIImpactFeedbackGenerator(style: .light)
-        impactFeedback.impactOccurred()
+        // Add haptic feedback - respect VoiceOver
+        if !UIAccessibility.isVoiceOverRunning {
+            let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+            impactFeedback.impactOccurred()
+        }
         
         Task {
             let result = await searchService.search(query: trimmedQuery)
@@ -146,14 +154,18 @@ struct SearchView: View {
                 switch result {
                 case .success(let books):
                     searchState = .results(books)
-                    // Success haptic feedback
-                    let successFeedback = UINotificationFeedbackGenerator()
-                    successFeedback.notificationOccurred(.success)
+                    // Success haptic feedback - respect VoiceOver
+                    if !UIAccessibility.isVoiceOverRunning {
+                        let successFeedback = UINotificationFeedbackGenerator()
+                        successFeedback.notificationOccurred(.success)
+                    }
                 case .failure(let error):
                     searchState = .error(formatError(error))
-                    // Error haptic feedback
-                    let errorFeedback = UINotificationFeedbackGenerator()
-                    errorFeedback.notificationOccurred(.error)
+                    // Error haptic feedback - respect VoiceOver
+                    if !UIAccessibility.isVoiceOverRunning {
+                        let errorFeedback = UINotificationFeedbackGenerator()
+                        errorFeedback.notificationOccurred(.error)
+                    }
                 }
             }
         }
@@ -163,9 +175,11 @@ struct SearchView: View {
         searchText = ""
         searchState = .idle
         
-        // Light haptic feedback for clear action
-        let impactFeedback = UIImpactFeedbackGenerator(style: .light)
-        impactFeedback.impactOccurred()
+        // Light haptic feedback for clear action - respect VoiceOver
+        if !UIAccessibility.isVoiceOverRunning {
+            let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+            impactFeedback.impactOccurred()
+        }
     }
     
     private func formatError(_ error: Error) -> String {
@@ -196,7 +210,7 @@ struct EnhancedLoadingView: View {
                     .stroke(Color.theme.outline.opacity(0.3), lineWidth: 3)
                     .frame(width: 60, height: 60)
                 
-                // Animated progress circle
+                // Animated progress circle - respect Reduce Motion
                 Circle()
                     .trim(from: 0, to: 0.3)
                     .stroke(
@@ -210,20 +224,22 @@ struct EnhancedLoadingView: View {
                     .frame(width: 60, height: 60)
                     .rotationEffect(.degrees(isAnimating ? 360 : 0))
                     .animation(
-                        .linear(duration: 1.2)
-                        .repeatForever(autoreverses: false),
+                        UIAccessibility.isReduceMotionEnabled ? 
+                            .linear(duration: 0.1) :
+                            .linear(duration: 1.2).repeatForever(autoreverses: false),
                         value: isAnimating
                     )
                 
-                // Inner pulse
+                // Inner pulse - respect Reduce Motion
                 Circle()
                     .fill(Color.theme.primaryAction.opacity(0.2))
                     .frame(width: 30, height: 30)
                     .scaleEffect(isAnimating ? 1.2 : 0.8)
                     .opacity(isAnimating ? 0.3 : 0.8)
                     .animation(
-                        .easeInOut(duration: 1.0)
-                        .repeatForever(autoreverses: true),
+                        UIAccessibility.isReduceMotionEnabled ?
+                            .linear(duration: 0.1) :
+                            .easeInOut(duration: 1.0).repeatForever(autoreverses: true),
                         value: isAnimating
                     )
             }
@@ -246,6 +262,9 @@ struct EnhancedLoadingView: View {
         .onReceive(timer) { _ in
             dotCount = (dotCount + 1) % 4
         }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(message)
+        .accessibilityHint("Loading content, please wait")
     }
 }
 
@@ -259,7 +278,7 @@ struct EnhancedErrorView: View {
         VStack(spacing: Theme.Spacing.lg) {
             VStack(spacing: Theme.Spacing.md) {
                 Image(systemName: "exclamationmark.triangle.fill")
-                    .font(.system(size: 50))
+                    .headlineSmall()
                     .foregroundColor(Color.theme.error)
                 
                 Text(title)
@@ -274,17 +293,22 @@ struct EnhancedErrorView: View {
             }
             
             Button(action: {
-                // Haptic feedback for retry
-                let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
-                impactFeedback.impactOccurred()
+                // Haptic feedback for retry - respect VoiceOver
+                if !UIAccessibility.isVoiceOverRunning {
+                    let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+                    impactFeedback.impactOccurred()
+                }
                 retryAction()
             }) {
                 HStack(spacing: Theme.Spacing.sm) {
                     Image(systemName: "arrow.clockwise")
                     Text("Try Again")
                 }
-                .materialButton(style: .filled, size: .large)
             }
+            .materialButton(style: .filled, size: .large)
+            .frame(minHeight: 44)
+            .accessibilityLabel("Retry search")
+            .accessibilityHint("Attempts to search again")
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding(Theme.Spacing.lg)
@@ -316,7 +340,9 @@ struct SearchResultRow: View {
             .onAppear {
                 // Simulate image loading completion
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                    withAnimation(.easeOut(duration: 0.3)) {
+                    let animation = UIAccessibility.isReduceMotionEnabled ? 
+                        Animation.linear(duration: 0.1) : Animation.easeOut(duration: 0.3)
+                    withAnimation(animation) {
                         isImageLoading = false
                     }
                 }
@@ -351,10 +377,12 @@ struct SearchResultRow: View {
             Spacer()
         }
         .padding(.vertical, Theme.Spacing.xs)
+        .frame(minHeight: 44)
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(book.title) by \(book.authors.joined(separator: ", "))")
         .accessibilityHint("Double tap to view book details")
+        .accessibilityIdentifier("SearchResultRow_\(book.googleBooksID)")
     }
     
     // Helper function to extract year from various date formats

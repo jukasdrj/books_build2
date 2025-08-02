@@ -30,18 +30,41 @@
     <key>LSRequiresIPhoneOS</key>
     <true/>
     
-    <!-- Network Security Configuration - RELAXED FOR DEVELOPMENT -->
+    <!-- Network Security Configuration - PRODUCTION READY -->
     <key>NSAppTransportSecurity</key>
     <dict>
-        <!-- Allow all HTTPS loads -->
+        <!-- Disallow arbitrary loads for security -->
         <key>NSAllowsArbitraryLoads</key>
-        <true/>
+        <false/>
         <key>NSAllowsArbitraryLoadsForMedia</key>
-        <true/>
+        <false/>
         <key>NSAllowsArbitraryLoadsInWebContent</key>
-        <true/>
+        <false/>
         <key>NSAllowsLocalNetworking</key>
         <false/>
+        
+        <!-- Whitelist Google Books API -->
+        <key>NSExceptionDomains</key>
+        <dict>
+            <key>books.googleapis.com</key>
+            <dict>
+                <key>NSExceptionRequiresForwardSecrecy</key>
+                <false/>
+                <key>NSExceptionMinimumTLSVersion</key>
+                <string>TLSv1.2</string>
+                <key>NSThirdPartyExceptionRequiresForwardSecrecy</key>
+                <false/>
+            </dict>
+            <key>googleapis.com</key>
+            <dict>
+                <key>NSExceptionRequiresForwardSecrecy</key>
+                <false/>
+                <key>NSExceptionMinimumTLSVersion</key>
+                <string>TLSv1.2</string>
+                <key>NSThirdPartyExceptionRequiresForwardSecrecy</key>
+                <false/>
+            </dict>
+        </dict>
     </dict>
     
     <!-- Privacy Descriptions -->
@@ -51,6 +74,10 @@
     <!-- Camera Usage Description -->
     <key>NSCameraUsageDescription</key>
     <string>This app uses the camera to scan book barcodes for quick book lookup.</string>
+    
+    <!-- Photo Library Usage Description - For future cover art caching feature -->
+    <key>NSPhotoLibraryAddUsageDescription</key>
+    <string>This app may save book cover images to your photo library for offline access and personal organization.</string>
     
     <!-- Scene configuration for SwiftUI lifecycle -->
     <key>UIApplicationSceneManifest</key>

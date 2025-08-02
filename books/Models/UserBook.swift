@@ -268,11 +268,11 @@ struct ReadingSession: Codable, Identifiable {
 }
 
 enum ReadingStatus: String, Codable, CaseIterable, Identifiable, Sendable {
-    case toRead = "To Read"
+    case toRead = "TBR - To Be Read"
     case reading = "Reading"
     case read = "Read"
     case onHold = "On Hold"
-    case dnf = "Did Not Finish"
+    case dnf = "DNF - Did Not Finish"
     
     var id: Self { self }
 }

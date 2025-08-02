@@ -141,19 +141,21 @@ struct LibraryView: View {
             
             // Action button - Fixed: Switch to Search tab instead of NavigationLink
             Button(action: {
-                // Haptic feedback for tab switch
-                let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
-                impactFeedback.impactOccurred()
+                // Haptic feedback for tab switch - respect VoiceOver
+                if !UIAccessibility.isVoiceOverRunning {
+                    let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+                    impactFeedback.impactOccurred()
+                }
                 
                 // Switch to Search tab (tab index 2)
                 selectedTab = 2
             }) {
-                HStack(spacing: Theme.Spacing.sm) {
-                    Image(systemName: "magnifyingglass")
-                    Text(filter.emptyActionTitle)
-                }
-                .materialButton(style: .filled, size: .large)
+                Label(filter.emptyActionTitle, systemImage: "magnifyingglass")
             }
+            .materialButton(style: .filled, size: .large)
+            .frame(minHeight: 44)
+            .accessibilityLabel("Browse books to add to your \(filter == .library ? "library" : "wishlist")")
+            .accessibilityHint("Switches to the search tab to find new books")
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
@@ -200,9 +202,11 @@ struct LibraryView: View {
     private func performRefresh() async {
         isRefreshing = true
         
-        // Haptic feedback for refresh start
-        let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
-        impactFeedback.impactOccurred()
+        // Haptic feedback for refresh start - respect VoiceOver
+        if !UIAccessibility.isVoiceOverRunning {
+            let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+            impactFeedback.impactOccurred()
+        }
         
         // Simulate data refresh operations
         await withTaskGroup(of: Void.self) { group in
@@ -220,9 +224,11 @@ struct LibraryView: View {
             await group.waitForAll()
         }
         
-        // Success haptic feedback
-        let successFeedback = UINotificationFeedbackGenerator()
-        successFeedback.notificationOccurred(.success)
+        // Success haptic feedback - respect VoiceOver
+        if !UIAccessibility.isVoiceOverRunning {
+            let successFeedback = UINotificationFeedbackGenerator()
+            successFeedback.notificationOccurred(.success)
+        }
         
         isRefreshing = false
     }
@@ -276,17 +282,24 @@ struct LibraryView: View {
             HStack(spacing: Theme.Spacing.sm) {
                 // View mode toggle
                 Button(action: {
-                    withAnimation(Theme.Animation.smooth) {
+                    let animation = UIAccessibility.isReduceMotionEnabled ? 
+                        .linear(duration: 0.1) : Theme.Animation.smooth
+                    withAnimation(animation) {
                         selectedViewMode = selectedViewMode == .grid ? .list : .grid
                     }
                     
-                    // Haptic feedback for view mode change
-                    let impactFeedback = UIImpactFeedbackGenerator(style: .light)
-                    impactFeedback.impactOccurred()
+                    // Haptic feedback for view mode change - respect VoiceOver
+                    if !UIAccessibility.isVoiceOverRunning {
+                        let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+                        impactFeedback.impactOccurred()
+                    }
                 }) {
                     Image(systemName: selectedViewMode == .grid ? "rectangle.grid.2x2" : "list.bullet")
-                        .font(.system(size: 16, weight: .medium))
+                        .labelMedium()
                 }
+                .frame(minWidth: 44, minHeight: 44)
+                .contentShape(Rectangle())
+                .accessibilityLabel("Switch to \(selectedViewMode == .grid ? "list" : "grid") view")
                 
                 // Sort menu
                 Menu {
@@ -294,9 +307,11 @@ struct LibraryView: View {
                         Button(action: {
                             selectedSortOption = option
                             
-                            // Haptic feedback for sort change
-                            let impactFeedback = UIImpactFeedbackGenerator(style: .light)
-                            impactFeedback.impactOccurred()
+                            // Haptic feedback for sort change - respect VoiceOver
+                            if !UIAccessibility.isVoiceOverRunning {
+                                let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+                                impactFeedback.impactOccurred()
+                            }
                         }) {
                             HStack {
                                 Text(option.displayName)
@@ -308,8 +323,12 @@ struct LibraryView: View {
                     }
                 } label: {
                     Image(systemName: "arrow.up.arrow.down")
-                        .font(.system(size: 16, weight: .medium))
+                        .labelMedium()
                 }
+                .frame(minWidth: 44, minHeight: 44)
+                .contentShape(Rectangle())
+                .accessibilityLabel("Sort books")
+                .accessibilityValue("Currently sorted by \(selectedSortOption.displayName)")
                 
                 if !displayedBooks.isEmpty && filter == .library {
                     EditButton()
@@ -389,7 +408,7 @@ struct LibraryHeaderView: View {
         HStack {
             VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
                 Text("\(totalBooks) books")
-                    .bookTitle()
+                    .titleLarge()
                     .foregroundColor(Color.theme.primaryText)
                 
                 if filter == .library {

@@ -26,10 +26,12 @@ struct booksTests {
     @Test("ReadingStatus Enum - Should handle all cases")
     func testReadingStatusEnum() throws {
         let allCases = ReadingStatus.allCases
-        #expect(allCases.count == 3)
-        #expect(ReadingStatus.toRead.rawValue == "To Read")
+        #expect(allCases.count == 5)
+        #expect(ReadingStatus.toRead.rawValue == "TBR - To Be Read")
         #expect(ReadingStatus.reading.rawValue == "Reading")
         #expect(ReadingStatus.read.rawValue == "Read")
+        #expect(ReadingStatus.onHold.rawValue == "On Hold")
+        #expect(ReadingStatus.dnf.rawValue == "DNF - Did Not Finish")
     }
     
     @Test("UserBook Default Values - Should initialize correctly")
