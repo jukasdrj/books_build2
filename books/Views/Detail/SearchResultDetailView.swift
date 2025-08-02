@@ -20,20 +20,22 @@ struct SearchResultDetailView: View {
     @State private var successMessage = ""
     @State private var isAddingToLibrary = false
     @State private var isAddingToWishlist = false
+    @State private var showingEditView = false
+    @State private var newlyAddedBook: UserBook?
 
     var body: some View {
         ZStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
+                VStack(alignment: .leading, spacing: Theme.Spacing.lg) {
                     // Header with cover, title, author
-                    HStack(alignment: .top, spacing: 20) {
+                    HStack(alignment: .top, spacing: Theme.Spacing.lg) {
                         BookCoverImage(
                             imageURL: bookMetadata.imageURL?.absoluteString,
                             width: 120,
                             height: 180
                         )
                         
-                        VStack(alignment: .leading, spacing: 8) {
+                        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
                             Text(bookMetadata.title)
                                 .titleLarge()
                             
@@ -46,8 +48,8 @@ struct SearchResultDetailView: View {
                                 Text(bookMetadata.genre.first!)
                                     .labelMedium()
                                     .fontWeight(.medium)
-                                    .padding(.horizontal, 8)
-                                    .padding(.vertical, 4)
+                                    .padding(.horizontal, Theme.Spacing.sm)
+                                    .padding(.vertical, Theme.Spacing.xs)
                                     .background(SwiftUI.Color.purple.opacity(0.2))
                                     .foregroundColor(.purple)
                                     .cornerRadius(8)
@@ -58,11 +60,11 @@ struct SearchResultDetailView: View {
                     }
                     
                     // Enhanced Action Buttons with Loading States
-                    VStack(spacing: 12) {
+                    VStack(spacing: Theme.Spacing.md) {
                         Button(action: {
                             addBook(toWishlist: false)
                         }) {
-                            HStack(spacing: 8) {
+                            HStack(spacing: Theme.Spacing.sm) {
                                 if isAddingToLibrary {
                                     ProgressView()
                                         .scaleEffect(0.8)
@@ -75,14 +77,14 @@ struct SearchResultDetailView: View {
                             .frame(maxWidth: .infinity)
                             .frame(height: 44)
                         }
-                        .buttonStyle(.borderedProminent)
+                        .materialButton(style: .filled)
                         .disabled(isAddingToLibrary || isAddingToWishlist || existingBook != nil)
                         .animation(.easeInOut(duration: 0.2), value: isAddingToLibrary)
                         
                         Button(action: {
                             addBook(toWishlist: true)
                         }) {
-                            HStack(spacing: 8) {
+                            HStack(spacing: Theme.Spacing.sm) {
                                 if isAddingToWishlist {
                                     ProgressView()
                                         .scaleEffect(0.8)
@@ -95,21 +97,21 @@ struct SearchResultDetailView: View {
                             .frame(maxWidth: .infinity)
                             .frame(height: 44)
                         }
-                        .buttonStyle(.bordered)
+                        .materialButton(style: .outlined)
                         .disabled(isAddingToLibrary || isAddingToWishlist || existingBook != nil)
                         .animation(.easeInOut(duration: 0.2), value: isAddingToWishlist)
                         
                         // Status indicator for existing books
                         if let existing = existingBook {
-                            HStack(spacing: 8) {
+                            HStack(spacing: Theme.Spacing.sm) {
                                 Image(systemName: "checkmark.circle.fill")
                                     .foregroundColor(Color.theme.success)
                                 Text("Already in your \(existing.onWishlist ? "wishlist" : "library")")
                                     .font(.subheadline)
                                     .foregroundColor(Color.theme.secondaryText)
                             }
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 8)
+                            .padding(.horizontal, Theme.Spacing.md)
+                            .padding(.vertical, Theme.Spacing.sm)
                             .background(Color.theme.success.opacity(0.1))
                             .cornerRadius(8)
                         }
@@ -117,7 +119,7 @@ struct SearchResultDetailView: View {
                     
                     // Description
                     if let description = bookMetadata.bookDescription, !description.isEmpty {
-                        VStack(alignment: .leading, spacing: 8) {
+                        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
                             Text("Description")
                                 .headlineMedium()
                             Text(description)
@@ -126,7 +128,7 @@ struct SearchResultDetailView: View {
                     }
                     
                     // Other Details
-                    VStack(alignment: .leading, spacing: 8) {
+                    VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
                         Text("Details")
                             .headlineMedium()
                         DetailRow(label: "Published", value: bookMetadata.publishedDate ?? "N/A")
@@ -146,8 +148,8 @@ struct SearchResultDetailView: View {
                 VStack {
                     Spacer()
                     SuccessToast(message: successMessage, isShowing: $showingSuccessToast)
-                        .padding(.horizontal, 20)
-                        .padding(.bottom, 100)
+                        .padding(.horizontal, Theme.Spacing.lg)
+                        .padding(.bottom, 100) 
                 }
                 .transition(.move(edge: .bottom).combined(with: .opacity))
                 .zIndex(1)
@@ -155,6 +157,17 @@ struct SearchResultDetailView: View {
         }
         .navigationTitle("Book Details")
         .navigationBarTitleDisplayMode(.inline)
+        .sheet(isPresented: $showingEditView) {
+            if let book = newlyAddedBook {
+                NavigationStack {
+                    EditBookView(userBook: book) { savedBook in
+                        // Handle save completion
+                        print("Book details saved: \(savedBook.metadata?.title ?? "Unknown")")
+                        showingEditView = false
+                    }
+                }
+            }
+        }
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button("Done") {
@@ -215,6 +228,9 @@ struct SearchResultDetailView: View {
             
             modelContext.insert(newBook)
             
+            // Store reference for potential navigation
+            newlyAddedBook = newBook
+            
             // Clear loading states
             isAddingToLibrary = false
             isAddingToWishlist = false
@@ -223,19 +239,37 @@ struct SearchResultDetailView: View {
             let successFeedback = UINotificationFeedbackGenerator()
             successFeedback.notificationOccurred(.success)
             
-            // Show success message
-            successMessage = toWishlist ? 
-                "📚 Added to your wishlist!" : 
-                "✅ Added to your library!"
-            
-            withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
-                showingSuccessToast = true
-            }
-            
-            // Auto-hide toast after delay (but don't auto-dismiss the view)
-            DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
-                withAnimation(.easeOut(duration: 0.3)) {
-                    showingSuccessToast = false
+            if toWishlist {
+                // Wishlist: Show success and stop
+                successMessage = "📚 Added to your wishlist!"
+                
+                withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
+                    showingSuccessToast = true
+                }
+                
+                DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+                    withAnimation(.easeOut(duration: 0.3)) {
+                        showingSuccessToast = false
+                    }
+                }
+            } else {
+                // Library: Show success then navigate to edit
+                successMessage = "✅ Added to your library! Customize your book..."
+                
+                withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
+                    showingSuccessToast = true
+                }
+                
+                // After brief success feedback, present EditBookView
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                    withAnimation(.easeOut(duration: 0.3)) {
+                        showingSuccessToast = false
+                    }
+                    
+                    // Present EditBookView as sheet for immediate customization
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        showingEditView = true
+                    }
                 }
             }
         }
@@ -250,7 +284,7 @@ struct SuccessToast: View {
     @State private var opacity: Double = 0
     
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: Theme.Spacing.md) {
             Image(systemName: "checkmark.circle.fill")
                 .titleMedium()
                 .foregroundColor(Color.theme.success)
@@ -261,8 +295,8 @@ struct SuccessToast: View {
             
             Spacer()
         }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 16)
+        .padding(.horizontal, Theme.Spacing.lg)
+        .padding(.vertical, Theme.Spacing.md)
         .background(Color.theme.cardBackground)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
@@ -314,7 +348,7 @@ struct DetailRow: View {
             
             Spacer()
         }
-        .padding(.vertical, 2)
+        .padding(.vertical, Theme.Spacing.xs)
         .frame(minHeight: 44)
         .contentShape(Rectangle())
     }

@@ -27,6 +27,7 @@ struct BookCardView: View {
             }
         }
         .frame(width: cardWidth)
+        .materialInteractive()
         .contentShape(Rectangle()) // Makes the entire card tappable
         .accessibilityElement(children: .combine)
         .accessibilityLabel(accessibilityDescription)
@@ -70,7 +71,7 @@ struct BookCardView: View {
                 .multilineTextAlignment(.leading)
                 .frame(height: 36, alignment: .top)
             
-            Spacer(minLength: 2)
+            Spacer(minLength: Theme.Spacing.xs)
             
             // Author section (Fixed height)
             Text(book.metadata?.authors.joined(separator: ", ") ?? "Unknown Author")
@@ -79,7 +80,7 @@ struct BookCardView: View {
                 .lineLimit(1)
                 .frame(height: 16, alignment: .top)
             
-            Spacer(minLength: 4)
+            Spacer(minLength: Theme.Spacing.xs)
             
             // Bottom section - Cultural info, rating, or spacer (Fixed height)
             bottomInfoSection
@@ -124,7 +125,7 @@ struct BookCardView: View {
     // MARK: - Helper Components
     @ViewBuilder
     private var bottomInfoSection: some View {
-        VStack(alignment: .leading, spacing: 2) {
+        VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
             // Priority 1: Cultural information
             if let originalLanguage = book.metadata?.originalLanguage,
                originalLanguage != book.metadata?.language {
@@ -167,7 +168,7 @@ struct BookCardView: View {
     
     @ViewBuilder
     private func ratingStars(rating: Int) -> some View {
-        HStack(spacing: 2) {
+        HStack(spacing: Theme.Spacing.xs) {
             ForEach(1...5, id: \.self) { star in
                 Image(systemName: star <= rating ? "star.fill" : "star")
                     .labelSmall()

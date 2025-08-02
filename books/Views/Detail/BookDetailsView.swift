@@ -16,6 +16,11 @@ struct BookDetailsView: View {
                 
                 RatingSection(rating: $book.rating)
                 
+                // NEW: Reading Progress Section
+                if book.readingStatus == .reading || book.readingStatus == .read || book.currentPage > 0 {
+                    ReadingProgressSection(book: book)
+                }
+                
                 // NEW: Tags Section
                 BookTagsDisplaySection(book: book)
                 
@@ -597,32 +602,261 @@ extension UserBook {
     }
 }
 
-#Preview {
-    let metadata = BookMetadata(
-        googleBooksID: "preview-id",
-        title: "The Midnight Library",
-        authors: ["Matt Haig"],
-        publishedDate: "2020",
-        pageCount: 304,
-        bookDescription: "Between life and death there is a library, and within that library, the shelves go on forever. Every book provides a chance to try another life you could have lived. To see how things would be if you had made other choices . . . Would you have done anything different, if you had the chance to undo your regrets?",
-        language: "English",
-        publisher: "Viking",
-        isbn: "9780525559474",
-        genre: ["Contemporary Fiction", "Fantasy"],
-        originalLanguage: "English",
-        authorNationality: "British"
-    )
+// MARK: - NEW: Reading Progress Section
+struct ReadingProgressSection: View {
+    @Bindable var book: UserBook
+    @State private var showingPageInput = false
+    @State private var showingReadingSessionInput = false
     
-    let sampleBook = UserBook(
-        readingStatus: .reading,
-        rating: 5,
-        notes: "An absolutely fantastic and though-provoking read!",
-        tags: ["Fiction", "Philosophy"],
-        metadata: metadata
-    )
+    private var totalPages: Int {
+        book.metadata?.pageCount ?? 0
+    }
     
-    return NavigationStack {
-        BookDetailsView(book: sampleBook)
-            .modelContainer(for: [UserBook.self, BookMetadata.self], inMemory: true)
+    private var progressPercentage: Int {
+        guard totalPages > 0 else { return 0 }
+        return min(Int((Double(book.currentPage) / Double(totalPages)) * 100), 100)
+    }
+    
+    var body: some View {
+        GroupBox {
+            VStack(alignment: .leading, spacing: Theme.Spacing.md) {
+                // Progress Header
+                HStack {
+                    VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+                        Text("Reading Progress")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(Color.theme.primaryText)
+                        
+                        if totalPages > 0 {
+                            Text("\(book.currentPage) of \(totalPages) pages")
+                                .bodyMedium()
+                                .foregroundColor(Color.theme.secondaryText)
+                        } else {
+                            Text("Page \(book.currentPage)")
+                                .bodyMedium()
+                                .foregroundColor(Color.theme.secondaryText)
+                        }
+                    }
+                    
+                    Spacer()
+                    
+                    // Progress percentage
+                    if totalPages > 0 {
+                        Text("\(progressPercentage)%")
+                            .titleSmall()
+                            .fontWeight(.bold)
+                            .foregroundColor(Color.theme.primaryAction)
+                    }
+                }
+                
+                // Progress Bar
+                if totalPages > 0 {
+                    ProgressView(value: book.readingProgress)
+                        .tint(Color.theme.primaryAction)
+                        .scaleEffect(y: 1.5, anchor: .center)
+                        .animation(.easeInOut(duration: 0.3), value: book.readingProgress)
+                }
+                
+                // Action Buttons
+                HStack(spacing: Theme.Spacing.sm) {
+                    Button("Update Progress") {
+                        showingPageInput = true
+                    }
+                    .materialButton(style: .tonal, size: .small)
+                    
+                    if book.readingStatus == .reading {
+                        Button("Log Session") {
+                            showingReadingSessionInput = true
+                        }
+                        .materialButton(style: .outlined, size: .small)
+                    }
+                }
+                
+                // Estimated Finish Date
+                if let estimatedFinish = book.estimatedFinishDate, book.readingStatus == .reading {
+                    HStack(spacing: Theme.Spacing.xs) {
+                        Image(systemName: "calendar")
+                            .labelSmall()
+                            .foregroundColor(Color.theme.secondaryText)
+                        
+                        Text("Estimated finish: \(estimatedFinish.formatted(date: .abbreviated, time: .omitted))")
+                            .labelSmall()
+                            .foregroundColor(Color.theme.secondaryText)
+                    }
+                    .padding(.top, Theme.Spacing.xs)
+                }
+                
+                // Reading Stats
+                if !book.readingSessions.isEmpty {
+                    readingStatsView
+                }
+            }
+        }
+        .sheet(isPresented: $showingPageInput) {
+            PageInputView(
+                currentPage: Binding(
+                    get: { book.currentPage },
+                    set: { newValue in book.currentPage = newValue }
+                ),
+                totalPages: Binding(
+                    get: { book.metadata?.pageCount ?? 0 },
+                    set: { newValue in
+                        book.metadata?.pageCount = newValue > 0 ? newValue : nil
+                    }
+                ),
+                onSave: {
+                    book.updateReadingProgress()
+                }
+            )
+        }
+        .sheet(isPresented: $showingReadingSessionInput) {
+            ReadingSessionInputView(book: book)
+        }
+    }
+    
+    @ViewBuilder
+    private var readingStatsView: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+            Divider()
+                .padding(.vertical, Theme.Spacing.xs)
+            
+            Text("Reading Stats")
+                .labelMedium()
+                .fontWeight(.semibold)
+                .foregroundColor(Color.theme.primaryText)
+            
+            HStack(spacing: Theme.Spacing.lg) {
+                StatItemView(
+                    icon: "clock",
+                    value: "\(book.totalReadingTimeMinutes / 60)h \(book.totalReadingTimeMinutes % 60)m",
+                    label: "Total Time"
+                )
+                
+                if let pace = book.averageReadingPace() {
+                    StatItemView(
+                        icon: "speedometer",
+                        value: String(format: "%.1f", pace),
+                        label: "Pages/Hour"
+                    )
+                }
+                
+                StatItemView(
+                    icon: "book.pages",
+                    value: "\(book.readingSessions.count)",
+                    label: "Sessions"
+                )
+            }
+        }
     }
 }
+
+// MARK: - Reading Stats Item
+struct StatItemView: View {
+    let icon: String
+    let value: String
+    let label: String
+    
+    var body: some View {
+        VStack(spacing: Theme.Spacing.xs) {
+            Image(systemName: icon)
+                .labelMedium()
+                .foregroundColor(Color.theme.primaryAction)
+            
+            Text(value)
+                .labelMedium()
+                .fontWeight(.bold)
+                .foregroundColor(Color.theme.primaryText)
+            
+            Text(label)
+                .labelSmall()
+                .foregroundColor(Color.theme.secondaryText)
+        }
+        .frame(maxWidth: .infinity)
+    }
+}
+
+// MARK: - Reading Session Input View
+struct ReadingSessionInputView: View {
+    @Environment(\.dismiss) private var dismiss
+    @Bindable var book: UserBook
+    
+    @State private var durationText = ""
+    @State private var pagesReadText = ""
+    
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("Reading Session") {
+                    HStack {
+                        Text("Duration (minutes)")
+                            .labelMedium()
+                        Spacer()
+                        TextField("0", text: $durationText)
+                            .frame(width: 80)
+                            .bodyMedium()
+                            .keyboardType(.numberPad)
+                    }
+                    
+                    HStack {
+                        Text("Pages Read")
+                            .labelMedium()
+                        Spacer()
+                        TextField("0", text: $pagesReadText)
+                            .frame(width: 80)
+                            .bodyMedium()
+                            .keyboardType(.numberPad)
+                    }
+                }
+                
+                if let duration = Int(durationText), let pages = Int(pagesReadText), duration > 0, pages > 0 {
+                    Section("Session Stats") {
+                        HStack {
+                            Text("Reading Pace")
+                            Spacer()
+                            Text(String(format: "%.1f pages/hour", Double(pages) / (Double(duration) / 60.0)))
+                                .foregroundColor(Color.theme.primaryAction)
+                        }
+                        
+                        HStack {
+                            Text("New Current Page")
+                            Spacer()
+                            Text("\(book.currentPage + pages)")
+                                .foregroundColor(Color.theme.primaryAction)
+                        }
+                    }
+                }
+            }
+            .navigationTitle("Log Reading Session")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+                
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        saveSession()
+                        dismiss()
+                    }
+                    .disabled(!isValidInput)
+                }
+            }
+        }
+    }
+    
+    private var isValidInput: Bool {
+        guard let duration = Int(durationText),
+              let pages = Int(pagesReadText) else {
+            return false
+        }
+        return duration > 0 && pages > 0 && pages <= 1000 // reasonable limits
+    }
+    
+    private func saveSession() {
+        guard let duration = Int(durationText),
+              let pages = Int(pagesReadText) else { return }
+        
+        book.addReadingSession(minutes: duration, pagesRead: pages)
+    }
+}
+

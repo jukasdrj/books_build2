@@ -5,7 +5,7 @@ struct BookRowView: View {
     var userBook: UserBook
     
     var body: some View {
-        HStack(spacing: 15) {
+        HStack(spacing: Theme.Spacing.md) {
             BookCoverImage(
                 imageURL: userBook.metadata?.imageURL?.absoluteString,
                 width: 60,
@@ -22,13 +22,14 @@ struct BookRowView: View {
                 
                 if userBook.readingStatus != .toRead {
                     StatusBadge(status: userBook.readingStatus, style: .capsule)
-                        .padding(.top, 2)
+                        .padding(.top, Theme.Spacing.xs)
                 }
             }
             
             Spacer()
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, Theme.Spacing.xs)
+        .materialInteractive()
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(userBook.metadata?.title ?? "Unknown Title") by \(userBook.metadata?.authors.joined(separator: ", ") ?? "Unknown Author")")

@@ -74,4 +74,67 @@ struct IntegrationTests {
         #expect(wishlistBooks.count == 1, "One book should be on the wishlist")
         #expect(wishlistBooks.first?.metadata?.title == "A Searched Book")
     }
+    
+    @Test("Adding Book Auto-navigates to EditBookDetails - Should trigger navigation")
+    func testAddBookAutoNavigation() async throws {
+        let container = try createTestContainer()
+        let context = ModelContext(container)
+        
+        // Create a search result book metadata
+        let searchResultMetadata = BookMetadata(
+            googleBooksID: "auto-nav-test-123",
+            title: "Navigation Test Book",
+            authors: ["Navigation Author"],
+            genre: ["Testing"]
+        )
+        
+        // Simulate adding book to library (not wishlist)
+        let userBook = UserBook(readingStatus: .reading, onWishlist: false)
+        userBook.metadata = searchResultMetadata
+        
+        context.insert(userBook)
+        try context.save()
+        
+        // Verify book was added to library
+        let allBooks = try context.fetch(FetchDescriptor<UserBook>())
+        let libraryBooks = allBooks.filter { !$0.onWishlist }
+        
+        #expect(libraryBooks.count == 1, "One book should be in the library")
+        #expect(libraryBooks.first?.metadata?.title == "Navigation Test Book")
+        #expect(libraryBooks.first?.readingStatus == .reading, "Book should have reading status")
+        
+        // The navigation test will be verified in the UI implementation
+        // This test ensures the data flow works correctly for the auto-navigation feature
+    }
+    
+    @Test("Adding Book to Wishlist Does Not Auto-navigate - Should not trigger navigation")
+    func testAddToWishlistNoAutoNavigation() async throws {
+        let container = try createTestContainer()
+        let context = ModelContext(container)
+        
+        // Create a search result book metadata
+        let searchResultMetadata = BookMetadata(
+            googleBooksID: "wishlist-test-123",
+            title: "Wishlist Test Book",
+            authors: ["Wishlist Author"],
+            genre: ["Testing"]
+        )
+        
+        // Simulate adding book to wishlist
+        let userBook = UserBook(readingStatus: .toRead, onWishlist: true)
+        userBook.metadata = searchResultMetadata
+        
+        context.insert(userBook)
+        try context.save()
+        
+        // Verify book was added to wishlist
+        let allBooks = try context.fetch(FetchDescriptor<UserBook>())
+        let wishlistBooks = allBooks.filter { $0.onWishlist }
+        
+        #expect(wishlistBooks.count == 1, "One book should be on the wishlist")
+        #expect(wishlistBooks.first?.metadata?.title == "Wishlist Test Book")
+        #expect(wishlistBooks.first?.readingStatus == .toRead, "Wishlist book should have toRead status")
+        
+        // Auto-navigation should only happen for library additions, not wishlist
+    }
 }

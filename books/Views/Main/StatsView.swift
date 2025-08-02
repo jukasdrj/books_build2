@@ -36,6 +36,7 @@ struct StatsView: View {
                 }
             }
             .padding()
+            .padding(.bottom, Theme.Spacing.xl)
         }
         .navigationTitle("Reading Stats")
     }
@@ -124,9 +125,8 @@ struct CulturalDiversitySection: View {
             // Marginalized Voices Summary
             marginizedVoicesSection
         }
-        .padding()
-        .background(Color.theme.cardBackground)
-        .cornerRadius(12)
+        .padding(Theme.Spacing.md)
+        .materialCard()
     }
     
     private var culturalProgressOverview: some View {
@@ -313,7 +313,7 @@ struct StatCard: View {
     let color: Color
     
     var body: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: Theme.Spacing.sm) {
             Image(systemName: icon)
                 .labelLarge()
                 .foregroundColor(color)
@@ -329,9 +329,8 @@ struct StatCard: View {
                 .foregroundColor(Color.theme.secondaryText)
         }
         .frame(maxWidth: .infinity)
-        .padding()
-        .background(color.opacity(0.1))
-        .cornerRadius(12)
+        .padding(Theme.Spacing.md)
+        .materialCard(backgroundColor: color.opacity(0.1))
     }
 }
 
@@ -339,20 +338,19 @@ struct ReadingStatusBreakdown: View {
     let books: [UserBook]
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: Theme.Spacing.md) {
             Text("Reading Status")
                 .titleLarge()
                 .foregroundColor(Color.theme.primaryText)
             
-            VStack(spacing: 8) {
+            VStack(spacing: Theme.Spacing.sm) {
                 StatusRow(status: .read, count: booksRead, total: books.count)
                 StatusRow(status: .reading, count: currentlyReading, total: books.count)
                 StatusRow(status: .toRead, count: wantToRead, total: books.count)
             }
         }
-        .padding()
-        .background(Color.theme.cardBackground)
-        .cornerRadius(12)
+        .padding(Theme.Spacing.md)
+        .materialCard()
     }
     
     private var booksRead: Int {
@@ -399,20 +397,20 @@ struct RecentBooksSection: View {
     let books: [UserBook]
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: Theme.Spacing.md) {
             Text("Recently Completed")
                 .titleLarge()
                 .foregroundColor(Color.theme.primaryText)
             
             ForEach(books, id: \.self) { book in
-                HStack(spacing: 12) {
+                HStack(spacing: Theme.Spacing.md) {
                     BookCoverImage(
                         imageURL: book.metadata?.imageURL?.absoluteString,
                         width: 40,
                         height: 60
                     )
                     
-                    VStack(alignment: .leading, spacing: 4) {
+                    VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
                         Text(book.metadata?.title ?? "Unknown Title")
                             .bodyMedium()
                             .fontWeight(.medium)
@@ -443,12 +441,11 @@ struct RecentBooksSection: View {
                         }
                     }
                 }
-                .padding(.vertical, 4)
+                .padding(.vertical, Theme.Spacing.xs)
             }
         }
-        .padding()
-        .background(Color.theme.cardBackground)
-        .cornerRadius(12)
+        .padding(Theme.Spacing.md)
+        .materialCard()
     }
 }
 

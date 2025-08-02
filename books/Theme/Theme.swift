@@ -358,14 +358,17 @@ extension View {
             )
     }
     
-    // Interactive state handling
+    // Interactive state handling with enhanced Material Design 3 feedback
     func materialInteractive(
-        pressedColor: SwiftUI.Color = SwiftUI.Color.theme.pressed,
+        pressedScale: CGFloat = 0.95,
+        pressedOpacity: Double = 0.8,
         hoveredColor: SwiftUI.Color = SwiftUI.Color.theme.hovered
     ) -> some View {
-        self
-            .scaleEffect(1.0) // Will be animated on press
-            .animation(Theme.Animation.fastEaseOut, value: false)
+        self.modifier(MaterialInteractiveModifier(
+            pressedScale: pressedScale,
+            pressedOpacity: pressedOpacity,
+            hoveredColor: hoveredColor
+        ))
     }
     
     // Helper for conditional modifiers
@@ -515,5 +518,36 @@ struct MaterialButtonModifier: ViewModifier {
         case .outlined: return 1
         default: return 0
         }
+    }
+}
+
+struct MaterialInteractiveModifier: ViewModifier {
+    let pressedScale: CGFloat
+    let pressedOpacity: Double
+    let hoveredColor: SwiftUI.Color
+    
+    @State private var isPressed = false
+    @GestureState private var isGestureActive = false
+    
+    func body(content: Content) -> some View {
+        content
+            .scaleEffect(isPressed || isGestureActive ? pressedScale : 1.0)
+            .opacity(isPressed || isGestureActive ? pressedOpacity : 1.0)
+            .animation(Theme.Animation.fastEaseOut, value: isPressed)
+            .animation(Theme.Animation.fastEaseOut, value: isGestureActive)
+            .simultaneousGesture(
+                DragGesture(minimumDistance: 0)
+                    .updating($isGestureActive) { _, state, _ in
+                        state = true
+                    }
+                    .onChanged { _ in
+                        if !isPressed {
+                            isPressed = true
+                        }
+                    }
+                    .onEnded { _ in
+                        isPressed = false
+                    }
+            )
     }
 }

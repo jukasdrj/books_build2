@@ -56,7 +56,7 @@ struct EditBookView: View {
                             .bodyMedium()
                             .textSelection(.enabled)
                             .foregroundColor(Color.theme.primaryText)
-                            .padding(.vertical, 8)
+                            .padding(.vertical, Theme.Spacing.sm)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .accessibilityHint("Read-only book metadata")
                     }
@@ -69,7 +69,7 @@ struct EditBookView: View {
                             .bodyMedium()
                             .textSelection(.enabled)
                             .foregroundColor(Color.theme.primaryText)
-                            .padding(.vertical, 8)
+                            .padding(.vertical, Theme.Spacing.sm)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .accessibilityHint("Read-only book metadata")
                     }
@@ -78,7 +78,7 @@ struct EditBookView: View {
                         .titleSmall()
                         .foregroundColor(Color.theme.primaryText)
                 } footer: {
-                    HStack(spacing: 4) {
+                    HStack(spacing: Theme.Spacing.xs) {
                         Image(systemName: "lock.shield")
                             .foregroundColor(Color.theme.secondaryText)
                             .font(.caption)
@@ -99,7 +99,7 @@ struct EditBookView: View {
                         LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: Theme.Spacing.sm) {
                             ForEach(BookFormat.allCases, id: \.self) { format in
                                 Button(action: { selectedFormat = format == selectedFormat ? nil : format }) {
-                                    VStack(spacing: 4) {
+                                    VStack(spacing: Theme.Spacing.xs) {
                                         Image(systemName: format.icon)
                                             .font(.system(size: 20))
                                             .foregroundColor(selectedFormat == format ? Color.theme.onPrimary : Color.theme.primaryAction)
@@ -129,7 +129,7 @@ struct EditBookView: View {
                             .bodyMedium()
                             .textSelection(.enabled)
                             .foregroundColor(Color.theme.primaryText)
-                            .padding(.vertical, 8)
+                            .padding(.vertical, Theme.Spacing.sm)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .accessibilityHint("Read-only book metadata")
                     }
@@ -142,7 +142,7 @@ struct EditBookView: View {
                             .bodyMedium()
                             .textSelection(.enabled)
                             .foregroundColor(Color.theme.primaryText)
-                            .padding(.vertical, 8)
+                            .padding(.vertical, Theme.Spacing.sm)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .accessibilityHint("Read-only book metadata")
                     }
@@ -155,7 +155,7 @@ struct EditBookView: View {
                             .bodyMedium()
                             .textSelection(.enabled)
                             .foregroundColor(Color.theme.primaryText)
-                            .padding(.vertical, 8)
+                            .padding(.vertical, Theme.Spacing.sm)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .accessibilityHint("Read-only book metadata")
                     }
@@ -168,7 +168,7 @@ struct EditBookView: View {
                             .bodyMedium()
                             .textSelection(.enabled)
                             .foregroundColor(Color.theme.primaryText)
-                            .padding(.vertical, 8)
+                            .padding(.vertical, Theme.Spacing.sm)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .accessibilityHint("Read-only book metadata")
                     }
@@ -177,7 +177,7 @@ struct EditBookView: View {
                         .titleSmall()
                         .foregroundColor(Color.theme.primaryText)
                 } footer: {
-                    HStack(spacing: 4) {
+                    HStack(spacing: Theme.Spacing.xs) {
                         Image(systemName: "info.circle")
                             .foregroundColor(Color.theme.secondaryText)
                             .font(.caption)
@@ -197,7 +197,7 @@ struct EditBookView: View {
                             .bodyMedium()
                             .textSelection(.enabled)
                             .foregroundColor(Color.theme.primaryText)
-                            .padding(.vertical, 8)
+                            .padding(.vertical, Theme.Spacing.sm)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .accessibilityHint("Read-only book metadata")
                     }
@@ -234,7 +234,7 @@ struct EditBookView: View {
                         .foregroundColor(Color.theme.primaryText)
                 } footer: {
                     VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
-                        HStack(spacing: 4) {
+                        HStack(spacing: Theme.Spacing.xs) {
                             Image(systemName: "info.circle")
                                 .foregroundColor(Color.theme.secondaryText)
                                 .font(.caption)

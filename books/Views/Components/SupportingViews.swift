@@ -19,7 +19,7 @@ struct StatusBadge: View {
     var body: some View {
         switch style {
         case .full:
-            HStack(spacing: 4) {
+            HStack(spacing: Theme.Spacing.xs) {
                 Text(status.rawValue)
                     .labelMedium()
                     .foregroundColor(Color.theme.primaryText)
@@ -36,8 +36,8 @@ struct StatusBadge: View {
             Text(status.rawValue)
                 .labelSmall()
                 .fontWeight(.medium)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
+                .padding(.horizontal, Theme.Spacing.sm)
+                .padding(.vertical, Theme.Spacing.xs)
                 .background(status.color.opacity(0.2))
                 .foregroundColor(status.color)
                 .cornerRadius(Theme.CornerRadius.small)
@@ -115,7 +115,7 @@ struct EnhancedEditBookView: View {
                                 Button(action: {
                                     selectedFormat = selectedFormat == format ? nil : format
                                 }) {
-                                    VStack(spacing: 4) {
+                                    VStack(spacing: Theme.Spacing.xs) {
                                         Image(systemName: format.icon)
                                             .font(.system(size: 20))
                                             .foregroundColor(selectedFormat == format ? .white : Theme.Color.PrimaryAction)
@@ -229,9 +229,9 @@ struct EnhancedEditBookView: View {
                         }
                         
                         if !categories.isEmpty {
-                            LazyVGrid(columns: [GridItem(.adaptive(minimum: 100))], spacing: 8) {
+                            LazyVGrid(columns: [GridItem(.adaptive(minimum: 100))], spacing: Theme.Spacing.sm) {
                                 ForEach(categories, id: \.self) { category in
-                                    HStack(spacing: 4) {
+                                    HStack(spacing: Theme.Spacing.xs) {
                                         Text(category)
                                             .labelSmall()
                                         
@@ -242,8 +242,8 @@ struct EnhancedEditBookView: View {
                                                 .font(.caption)
                                         }
                                     }
-                                    .padding(.horizontal, 8)
-                                    .padding(.vertical, 4)
+                                    .padding(.horizontal, Theme.Spacing.sm)
+                                    .padding(.vertical, Theme.Spacing.xs)
                                     .background(Theme.Color.PrimaryAction.opacity(0.1))
                                     .foregroundColor(Theme.Color.PrimaryAction)
                                     .cornerRadius(8)
