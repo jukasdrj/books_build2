@@ -17,11 +17,49 @@ class DataMigrationManager: ObservableObject {
     }
     
     func checkForMigrationNeeds() async {
-        // This is a placeholder for future migration logic.
+        // Check if we need to perform any migrations
+        await performReadingStatusMigration()
     }
     
     func performFullMigration() async {
-        // This is a placeholder for future migration logic.
+        isMigrating = true
+        migrationStatus = "Updating reading statuses..."
+        migrationProgress = 0.5
+        
+        do {
+            await performReadingStatusMigration()
+            migrationStatus = "Migration completed"
+            migrationProgress = 1.0
+        } catch {
+            migrationError = "Migration failed: \(error.localizedDescription)"
+            showingMigrationAlert = true
+        }
+        
+        isMigrating = false
+    }
+    
+    private func performReadingStatusMigration() async {
+        // Note: With the custom decoder in ReadingStatus, this migration
+        // should happen automatically when data is loaded. This function
+        // serves as a fallback and for logging purposes.
+        
+        let context = modelContainer.mainContext
+        
+        do {
+            let descriptor = FetchDescriptor<UserBook>()
+            let books = try context.fetch(descriptor)
+            
+            // The custom decoder will handle the migration automatically
+            // when each book's readingStatus is accessed
+            for book in books {
+                _ = book.readingStatus // This triggers the decoder if needed
+            }
+            
+            try context.save()
+            print("Reading status migration completed for \(books.count) books")
+        } catch {
+            print("Error during reading status migration: \(error)")
+        }
     }
     
     private func enhanceBookMetadata(in context: ModelContext) async throws {
@@ -30,7 +68,6 @@ class DataMigrationManager: ObservableObject {
         
         for book in books {
             if book.metadata == nil {
-                // Corrected to use the new, valid initializer
                 book.metadata = BookMetadata(
                     googleBooksID: "migrated-\(UUID().uuidString)",
                     title: "Unknown Title",
