@@ -41,7 +41,6 @@
 
 ## Short Term (Next 2-4 weeks) 🎯
 
-### User Experience Improvements
 - [ ] **Pull-to-refresh functionality**
   - Add refresh capability to LibraryView and WishlistView
   - Implement background data sync and cache invalidation
@@ -62,27 +61,8 @@
   - Success/error haptics for form submissions
   - Status change confirmation feedback
 
-### Reading Progress Features
-- [ ] **Enhanced progress tracking**
-  - Current page input with progress bar visualization
-  - Reading session timer and tracking
-  - Daily/weekly reading goal setting and progress
-
-- [ ] **Reading statistics expansion**
-  - Average reading speed calculation
-  - Time spent reading tracking
-  - Reading streak counters
-
-### Search & Discovery
-- [ ] **Advanced filtering system**
-  - Filter by genre, publication year, rating
-  - Cultural diversity filters (region, language, etc.)
-  - Reading status and completion date filters
-
-- [ ] **Barcode scanning improvements**
-  - Enhanced ISBN recognition accuracy
-  - Camera permission handling
-  - Manual ISBN entry fallback
+- [ ] **Move cultural field display to StatsView**
+  - Show author nationality and original language metrics in StatsView
 
 ## Medium Term (1-3 months) 🚀
 

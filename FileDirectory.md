@@ -134,8 +134,10 @@ The Books Reading Tracker project is organized into several main directories wit
 
 #### **StatsView.swift**
 - **Purpose**: Reading analytics and progress visualization
-- **Responsibility**: Display reading statistics, goal tracking, and progress charts
-- **Key Features**: Monthly progress, genre breakdown, reading pace analytics
+- **Responsibility**: Display reading statistics, goal tracking, progress charts, and cultural diversity metrics
+- **Key Features**: 
+  - Monthly progress, genre breakdown, reading pace analytics
+  - Cultural fields display: author nationality and original language statistics
 - **Chart Dependencies**: Uses chart views from Charts/ subfolder
 
 #### **CulturalDiversityView.swift**
