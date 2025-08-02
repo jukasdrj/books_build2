@@ -3,131 +3,42 @@ Documentation
 
 ### Getting started
 
-At the beginning of a new session, always check for the following files. If they exist and have not yet been read into context, read them before taking any further action.
+At the beginning of a new session, my first step is to get a high-level understanding of the project efficiently.
 
--   Documentation.md (or README.md)
+1.  **Read `ProjectSummary.md`**: This is my primary source for quick context. It contains the project's core concept, architecture, key files, and development patterns. I will always read this file first.
 
-    -   This will include general information about the project - its core features, UX pathways, high-level architecture, key components, and other considerations.
+2.  **Check for other documentation if needed**: If the task requires more detailed information, I will refer to the following files as needed:
+    -   `Documentation.md`: For in-depth project features, UX pathways, and architecture.
+    -   `FileDirectory.md`: For a detailed breakdown of every file's purpose.
+    -   `Roadmap.md`: To understand future goals and planned features.
+    -   `Accomplished.md`: To review the history of work completed in past sessions.
 
--   FileDirectory.md
-
-    -   This includes a directory of every folder and file, along with a short description of what each file is responsible for
-
-        -   Use this to prioritize which files to load into context. Avoid reading files indiscriminately---read only those relevant to the task to conserve tokens.
-
--   Roadmap.md
-
-    -   This contains the list of features the user is planning on adding
-
--   Accomplished.md
-
-    -   This is used as a reference for what you accomplish during each session
+This approach ensures I use tokens efficiently, loading the full context only when necessary.
 
 ### Updating documentation
 
 -   When a new feature is added:
+    -   Add feature description and UX path to `Documentation.md`.
+    -   Update `FileDirectory.md` if any new files were added.
+    -   Update `ProjectSummary.md` if the changes affect the high-level architecture or add new key components.
+    -   Remove the feature from `Roadmap.md`.
 
-    -   Add feature description and UX path to Documentation.md
-    -   Update FileDirectory.md if any new files were added
-    -   Remove the feature from Roadmap.md
-
--   If you notice the file structure doesn't match what's currently in FileDirectory.md, inform the user and suggest a change to it
--   If the user asks you to add a feature to the roadmap, add a detailed description of the feature along with a suggested plan to Roadmap.md
--   If the user asks you to summarize the work you did today, log
-
-    -   What files you edited
-
-        -   What the changes were
-        -   Why the change were made
-        -   Include any partially completed tasks, blockers encountered, and key context needed to resume work in a future session.
+-   If I notice the file structure doesn't match what's in `FileDirectory.md`, I will inform you and suggest a change.
+-   If you ask me to add a feature to the roadmap, I'll add a detailed description and a suggested plan to `Roadmap.md`.
+-   If you ask me to summarize the work I did today, I will log:
+    -   What files I edited
+    -   What the changes were
+    -   Why the changes were made
+    -   Include any partially completed tasks, blockers, and key context needed to resume work.
 
 Constraints:
 
-1. Don't assume what the user prefers, instead ask them
-2. Don't silverbullet large changes. Take it slow.
-3. Only send snippets of a file you edited. Auto apply will stitch your changes into the file for you.
+1. I will not assume what you prefer; instead, I will ask.
+2. I will not propose large, monolithic changes. I will take things step-by-step.
+3. I will only send snippets of the files I edit.
 
 Requirements:
 
-1. Use the search tool and read files tool to gain context of the situation instead of assuming 
-<antml:function_calls>
-<antml:invoke name="semantic_search">
-<antml:parameter name="query">natural language query</antml:parameter>
-<antml:parameter name="limit">10</antml:parameter>
-</antml:invoke>
-</antml:function_calls>
-<antml:function_calls>
-<antml:invoke name="read_files">
-<antml:parameter name="file_paths">["/full/path/to/file.swift"]</antml:parameter>
-</antml:invoke>
-</antml:function_calls>
-2. Always ask for clarification instead of guessing what the user would prefer like this:
-
-Would you prefer if I do blank or blank?
-
-232. Yes
-432. No
-
-3. When using planning mode follow this workflow:
-
-1. Generate a plan for the task
-<antml:function_calls>
-<antml:invoke name="update_plan">
-<antml:parameter name="plan">your plan</antml:parameter>
-</antml:invoke>
-</antml:function_calls>
-2. Complete each step of the plan seperately instead of trying to silver bullet it with one massive code block
-4. Repeat until plan is completed
-
-Response formatting:
-
-<antml:function_calls>
-<antml:invoke name="semantic_search">
-<antml:parameter name="query">natural language query</antml:parameter>
-<antml:parameter name="limit">10</antml:parameter>
-</antml:invoke>
-</antml:function_calls>
-<antml:function_calls>
-<antml:invoke name="think">
-<antml:parameter name="thought">your thoughts/brainstorming</antml:parameter>
-</antml:invoke>
-</antml:function_calls>
-<antml:function_calls>
-<antml:invoke name="update_plan">
-<antml:parameter name="plan">your plan description</antml:parameter>
-</antml:invoke>
-</antml:function_calls>
-[Problem block]
-[Change block]
-<antml:function_calls>
-<antml:invoke name="all_done">
-<antml:parameter name="message">task completed message</antml:parameter>
-</antml:invoke>
-</antml:function_calls>
-
-
---------
-
-Problem block structure:
-
-# Problems
-
-- [Problem 1]
-- [Problem 2]
-- [Include more bullet points if needed]
-
-The problem block should only be used when you are completely sure the problem exists. Use this block to organize what you deduct is wrong.
-
---------
-
-Change block structure:
-
-# Changes Summary
-
-- [Blank is very blank]
-- [Blank caused blank to blank]
-- [The blank is blank but blank which is why blank]
-- [Include more bullet points if needed]
-
-Change blocks are required if you changed the code. The # Changes section should directly tell me what was changed/removed/added/edited/moved. The # Changes Summary section should humanize what you changed into something easily understandable.
-
+1.  I will use tools like `semantic_search` and `read_files` to gain context instead of assuming.
+2.  I will always ask for clarification when needed.
+3.  When planning, I will generate a plan, update you with it, and then execute each step separately.

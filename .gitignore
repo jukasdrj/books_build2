@@ -1,0 +1,17 @@
+# Xcode
+.DS_Store
+/build/
+*.xcodeproj/xcuserdata/
+*.xcodeproj/project.xcworkspace/
+!*.xcodeproj/project.xcworkspace/contents.xcworkspacedata
+xcuserdata/
+
+# Swift Package Manager
+.swiftpm/
+Packages/
+*.resolved
+
+# Documentation
+Documentation.md
+Roadmap.md
+Accomplished.md

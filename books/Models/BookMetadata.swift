@@ -39,7 +39,7 @@ final class BookMetadata: Identifiable, @unchecked Sendable {
     private var culturalThemesString: String = ""
     
     var indigenousAuthor: Bool = false
-    var marginizedVoice: Bool = false
+    var marginalizedVoice: Bool = false
     
     // NEW: Enhanced reading experience tracking
     var readingDifficulty: ReadingDifficulty?
@@ -116,7 +116,7 @@ final class BookMetadata: Identifiable, @unchecked Sendable {
         }
     }
 
-    init(googleBooksID: String, title: String, authors: [String] = [], publishedDate: String? = nil, pageCount: Int? = nil, bookDescription: String? = nil, imageURL: URL? = nil, language: String? = nil, previewLink: URL? = nil, infoLink: URL? = nil, publisher: String? = nil, isbn: String? = nil, genre: [String] = [], originalLanguage: String? = nil, authorNationality: String? = nil, translator: String? = nil, format: BookFormat? = nil, authorGender: AuthorGender? = nil, authorEthnicity: String? = nil, culturalRegion: CulturalRegion? = nil, originalPublicationCountry: String? = nil, translatorNationality: String? = nil, culturalThemes: [String] = [], indigenousAuthor: Bool = false, marginizedVoice: Bool = false, readingDifficulty: ReadingDifficulty? = nil, timeToRead: Int? = nil, contentWarnings: [String] = [], awards: [String] = [], series: String? = nil, seriesNumber: Int? = nil) {
+    init(googleBooksID: String, title: String, authors: [String] = [], publishedDate: String? = nil, pageCount: Int? = nil, bookDescription: String? = nil, imageURL: URL? = nil, language: String? = nil, previewLink: URL? = nil, infoLink: URL? = nil, publisher: String? = nil, isbn: String? = nil, genre: [String] = [], originalLanguage: String? = nil, authorNationality: String? = nil, translator: String? = nil, format: BookFormat? = nil, authorGender: AuthorGender? = nil, authorEthnicity: String? = nil, culturalRegion: CulturalRegion? = nil, originalPublicationCountry: String? = nil, translatorNationality: String? = nil, culturalThemes: [String] = [], indigenousAuthor: Bool = false, marginalizedVoice: Bool = false, readingDifficulty: ReadingDifficulty? = nil, timeToRead: Int? = nil, contentWarnings: [String] = [], awards: [String] = [], series: String? = nil, seriesNumber: Int? = nil) {
         self.googleBooksID = googleBooksID
         self.title = title.trimmingCharacters(in: .whitespacesAndNewlines)
         self.publishedDate = publishedDate
@@ -138,7 +138,7 @@ final class BookMetadata: Identifiable, @unchecked Sendable {
         self.originalPublicationCountry = originalPublicationCountry
         self.translatorNationality = translatorNationality
         self.indigenousAuthor = indigenousAuthor
-        self.marginizedVoice = marginizedVoice
+        self.marginalizedVoice = marginalizedVoice
         self.readingDifficulty = readingDifficulty
         self.timeToRead = timeToRead
         self.series = series

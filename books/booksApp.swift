@@ -12,7 +12,7 @@ struct booksApp: App {
         
         // Force a clean migration due to BookFormat enum changes
         let modelConfiguration = ModelConfiguration(
-            "BooksModel_v2", // Version bump to force clean migration
+            "BooksModel_v3_Final", // More descriptive versioning
             schema: schema,
             isStoredInMemoryOnly: false,
             allowsSave: true
