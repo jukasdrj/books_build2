@@ -43,6 +43,7 @@ struct LibraryView: View {
     }
     
     let filter: Filter
+    @Binding var selectedTab: Int
     
     @Environment(\.modelContext) private var modelContext
     @Query(sort: [SortDescriptor(\UserBook.dateAdded, order: .reverse)])
@@ -77,8 +78,9 @@ struct LibraryView: View {
         return sortBooks(uniqueBooks, by: selectedSortOption)
     }
     
-    init(filter: Filter = .library) {
+    init(filter: Filter = .library, selectedTab: Binding<Int> = .constant(0)) {
         self.filter = filter
+        self._selectedTab = selectedTab
     }
     
     var body: some View {
@@ -137,8 +139,15 @@ struct LibraryView: View {
                 }
             }
             
-            // Action button
-            NavigationLink(destination: SearchView()) {
+            // Action button - Fixed: Switch to Search tab instead of NavigationLink
+            Button(action: {
+                // Haptic feedback for tab switch
+                let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+                impactFeedback.impactOccurred()
+                
+                // Switch to Search tab (tab index 2)
+                selectedTab = 2
+            }) {
                 HStack(spacing: Theme.Spacing.sm) {
                     Image(systemName: "magnifyingglass")
                     Text(filter.emptyActionTitle)

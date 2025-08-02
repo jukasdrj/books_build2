@@ -10,36 +10,34 @@ struct StatsView: View {
     }
     
     var body: some View {
-        NavigationView {
-            ScrollView {
-                LazyVStack(spacing: Theme.Spacing.lg) {
-                    // Quick Stats Grid
-                    StatsQuickGrid(books: allBooks)
+        ScrollView {
+            LazyVStack(spacing: Theme.Spacing.lg) {
+                // Quick Stats Grid
+                StatsQuickGrid(books: allBooks)
+                
+                // NEW: Charts Section
+                if !allBooks.isEmpty {
+                    MonthlyReadsChartView(books: allBooks)
                     
-                    // NEW: Charts Section
-                    if !allBooks.isEmpty {
-                        MonthlyReadsChartView(books: allBooks)
-                        
-                        GenreBreakdownChartView(books: allBooks)
-                    }
-                    
-                    // Enhanced stats sections
-                    ReadingStatusBreakdown(books: allBooks)
-                    
-                    // NEW: Cultural Diversity Section
-                    if !readBooks.isEmpty {
-                        CulturalDiversitySection(books: readBooks)
-                    }
-                    
-                    // Recent Activity
-                    if !recentBooks.isEmpty {
-                        RecentBooksSection(books: recentBooks)
-                    }
+                    GenreBreakdownChartView(books: allBooks)
                 }
-                .padding()
+                
+                // Enhanced stats sections
+                ReadingStatusBreakdown(books: allBooks)
+                
+                // NEW: Cultural Diversity Section
+                if !readBooks.isEmpty {
+                    CulturalDiversitySection(books: readBooks)
+                }
+                
+                // Recent Activity
+                if !recentBooks.isEmpty {
+                    RecentBooksSection(books: recentBooks)
+                }
             }
-            .navigationTitle("Reading Stats")
+            .padding()
         }
+        .navigationTitle("Reading Stats")
     }
     
     private var recentBooks: [UserBook] {

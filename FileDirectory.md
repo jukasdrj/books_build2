@@ -46,6 +46,7 @@ The Books Reading Tracker project is organized into several main directories wit
 #### **/books/Models/BookMetadata.swift**
 - **Purpose**: Core book information and cultural diversity tracking.
 - **Responsibility**: Store comprehensive book details from Google Books API plus enhanced cultural metadata.
+- **Key Features**: Hashable conformance for navigation, extensive cultural tracking fields, SwiftData @Model with array handling.
 
 #### **/books/Models/UserBook.swift**
 - **Purpose**: User-specific reading tracking and personal book management.
@@ -73,47 +74,47 @@ The Books Reading Tracker project is organized into several main directories wit
 
 #### **Main Views (/books/Views/Main/)**
 
-- **ContentView.swift**: Main app navigation and tab bar structure.
-- **LibraryView.swift**: Main library display with user's book collection.
+- **ContentView.swift**: Main app navigation and tab bar structure with NavigationStack for each tab.
+- **LibraryView.swift**: Main library display with user's book collection, grid/list layouts, filtering.
 - **WishlistView.swift**: Wishlist management for future reading.
-- **SearchView.swift**: Google Books API integration and book discovery.
+- **SearchView.swift**: Google Books API integration and book discovery with NavigationLink-based navigation.
 - **StatsView.swift**: Reading analytics and progress visualization with integrated cultural diversity.
-- **CulturalDiversityView.swift**: (Note: This may be consolidated into StatsView based on other documentation).
+- **CulturalDiversityView.swift**: Dedicated cultural diversity tracking and analytics.
 
 #### **Detail Views (/books/Views/Detail/)**
 
-- **BookDetailsView.swift**: Detailed book information and management screen.
+- **BookDetailsView.swift**: Detailed book information and management screen for library books.
 - **EditBookView.swift**: Book information editing interface.
-- **SearchResultDetailView.swift**: Detailed view for books from search results.
+- **SearchResultDetailView.swift**: Detailed view for books from search results with duplicate detection.
 - **AuthorSearchResultsView.swift**: View to display results for author searches.
 
 #### **Component Views (/books/Views/Components/)**
 
 - **BookCardView.swift**: Card-style book display component for grid layouts.
 - **BookRowView.swift**: Row-style book display component for list layouts.
-- **BookCoverImage.swift**: Intelligent book cover image loading and caching.
+- **BookCoverImage.swift**: Intelligent book cover image loading and caching with shimmer effects.
 - **PageInputView.swift**: Reading progress input interface.
 - **SupportingViews.swift**: Additional supporting views and utility components.
 - **shared_components.swift**: Collection of reusable UI components.
 
 ---
 
-### **🔧 Supporting Services & Utilities**
+### **🔧 Services & Utilities**
 
 #### **Services (/books/Services/)**
-- **BookSearchService.swift**: Google Books API integration service.
-- **ImageCache.swift**: Image caching and memory management.
+- **BookSearchService.swift**: Google Books API integration service with async/await pattern.
+- **ImageCache.swift**: Image caching and memory management for book covers.
 - **DataMigrationManager.swift**: Handle SwiftData schema migrations and data updates.
 
 #### **Utilities (/books/Utilities/)**
 - **barcode_scanner.swift**: ISBN barcode scanning functionality.
-- **duplicate_detection.swift**: Prevent duplicate books in user's library.
+- **duplicate_detection.swift**: DuplicateDetectionService for preventing duplicate books in user's library with sophisticated matching logic.
 
 ---
 
 ### **📊 Analytics and Charts (/books/Charts/)**
 
-- **GenreBreakdownChartView.swift**: Visual representation of reading genres.
+- **GenreBreakdownChartView.swift**: Visual representation of reading genres using SwiftUI Charts.
 - **MonthlyReadsChartView.swift**: Monthly reading progress visualization.
 
 ---
@@ -121,6 +122,7 @@ The Books Reading Tracker project is organized into several main directories wit
 ### **🧪 Testing Infrastructure (/booksTests/ & /booksUITests/)**
 
 - The `booksTests` and `booksUITests` directories contain all the unit, integration, and UI tests for the application.
+- Comprehensive test coverage for models, services, views, and user workflows.
 
 ---
 
@@ -131,6 +133,17 @@ The Books Reading Tracker project is organized into several main directories wit
 
 ---
 
+### **📄 Additional Documentation (/books/Markdown/)**
+
+- **data_model_specification.txt**: SwiftData model specifications and relationships.
+- **use-swiftdata.txt**: SwiftData implementation guidelines and patterns.
+
+---
+
 ## 📁 File Organization Principles
 
-- **Directory Structure Logic**: A clear, hierarchical structure with dedicated folders for Views (split into Main, Detail, Components), Models, Services, Utilities, Theme, and Extensions. This promotes modularity and scalability.
+- **Hierarchical Structure**: Clear separation between Views (Main/Detail/Components), Models, Services, Utilities, Theme, and Extensions.
+- **Modular Design**: Each directory serves a specific architectural purpose.
+- **Scalability**: Structure supports easy addition of new features and components.
+- **Separation of Concerns**: Business logic, UI components, data models, and utilities are clearly separated.
+- **Navigation Patterns**: Uses modern SwiftUI navigation with NavigationStack and value-based NavigationLink.

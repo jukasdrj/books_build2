@@ -14,8 +14,6 @@ struct SearchResultDetailView: View {
     
     let bookMetadata: BookMetadata
     
-    @Query private var userBooks: [UserBook]
-    
     @State private var showingDuplicateAlert = false
     @State private var existingBook: UserBook?
     @State private var showingSuccessToast = false
@@ -175,8 +173,17 @@ struct SearchResultDetailView: View {
     }
     
     private func checkForDuplicate() {
-        if let duplicate = DuplicateDetectionService.findExistingBook(for: bookMetadata, in: userBooks) {
-            existingBook = duplicate
+        // Fetch userBooks directly from modelContext instead of using @Query
+        let fetchDescriptor = FetchDescriptor<UserBook>()
+        
+        do {
+            let userBooks = try modelContext.fetch(fetchDescriptor)
+            if let duplicate = DuplicateDetectionService.findExistingBook(for: bookMetadata, in: userBooks) {
+                existingBook = duplicate
+            }
+        } catch {
+            print("Error fetching user books for duplicate check: \(error)")
+            // If we can't fetch, just continue without duplicate checking
         }
     }
     

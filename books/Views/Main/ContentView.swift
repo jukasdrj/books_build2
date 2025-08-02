@@ -9,7 +9,7 @@ struct ContentView: View {
     var body: some View {
         TabView(selection: $selectedTab) {
             NavigationStack {
-                LibraryView()
+                LibraryView(selectedTab: $selectedTab)
             }
             .tabItem {
                 Label("Library", systemImage: selectedTab == 0 ? "books.vertical.fill" : "books.vertical")
@@ -17,7 +17,7 @@ struct ContentView: View {
             .tag(0)
             
             NavigationStack {
-                LibraryView(filter: .wishlist)
+                LibraryView(filter: .wishlist, selectedTab: $selectedTab)
             }
             .tabItem {
                 Label("Wishlist", systemImage: selectedTab == 1 ? "wand.and.stars" : "wand.and.stars")
