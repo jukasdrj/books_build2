@@ -40,9 +40,6 @@ struct AuthorSearchResultsView: View {
             }
         }
         .navigationTitle(authorName)
-        .navigationDestination(for: BookMetadata.self) { book in
-            SearchResultDetailView(bookMetadata: book)
-        }
     }
     
     private func performAuthorSearch() async {

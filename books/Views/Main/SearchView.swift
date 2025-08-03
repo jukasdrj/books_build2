@@ -69,9 +69,6 @@ struct SearchView: View {
         .navigationTitle("Search Books")
         .navigationBarTitleDisplayMode(.large)
         .background(Color.theme.background)
-        .navigationDestination(for: BookMetadata.self) { book in
-            SearchResultDetailView(bookMetadata: book)
-        }
     }
     
     // MARK: - Search Bar Component

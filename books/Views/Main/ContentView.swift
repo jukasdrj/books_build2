@@ -27,6 +27,9 @@ struct ContentView: View {
                         .navigationDestination(for: String.self) { authorName in
                             AuthorSearchResultsView(authorName: authorName)
                         }
+                        .navigationDestination(for: BookMetadata.self) { metadata in
+                            SearchResultDetailView(bookMetadata: metadata)
+                        }
                 }
                 .tabItem {
                     Image(systemName: selectedTab == 0 ? "books.vertical.fill" : "books.vertical")
@@ -38,6 +41,9 @@ struct ContentView: View {
                     WishlistLibraryView()
                         .navigationDestination(for: UserBook.self) { book in
                             BookDetailsView(book: book)
+                        }
+                        .navigationDestination(for: BookMetadata.self) { metadata in
+                            SearchResultDetailView(bookMetadata: metadata)
                         }
                 }
                 .tabItem {
@@ -68,6 +74,9 @@ struct ContentView: View {
                         }
                         .navigationDestination(for: String.self) { authorName in
                             AuthorSearchResultsView(authorName: authorName)
+                        }
+                        .navigationDestination(for: BookMetadata.self) { metadata in
+                            SearchResultDetailView(bookMetadata: metadata)
                         }
                 }
                 .tabItem {
