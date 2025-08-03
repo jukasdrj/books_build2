@@ -1,3 +1,6 @@
+//
+// UPDATED: booksTests/AppLaunchTests.swift
+//
 import Testing
 import SwiftData
 import SwiftUI
@@ -24,15 +27,14 @@ struct AppLaunchTests {
             publishedDate: "2024",
             pageCount: 300,
             bookDescription: "A test book description",
-            language: "English",
+            language: "en",
             publisher: "Test Publisher",
             isbn: "1234567890123",
             genre: ["Fiction", "Test"],
             authorNationality: "American"
         )
         
-        let userBook = UserBook(readingStatus: status, owned: true)
-        userBook.metadata = metadata
+        let userBook = UserBook(readingStatus: status, owned: true, metadata: metadata)
         
         if status == .read {
             userBook.dateCompleted = Date()
@@ -50,10 +52,8 @@ struct AppLaunchTests {
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
         let container = try ModelContainer(for: schema, configurations: [modelConfiguration])
         
-        // Test that we can create a context from the container
         _ = ModelContext(container)
         
-        // Verify the container has the expected schema
         #expect(container.schema.entities.count == 2)
         #expect(container.schema.entities.contains { $0.name == "UserBook" })
         #expect(container.schema.entities.contains { $0.name == "BookMetadata" })
@@ -115,6 +115,8 @@ struct AppLaunchTests {
         #expect(savedBook.isFavorited == true)
         #expect(savedBook.metadata?.isbn == "1234567890123")
         #expect(savedBook.metadata?.genre.contains("Fiction") == true)
+        #expect(savedBook.tags.contains("validation"))
+        #expect(savedBook.tags.contains("test"))
     }
     
     @Test("BookMetadata Model - Should handle comprehensive metadata")
@@ -130,14 +132,13 @@ struct AppLaunchTests {
             pageCount: 450,
             bookDescription: "A comprehensive test of all metadata fields.",
             imageURL: URL(string: "https://example.com/cover.jpg"),
-            language: "English",
+            language: "en",
             publisher: "Comprehensive Test Publishing",
             isbn: "9781234567890",
             genre: ["Technology", "Programming", "Software Development"]
         )
         
-        let userBook = UserBook(readingStatus: .toRead)
-        userBook.metadata = metadata
+        let userBook = UserBook(readingStatus: .toRead, metadata: metadata)
         
         context.insert(userBook)
         try context.save()
@@ -149,5 +150,61 @@ struct AppLaunchTests {
         let saved = savedMetadata.first!
         #expect(saved.title == "Comprehensive Metadata Test")
         #expect(saved.genre.count == 3)
+        #expect(saved.authors.count == 2)
+        #expect(saved.authors.contains("Primary Author"))
+        #expect(saved.authors.contains("Secondary Author"))
+    }
+    
+    @Test("App Configuration - Should handle different model configurations")
+    func testAppConfiguration() async throws {
+        // Test the actual app configuration logic
+        let schema = Schema([UserBook.self, BookMetadata.self])
+        
+        // Test migration scenario
+        let migrationConfig = ModelConfiguration(
+            "BooksModel_v5_StatusLabels",
+            schema: schema,
+            isStoredInMemoryOnly: true,
+            allowsSave: true
+        )
+        
+        let container = try ModelContainer(for: schema, configurations: [migrationConfig])
+        #expect(container != nil)
+        
+        // Test fallback scenario
+        let fallbackConfig = ModelConfiguration(
+            "BooksModel_Fresh_\(Date().timeIntervalSince1970)",
+            schema: schema,
+            isStoredInMemoryOnly: true,
+            allowsSave: true
+        )
+        
+        let fallbackContainer = try ModelContainer(for: schema, configurations: [fallbackConfig])
+        #expect(fallbackContainer != nil)
+    }
+
+    @Test("Theme System - Should provide consistent values")
+    func testThemeSystem() throws {
+        // Test Typography
+        #expect(Theme.Typography.displayLarge != nil)
+        #expect(Theme.Typography.titleMedium != nil)
+        #expect(Theme.Typography.bodyMedium != nil)
+        #expect(Theme.Typography.labelSmall != nil)
+        
+        // Test Spacing
+        #expect(Theme.Spacing.xs == 4)
+        #expect(Theme.Spacing.sm == 8)
+        #expect(Theme.Spacing.md == 16)
+        #expect(Theme.Spacing.lg == 24)
+        
+        // Test Corner Radius
+        #expect(Theme.CornerRadius.small == 8)
+        #expect(Theme.CornerRadius.medium == 12)
+        #expect(Theme.CornerRadius.large == 16)
+        
+        // Test Animation
+        #expect(Theme.Animation.quick == 0.1)
+        #expect(Theme.Animation.standard == 0.2)
+        #expect(Theme.Animation.emphasized == 0.5)
     }
 }

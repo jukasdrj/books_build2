@@ -1,3 +1,6 @@
+//
+// UPDATED: booksTests/booksTests.swift
+//
 import Testing
 import SwiftData
 @testable import books
@@ -7,15 +10,13 @@ struct booksTests {
 
     @Test("UserBook and BookMetadata Models - Should work together")
     func testBasicModelIntegration() throws {
-        // CORRECTED: The initializer now correctly matches the full BookMetadata model.
         let metadata = BookMetadata(
             googleBooksID: "basic-test-123",
             title: "Basic Test Book",
             authors: ["Basic Author"]
         )
         
-        let userBook = UserBook(readingStatus: .toRead)
-        userBook.metadata = metadata
+        let userBook = UserBook(readingStatus: .toRead, metadata: metadata)
         
         #expect(userBook.metadata === metadata)
         #expect(userBook.readingStatus == .toRead)
@@ -39,7 +40,40 @@ struct booksTests {
         let userBook = UserBook()
         #expect(userBook.readingStatus == .toRead)
         #expect(userBook.isFavorited == false)
+        #expect(userBook.owned == true) // Default is true
+        #expect(userBook.onWishlist == false)
         #expect(userBook.rating == nil)
         #expect(userBook.notes == nil)
+        #expect(userBook.currentPage == 0)
+        #expect(userBook.readingProgress == 0.0)
+        #expect(userBook.totalReadingTimeMinutes == 0)
+        #expect(userBook.tags.isEmpty)
+    }
+    
+    @Test("UserBook Reading Progress - Should calculate correctly")
+    func testReadingProgressCalculation() throws {
+        let metadata = BookMetadata(
+            googleBooksID: "progress-test",
+            title: "Progress Test Book",
+            authors: ["Test Author"],
+            pageCount: 200
+        )
+        
+        let userBook = UserBook(metadata: metadata)
+        userBook.currentPage = 50
+        userBook.updateReadingProgress()
+        
+        #expect(userBook.readingProgress == 0.25, "Progress should be 25% for 50/200 pages")
+    }
+    
+    @Test("UserBook Tags - Should handle array properly")
+    func testUserBookTags() throws {
+        let userBook = UserBook()
+        userBook.tags = ["fiction", "sci-fi", "favorite"]
+        
+        #expect(userBook.tags.count == 3)
+        #expect(userBook.tags.contains("fiction"))
+        #expect(userBook.tags.contains("sci-fi"))
+        #expect(userBook.tags.contains("favorite"))
     }
 }

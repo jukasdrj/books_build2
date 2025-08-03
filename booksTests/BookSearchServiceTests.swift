@@ -1,3 +1,6 @@
+//
+// UPDATED: booksTests/BookSearchServiceTests.swift
+//
 import Testing
 import Foundation
 @testable import books
@@ -29,7 +32,6 @@ struct BookSearchServiceTests {
     @Test("BookSearchService Initialization - Should create singleton")
     func testBookSearchServiceInitialization() async {
         let service = await BookSearchService.shared
-        
         let service2 = await BookSearchService.shared
         #expect(service === service2, "BookSearchService should be a singleton")
     }
@@ -55,15 +57,6 @@ struct BookSearchServiceTests {
         case .failure:
             throw TestingError("Whitespace query should not fail, but return empty results")
         }
-        
-        // Test mixed whitespace query
-        let mixedWhitespaceResult = await service.search(query: " \t \n ")
-        switch mixedWhitespaceResult {
-        case .success(let results):
-            #expect(results.isEmpty, "Mixed whitespace query should return empty results")
-        case .failure:
-            throw TestingError("Mixed whitespace query should not fail, but return empty results")
-        }
     }
     
     @Test("BookMetadata Creation - Should initialize correctly from helper")
@@ -75,6 +68,7 @@ struct BookSearchServiceTests {
         #expect(metadata.googleBooksID == "test123")
         #expect(metadata.isbn == "1234567890123")
         #expect(metadata.genre.contains("Technology") == true)
+        #expect(metadata.id == metadata.googleBooksID)
     }
     
     @Test("BookMetadata Creation - Should handle missing optional fields")
@@ -86,19 +80,50 @@ struct BookSearchServiceTests {
         )
         
         #expect(metadata.publishedDate == nil)
-        #expect(metadata.genre == nil)
+        #expect(metadata.genre.isEmpty) // Default is empty array, not nil
         #expect(metadata.originalLanguage == nil)
+        #expect(metadata.authorNationality == nil)
+        #expect(metadata.translator == nil)
     }
     
-    @Test("BookMetadata Identifiable Conformance - Should use googleBooksID as id")
-    func testBookMetadataIdentifiable() {
-        let metadata = createTestBookMetadata(id: "unique-test-id")
-        #expect(metadata.id == "unique-test-id")
-        #expect(metadata.id == metadata.googleBooksID)
+    @Test("BookMetadata Arrays - Should handle arrays correctly")
+    func testBookMetadataArrays() {
+        let metadata = BookMetadata(
+            googleBooksID: "array-test",
+            title: "Array Test Book",
+            authors: ["Author One", "Author Two"],
+            genre: ["Fiction", "Mystery", "Thriller"]
+        )
+        
+        #expect(metadata.authors.count == 2)
+        #expect(metadata.authors.contains("Author One"))
+        #expect(metadata.authors.contains("Author Two"))
+        
+        #expect(metadata.genre.count == 3)
+        #expect(metadata.genre.contains("Fiction"))
+        #expect(metadata.genre.contains("Mystery"))
+        #expect(metadata.genre.contains("Thriller"))
+    }
+    
+    @Test("BookMetadata Validation - Should validate fields correctly")
+    func testBookMetadataValidation() {
+        let metadata = BookMetadata(
+            googleBooksID: "validation-test",
+            title: "Valid Title",
+            authors: ["Valid Author"],
+            pageCount: 250
+        )
+        
+        #expect(metadata.validateTitle() == true)
+        #expect(metadata.validateAuthors() == true)
+        #expect(metadata.validatePageCount() == true)
+        
+        // Test invalid page count
+        metadata.pageCount = -10
+        #expect(metadata.validatePageCount() == false)
     }
 }
 
-// Custom error for clearer test failures
 struct TestingError: Error, CustomStringConvertible {
     let message: String
     

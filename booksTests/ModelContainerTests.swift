@@ -1,3 +1,6 @@
+//
+// UPDATED: booksTests/ModelContainerTests.swift
+//
 import Testing
 import SwiftData
 import Foundation
@@ -27,7 +30,7 @@ struct ModelContainerTests {
             pageCount: 400,
             bookDescription: "A comprehensive test book.",
             imageURL: URL(string: "https://example.com/cover.jpg"),
-            language: "English",
+            language: "en",
             publisher: "Test Publisher",
             isbn: "9781234567890",
             genre: ["Fiction", "Test", "Programming"],
@@ -36,9 +39,10 @@ struct ModelContainerTests {
             translator: "Worf"
         )
         
-        let userBook = UserBook(readingStatus: .reading)
-        userBook.metadata = metadata
+        let userBook = UserBook(readingStatus: .reading, metadata: metadata)
         userBook.rating = 4
+        userBook.tags = ["science-fiction", "test-book"]
+        userBook.notes = "Great book for testing!"
         return userBook
     }
 
@@ -63,5 +67,74 @@ struct ModelContainerTests {
         #expect(savedMetadata?.originalLanguage == "Klingon")
         #expect(savedMetadata?.authorNationality == "Qo'noS")
         #expect(savedMetadata?.translator == "Worf")
+        #expect(savedBook.rating == 4)
+        #expect(savedBook.tags.contains("science-fiction"))
+        #expect(savedBook.notes == "Great book for testing!")
+    }
+    
+    @Test("Relationship Persistence - Should maintain UserBook-BookMetadata relationship")
+    func testRelationshipPersistence() async throws {
+        let container = try createTestContainer()
+        let context = ModelContext(container)
+        
+        let metadata = BookMetadata(
+            googleBooksID: "relationship-test",
+            title: "Relationship Test",
+            authors: ["Relationship Author"]
+        )
+        
+        let userBook1 = UserBook(readingStatus: .read, metadata: metadata)
+        let userBook2 = UserBook(readingStatus: .toRead, metadata: metadata)
+        
+        context.insert(userBook1)
+        context.insert(userBook2)
+        try context.save()
+        
+        let userBookDescriptor = FetchDescriptor<UserBook>()
+        let savedUserBooks = try context.fetch(userBookDescriptor)
+        
+        #expect(savedUserBooks.count == 2)
+        
+        let metadataDescriptor = FetchDescriptor<BookMetadata>()
+        let savedMetadata = try context.fetch(metadataDescriptor)
+        
+        #expect(savedMetadata.count == 1)
+        #expect(savedMetadata.first?.userBooks.count == 2)
+    }
+    
+    @Test("Reading Status Auto-Dating - Should set dates correctly")
+    func testReadingStatusAutoDating() async throws {
+        let container = try createTestContainer()
+        let context = ModelContext(container)
+        
+        let metadata = BookMetadata(
+            googleBooksID: "dating-test",
+            title: "Dating Test",
+            authors: ["Dating Author"]
+        )
+        
+        let userBook = UserBook(readingStatus: .toRead, metadata: metadata)
+        #expect(userBook.dateStarted == nil)
+        #expect(userBook.dateCompleted == nil)
+        
+        // Change to reading
+        userBook.readingStatus = .reading
+        #expect(userBook.dateStarted != nil)
+        #expect(userBook.dateCompleted == nil)
+        
+        // Change to read
+        userBook.readingStatus = .read
+        #expect(userBook.dateStarted != nil)
+        #expect(userBook.dateCompleted != nil)
+        
+        context.insert(userBook)
+        try context.save()
+        
+        let descriptor = FetchDescriptor<UserBook>()
+        let savedBooks = try context.fetch(descriptor)
+        let savedBook = savedBooks.first!
+        
+        #expect(savedBook.dateStarted != nil)
+        #expect(savedBook.dateCompleted != nil)
     }
 }

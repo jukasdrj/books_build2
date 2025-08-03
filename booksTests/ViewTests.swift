@@ -1,3 +1,6 @@
+//
+// UPDATED: booksTests/ViewTests.swift
+//
 import Testing
 import SwiftData
 import SwiftUI
@@ -6,16 +9,12 @@ import SwiftUI
 @Suite("View Tests")
 struct ViewTests {
     
-    // Creates a clean, in-memory database container for each test.
     private func createTestContainer() throws -> ModelContainer {
         let schema = Schema([UserBook.self, BookMetadata.self])
         let configuration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
         return try ModelContainer(for: schema, configurations: [configuration])
     }
     
-    // CORRECTED: This helper function now creates a fully-formed BookMetadata object
-    // with valid default values for ALL properties. This prevents any view from
-    // unexpectedly receiving a nil value during testing.
     private func createTestUserBook(title: String = "Test Book") -> UserBook {
         let metadata = BookMetadata(
             googleBooksID: UUID().uuidString,
@@ -24,23 +23,19 @@ struct ViewTests {
             publishedDate: "2024",
             pageCount: 320,
             bookDescription: "This is a test description for the book.",
-            language: "English",
+            language: "en",
             publisher: "Test Publishing",
             isbn: "978-3-16-148410-0",
             genre: ["Fiction", "Testing"]
         )
         
-        let userBook = UserBook()
-        userBook.metadata = metadata
-        
+        let userBook = UserBook(metadata: metadata)
         return userBook
     }
     
-    // This test ensures the new detail view for search results can be created.
     @Test("SearchResultDetailView Creation - Should initialize correctly")
     func testSearchResultDetailViewCreation() throws {
         let container = try createTestContainer()
-        // Create a valid BookMetadata object using the full initializer.
         let searchResult = BookMetadata(
             googleBooksID: "test-search-result",
             title: "A Book from Search",
@@ -53,25 +48,22 @@ struct ViewTests {
         #expect(detailView != nil)
     }
 
-    // UPDATED: LibraryView now requires selectedTab binding parameter
     @Test("LibraryView Creation - Should initialize correctly")
     func testLibraryViewCreation() throws {
         let container = try createTestContainer()
-        @State var selectedTab = 0
-        let libraryView = LibraryView(selectedTab: Binding.constant(0)).modelContainer(container)
+        let libraryView = LibraryView().modelContainer(container)
         
         #expect(libraryView != nil)
     }
     
-    @Test("LibraryView Wishlist Creation - Should initialize correctly")
-    func testLibraryViewWishlistCreation() throws {
+    @Test("WishlistLibraryView Creation - Should initialize correctly")
+    func testWishlistLibraryViewCreation() throws {
         let container = try createTestContainer()
-        let wishlistView = LibraryView(filter: .wishlist, selectedTab: Binding.constant(1)).modelContainer(container)
+        let wishlistView = WishlistLibraryView().modelContainer(container)
         
         #expect(wishlistView != nil)
     }
     
-    // This test ensures the book details view (for books already in the library) can be created.
     @Test("BookDetailsView Creation - Should initialize with UserBook")
     func testBookDetailsViewCreation() throws {
         let container = try createTestContainer()
@@ -82,7 +74,6 @@ struct ViewTests {
         #expect(detailsView != nil)
     }
     
-    // This test ensures the main tabbed view of the app can be created.
     @Test("ContentView Creation - Should initialize all tabs")
     func testContentViewCreation() throws {
         let container = try createTestContainer()
@@ -91,7 +82,6 @@ struct ViewTests {
         #expect(contentView != nil)
     }
 
-    // This test ensures the book card view can be created with its dependencies.
     @Test("BookCardView Creation - Should initialize correctly")
     func testBookCardViewCreation() throws {
         let userBook = createTestUserBook(title: "Test Book for Card View")
@@ -100,13 +90,28 @@ struct ViewTests {
         #expect(cardView != nil)
     }
 
-    // This test ensures the cultural diversity view can be created.
     @Test("CulturalDiversityView Creation - Should initialize correctly")
     func testCulturalDiversityViewCreation() throws {
         let container = try createTestContainer()
         let culturalDiversityView = CulturalDiversityView().modelContainer(container)
         
         #expect(culturalDiversityView != nil)
+    }
+    
+    @Test("SearchView Creation - Should initialize correctly")
+    func testSearchViewCreation() throws {
+        let container = try createTestContainer()
+        let searchView = SearchView().modelContainer(container)
+        
+        #expect(searchView != nil)
+    }
+    
+    @Test("StatsView Creation - Should initialize correctly")
+    func testStatsViewCreation() throws {
+        let container = try createTestContainer()
+        let statsView = StatsView().modelContainer(container)
+        
+        #expect(statsView != nil)
     }
     
     @Test("BookMetadata Hashable - Should provide stable hashing")
@@ -138,20 +143,33 @@ struct ViewTests {
         #expect(metadata2 != metadata3)
     }
     
-    @Test("Tab Switching Architecture - Should handle tab selection properly")
-    func testTabSwitchingArchitecture() throws {
-        let container = try createTestContainer()
-        @State var selectedTab = 0
+    @Test("BookFormat Enum - Should have correct cases and icons")
+    func testBookFormatEnum() throws {
+        let allCases = BookFormat.allCases
+        #expect(allCases.count == 3)
         
-        // Test ContentView with different tab selections
-        let contentView = ContentView().modelContainer(container)
-        #expect(contentView != nil)
+        #expect(BookFormat.physical.rawValue == "Physical")
+        #expect(BookFormat.ebook.rawValue == "E-book")
+        #expect(BookFormat.audiobook.rawValue == "Audiobook")
         
-        // Test that LibraryView can accept different tab bindings
-        let libraryTab = LibraryView(selectedTab: Binding.constant(0)).modelContainer(container)
-        let wishlistTab = LibraryView(filter: .wishlist, selectedTab: Binding.constant(1)).modelContainer(container)
+        #expect(BookFormat.physical.icon == "book.closed")
+        #expect(BookFormat.ebook.icon == "ipad")
+        #expect(BookFormat.audiobook.icon == "headphones")
+    }
+    
+    @Test("CulturalRegion Enum - Should have correct properties")
+    func testCulturalRegionEnum() throws {
+        let allCases = CulturalRegion.allCases
+        #expect(allCases.count == 10)
         
-        #expect(libraryTab != nil)
-        #expect(wishlistTab != nil)
+        #expect(CulturalRegion.africa.rawValue == "Africa")
+        #expect(CulturalRegion.asia.rawValue == "Asia")
+        #expect(CulturalRegion.indigenous.rawValue == "Indigenous")
+        
+        // Test that each region has an icon and color
+        for region in allCases {
+            #expect(!region.icon.isEmpty)
+            #expect(region.color != nil)
+        }
     }
 }
