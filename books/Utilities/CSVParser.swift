@@ -340,6 +340,10 @@ struct CSVParser {
                 book.personalNotes = value.isEmpty ? nil : value
             case .tags:
                 book.tags = parseList(value)
+            case .authorGender:
+                <#code#>
+            case .culturalThemes:
+                <#code#>
             }
         }
         
