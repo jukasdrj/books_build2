@@ -90,7 +90,7 @@ struct LibraryView: View {
         .navigationBarTitleDisplayMode(.large)
         .searchable(text: $searchText, prompt: "Search by title or author...")
         .sheet(isPresented: $showingAddBookFlow) {
-            SearchView(isPresented: $showingAddBookFlow)
+            SearchView()
         }
         .sheet(isPresented: $showingFilters) {
             // Filter view will go here

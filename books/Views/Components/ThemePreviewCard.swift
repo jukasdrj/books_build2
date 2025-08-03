@@ -31,25 +31,30 @@ struct ThemePreviewCard: View {
         }
         .padding(Theme.Spacing.lg)
         .background(
-            RoundedRectangle(cornerRadius: Theme.CornerRadius.lg)
+            RoundedRectangle(cornerRadius: Theme.CornerRadius.large)
                 .fill(Color.theme.cardBackground)
                 .shadow(color: .black.opacity(0.05), radius: 5, y: 3)
         )
         .overlay(
-            RoundedRectangle(cornerRadius: Theme.CornerRadius.lg)
+            RoundedRectangle(cornerRadius: Theme.CornerRadius.large)
                 .stroke(
                     isSelected ? Color.theme.primary : Color.theme.outline.opacity(0.2),
                     lineWidth: isSelected ? 2 : 1
                 )
         )
         .scaleEffect(scale)
-        .materialInteractive(shape: .rect(cornerRadius: Theme.CornerRadius.lg)) {
-             withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+        .materialInteractive()
+        .onTapGesture {
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                 scale = 1.0
             }
             onSelect()
         }
-        .onLongPressGesture(minimumDuration: 0.05) { isPressing in
+        .onLongPressGesture(minimumDuration: 0.05) {
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                scale = 0.98
+            }
+        } onPressingChanged: { isPressing in
             withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                 scale = isPressing ? 0.98 : 1.0
             }

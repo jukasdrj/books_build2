@@ -172,6 +172,14 @@ struct AppColorTheme {
         primary
     }
     
+    var secondaryAction: Color {
+        secondary
+    }
+    
+    var accentHighlight: Color {
+        tertiary
+    }
+    
     var hovered: Color { primary.opacity(0.08) }
 
     // MARK: - Gradients (for that extra boho touch!)
