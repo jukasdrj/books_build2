@@ -16,17 +16,17 @@ This summary provides a high-level overview of the project for efficient context
 
 -   **UI**: SwiftUI with NavigationStack-based architecture and **enhanced purple boho visual design**
 -   **Data**: SwiftData with `UserBook` and `BookMetadata` models
--   **Navigation**: Robust 4-tab `TabView` in `ContentView.swift` (Library, Wishlist, Search, Stats) with programmatic tab switching and auto-navigation workflows
+-   **Navigation**: Robust 4-tab `TabView` in `ContentView.swift` (Library, Wishlist, Search, Stats) with programmatic tab switching and **optimized navigation architecture**
 -   **API Integration**: `BookSearchService.swift` handles Google Books API calls with async/await pattern
 -   **Theming**: A comprehensive **purple boho Material Design 3** theme system in `Theme.swift` and `Color+Extensions.swift` with full `.materialCard()`, `.materialButton()`, and `.materialInteractive()` component support
--   **Import System**: **Enhanced CSV import** with smart fallback strategies for book cover retrieval
+-   **Import System**: **Fully Integrated CSV Import** with smart fallback strategies, beautiful UI, and comprehensive error handling accessible from main interface
 -   **Asynchronous Operations**: Uses `async/await` for network requests and image loading
 -   **Caching**: `ImageCache.swift` provides an in-memory cache for book cover images
--   **Navigation Architecture**: Modern NavigationStack with value-based NavigationLink, stable Hashable model conformance, and intelligent auto-navigation workflows
+-   **Navigation Architecture**: **Optimized NavigationStack** with consolidated destination handling, eliminated warnings, and stable performance
 
 ---
 
-## 🎨 **NEW: Purple Boho Design System** ✨
+## 🎨 **Purple Boho Design System** ✨
 
 ### **Color Palette**
 -   **Primary Purple**: Rich violet in light mode → Soft lavender in dark mode
@@ -37,10 +37,10 @@ This summary provides a high-level overview of the project for efficient context
 
 ### **Enhanced Visual Elements**
 -   **Golden Star Ratings**: Prominent amber stars with subtle shadows
+-   **Uniform Book Cards**: **Fixed 140x260 dimensions** for perfect grid consistency
 -   **Cultural Language Badges**: Beautiful tertiary-colored indicators with glass effects
--   **Gradient Placeholders**: Gorgeous boho-inspired book cover placeholders
--   **Purple Tab Tinting**: Consistent purple theming across navigation
--   **Boho Depth**: Subtle gradients and shadows for visual richness
+-   **Purple Gradient Buttons**: Import and action buttons with proper Material shadows
+-   **Professional Layout**: Clean, uniform appearance with fixed card heights
 
 ---
 
@@ -50,7 +50,7 @@ This summary provides a high-level overview of the project for efficient context
 -   `Documentation.md`: Comprehensive project details
 -   `FileDirectory.md`: Detailed descriptions of every file with current directory structure
 -   `Roadmap.md`: Future feature planning with completed Material Design 3 implementation
--   `Accomplished.md`: **UPDATED** Log of completed work including **purple boho transformation**
+-   `Accomplished.md`: **UPDATED** Log of completed work including **clean library redesign and CSV import integration**
 -   `ProjectSummary.md`: **This file.** High-level summary for quick context
 
 ### Core Application (`/books`)
@@ -60,10 +60,11 @@ This summary provides a high-level overview of the project for efficient context
 ### Models (`/books/Models/`)
 -   `BookMetadata.swift`: Stores book info from Google Books API + extensive cultural data with Hashable conformance for stable navigation
 -   `UserBook.swift`: Comprehensive user-specific data including reading status, progress tracking, session analytics, and personal metadata
+-   `ImportModels.swift`: **CSV import data models** for parsing and mapping Goodreads exports
 
 ### Main Views (`/books/Views/Main/`)
--   `ContentView.swift`: **ENHANCED** Sets up the main 4-tab navigation with **purple gradient backgrounds** and **NavigationStack fixes**
--   `LibraryView.swift`: Displays the user's book collection with grid/list layouts, filtering, and proper empty state tab switching
+-   `ContentView.swift`: **OPTIMIZED** Sets up the main 4-tab navigation with **consolidated NavigationStack destinations** and **NavigationStack fixes**
+-   `LibraryView.swift`: **REDESIGNED** Clean interface with **uniform book cards**, **reading status filters**, and **integrated CSV import button**
 -   `SearchView.swift`: Interface for searching the Google Books API with value-based navigation to SearchResultDetailView
 -   `StatsView.swift`: Material Design 3 analytics visualization with `.materialCard()` components and integrated cultural diversity metrics
 -   `CulturalDiversityView.swift`: Dedicated cultural diversity tracking view with Material Design 3 components
@@ -75,16 +76,22 @@ This summary provides a high-level overview of the project for efficient context
 -   `AuthorSearchResultsView.swift`: Author-specific search results
 
 ### Key Components (`/books/Views/Components/`)
--   `BookCardView.swift`: **ENHANCED** Material Design 3 card UI with **prominent golden star ratings**, **cultural badges**, and **gradient borders**
+-   `BookCardView.swift`: **REDESIGNED** Clean uniform cards with **fixed 140x260 dimensions**, **removed gesture interactions**, and **golden star ratings**
 -   `BookCoverImage.swift`: **ENHANCED** Handles loading and caching with **beautiful boho placeholders** and **purple shimmer effects**
--   `BookRowView.swift`: Material Design 3 row UI with interactive feedback and proper spacing
+-   `BookRowView.swift`: **CLEANED** Material Design 3 row UI with **removed gestures** and **uniform styling**
 -   `PageInputView.swift`: Production-ready progress input interface for reading tracking
 -   `shared_components.swift`: Collection of Material Design 3 compliant reusable UI components
 -   `SupportingViews.swift`: **StatusBadge** and other supporting components
 
+### Import System (`/books/Views/Import/`)
+-   `CSVImportView.swift`: **INTEGRATED** Main CSV import interface with comprehensive 5-step flow
+-   `ImportPreviewView.swift`: Smart preview with automatic column detection
+-   `ColumnMappingView.swift`: Manual column mapping for non-standard formats
+-   **Accessible via beautiful purple boho import button in LibraryView**
+
 ### Services & Utilities
--   `Services/`: **ENHANCED** BookSearchService, ImageCache, **improved CSVImportService** with smart fallback strategies
--   `Utilities/`: DuplicateDetectionService, barcode scanner functionality
+-   `Services/`: **ENHANCED** BookSearchService, ImageCache, **CSVImportService** with smart fallback strategies, **HapticFeedbackManager**
+-   `Utilities/`: DuplicateDetectionService, **CSVParser**, barcode scanner functionality
 -   `Extensions/`: **ENHANCED** Color system with **purple boho theme** and theme extensions
 -   `Theme/`: **Enhanced** comprehensive Material Design 3 theme system with MaterialInteractiveModifier and advanced component styling
 
@@ -92,7 +99,21 @@ This summary provides a high-level overview of the project for efficient context
 
 ## 💡 Key Development Patterns
 
-### **NEW: Purple Boho Design System** 💜✨
+### **NEW: Clean Uniform Interface System** 💜📚
+-   **Fixed Card Dimensions**: 140x260 for perfect grid consistency
+-   **Reading Status Filters**: Horizontal pill-style filters (All, TBR, Reading, Read, On Hold, DNF)
+-   **No Gesture Conflicts**: Removed distracting swipe-to-rate interactions
+-   **Professional Appearance**: Uniform text heights and spacing using Theme.Spacing
+-   **Streamlined Navigation**: Simple tap-to-navigate without gesture complications
+
+### **Integrated CSV Import System** 📥
+-   **Beautiful UI Integration**: Purple boho import button accessible from LibraryView
+-   **Comprehensive Flow**: 5-step process (Select → Preview → Map → Import → Complete)
+-   **Smart Detection**: Automatic Goodreads format recognition
+-   **Progress Tracking**: Real-time import with detailed statistics
+-   **Error Handling**: Graceful handling of duplicates and problematic entries
+
+### **Purple Boho Design System** 💜✨
 -   **Rich Color Palette**: Gorgeous purple, dusty rose, and warm earth tones
 -   **Gradient Aesthetics**: Subtle background gradients for depth and warmth
 -   **Golden Accents**: Prominent amber star ratings and cultural highlights
@@ -111,34 +132,52 @@ This summary provides a high-level overview of the project for efficient context
 -   **Material Interactive**: Enhanced `.materialInteractive()` with MaterialInteractiveModifier providing configurable press feedback, scale effects, and accessibility-aware animations
 -   **Theme Spacing**: All spacing uses `Theme.Spacing` constants following 8pt grid system for consistent layout relationships
 
-### Navigation Architecture ✅ **FIXED**
--   **NavigationStack Consistency**: All views properly wrapped in NavigationStack with resolved warnings
--   **Value-Based Navigation**: NavigationLink(value:) with proper Hashable model conformance for stable destinations
--   **Auto-Navigation Workflows**: Intelligent routing where library additions auto-navigate to EditBookView for immediate customization
--   **Programmatic Tab Switching**: Empty states switch to appropriate tabs via selectedTab binding
--   **Stable Interactions**: Fixed book card clicking and gesture conflicts
+### Navigation Architecture ✅ **OPTIMIZED**
+-   **Consolidated Navigation**: Single navigationDestination per type per NavigationStack at ContentView level
+-   **Warning-Free**: Eliminated "NavigationRequestObserver" and "navigationDestination declared earlier" warnings
+-   **Stable Performance**: No more multiple updates per frame
+-   **Clean Hierarchy**: Child views use NavigationLink(value:) while parent handles routing
 
 ### Data & State Management
 -   **SwiftData Navigation Compatibility**: Navigation destination views use modelContext.fetch() instead of @Query to prevent update conflicts
 -   **Hashable Models**: BookMetadata implements Hashable using unique googleBooksID for stable navigation identity
--   **Proper State Binding**: selectedTab binding propagated to child views for programmatic navigation control
+-   **Optimized State**: Simplified filter and navigation state management
 -   **Reading Progress Integration**: UserBook model includes comprehensive progress tracking with currentPage, readingProgress, ReadingSession analytics, and pace calculations
 
-### UI & Theming ✅ **ENHANCED WITH PURPLE BOHO**
+### UI & Theming ✅ **ENHANCED WITH CLEAN UNIFORMITY**
 -   **Purple Boho Theming**: Gorgeous rich violet, dusty rose, and warm terracotta color palette
--   **Adaptive Color System**: Beautiful light/dark mode transitions with purple-themed surface colors
--   **Enhanced Visual Hierarchy**: Golden star ratings, cultural badges, and gradient effects
+-   **Uniform Grid System**: Fixed 140x260 cards with GridItem(.fixed(140)) for pixel-perfect alignment
+-   **Enhanced Visual Hierarchy**: Golden star ratings, status badges, and gradient effects
 -   **Consistent Spacing System**: All layouts use `Theme.Spacing` constants following 8pt grid system
 -   **Typography Tokens**: Material Design 3 typography with proper view modifiers
--   **Array Storage in SwiftData**: Arrays of strings stored as `|||` separated strings
 -   **Loading States**: Purple-themed shimmer effects and boho placeholder designs
--   **User Feedback**: Haptic feedback and beautiful success notifications
+-   **Professional Polish**: Clean, uniform appearance without visual chaos
 
 ---
 
 ## 🔧 Recent Architectural Improvements
 
-### **Purple Boho Design Transformation** ✅ **LATEST** 💜✨
+### **Clean Library Interface Redesign** ✅ **LATEST** 💜📚
+-   **Uniform Card System**: Fixed 140x260 dimensions for perfect grid consistency
+-   **Reading Status Filters**: Beautiful horizontal pill filters with icons and purple theming
+-   **Gesture Cleanup**: Removed distracting swipe-to-rate and long-press interactions
+-   **Deprecated Features Removal**: Cleaned up favorites/heart functionality throughout app
+-   **Professional Appearance**: Consistent text heights and spacing for clean visual hierarchy
+
+### **CSV Import Integration** ✅ **FULLY FUNCTIONAL**
+-   **Beautiful Button Design**: Purple boho import button with gradient styling and Material shadows
+-   **Main Interface Access**: Import functionality accessible from LibraryView and empty states
+-   **Comprehensive Flow**: 5-step import process with smart detection and progress tracking
+-   **Error Handling**: Graceful duplicate detection and error management
+-   **Results Summary**: Detailed success, duplicate, and error reporting
+
+### **Navigation Architecture Optimization** ✅ **WARNING-FREE**
+-   **Consolidated Destinations**: Single navigationDestination per type at ContentView level
+-   **Performance Optimized**: Eliminated multiple updates per frame warnings
+-   **Clean State Management**: Proper animation wrapping and state updates
+-   **Stable Navigation**: Smooth transitions without conflicts or warnings
+
+### **Purple Boho Design Transformation** ✅ **FOUNDATION** 💜✨
 -   **Complete Color Overhaul**: Transformed entire app with gorgeous purple boho aesthetic
 -   **Enhanced Book Cards**: Prominent golden star ratings, beautiful cultural badges, gradient borders
 -   **Smart Import System**: Advanced fallback strategies for better book cover retrieval
@@ -156,22 +195,17 @@ This summary provides a high-level overview of the project for efficient context
 -   **Workflow Differentiation**: Wishlist additions show success toast only
 -   **Integration Testing**: Comprehensive test coverage for auto-navigation workflows
 
-### Navigation System Overhaul ✅ **RESOLVED**
--   **Fixed NavigationStack Issues**: All tabs properly wrapped in NavigationStack
--   **Eliminated Navigation Conflicts**: Resolved navigationDestination warnings
--   **Stable Book Clicking**: Fixed gesture conflicts in book cards
--   **Proper Navigation Flow**: Smooth transitions between library, details, and editing
-
 ### User Experience Enhancements ✅ **ELEVATED**
--   **Gorgeous Purple Aesthetic**: Modern boho design with rich violets and warm earth tones
--   **Enhanced Import Success**: Smart fallback strategies significantly improve book cover retrieval
--   **Beautiful Visual Feedback**: Golden ratings, cultural badges, and gradient effects
--   **Professional Polish**: Comprehensive haptic feedback and smooth animations
+-   **Clean Professional Interface**: Uniform cards with fixed dimensions for perfect grid alignment
+-   **Intuitive Filtering**: Reading status filters that make sense to book readers
+-   **Accessible Import**: CSV import easily discoverable and beautifully integrated
+-   **Navigation Clarity**: Simple tap-to-navigate without gesture conflicts
+-   **Visual Consistency**: Golden ratings, purple theming, and professional layout throughout
 
-The app now delivers a **stunning purple boho experience** that perfectly balances modern Material Design 3 principles with warm, cultural aesthetics. The enhanced import system ensures users can easily build their library with beautiful cover images, while the navigation improvements provide a smooth, reliable user experience throughout! 💜📚✨
+The app now delivers a **clean, professional reading sanctuary** that perfectly balances beautiful purple boho aesthetics with functional, uniform design. The integrated CSV import system allows users to easily build their library, while the streamlined interface provides a distraction-free reading tracking experience! 💜📚✨
 
 ---
 
 ## 核心理念 (Updated)
 
-The app has evolved into a **gorgeous purple boho reading sanctuary** that celebrates both literary diversity and aesthetic beauty, providing users with an elegant, culturally-rich reading tracking experience that feels both modern and warmly personal.
+The app has evolved into a **clean, professional purple boho reading sanctuary** that celebrates both literary diversity and aesthetic beauty, providing users with a uniform, elegant interface for tracking their reading journey without distractions or visual chaos.
