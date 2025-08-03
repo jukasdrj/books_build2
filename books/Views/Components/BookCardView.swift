@@ -7,7 +7,7 @@ struct BookCardView: View {
     // Define consistent dimensions
     private let cardWidth: CGFloat = 140
     private let imageHeight: CGFloat = 200
-    private let textAreaHeight: CGFloat = 85 // Fixed height for text area when in grid
+    private let textAreaHeight: CGFloat = 95 // Increased for better rating display
     
     init(book: UserBook, useFlexibleLayout: Bool = false) {
         self.book = book
@@ -27,6 +27,26 @@ struct BookCardView: View {
             }
         }
         .frame(width: cardWidth)
+        .materialCard(
+            backgroundColor: Color.theme.cardBackground,
+            cornerRadius: Theme.CornerRadius.medium,
+            elevation: Theme.Elevation.card
+        )
+        .overlay(
+            // Subtle boho border gradient
+            RoundedRectangle(cornerRadius: Theme.CornerRadius.medium)
+                .stroke(
+                    LinearGradient(
+                        colors: [
+                            Color.theme.primary.opacity(0.1),
+                            Color.theme.tertiary.opacity(0.1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: 0.5
+                )
+        )
         .materialInteractive()
         .contentShape(Rectangle()) // Makes the entire card tappable
         .accessibilityElement(children: .combine)
@@ -34,7 +54,7 @@ struct BookCardView: View {
         .accessibilityHint("Double tap to view book details")
     }
     
-    // MARK: - Cover Image with Overlay
+    // MARK: - Cover Image with Enhanced Overlay
     @ViewBuilder
     private var coverImageWithOverlay: some View {
         ZStack(alignment: .topTrailing) {
@@ -43,16 +63,19 @@ struct BookCardView: View {
                 width: cardWidth,
                 height: imageHeight
             )
-            .materialCard()
+            .materialCard(cornerRadius: Theme.CornerRadius.small)
             
-            // Status and favorite indicators
+            // Enhanced status and indicators overlay
             VStack(alignment: .trailing, spacing: Theme.Spacing.xs) {
-                // Status indicator
+                // Status indicator with beautiful styling
                 if book.readingStatus != .toRead {
                     StatusBadge(status: book.readingStatus, style: .compact)
                         .padding(Theme.Spacing.xs)
-                        .background(Color.black.opacity(0.3))
-                        .clipShape(Circle())
+                        .background(
+                            Color.black.opacity(0.6)
+                                .background(.ultraThinMaterial)
+                        )
+                        .clipShape(RoundedRectangle(cornerRadius: Theme.CornerRadius.small))
                 }
             }
             .padding(Theme.Spacing.xs)
@@ -63,41 +86,41 @@ struct BookCardView: View {
     // MARK: - Fixed Layout (for grid alignment)
     @ViewBuilder
     private var fixedBookInfo: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            // Title section (Fixed height)
+        VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+            // Title section with enhanced styling
             Text(book.metadata?.title ?? "Unknown Title")
                 .titleSmall()
                 .lineLimit(2)
                 .multilineTextAlignment(.leading)
-                .frame(height: 36, alignment: .top)
+                .frame(height: 38, alignment: .top)
+                .foregroundColor(Color.theme.primaryText)
             
-            Spacer(minLength: Theme.Spacing.xs)
-            
-            // Author section (Fixed height)
+            // Author section with enhanced styling
             Text(book.metadata?.authors.joined(separator: ", ") ?? "Unknown Author")
                 .bodySmall()
                 .foregroundColor(Color.theme.secondaryText)
                 .lineLimit(1)
-                .frame(height: 16, alignment: .top)
+                .frame(height: 18, alignment: .top)
             
-            Spacer(minLength: Theme.Spacing.xs)
-            
-            // Bottom section - Cultural info, rating, or spacer (Fixed height)
-            bottomInfoSection
-                .frame(height: 28, alignment: .top)
+            // Enhanced bottom section with prominent rating display
+            enhancedBottomInfoSection
+                .frame(height: 36, alignment: .top)
         }
         .frame(width: cardWidth, height: textAreaHeight, alignment: .top)
+        .padding(.horizontal, Theme.Spacing.sm)
+        .padding(.vertical, Theme.Spacing.xs)
     }
     
     // MARK: - Flexible Layout (for standalone cards)
     @ViewBuilder
     private var flexibleBookInfo: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
-            // Title section (Natural height)
+            // Title section
             Text(book.metadata?.title ?? "Unknown Title")
-                .titleSmall() // For standalone cards, .titleSmall() is more legible
+                .titleSmall()
                 .lineLimit(2)
                 .multilineTextAlignment(.leading)
+                .foregroundColor(Color.theme.primaryText)
             
             // Author section
             Text(book.metadata?.authors.joined(separator: ", ") ?? "Unknown Author")
@@ -105,76 +128,110 @@ struct BookCardView: View {
                 .foregroundColor(Color.theme.secondaryText)
                 .lineLimit(1)
             
-            // Cultural information and rating with natural spacing
+            // Enhanced information with natural spacing
             VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+                // Rating first (most prominent)
+                if let rating = book.rating, rating > 0 {
+                    enhancedRatingStars(rating: rating)
+                }
+                
                 // Cultural information
                 if let originalLanguage = book.metadata?.originalLanguage,
                    originalLanguage != book.metadata?.language {
-                    culturalInfoBadge(language: originalLanguage)
-                }
-                
-                // Rating stars (if rated)
-                if let rating = book.rating, rating > 0 {
-                    ratingStars(rating: rating)
+                    enhancedCulturalBadge(language: originalLanguage)
                 }
             }
         }
         .frame(width: cardWidth, alignment: .leading)
+        .padding(.horizontal, Theme.Spacing.sm)
+        .padding(.vertical, Theme.Spacing.xs)
     }
     
-    // MARK: - Helper Components
+    // MARK: - Enhanced Helper Components with Boho Styling ✨
+    
     @ViewBuilder
-    private var bottomInfoSection: some View {
+    private var enhancedBottomInfoSection: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
-            // Priority 1: Cultural information
+            // Priority 1: Rating (always show if available, more prominent)
+            if let rating = book.rating, rating > 0 {
+                enhancedRatingStars(rating: rating)
+                    .frame(height: 18)
+            } else {
+                Spacer().frame(height: 18)
+            }
+            
+            // Priority 2: Cultural information
             if let originalLanguage = book.metadata?.originalLanguage,
                originalLanguage != book.metadata?.language {
-                culturalInfoBadge(language: originalLanguage)
-                    .frame(height: 16)
-                
-                // Rating on second line if space and rated
-                if let rating = book.rating, rating > 0 {
-                    ratingStars(rating: rating)
-                        .frame(height: 12)
-                } else {
-                    Spacer().frame(height: 12)
-                }
-            }
-            // Priority 2: Rating only (if no cultural info)
-            else if let rating = book.rating, rating > 0 {
-                ratingStars(rating: rating)
-                    .frame(height: 16)
-                Spacer().frame(height: 12)
-            }
-            // Priority 3: Empty space (maintains consistent height)
-            else {
-                Spacer().frame(height: 28)
+                enhancedCulturalBadge(language: originalLanguage)
+                    .frame(height: 18)
+            } else {
+                Spacer().frame(height: 18)
             }
         }
     }
     
     @ViewBuilder
-    private func culturalInfoBadge(language: String) -> some View {
+    private func enhancedCulturalBadge(language: String) -> some View {
         HStack(spacing: Theme.Spacing.xs) {
             Image(systemName: "globe")
-                .labelSmall()
-                .foregroundColor(Color.theme.accentHighlight)
+                .font(.system(size: 10, weight: .medium))
+                .foregroundColor(Color.theme.tertiary)
             
             Text(language)
-                .culturalTag()
-                .foregroundColor(Color.theme.accentHighlight)
+                .font(.system(size: 10, weight: .semibold))
+                .foregroundColor(Color.theme.tertiary)
         }
+        .padding(.horizontal, Theme.Spacing.xs)
+        .padding(.vertical, 2)
+        .background(
+            Color.theme.tertiary.opacity(0.12)
+                .background(.ultraThinMaterial)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .overlay(
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(Color.theme.tertiary.opacity(0.3), lineWidth: 0.5)
+        )
+    }
+    
+    @ViewBuilder
+    private func enhancedRatingStars(rating: Int) -> some View {
+        HStack(spacing: 2) {
+            ForEach(1...5, id: \.self) { star in
+                Image(systemName: star <= rating ? "star.fill" : "star")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(
+                        star <= rating ? 
+                        Color.theme.warning : // Golden amber for filled stars
+                        Color.theme.secondaryText.opacity(0.3)
+                    )
+                    .shadow(
+                        color: star <= rating ? Color.theme.warning.opacity(0.3) : Color.clear,
+                        radius: 1,
+                        x: 0,
+                        y: 0.5
+                    )
+            }
+        }
+        .padding(.horizontal, 4)
+        .padding(.vertical, 2)
+        .background(
+            Color.theme.cardBackground
+                .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 6))
+    }
+    
+    // MARK: - Legacy components for backward compatibility
+    @ViewBuilder
+    private func culturalInfoBadge(language: String) -> some View {
+        enhancedCulturalBadge(language: language)
     }
     
     @ViewBuilder
     private func ratingStars(rating: Int) -> some View {
-        HStack(spacing: Theme.Spacing.xs) {
-            ForEach(1...5, id: \.self) { star in
-                Image(systemName: star <= rating ? "star.fill" : "star")
-                    .labelSmall()
-                    .foregroundColor(star <= rating ? Color.theme.accentHighlight : Color.theme.secondaryText.opacity(0.3))
-            }
-        }
+        enhancedRatingStars(rating: rating)
     }
     
     // MARK: - Accessibility

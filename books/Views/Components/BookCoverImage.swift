@@ -174,27 +174,36 @@ struct LoadingPlaceholder: View {
     var body: some View {
         VStack(spacing: Theme.Spacing.sm) {
             ZStack {
-                RoundedRectangle(cornerRadius: 4)
-                    .fill(Color.theme.surfaceVariant)
-                    .frame(width: width * 0.6, height: height * 0.4)
+                // Base gradient background
+                LinearGradient(
+                    colors: [
+                        Color.theme.surfaceVariant,
+                        Color.theme.cardBackground
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .frame(width: width * 0.7, height: height * 0.5)
+                .cornerRadius(4)
                 
-                // Animated shimmer effect
+                // Enhanced shimmer effect with boho colors
                 RoundedRectangle(cornerRadius: 4)
                     .fill(
                         LinearGradient(
                             colors: [
                                 Color.clear,
-                                Color.theme.onSurface.opacity(0.1),
+                                Color.theme.primary.opacity(0.1),
+                                Color.theme.tertiary.opacity(0.1),
                                 Color.clear
                             ],
                             startPoint: .leading,
                             endPoint: .trailing
                         )
                     )
-                    .frame(width: width * 0.6, height: height * 0.4)
+                    .frame(width: width * 0.7, height: height * 0.5)
                     .offset(x: isAnimating ? width : -width)
                     .animation(
-                        .linear(duration: 1.2)
+                        .linear(duration: 1.5)
                         .repeatForever(autoreverses: false),
                         value: isAnimating
                     )
@@ -203,7 +212,7 @@ struct LoadingPlaceholder: View {
             
             if height > 60 {
                 Text("Loading...")
-                    .labelSmall()
+                    .font(.system(size: 10, weight: .medium))
                     .foregroundColor(Color.theme.secondaryText)
             }
         }
@@ -270,25 +279,90 @@ struct PlaceholderBookCover: View {
     
     var body: some View {
         VStack(spacing: Theme.Spacing.xs) {
-            Image(systemName: "book.closed.fill")
-                .resizable()
-                .scaledToFit()
-                .frame(width: width * 0.4, height: height * 0.4)
-                .foregroundColor(Color.theme.secondaryText)
+            // Beautiful boho-inspired book icon with gradient
+            ZStack {
+                // Background gradient
+                LinearGradient(
+                    colors: [
+                        Color.theme.gradientStart,
+                        Color.theme.gradientEnd
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .clipShape(RoundedRectangle(cornerRadius: 4))
+                
+                // Decorative book icon
+                Image(systemName: "book.closed.fill")
+                    .font(.system(size: width * 0.25, weight: .medium))
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [
+                                Color.theme.primary,
+                                Color.theme.tertiary
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .shadow(color: Color.black.opacity(0.1), radius: 2, x: 0, y: 1)
+                
+                // Subtle decorative elements for boho feel
+                VStack {
+                    HStack {
+                        Circle()
+                            .fill(Color.theme.primary.opacity(0.2))
+                            .frame(width: 3, height: 3)
+                        Spacer()
+                        Circle()
+                            .fill(Color.theme.tertiary.opacity(0.3))
+                            .frame(width: 2, height: 2)
+                    }
+                    Spacer()
+                    HStack {
+                        Spacer()
+                        Circle()
+                            .fill(Color.theme.secondary.opacity(0.2))
+                            .frame(width: 2, height: 2)
+                    }
+                }
+                .padding(Theme.Spacing.xs)
+            }
+            .frame(width: width * 0.7, height: height * 0.6)
             
             if height > 60 {
                 Text("No Cover")
-                    .labelSmall()
+                    .font(.system(size: 10, weight: .medium))
                     .foregroundColor(Color.theme.secondaryText)
             }
         }
         .frame(width: width, height: height)
-        .background(Color.theme.cardBackground)
+        .background(
+            LinearGradient(
+                colors: [
+                    Color.theme.cardBackground,
+                    Color.theme.surfaceVariant
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        )
         .cornerRadius(8)
         .overlay(
             RoundedRectangle(cornerRadius: 8)
-                .stroke(Color.theme.outline.opacity(0.2), lineWidth: 0.5)
+                .stroke(
+                    LinearGradient(
+                        colors: [
+                            Color.theme.outline.opacity(0.3),
+                            Color.theme.outline.opacity(0.1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: 0.5
+                )
         )
+        .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
         .accessibilityLabel("No book cover available")
     }
 }

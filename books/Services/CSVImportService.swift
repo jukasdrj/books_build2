@@ -301,37 +301,29 @@ class CSVImportService: ObservableObject {
             return .duplicate
         }
         
-        // ISBN-First Strategy: Try to get fresh metadata from Google Books API
+        // Enhanced Image-First Strategy: Try multiple approaches to get cover images
         var bookMetadata: BookMetadata
         
+        // Strategy 1: ISBN lookup for fresh metadata with images
         if let isbn = parsedBook.isbn, !isbn.isEmpty {
-            // Attempt ISBN lookup for fresh metadata
             do {
                 if let apiMetadata = try await fetchMetadataFromISBN(isbn) {
-                    // Success! Use fresh API metadata
+                    // Success! Use fresh API metadata with images
                     bookMetadata = apiMetadata
                     
                     // Preserve cultural data from CSV if API doesn't have it
-                    if bookMetadata.originalLanguage == nil && parsedBook.originalLanguage != nil {
-                        bookMetadata.originalLanguage = parsedBook.originalLanguage
-                    }
-                    if bookMetadata.authorNationality == nil && parsedBook.authorNationality != nil {
-                        bookMetadata.authorNationality = parsedBook.authorNationality
-                    }
-                    if bookMetadata.translator == nil && parsedBook.translator != nil {
-                        bookMetadata.translator = parsedBook.translator
-                    }
+                    enrichMetadataWithCSVData(&bookMetadata, from: parsedBook)
                 } else {
-                    // ISBN lookup failed, fallback to CSV data
-                    bookMetadata = createMetadataFromCSV(parsedBook)
+                    // ISBN lookup failed, try title/author search
+                    bookMetadata = try await fetchMetadataByTitleAuthor(parsedBook) ?? createMetadataFromCSV(parsedBook)
                 }
             } catch {
-                // API error, fallback to CSV data
-                bookMetadata = createMetadataFromCSV(parsedBook)
+                // API error, try title/author search as fallback
+                bookMetadata = try await fetchMetadataByTitleAuthor(parsedBook) ?? createMetadataFromCSV(parsedBook)
             }
         } else {
-            // No ISBN available, use CSV data
-            bookMetadata = createMetadataFromCSV(parsedBook)
+            // No ISBN, try title/author search for images
+            bookMetadata = try await fetchMetadataByTitleAuthor(parsedBook) ?? createMetadataFromCSV(parsedBook)
         }
         
         // Determine reading status
@@ -380,6 +372,107 @@ class CSVImportService: ObservableObject {
             return books.first // Return the first matching book
         case .failure(_):
             return nil // Failed to fetch from API
+        }
+    }
+    
+    /// Enhanced: Fetch metadata by title and author as fallback
+    private func fetchMetadataByTitleAuthor(_ parsedBook: ParsedBook) async throws -> BookMetadata? {
+        guard let title = parsedBook.title?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !title.isEmpty else {
+            return nil
+        }
+        
+        // Construct search query
+        var searchQuery = title
+        if let author = parsedBook.author?.trimmingCharacters(in: .whitespacesAndNewlines), !author.isEmpty {
+            // Take first author name for cleaner search
+            let firstAuthor = author.components(separatedBy: ",").first?.trimmingCharacters(in: .whitespacesAndNewlines) ?? author
+            searchQuery += " author:\(firstAuthor)"
+        }
+        
+        // Rate limiting: add delay to avoid hitting API limits
+        try await Task.sleep(nanoseconds: 200_000_000) // 0.2 seconds
+        
+        // Use existing BookSearchService to search by title and author
+        let searchResult = await BookSearchService.shared.search(query: searchQuery)
+        
+        switch searchResult {
+        case .success(let books):
+            // Try to find the best match based on title similarity
+            return findBestMatch(books: books, targetTitle: title, targetAuthor: parsedBook.author)
+        case .failure(_):
+            return nil
+        }
+    }
+    
+    /// Find the best matching book from search results
+    private func findBestMatch(books: [BookMetadata], targetTitle: String, targetAuthor: String?) -> BookMetadata? {
+        guard !books.isEmpty else { return nil }
+        
+        let normalizedTargetTitle = normalizeForComparison(targetTitle)
+        let normalizedTargetAuthor = targetAuthor?.components(separatedBy: ",").first?.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        // Score each book and return the best match
+        let scoredBooks = books.map { book -> (book: BookMetadata, score: Double) in
+            let titleScore = calculateTitleSimilarity(
+                normalizeForComparison(book.title),
+                normalizedTargetTitle
+            )
+            
+            let authorScore: Double
+            if let targetAuthor = normalizedTargetAuthor,
+               let bookAuthor = book.authors.first {
+                authorScore = calculateTitleSimilarity(
+                    normalizeForComparison(bookAuthor),
+                    normalizeForComparison(targetAuthor)
+                )
+            } else {
+                authorScore = 0.0
+            }
+            
+            // Weighted scoring: title is more important than author
+            let combinedScore = (titleScore * 0.7) + (authorScore * 0.3)
+            return (book: book, score: combinedScore)
+        }
+        
+        // Return the highest scoring book if it's above threshold
+        let bestMatch = scoredBooks.max(by: { $0.score < $1.score })
+        if let bestMatch = bestMatch, bestMatch.score > 0.6 { // 60% similarity threshold
+            return bestMatch.book
+        }
+        
+        return nil
+    }
+    
+    /// Calculate title similarity using basic string matching
+    private func calculateTitleSimilarity(_ title1: String, _ title2: String) -> Double {
+        let words1 = Set(title1.components(separatedBy: .whitespacesAndNewlines))
+        let words2 = Set(title2.components(separatedBy: .whitespacesAndNewlines))
+        
+        let intersection = words1.intersection(words2)
+        let union = words1.union(words2)
+        
+        guard !union.isEmpty else { return 0.0 }
+        return Double(intersection.count) / Double(union.count)
+    }
+    
+    /// Normalize string for comparison
+    private func normalizeForComparison(_ text: String) -> String {
+        return text.lowercased()
+            .replacingOccurrences(of: "[^a-z0-9\\s]", with: "", options: .regularExpression)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+    
+    /// Enrich API metadata with cultural data from CSV
+    private func enrichMetadataWithCSVData(_ metadata: inout BookMetadata, from parsedBook: ParsedBook) {
+        if metadata.originalLanguage == nil && parsedBook.originalLanguage != nil {
+            metadata.originalLanguage = parsedBook.originalLanguage
+        }
+        if metadata.authorNationality == nil && parsedBook.authorNationality != nil {
+            metadata.authorNationality = parsedBook.authorNationality
+        }
+        if metadata.translator == nil && parsedBook.translator != nil {
+            metadata.translator = parsedBook.translator
         }
     }
     

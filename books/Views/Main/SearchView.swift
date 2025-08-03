@@ -3,6 +3,7 @@ import SwiftData
 
 struct SearchView: View {
     @Environment(\.modelContext) private var modelContext
+    @Binding var selectedTab: Int
     
     @State private var searchService = BookSearchService.shared
     @State private var searchText = ""
@@ -13,6 +14,10 @@ struct SearchView: View {
         case searching
         case results([BookMetadata])
         case error(String)
+    }
+    
+    init(selectedTab: Binding<Int> = .constant(2)) {
+        self._selectedTab = selectedTab
     }
 
     var body: some View {

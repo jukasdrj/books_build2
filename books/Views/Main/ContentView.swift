@@ -4,58 +4,63 @@ import SwiftData
 
 struct ContentView: View {
     @State private var selectedTab = 0
-    @Environment(\.colorScheme) private var colorScheme
     
     var body: some View {
-        TabView(selection: $selectedTab) {
-            NavigationStack {
-                LibraryView(selectedTab: $selectedTab)
-            }
-            .tabItem {
-                Label("Library", systemImage: selectedTab == 0 ? "books.vertical.fill" : "books.vertical")
-            }
-            .tag(0)
+        ZStack {
+            // Beautiful gradient background for boho aesthetic
+            LinearGradient(
+                colors: [
+                    Color.theme.gradientStart.opacity(0.2),
+                    Color.theme.gradientEnd.opacity(0.1)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
             
-            NavigationStack {
-                LibraryView(filter: .wishlist, selectedTab: $selectedTab)
+            TabView(selection: $selectedTab) {
+                NavigationStack {
+                    LibraryView(selectedTab: $selectedTab)
+                }
+                .tabItem {
+                    Image(systemName: selectedTab == 0 ? "books.vertical.fill" : "books.vertical")
+                    Text("Library")
+                }
+                .tag(0)
+                
+                NavigationStack {
+                    LibraryView(filter: .wishlist, selectedTab: $selectedTab)
+                }
+                .tabItem {
+                    Image(systemName: selectedTab == 1 ? "heart.text.square.fill" : "heart.text.square")
+                    Text("Wishlist")
+                }
+                .tag(1)
+                
+                NavigationStack {
+                    SearchView(selectedTab: $selectedTab)
+                }
+                .tabItem {
+                    Image(systemName: selectedTab == 2 ? "magnifyingglass.circle.fill" : "magnifyingglass")
+                    Text("Search")
+                }
+                .tag(2)
+                
+                NavigationStack {
+                    StatsView()
+                }
+                .tabItem {
+                    Image(systemName: selectedTab == 3 ? "chart.bar.fill" : "chart.bar")
+                    Text("Stats")
+                }
+                .tag(3)
             }
-            .tabItem {
-                Label("Wishlist", systemImage: selectedTab == 1 ? "wand.and.stars" : "wand.and.stars")
-            }
-            .tag(1)
-            
-            NavigationStack {
-                SearchView()
-            }
-            .tabItem {
-                Label("Search", systemImage: selectedTab == 2 ? "magnifyingglass" : "magnifyingglass")
-            }
-            .tag(2)
-            
-            NavigationStack {
-                StatsView()
-            }
-            .tabItem {
-                Label("Stats", systemImage: selectedTab == 3 ? "chart.bar.xaxis" : "chart.bar.xaxis")
-            }
-            .tag(3)
+            .tint(Color.theme.primary) // Beautiful purple tint for tabs
         }
-        .background(Color.theme.background)
-        .tint(Color.theme.primaryAction)
-        .animation(Theme.Animation.pageTransition, value: selectedTab)
-        .preferredColorScheme(nil) // Let system handle color scheme
-        .accessibilityElement(children: .contain)
     }
 }
 
-#Preview("Light Mode") {
+#Preview {
     ContentView()
         .modelContainer(for: [UserBook.self, BookMetadata.self], inMemory: true)
-        .preferredColorScheme(.light)
-}
-
-#Preview("Dark Mode") {
-    ContentView()
-        .modelContainer(for: [UserBook.self, BookMetadata.self], inMemory: true)
-        .preferredColorScheme(.dark)
 }
