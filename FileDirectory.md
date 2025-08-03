@@ -52,6 +52,7 @@ The Books Reading Tracker project is organized into several main directories wit
 #### **/books/Models/UserBook.swift**
 - **Purpose**: User-specific reading tracking and personal book management.
 - **Responsibility**: Store reading status, progress, ratings, notes, and personal metadata.
+- **Key Features**: Automatic date handling, reading session tracking, wishlist integration.
 
 ---
 
@@ -65,7 +66,7 @@ The Books Reading Tracker project is organized into several main directories wit
 #### **/books/Extensions/Color+Extensions.swift**
 - **Purpose**: Programmatic adaptive color system with dark/light mode support.
 - **Responsibility**: Provide computed color properties that adapt to system color scheme.
-- **Key Features**: Cultural region colors, status colors, adaptive contrast for accessibility.
+- **Key Features**: Multi-theme support, cultural region colors, status colors, adaptive contrast for accessibility.
 
 #### **/books/Theme/SharedModifiers.swift**
 - **Purpose**: Reusable SwiftUI view modifiers for consistent styling.
@@ -77,12 +78,13 @@ The Books Reading Tracker project is organized into several main directories wit
 
 #### **Main Views (/books/Views/Main/)**
 
-- **ContentView.swift**: Main app navigation and tab bar structure with NavigationStack for each tab.
-- **LibraryView.swift**: Main library display with user's book collection, grid/list layouts, filtering, pull-to-refresh.
-- **WishlistView.swift**: Wishlist management for future reading.
+- **ContentView.swift**: Main app navigation and tab bar structure with NavigationStack for each tab. **4-tab design**: Library, Search, Stats, Culture (removed Wishlist tab).
+- **LibraryView.swift**: Main library display with user's book collection, grid/list layouts, **integrated filtering system**, **quick filter chips**, **theme refresh capabilities**, and **manual refresh button**.
 - **SearchView.swift**: Google Books API integration and book discovery with NavigationLink-based navigation, enhanced accessibility.
 - **StatsView.swift**: Reading analytics and progress visualization with integrated cultural diversity.
 - **CulturalDiversityView.swift**: Dedicated cultural diversity tracking and analytics.
+- **SettingsView.swift**: **Enhanced Settings view** with working **CSV import button**, **theme picker access**, and **haptic feedback** for all interactions.
+- **ThemePickerView.swift**: **Multi-theme selection interface** with **instant theme application** and **auto-dismiss**.
 
 #### **Detail Views (/books/Views/Detail/)**
 
@@ -99,6 +101,9 @@ The Books Reading Tracker project is organized into several main directories wit
 - **PageInputView.swift**: Reading progress input interface.
 - **SupportingViews.swift**: Additional supporting views and utility components.
 - **shared_components.swift**: Collection of reusable UI components.
+- **QuickFilterBar.swift**: **NEW** Horizontal quick filter chips for instant library filtering.
+- **LibraryFilterView.swift**: **NEW** Comprehensive filter sheet with reading status, wishlist, and collection options.
+- **ThemePreviewCard.swift**: Theme selection cards with visual previews.
 
 ---
 
@@ -108,10 +113,13 @@ The Books Reading Tracker project is organized into several main directories wit
 - **BookSearchService.swift**: Google Books API integration service with async/await pattern.
 - **ImageCache.swift**: Image caching and memory management for book covers.
 - **DataMigrationManager.swift**: Handle SwiftData schema migrations and data updates.
+- **HapticFeedbackManager.swift**: Centralized haptic feedback system for all interactions.
+- **CSVImportService.swift**: **Enhanced CSV import service** with smart fallback strategies.
 
 #### **Utilities (/books/Utilities/)**
 - **barcode_scanner.swift**: ISBN barcode scanning functionality.
 - **duplicate_detection.swift**: DuplicateDetectionService for preventing duplicate books in user's library with sophisticated matching logic.
+- **CSVParser.swift**: **Enhanced CSV parsing** with Goodreads format recognition.
 
 ---
 
@@ -189,3 +197,19 @@ The Books Reading Tracker project is organized into several main directories wit
 - **Updated** UI tests to use modern `XCUIDevice.shared.userInterfaceStyle` API
 - **Added** accessibility identifiers for robust test targeting
 - **Enhanced** with dark mode testing capabilities
+
+---
+
+## 🌟 Recent Feature Additions
+
+### **Multi-Theme System**
+- **5 Gorgeous Themes**: Purple Boho, Forest Sage, Ocean Blues, Sunset Warmth, Monochrome Elegance
+- **Theme Manager**: Centralized theme management with persistence
+- **Instant Application**: One-tap theme switching with haptic feedback
+- **Auto-Refresh**: Library view updates immediately when theme changes
+
+### **Integrated Filtering System**
+- **Quick Filter Chips**: Horizontal scrolling chips for instant filtering
+- **Wishlist Integration**: Access wishlist items through filtering instead of separate tab
+- **Comprehensive Filter Sheet**: Detailed filtering options with multiple criteria
+- **Dynamic UI**: Context-aware titles and empty states based on active filters

@@ -14,6 +14,13 @@ The Books Reading Tracker is a comprehensive iOS app built with SwiftUI and Swif
 - **Personal Notes**: Private notes and reflections for each book
 - **Tag System**: Organize books with custom tags for easy categorization
 - **Cover Images**: Automatic cover image loading with intelligent caching
+- **Integrated Wishlist**: Access wishlist items through filtering instead of separate tab
+
+### 🎨 Multi-Theme System
+- **5 Gorgeous Themes**: Purple Boho (default), Forest Sage, Ocean Blues, Sunset Warmth, Monochrome Elegance
+- **Instant Theme Switching**: One-tap theme application with haptic feedback
+- **Automatic Refresh**: Library view updates immediately when theme changes
+- **Light/Dark Mode**: Full support for both color schemes across all themes
 
 ### 🌍 Cultural Diversity Tracking
 - **Author Nationality**: Track the cultural background of authors
@@ -38,10 +45,11 @@ The Books Reading Tracker is a comprehensive iOS app built with SwiftUI and Swif
 - **Author Search**: Quick access to books by specific authors
 - **Consistent Navigation**: Standard iOS disclosure indicators and navigation patterns
 
-### ⭐ Wishlist Management
-- **Future Reading**: Curated list of books to read
-- **Priority System**: Organize wishlist by reading priority
-- **Cultural Goals**: Track wishlist diversity for balanced reading
+### 🎯 Smart Filtering System
+- **Quick Filter Chips**: Horizontal scrolling chips for instant filtering (Reading Status, Wishlist)
+- **Comprehensive Filter Sheet**: Detailed filtering options with reading status, wishlist, owned, favorites
+- **Dynamic UI**: Context-aware titles and empty states based on active filters
+- **Manual Refresh**: Refresh button for instant UI updates when needed
 
 ## Architecture
 
@@ -71,6 +79,7 @@ User-specific book tracking including:
 - Cultural goal contribution tracking
 - Tag organization system
 - Social features (recommendations, discussions)
+- **Wishlist Integration**: `onWishlist` property for integrated wishlist functionality
 
 ### Key Components
 
@@ -80,15 +89,15 @@ User-specific book tracking including:
 - **Section Dividers**: Subtle dividers between content sections for better organization
 - **Consistent Navigation**: Standard iOS disclosure indicators throughout
 
-#### Theme System
-- **Material Design 3**: Comprehensive color system with proper dark mode
-- **Typography Scale**: Consistent text styling with enhanced hierarchy
-- **Spacing System**: 8pt grid-based layout system with improved breathing room
-- **Animation Framework**: Smooth transitions and micro-interactions
+#### Multi-Theme System
+- **5 Theme Variants**: Comprehensive color definitions for Purple Boho, Forest Sage, Ocean Blues, Sunset Warmth, Monochrome Elegance
+- **Adaptive Colors**: Proper light/dark mode support with accessibility considerations
+- **Theme Manager**: Centralized theme management with persistence and animation support
+- **Real-time Updates**: Views automatically refresh when themes change
 
 #### Views Architecture
-- **TabView Navigation**: 5 main sections (Library, Wishlist, Search, Stats, Diversity)
-- **Modular Components**: Reusable BookCardView, BookRowView, StatusBadge
+- **TabView Navigation**: 4 main sections (Library, Search, Stats, Culture) with optimized NavigationStack
+- **Modular Components**: Reusable BookCardView, BookRowView, StatusBadge, QuickFilterBar
 - **Responsive Design**: Adaptive layouts for different screen sizes
 - **Professional Polish**: Consistent with Apple's design patterns throughout
 
@@ -112,6 +121,18 @@ User-specific book tracking including:
 2. **Goal Setting**: Set targets for reading from different cultures
 3. **Progress Monitoring**: Track progress toward diversity goals with clear metrics
 4. **Insights**: Discover reading patterns and suggestions for improvement
+
+### Theme Management
+1. **Access Themes**: Open Settings → Theme to browse available themes
+2. **Select Theme**: Tap any theme card to apply instantly with haptic feedback
+3. **View Results**: Library view automatically refreshes with new theme colors
+4. **Switch Anytime**: Change themes at any time with one-tap application
+
+### Library Filtering
+1. **Quick Filters**: Use horizontal chips for instant reading status filtering
+2. **Wishlist Access**: Tap "💜 Wishlist" chip to view wishlist items
+3. **Advanced Filters**: Tap filter button for comprehensive filtering options
+4. **Clear Filters**: "Show All" button appears when filters are active
 
 ## Design Philosophy
 
@@ -180,6 +201,18 @@ User-specific book tracking including:
 - **Enhanced Accessibility**: Improved layouts and navigation for all users
 - **Performance Optimization**: Simplified data models and reduced complexity
 
+### Multi-Theme System
+- **5 Gorgeous Themes**: Purple Boho, Forest Sage, Ocean Blues, Sunset Warmth, Monochrome Elegance
+- **Instant Application**: One-tap theme switching with haptic feedback
+- **Automatic Refresh**: Library view updates immediately when theme changes
+- **Settings Integration**: Direct access to theme picker from Settings view
+
+### Integrated Filtering
+- **Wishlist Integration**: Wishlist items accessible through filtering instead of separate tab
+- **Quick Filter Chips**: Horizontal chips for instant reading status filtering
+- **Comprehensive Filter Sheet**: Detailed filtering options with wishlist, owned, favorites
+- **Dynamic UI**: Context-aware titles and empty states based on active filters
+
 ## Future Expansion
 
 The app is designed with extensibility in mind:
@@ -190,4 +223,4 @@ The app is designed with extensibility in mind:
 - **Additional APIs**: Integration with library systems and bookstores
 - **Cross-Platform**: Potential macOS and watchOS companions
 
-The Books Reading Tracker provides a professional, polished reading management experience that emphasizes cultural diversity while maintaining simplicity and usability. The interface follows Apple's design patterns to create a familiar, native experience that serious readers will appreciate.
+The Books Reading Tracker provides a professional, polished reading management experience that emphasizes cultural diversity while maintaining simplicity and usability. The interface follows Apple's design patterns to create a familiar, native experience that serious readers will appreciate, enhanced with gorgeous multi-theme options and integrated filtering.

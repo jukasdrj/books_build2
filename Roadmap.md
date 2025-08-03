@@ -5,6 +5,11 @@
     * [ ] Add functionality for users to set and track daily or weekly reading goals.
     * [ ] Visualize progress toward goals in the `StatsView`.
 
+* **Enhanced Theme System Polish**
+    * [ ] Add preview animations when switching themes
+    * [ ] Implement theme-specific wallpapers or backgrounds
+    * [ ] Add light/dark mode toggle within each theme
+
 ### Medium Term (1-3 months) 🚀
 
 * **iCloud & Sync**
@@ -27,6 +32,17 @@
 ---
 
 ## ✅ COMPLETED FEATURES
+
+### **Integrated Wishlist Filtering** ✅ **COMPLETED**
+* [x] ~~Replace separate Wishlist tab with integrated filtering in LibraryView~~ ✅ **COMPLETED** - Wishlist items now accessible through filtering
+* [x] ~~Implement quick filter chips for instant reading status filtering~~ ✅ **COMPLETED** - Horizontal filter chips for TBR, Reading, Read, etc.
+* [x] ~~Add comprehensive filter sheet with wishlist, owned, and favorites toggles~~ ✅ **COMPLETED** - Detailed filter options with all criteria
+
+### **Enhanced Multi-Theme System** ✅ **COMPLETED**
+* [x] ~~Implement 5 gorgeous theme variants with comprehensive color definitions~~ ✅ **COMPLETED** - Purple Boho, Forest Sage, Ocean Blues, Sunset Warmth, Monochrome Elegance
+* [x] ~~Add one-tap theme switching with haptic feedback~~ ✅ **COMPLETED** - Instant theme application with auto-dismiss
+* [x] ~~Implement automatic library view refresh when theme changes~~ ✅ **COMPLETED** - Library updates immediately with new themes
+* [x] ~~Enhance Settings view with theme picker access~~ ✅ **COMPLETED** - Direct access to themes from Settings
 
 ### **Workflow Improvement** ✅ **COMPLETED**
 * [x] ~~After a user adds a book from search results, navigate them directly to the `EditBookDetails` view to encourage immediate customization (e.g., setting status, adding tags).~~ ✅ **COMPLETED** - Auto-navigation implemented with smart logic (library additions only)
