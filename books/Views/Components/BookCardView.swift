@@ -18,16 +18,6 @@ struct BookCardView: View {
                 width: 120,
                 height: 180
             )
-            .overlay(alignment: .topTrailing) {
-                if book.isFavorited {
-                    Image(systemName: "heart.fill")
-                        .font(.system(size: 14))
-                        .foregroundColor(Color.theme.error)
-                        .background(Color.theme.surface.opacity(0.9))
-                        .clipShape(Circle())
-                        .padding(Theme.Spacing.xs)
-                }
-            }
             
             // Book information - fixed height for uniformity
             VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
@@ -130,7 +120,6 @@ private let sampleUserBooks: [UserBook] = [
     {
         let book = UserBook(
             readingStatus: .read,
-            isFavorited: true,
             rating: 5
         )
         let metadata = BookMetadata(

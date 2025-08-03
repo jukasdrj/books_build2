@@ -64,13 +64,6 @@ struct BookRowView: View {
                     .background(Color.theme.tertiary.opacity(0.1))
                     .cornerRadius(Theme.CornerRadius.small)
             }
-            
-            // Favorite indicator
-            if userBook.isFavorited {
-                Image(systemName: "heart.fill")
-                    .font(.system(size: 14))
-                    .foregroundColor(Color.theme.error)
-            }
         }
         .padding(.vertical, Theme.Spacing.sm)
         .materialInteractive()
@@ -118,7 +111,6 @@ private let sampleRowBooks: [UserBook] = [
     {
         let book = UserBook(
             readingStatus: .reading,
-            isFavorited: true,
             rating: 4,
             currentPage: 120
         )
