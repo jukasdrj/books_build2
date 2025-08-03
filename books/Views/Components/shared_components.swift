@@ -44,7 +44,7 @@ struct BookListItem: View {
                 }
                 
                 HStack(spacing: Theme.Spacing.sm) {
-                    StatusBadge(status: book.readingStatus, style: .capsule)
+                    StatusBadge(status: book.readingStatus, style: .full)
                     
                     Spacer()
                     
