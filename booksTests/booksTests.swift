@@ -3,6 +3,7 @@
 //
 import Testing
 import SwiftData
+import SwiftUI
 @testable import books
 
 @Suite("Basic Books App Tests")

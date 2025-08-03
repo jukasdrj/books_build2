@@ -155,28 +155,35 @@ final class booksUITests: XCTestCase {
     
     @MainActor
     func testDarkModeSupport() throws {
-        let app = XCUIApplication()
-        
-        // Test Light Mode
-        XCUIDevice.shared.userInterfaceStyle = .light
+        // Test Light Mode by launching without dark mode argument
+        var app = XCUIApplication()
         app.launch()
         
-        let libraryTab = app.tabBars.buttons["Library"]
-        XCTAssert(libraryTab.waitForExistence(timeout: 5), "UI should work in light mode")
+        let libraryTabLight = app.tabBars.buttons["Library"]
+        XCTAssert(libraryTabLight.waitForExistence(timeout: 5), "UI should work in light mode")
         
-        // Switch to Dark Mode
-        XCUIDevice.shared.userInterfaceStyle = .dark
-        Thread.sleep(forTimeInterval: 1)
+        app.terminate() // Terminate current app instance
         
-        XCTAssert(libraryTab.exists, "UI should work in dark mode")
+        // Test Dark Mode by launching with a specific argument
+        app = XCUIApplication() // Create a new app instance
+        app.launchArguments += ["-AppleInterfaceStyle", "Dark"] // Set argument for dark mode
+        app.launch()
+        
+        let libraryTabDark = app.tabBars.buttons["Library"]
+        XCTAssert(libraryTabDark.waitForExistence(timeout: 5), "UI should work in dark mode")
         
         // Test navigation in dark mode
         app.tabBars.buttons["Search"].tap()
         let searchField = app.textFields["Search by title, author, or ISBN"]
         XCTAssert(searchField.waitForExistence(timeout: 5), "Search should work in dark mode")
         
-        // Restore light mode
-        XCUIDevice.shared.userInterfaceStyle = .light
+        app.terminate() // Terminate dark mode app instance
+        
+        // Restore light mode for subsequent tests if needed (by launching normally)
+        app = XCUIApplication()
+        app.launch()
+        let libraryTabRestore = app.tabBars.buttons["Library"]
+        XCTAssert(libraryTabRestore.waitForExistence(timeout: 5), "UI should restore to light mode")
     }
     
     @MainActor
