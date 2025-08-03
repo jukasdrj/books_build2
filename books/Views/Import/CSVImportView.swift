@@ -108,7 +108,7 @@ struct CSVImportView: View {
                     handleFileSelection(result)
                 }
                 .onReceive(importService.objectWillChange) { _ in
-                    if let result = importService.importResult, 
+                    if importService.importResult != nil, 
                        importService.importProgress?.isComplete == true {
                         currentStep = .completed
                     }
