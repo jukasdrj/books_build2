@@ -50,7 +50,7 @@ struct PageInputView: View {
                 
                 if let current = Int(currentPageText), let total = Int(totalPagesText), total > 0 {
                     Section("Progress") {
-                        VStack(spacing: 8) {
+                        VStack(spacing: Theme.Spacing.sm) {
                             ProgressView(value: Double(current) / Double(total))
                                 .progressViewStyle(.linear)
                             

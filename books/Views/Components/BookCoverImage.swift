@@ -172,7 +172,7 @@ struct LoadingPlaceholder: View {
     @State private var isAnimating = false
     
     var body: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: Theme.Spacing.sm) {
             ZStack {
                 RoundedRectangle(cornerRadius: 4)
                     .fill(Color.theme.surfaceVariant)
@@ -229,7 +229,7 @@ struct ErrorPlaceholder: View {
     let onRetry: () -> Void
     
     var body: some View {
-        VStack(spacing: 4) {
+        VStack(spacing: Theme.Spacing.xs) {
             Image(systemName: "exclamationmark.triangle.fill")
                 .resizable()
                 .scaledToFit()
@@ -237,7 +237,7 @@ struct ErrorPlaceholder: View {
                 .foregroundColor(Color.theme.warning)
             
             if showDetails {
-                VStack(spacing: 2) {
+                VStack(spacing: Theme.Spacing.xs) {
                     Text(errorMessage)
                         .labelSmall()
                         .foregroundColor(Color.theme.secondaryText)
@@ -269,7 +269,7 @@ struct PlaceholderBookCover: View {
     let height: CGFloat
     
     var body: some View {
-        VStack(spacing: 4) {
+        VStack(spacing: Theme.Spacing.xs) {
             Image(systemName: "book.closed.fill")
                 .resizable()
                 .scaledToFit()
@@ -295,27 +295,29 @@ struct PlaceholderBookCover: View {
 
 #Preview {
     VStack(spacing: 20) {
-        HStack(spacing: 16) {
-            // Test with valid URL
-            BookCoverImage(
-                imageURL: "https://books.google.com/books/content?id=M30_sYfUfgAC&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
-                width: 100,
-                height: 150
-            )
-            
-            // Test with invalid URL
-            BookCoverImage(
-                imageURL: "https://invalid-url.com/image.jpg",
-                width: 100,
-                height: 150
-            )
-            
-            // Test with nil URL
-            BookCoverImage(
-                imageURL: nil,
-                width: 100,
-                height: 150
-            )
+        VStack(spacing: Theme.Spacing.lg) {
+            HStack(spacing: Theme.Spacing.md) {
+                // Test with valid URL
+                BookCoverImage(
+                    imageURL: "https://books.google.com/books/content?id=M30_sYfUfgAC&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+                    width: 100,
+                    height: 150
+                )
+                
+                // Test with invalid URL
+                BookCoverImage(
+                    imageURL: "https://invalid-url.com/image.jpg",
+                    width: 100,
+                    height: 150
+                )
+                
+                // Test with nil URL
+                BookCoverImage(
+                    imageURL: nil,
+                    width: 100,
+                    height: 150
+                )
+            }
         }
         
         HStack {

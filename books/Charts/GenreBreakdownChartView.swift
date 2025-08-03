@@ -90,7 +90,7 @@ struct GenreBreakdownChartView: View {
                     GeometryReader { geometry in
                         if let plotFrame = chartProxy.plotFrame {
                             let frame = geometry[plotFrame]
-                            VStack(spacing: 4) {
+                            VStack(spacing: Theme.Spacing.xs) {
                                 Text("Total")
                                     .labelSmall()
                                     .foregroundColor(Theme.Color.SecondaryText)

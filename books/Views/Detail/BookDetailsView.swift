@@ -11,7 +11,7 @@ struct BookDetailsView: View {
     
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 24) {
+            VStack(alignment: .leading, spacing: Theme.Spacing.xl) {
                 BookHeaderSection(book: book)
                 
                 RatingSection(rating: $book.rating)
@@ -154,7 +154,7 @@ struct TagChip: View {
     let onRemove: () -> Void
     
     var body: some View {
-        HStack(spacing: 4) {
+        HStack(spacing: Theme.Spacing.xs) {
             Text(tag)
                 .culturalTag()
             
@@ -165,7 +165,7 @@ struct TagChip: View {
             }
         }
         .padding(.horizontal, Theme.Spacing.sm)
-        .padding(.vertical, 4)
+        .padding(.vertical, Theme.Spacing.xs)
         .background(Color.theme.surfaceVariant)
         .cornerRadius(Theme.CornerRadius.small)
     }
@@ -232,7 +232,7 @@ struct BookHeaderSection: View {
     var book: UserBook
     
     var body: some View {
-        HStack(alignment: .top, spacing: 20) {
+        HStack(alignment: .top, spacing: Theme.Spacing.lg) {
             BookCoverImage(
                 imageURL: book.metadata?.imageURL?.absoluteString,
                 width: 120,
@@ -240,7 +240,7 @@ struct BookHeaderSection: View {
             )
             .shadow(color: .black.opacity(0.2), radius: 8, x: 4, y: 4)
             
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
                 Text(book.metadata?.title ?? "Unknown Title")
                     .bookTitle()
                     .foregroundColor(Color.theme.primaryText)
@@ -264,16 +264,16 @@ struct BookHeaderSection: View {
                     Text(genre.first!)
                         .culturalTag()
                         .fontWeight(.medium)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
+                        .padding(.horizontal, Theme.Spacing.sm)
+                        .padding(.vertical, Theme.Spacing.xs)
                         .background(Color.theme.primaryAction.opacity(0.2))
                         .foregroundColor(Color.theme.primaryAction)
-                        .cornerRadius(8)
+                        .cornerRadius(Theme.CornerRadius.small)
                 }
                 
                 // Status selector - prominent placement below genre
                 BookStatusSelector(book: book)
-                    .padding(.top, 4)
+                    .padding(.top, Theme.Spacing.xs)
                 
                 Spacer()
             }
@@ -325,7 +325,7 @@ struct DescriptionSection: View {
     
     var body: some View {
         GroupBox {
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
                 Text(description)
                     .bodyMedium()
                     .lineLimit(isExpanded ? nil : 5)
@@ -859,4 +859,3 @@ struct ReadingSessionInputView: View {
         book.addReadingSession(minutes: duration, pagesRead: pages)
     }
 }
-

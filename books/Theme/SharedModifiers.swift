@@ -50,7 +50,7 @@ struct ProgressIndicator: View {
     var showPercentage: Bool = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
             GeometryReader { geometry in
                 ZStack(alignment: .leading) {
                     // Background
@@ -104,7 +104,7 @@ struct LoadingView: View {
     @State private var isAnimating = false
     
     var body: some View {
-        VStack(spacing: 20) {
+        VStack(spacing: Theme.Spacing.lg) {
             ZStack {
                 Circle()
                     .stroke(Color.gray.opacity(0.3), lineWidth: 4)
@@ -146,7 +146,7 @@ struct ErrorView: View {
     let retry: () -> Void
     
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: Theme.Spacing.md) {
             Image(systemName: "exclamationmark.triangle.fill")
                 .labelLarge()
                 .foregroundColor(.orange)
@@ -192,13 +192,13 @@ struct EmptyStateView: View {
     }
     
     var body: some View {
-        VStack(spacing: 24) {
-            VStack(spacing: 16) {
+        VStack(spacing: Theme.Spacing.xl) {
+            VStack(spacing: Theme.Spacing.md) {
                 Image(systemName: icon)
                     .labelLarge()
                     .foregroundColor(.gray)
                 
-                VStack(spacing: 8) {
+                VStack(spacing: Theme.Spacing.sm) {
                     Text(title)
                         .titleMedium()
                         .fontWeight(.semibold)
@@ -244,7 +244,7 @@ struct RefreshableScrollView<Content: View>: View {
 // MARK: - Previews
 
 #Preview("Progress Indicators") {
-    VStack(spacing: 20) {
+    VStack(spacing: Theme.Spacing.lg) {
         ProgressIndicator(progress: 0.3, showPercentage: true)
         ProgressIndicator(progress: 0.7, color: .green)
         ProgressIndicator(progress: 0.95, color: .orange, showPercentage: true)
@@ -253,7 +253,7 @@ struct RefreshableScrollView<Content: View>: View {
 }
 
 #Preview("Loading and Error States") {
-    VStack(spacing: 40) {
+    VStack(spacing: Theme.Spacing.xxxl) {
         LoadingView(message: "Loading books...")
         
         ErrorView(error: NSError(domain: "TestError", code: 1, userInfo: [NSLocalizedDescriptionKey: "Test error message"])) {
