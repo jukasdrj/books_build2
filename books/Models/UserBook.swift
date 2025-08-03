@@ -9,19 +9,24 @@ final class UserBook: Identifiable, @unchecked Sendable {
     var dateCompleted: Date?
     var readingStatus: ReadingStatus {
         didSet {
+            print("UserBook: readingStatus didSet - oldValue: \(oldValue), newValue: \(readingStatus), dateStarted before: \(String(describing: dateStarted))")
             // Auto-set dates based on status changes
             if readingStatus == .reading && oldValue != .reading && dateStarted == nil {
                 dateStarted = Date()
+                print("UserBook: dateStarted set to \(String(describing: dateStarted)) due to readingStatus change to .reading")
             }
             
             if readingStatus == .read && oldValue != .read {
                 if dateCompleted == nil {
                     dateCompleted = Date()
+                    print("UserBook: dateCompleted set to \(String(describing: dateCompleted)) due to readingStatus change to .read")
                 }
                 if dateStarted == nil {
                     dateStarted = Date()
+                    print("UserBook: dateStarted set to \(String(describing: dateStarted)) due to readingStatus change to .read (was nil)")
                 }
             }
+            print("UserBook: readingStatus didSet - dateStarted after: \(String(describing: dateStarted))")
         }
     }
     var isFavorited: Bool
@@ -178,13 +183,16 @@ final class UserBook: Identifiable, @unchecked Sendable {
         // Set initial dates based on status (non-auto since didSet won't trigger in init)
         if readingStatus == .reading {
             self.dateStarted = Date()
+            print("UserBook Init: Initial dateStarted set to \(String(describing: dateStarted)) for .reading")
         } else if readingStatus == .read {
             self.dateStarted = Date()
             self.dateCompleted = Date()
+            print("UserBook Init: Initial dateStarted and dateCompleted set for .read")
         }
         
         // Calculate initial progress
         updateReadingProgress()
+        print("UserBook Init: Completed. dateStarted: \(String(describing: dateStarted))")
     }
     
     // Enhanced progress tracking methods

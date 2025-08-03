@@ -114,16 +114,19 @@ struct ModelContainerTests {
         )
         
         let userBook = UserBook(readingStatus: .toRead, metadata: metadata)
-        #expect(userBook.dateStarted == nil)
+        print("Test: After init (.toRead), dateStarted: \(String(describing: userBook.dateStarted))")
+        #expect(userBook.dateStarted == nil) // Line 122
         #expect(userBook.dateCompleted == nil)
         
         // Change to reading
         userBook.readingStatus = .reading
-        #expect(userBook.dateStarted != nil)
+        print("Test: After changing to .reading, dateStarted: \(String(describing: userBook.dateStarted))")
+        #expect(userBook.dateStarted != nil) // Line 127 (previously reported as failing, let's confirm)
         #expect(userBook.dateCompleted == nil)
         
         // Change to read
         userBook.readingStatus = .read
+        print("Test: After changing to .read, dateStarted: \(String(describing: userBook.dateStarted))")
         #expect(userBook.dateStarted != nil)
         #expect(userBook.dateCompleted != nil)
         
@@ -134,6 +137,7 @@ struct ModelContainerTests {
         let savedBooks = try context.fetch(descriptor)
         let savedBook = savedBooks.first!
         
+        print("Test: After save and fetch, savedBook.dateStarted: \(String(describing: savedBook.dateStarted))")
         #expect(savedBook.dateStarted != nil)
         #expect(savedBook.dateCompleted != nil)
     }

@@ -58,6 +58,19 @@ final class booksUITests: XCTestCase {
         )
         wait(for: [expectation], timeout: 10)
         
+        // Debugging: Print UI hierarchy and check for elements
+        print("UI Hierarchy after search for 'Swift':\n\(app.debugDescription)")
+        
+        let firstCellExists = app.tables.cells.firstMatch.exists
+        print("First table cell exists: \(firstCellExists)")
+
+        let noResultsTextExists = app.staticTexts["No Results Found"].exists
+        print("No Results Found text exists: \(noResultsTextExists)")
+
+        let errorTextElement = app.staticTexts.containing(NSPredicate(format: "label CONTAINS[c] 'error'")).firstMatch
+        let errorTextExists = errorTextElement.exists
+        print("Error text exists: \(errorTextExists), label: \(errorTextExists ? errorTextElement.label : "N/A")")
+
         // Verify we get some kind of response (results, no results, or error)
         let hasResults = app.tables.cells.count > 0
         let hasNoResults = app.staticTexts["No Results Found"].exists
