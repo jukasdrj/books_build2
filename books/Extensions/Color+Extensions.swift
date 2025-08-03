@@ -19,14 +19,14 @@ struct AppColorTheme {
     
     // MARK: - Enhanced Purple Boho Color Palette 💜✨
     
-    // Primary Colors - Beautiful purple boho theme
+    // Primary Colors - Beautiful purple boho theme with enhanced light mode
     let primary = adaptiveColor(
-        light: UIColor(red: 0.45, green: 0.25, blue: 0.75, alpha: 1.0), // Rich violet 
+        light: UIColor(red: 0.50, green: 0.30, blue: 0.80, alpha: 1.0), // Vibrant rich violet 
         dark: UIColor(red: 0.75, green: 0.60, blue: 0.95, alpha: 1.0)   // Soft lavender
     )
     let onPrimary = adaptiveColor(light: .white, dark: UIColor(red: 0.25, green: 0.15, blue: 0.45, alpha: 1.0))
     let primaryContainer = adaptiveColor(
-        light: UIColor(red: 0.92, green: 0.88, blue: 0.98, alpha: 1.0), // Soft lavender mist
+        light: UIColor(red: 0.95, green: 0.92, blue: 0.99, alpha: 1.0), // Brighter lavender mist
         dark: UIColor(red: 0.35, green: 0.20, blue: 0.60, alpha: 1.0)   // Deep purple
     )
     let onPrimaryContainer = adaptiveColor(
@@ -34,14 +34,14 @@ struct AppColorTheme {
         dark: UIColor(red: 0.92, green: 0.88, blue: 0.98, alpha: 1.0)
     )
     
-    // Secondary Colors - Warm complement to purple
+    // Secondary Colors - Enhanced warm complement to purple for light mode
     let secondary = adaptiveColor(
-        light: UIColor(red: 0.65, green: 0.45, blue: 0.55, alpha: 1.0), // Dusty rose
+        light: UIColor(red: 0.70, green: 0.50, blue: 0.60, alpha: 1.0), // Brighter dusty rose
         dark: UIColor(red: 0.85, green: 0.70, blue: 0.80, alpha: 1.0)   // Soft rose
     )
     let onSecondary = adaptiveColor(light: .white, dark: UIColor(red: 0.35, green: 0.20, blue: 0.30, alpha: 1.0))
     let secondaryContainer = adaptiveColor(
-        light: UIColor(red: 0.95, green: 0.90, blue: 0.93, alpha: 1.0), // Pale rose
+        light: UIColor(red: 0.97, green: 0.92, blue: 0.95, alpha: 1.0), // Brighter pale rose
         dark: UIColor(red: 0.45, green: 0.30, blue: 0.40, alpha: 1.0)   // Deep rose
     )
     let onSecondaryContainer = adaptiveColor(
@@ -49,14 +49,14 @@ struct AppColorTheme {
         dark: UIColor(red: 0.95, green: 0.90, blue: 0.93, alpha: 1.0)
     )
     
-    // Tertiary Colors - Earthy boho accent
+    // Tertiary Colors - Enhanced earthy boho accent with brighter light mode
     let tertiary = adaptiveColor(
-        light: UIColor(red: 0.75, green: 0.55, blue: 0.35, alpha: 1.0), // Warm terracotta
+        light: UIColor(red: 0.80, green: 0.60, blue: 0.40, alpha: 1.0), // Brighter warm terracotta
         dark: UIColor(red: 0.95, green: 0.80, blue: 0.65, alpha: 1.0)   // Soft peach
     )
     let onTertiary = adaptiveColor(light: .white, dark: UIColor(red: 0.45, green: 0.25, blue: 0.15, alpha: 1.0))
     let tertiaryContainer = adaptiveColor(
-        light: UIColor(red: 0.98, green: 0.92, blue: 0.88, alpha: 1.0), // Cream
+        light: UIColor(red: 0.99, green: 0.95, blue: 0.91, alpha: 1.0), // Brighter cream
         dark: UIColor(red: 0.55, green: 0.35, blue: 0.25, alpha: 1.0)   // Deep earth
     )
     let onTertiaryContainer = adaptiveColor(
@@ -64,14 +64,14 @@ struct AppColorTheme {
         dark: UIColor(red: 0.98, green: 0.92, blue: 0.88, alpha: 1.0)
     )
     
-    // Error Colors - Harmonious with purple theme
+    // Error Colors - Enhanced harmonious with purple theme
     let error = adaptiveColor(
-        light: UIColor(red: 0.75, green: 0.25, blue: 0.35, alpha: 1.0), // Deep rose red
+        light: UIColor(red: 0.80, green: 0.30, blue: 0.40, alpha: 1.0), // Brighter deep rose red
         dark: UIColor(red: 0.95, green: 0.70, blue: 0.75, alpha: 1.0)   // Soft coral
     )
     let onError = adaptiveColor(light: .white, dark: UIColor(red: 0.45, green: 0.10, blue: 0.15, alpha: 1.0))
     let errorContainer = adaptiveColor(
-        light: UIColor(red: 0.98, green: 0.88, blue: 0.90, alpha: 1.0),
+        light: UIColor(red: 0.99, green: 0.91, blue: 0.93, alpha: 1.0), // Brighter error container
         dark: UIColor(red: 0.55, green: 0.15, blue: 0.20, alpha: 1.0)
     )
     let onErrorContainer = adaptiveColor(
@@ -79,14 +79,14 @@ struct AppColorTheme {
         dark: UIColor(red: 0.98, green: 0.88, blue: 0.90, alpha: 1.0)
     )
     
-    // Success Colors - Natural boho green
+    // Success Colors - Enhanced natural boho green with brighter light mode
     let success = adaptiveColor(
-        light: UIColor(red: 0.25, green: 0.65, blue: 0.45, alpha: 1.0), // Forest sage
+        light: UIColor(red: 0.30, green: 0.70, blue: 0.50, alpha: 1.0), // Brighter forest sage
         dark: UIColor(red: 0.60, green: 0.85, blue: 0.70, alpha: 1.0)   // Soft mint
     )
     let onSuccess = adaptiveColor(light: .white, dark: UIColor(red: 0.10, green: 0.35, blue: 0.20, alpha: 1.0))
     let successContainer = adaptiveColor(
-        light: UIColor(red: 0.88, green: 0.95, blue: 0.90, alpha: 1.0), // Pale mint
+        light: UIColor(red: 0.91, green: 0.97, blue: 0.93, alpha: 1.0), // Brighter pale mint
         dark: UIColor(red: 0.15, green: 0.45, blue: 0.30, alpha: 1.0)   // Deep forest
     )
     let onSuccessContainer = adaptiveColor(
@@ -94,14 +94,14 @@ struct AppColorTheme {
         dark: UIColor(red: 0.88, green: 0.95, blue: 0.90, alpha: 1.0)
     )
     
-    // Warning Colors - Warm amber boho
+    // Warning Colors - Enhanced warm amber boho with brighter light mode
     let warning = adaptiveColor(
-        light: UIColor(red: 0.85, green: 0.65, blue: 0.25, alpha: 1.0), // Golden amber
+        light: UIColor(red: 0.90, green: 0.70, blue: 0.30, alpha: 1.0), // Brighter golden amber
         dark: UIColor(red: 0.95, green: 0.80, blue: 0.55, alpha: 1.0)   // Soft gold
     )
     let onWarning = adaptiveColor(light: .white, dark: UIColor(red: 0.45, green: 0.35, blue: 0.10, alpha: 1.0))
     let warningContainer = adaptiveColor(
-        light: UIColor(red: 0.98, green: 0.95, blue: 0.88, alpha: 1.0), // Cream yellow
+        light: UIColor(red: 0.99, green: 0.97, blue: 0.91, alpha: 1.0), // Brighter cream yellow
         dark: UIColor(red: 0.55, green: 0.45, blue: 0.15, alpha: 1.0)   // Deep amber
     )
     let onWarningContainer = adaptiveColor(
@@ -109,19 +109,19 @@ struct AppColorTheme {
         dark: UIColor(red: 0.98, green: 0.95, blue: 0.88, alpha: 1.0)
     )
     
-    // MARK: - Adaptive Colors for Dark Mode Support
+    // MARK: - Enhanced Adaptive Colors for Better Light/Dark Mode Balance
     
-    // Surface Colors - Enhanced for boho aesthetic
+    // Surface Colors - Enhanced for boho aesthetic with brighter light mode
     var surface: Color { 
         adaptiveColor(
-            light: UIColor(red: 0.98, green: 0.97, blue: 0.99, alpha: 1.0), // Soft white with purple hint
+            light: UIColor(red: 0.99, green: 0.98, blue: 1.0, alpha: 1.0), // Brighter soft white with purple hint
             dark: UIColor(red: 0.12, green: 0.10, blue: 0.15, alpha: 1.0)   // Deep purple black
         )
     }
     var onSurface: Color { Color(.label) }
     var surfaceVariant: Color { 
         adaptiveColor(
-            light: UIColor(red: 0.95, green: 0.93, blue: 0.97, alpha: 1.0), // Lavender mist
+            light: UIColor(red: 0.97, green: 0.95, blue: 0.99, alpha: 1.0), // Brighter lavender mist
             dark: UIColor(red: 0.18, green: 0.16, blue: 0.22, alpha: 1.0)   // Purple grey
         )
     }
@@ -135,10 +135,10 @@ struct AppColorTheme {
         dark: UIColor(red: 0.45, green: 0.25, blue: 0.75, alpha: 1.0)
     )
     
-    // Outline Colors
+    // Outline Colors with enhanced light mode
     var outline: Color { 
         adaptiveColor(
-            light: UIColor(red: 0.85, green: 0.80, blue: 0.90, alpha: 1.0), // Soft purple grey
+            light: UIColor(red: 0.88, green: 0.83, blue: 0.93, alpha: 1.0), // Brighter soft purple grey
             dark: UIColor(red: 0.40, green: 0.35, blue: 0.45, alpha: 1.0)   // Medium purple grey
         )
     }
@@ -148,16 +148,16 @@ struct AppColorTheme {
     var background: Color { surface }
     var onBackground: Color { Color(.label) }
     
-    // MARK: - Enhanced Reading Status Colors 💜
+    // MARK: - Enhanced Reading Status Colors with Brighter Light Mode 💜
     var statusToRead: Color { 
         adaptiveColor(
-            light: UIColor(red: 0.60, green: 0.55, blue: 0.70, alpha: 1.0), // Muted purple
+            light: UIColor(red: 0.65, green: 0.60, blue: 0.75, alpha: 1.0), // Brighter muted purple
             dark: UIColor(red: 0.75, green: 0.70, blue: 0.85, alpha: 1.0)   // Soft lavender
         )
     }
     var statusReading: Color { 
         adaptiveColor(
-            light: UIColor(red: 0.35, green: 0.55, blue: 0.85, alpha: 1.0), // Vibrant blue
+            light: UIColor(red: 0.40, green: 0.60, blue: 0.90, alpha: 1.0), // Brighter vibrant blue
             dark: UIColor(red: 0.65, green: 0.80, blue: 1.0, alpha: 1.0)    // Bright sky blue
         )
     }
@@ -165,77 +165,77 @@ struct AppColorTheme {
     var statusOnHold: Color { warning }
     var statusDNF: Color { error }
     
-    // MARK: - Enhanced Cultural Theme Colors with Boho Warmth 🌍✨
+    // MARK: - Enhanced Cultural Theme Colors with Brighter Boho Warmth 🌍✨
     let cultureAfrica = adaptiveColor(
-        light: UIColor(red: 0.90, green: 0.45, blue: 0.25, alpha: 1.0), // Warm terracotta
+        light: UIColor(red: 0.95, green: 0.50, blue: 0.30, alpha: 1.0), // Brighter warm terracotta
         dark: UIColor(red: 1.0, green: 0.70, blue: 0.55, alpha: 1.0)    // Soft coral
     )
     let cultureAsia = adaptiveColor(
-        light: UIColor(red: 0.85, green: 0.25, blue: 0.45, alpha: 1.0), // Deep rose
+        light: UIColor(red: 0.90, green: 0.30, blue: 0.50, alpha: 1.0), // Brighter deep rose
         dark: UIColor(red: 1.0, green: 0.65, blue: 0.75, alpha: 1.0)    // Soft cherry
     )
     let cultureEurope = adaptiveColor(
-        light: UIColor(red: 0.35, green: 0.55, blue: 0.85, alpha: 1.0), // Royal blue
+        light: UIColor(red: 0.40, green: 0.60, blue: 0.90, alpha: 1.0), // Brighter royal blue
         dark: UIColor(red: 0.70, green: 0.80, blue: 1.0, alpha: 1.0)    // Sky blue
     )
     let cultureAmericas = adaptiveColor(
-        light: UIColor(red: 0.25, green: 0.70, blue: 0.45, alpha: 1.0), // Forest green
+        light: UIColor(red: 0.30, green: 0.75, blue: 0.50, alpha: 1.0), // Brighter forest green
         dark: UIColor(red: 0.60, green: 0.90, blue: 0.70, alpha: 1.0)   // Mint green
     )
     let cultureOceania = adaptiveColor(
-        light: UIColor(red: 0.25, green: 0.75, blue: 0.85, alpha: 1.0), // Ocean turquoise
+        light: UIColor(red: 0.30, green: 0.80, blue: 0.90, alpha: 1.0), // Brighter ocean turquoise
         dark: UIColor(red: 0.60, green: 0.90, blue: 0.95, alpha: 1.0)   // Aqua blue
     )
     let cultureMiddleEast = adaptiveColor(
-        light: UIColor(red: 0.65, green: 0.35, blue: 0.85, alpha: 1.0), // Rich amethyst
+        light: UIColor(red: 0.70, green: 0.40, blue: 0.90, alpha: 1.0), // Brighter rich amethyst
         dark: UIColor(red: 0.85, green: 0.70, blue: 0.95, alpha: 1.0)   // Soft lavender
     )
     let cultureIndigenous = adaptiveColor(
-        light: UIColor(red: 0.85, green: 0.70, blue: 0.25, alpha: 1.0), // Warm gold
+        light: UIColor(red: 0.90, green: 0.75, blue: 0.30, alpha: 1.0), // Brighter warm gold
         dark: UIColor(red: 0.95, green: 0.85, blue: 0.60, alpha: 1.0)   // Soft amber
     )
     
-    // MARK: - Enhanced Genre Colors with Boho Vibes 🎨
+    // MARK: - Enhanced Genre Colors with Brighter Boho Vibes 🎨
     let genreFiction = adaptiveColor(
-        light: UIColor(red: 0.65, green: 0.35, blue: 0.85, alpha: 1.0), // Vibrant purple
+        light: UIColor(red: 0.70, green: 0.40, blue: 0.90, alpha: 1.0), // Brighter vibrant purple
         dark: UIColor(red: 0.85, green: 0.70, blue: 0.95, alpha: 1.0)   // Soft lavender
     )
     let genreNonfiction = adaptiveColor(
-        light: UIColor(red: 0.25, green: 0.65, blue: 0.45, alpha: 1.0), // Sage green
+        light: UIColor(red: 0.30, green: 0.70, blue: 0.50, alpha: 1.0), // Brighter sage green
         dark: UIColor(red: 0.60, green: 0.85, blue: 0.70, alpha: 1.0)   // Mint green
     )
     let genreMystery = adaptiveColor(
-        light: UIColor(red: 0.35, green: 0.30, blue: 0.45, alpha: 1.0), // Deep plum
+        light: UIColor(red: 0.40, green: 0.35, blue: 0.50, alpha: 1.0), // Brighter deep plum
         dark: UIColor(red: 0.85, green: 0.80, blue: 0.90, alpha: 1.0)   // Soft grey lavender
     )
     let genreRomance = adaptiveColor(
-        light: UIColor(red: 0.85, green: 0.35, blue: 0.55, alpha: 1.0), // Rose pink
+        light: UIColor(red: 0.90, green: 0.40, blue: 0.60, alpha: 1.0), // Brighter rose pink
         dark: UIColor(red: 1.0, green: 0.70, blue: 0.80, alpha: 1.0)    // Soft pink
     )
     let genreSciFi = adaptiveColor(
-        light: UIColor(red: 0.25, green: 0.55, blue: 0.85, alpha: 1.0), // Electric blue
+        light: UIColor(red: 0.30, green: 0.60, blue: 0.90, alpha: 1.0), // Brighter electric blue
         dark: UIColor(red: 0.65, green: 0.80, blue: 1.0, alpha: 1.0)    // Bright blue
     )
     let genreFantasy = adaptiveColor(
-        light: UIColor(red: 0.55, green: 0.25, blue: 0.85, alpha: 1.0), // Mystical purple
+        light: UIColor(red: 0.60, green: 0.30, blue: 0.90, alpha: 1.0), // Brighter mystical purple
         dark: UIColor(red: 0.80, green: 0.65, blue: 0.95, alpha: 1.0)   // Dreamy lavender
     )
     let genreBiography = adaptiveColor(
-        light: UIColor(red: 0.85, green: 0.65, blue: 0.25, alpha: 1.0), // Golden amber
+        light: UIColor(red: 0.90, green: 0.70, blue: 0.30, alpha: 1.0), // Brighter golden amber
         dark: UIColor(red: 0.95, green: 0.80, blue: 0.55, alpha: 1.0)   // Soft gold
     )
     let genreHistory = adaptiveColor(
-        light: UIColor(red: 0.75, green: 0.55, blue: 0.35, alpha: 1.0), // Warm brown
+        light: UIColor(red: 0.80, green: 0.60, blue: 0.40, alpha: 1.0), // Brighter warm brown
         dark: UIColor(red: 0.90, green: 0.75, blue: 0.60, alpha: 1.0)   // Soft tan
     )
     
     // MARK: - Component-Specific Colors with Enhanced Boho Style 💫
     
-    // Card colors with beautiful boho elevation
+    // Card colors with beautiful boho elevation and brighter light mode
     var cardBackground: Color { 
         adaptiveColor(
-            light: UIColor(red: 0.99, green: 0.98, blue: 1.0, alpha: 1.0), // Pure white with purple hint
-            dark: UIColor(red: 0.15, green: 0.13, blue: 0.18, alpha: 1.0)   // Deep purple card
+            light: UIColor(red: 1.0, green: 0.99, blue: 1.0, alpha: 1.0), // Brightest pure white with purple hint
+            dark: UIColor(red: 0.15, green: 0.13, blue: 0.18, alpha: 1.0)  // Deep purple card
         )
     }
     var cardBorder: Color { outline.opacity(0.3) }
@@ -245,16 +245,16 @@ struct AppColorTheme {
     var secondaryAction: Color { secondary }
     var destructiveAction: Color { error }
     
-    // Text colors with enhanced hierarchy
+    // Text colors with enhanced hierarchy and brighter light mode
     var primaryText: Color { 
         adaptiveColor(
-            light: UIColor(red: 0.20, green: 0.15, blue: 0.25, alpha: 1.0), // Rich dark purple
+            light: UIColor(red: 0.15, green: 0.10, blue: 0.20, alpha: 1.0), // Richer dark purple
             dark: UIColor(red: 0.95, green: 0.93, blue: 0.97, alpha: 1.0)   // Soft white
         )
     }
     var secondaryText: Color { 
         adaptiveColor(
-            light: UIColor(red: 0.50, green: 0.45, blue: 0.55, alpha: 1.0), // Muted purple
+            light: UIColor(red: 0.45, green: 0.40, blue: 0.50, alpha: 1.0), // Brighter muted purple
             dark: UIColor(red: 0.80, green: 0.75, blue: 0.85, alpha: 1.0)   // Light lavender
         )
     }
@@ -267,19 +267,19 @@ struct AppColorTheme {
     var selected: Color { primary.opacity(0.15) }
     var disabled: Color { Color(.systemFill) }
     
-    // MARK: - Additional Boho Helper Colors ✨
+    // MARK: - Additional Boho Helper Colors with Enhanced Light Mode ✨
     var accentHighlight: Color { tertiary }
     
-    // Gradient colors for boho effects
+    // Enhanced gradient colors for boho effects with brighter light mode
     var gradientStart: Color { 
         adaptiveColor(
-            light: UIColor(red: 0.85, green: 0.75, blue: 0.95, alpha: 1.0), // Soft lavender
+            light: UIColor(red: 0.88, green: 0.78, blue: 0.98, alpha: 1.0), // Brighter soft lavender
             dark: UIColor(red: 0.25, green: 0.20, blue: 0.35, alpha: 1.0)   // Deep purple
         )
     }
     var gradientEnd: Color { 
         adaptiveColor(
-            light: UIColor(red: 0.95, green: 0.85, blue: 0.90, alpha: 1.0), // Soft rose
+            light: UIColor(red: 0.98, green: 0.88, blue: 0.93, alpha: 1.0), // Brighter soft rose
             dark: UIColor(red: 0.35, green: 0.25, blue: 0.40, alpha: 1.0)   // Deep rose
         )
     }

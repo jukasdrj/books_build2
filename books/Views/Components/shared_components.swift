@@ -364,13 +364,19 @@ struct AddBookView: View {
         
         guard !authorsList.isEmpty else { return }
         
+        // Safe page count parsing
+        let safePageCount: Int? = {
+            let trimmed = pageCount.trimmingCharacters(in: .whitespacesAndNewlines)
+            return trimmed.isEmpty ? nil : Int(trimmed)
+        }()
+        
         // Create BookMetadata with all fields including the new ones
         let metadata = BookMetadata(
             googleBooksID: UUID().uuidString, // Generate unique ID for manually added books
             title: title.trimmingCharacters(in: .whitespacesAndNewlines),
             authors: authorsList,
             publishedDate: publishedDate.isEmpty ? nil : publishedDate,
-            pageCount: pageCount.isEmpty ? nil : Int(pageCount),
+            pageCount: safePageCount,
             bookDescription: nil, // Description not collected in this form
             imageURL: nil,
             language: language.isEmpty ? nil : language,
