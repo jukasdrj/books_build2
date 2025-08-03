@@ -53,6 +53,8 @@ struct LibraryView: View {
     @State private var selectedViewMode: ViewMode = .grid
     @State private var showingSortMenu = false
     @State private var isRefreshing = false
+    @State private var showingImportView = false
+    @State private var showingAddBookView = false
     
     private var displayedBooks: [UserBook] {
         let filtered = switch filter {
@@ -102,6 +104,12 @@ struct LibraryView: View {
         .toolbar {
             toolbarContent
         }
+        .sheet(isPresented: $showingImportView) {
+            CSVImportView()
+        }
+        .sheet(isPresented: $showingAddBookView) {
+            AddBookView()
+        }
     }
     
     // MARK: - Empty State View
@@ -139,23 +147,38 @@ struct LibraryView: View {
                 }
             }
             
-            // Action button - Fixed: Switch to Search tab instead of NavigationLink
-            Button(action: {
-                // Haptic feedback for tab switch - respect VoiceOver
-                if !UIAccessibility.isVoiceOverRunning {
-                    let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
-                    impactFeedback.impactOccurred()
+            // Action buttons for empty state
+            VStack(spacing: Theme.Spacing.md) {
+                Button(action: {
+                    // Haptic feedback for tab switch - respect VoiceOver
+                    if !UIAccessibility.isVoiceOverRunning {
+                        let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+                        impactFeedback.impactOccurred()
+                    }
+                    
+                    // Switch to Search tab (tab index 2)
+                    selectedTab = 2
+                }) {
+                    Label(filter.emptyActionTitle, systemImage: "magnifyingglass")
                 }
+                .materialButton(style: .filled, size: .large)
+                .accessibilityLabel("Browse books to add to your \(filter == .library ? "library" : "wishlist")")
+                .accessibilityHint("Switches to the search tab to find new books")
                 
-                // Switch to Search tab (tab index 2)
-                selectedTab = 2
-            }) {
-                Label(filter.emptyActionTitle, systemImage: "magnifyingglass")
+                if filter == .library {
+                    HStack(spacing: Theme.Spacing.md) {
+                        Button("Import from Goodreads") {
+                            showingImportView = true
+                        }
+                        .materialButton(style: .outlined, size: .medium)
+                        
+                        Button("Add Manually") {
+                            showingAddBookView = true
+                        }
+                        .materialButton(style: .tonal, size: .medium)
+                    }
+                }
             }
-            .materialButton(style: .filled, size: .large)
-            .frame(minHeight: 44)
-            .accessibilityLabel("Browse books to add to your \(filter == .library ? "library" : "wishlist")")
-            .accessibilityHint("Switches to the search tab to find new books")
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
@@ -278,6 +301,25 @@ struct LibraryView: View {
     // MARK: - Toolbar Content
     @ToolbarContentBuilder
     private var toolbarContent: some ToolbarContent {
+        ToolbarItem(placement: .topBarLeading) {
+            if filter == .library {
+                Menu {
+                    Button(action: { showingImportView = true }) {
+                        Label("Import from Goodreads", systemImage: "square.and.arrow.down")
+                    }
+                    
+                    Button(action: { showingAddBookView = true }) {
+                        Label("Add Book Manually", systemImage: "plus")
+                    }
+                } label: {
+                    Image(systemName: "plus")
+                        .font(.headline)
+                }
+                .accessibilityLabel("Add books")
+                .accessibilityHint("Choose how to add books to your library")
+            }
+        }
+        
         ToolbarItem(placement: .topBarTrailing) {
             HStack(spacing: Theme.Spacing.sm) {
                 // View mode toggle

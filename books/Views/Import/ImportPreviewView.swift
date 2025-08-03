@@ -40,16 +40,23 @@ struct ImportPreviewView: View {
                 .materialButton(style: .outlined, size: .large)
                 .frame(maxWidth: .infinity)
                 
-                Button("Next: Map Columns") {
+                Button(canProceedDirectly ? "Start Import" : "Map Columns") {
                     onNext()
                 }
                 .materialButton(style: .filled, size: .large)
                 .frame(maxWidth: .infinity)
-                .disabled(!session.isValidGoodreadsFormat)
+                .disabled(!session.isValidGoodreadsFormat && !canProceedDirectly)
             }
             .padding(Theme.Spacing.md)
             .background(Color.theme.surface)
         }
+    }
+    
+    private var canProceedDirectly: Bool {
+        let detectedFields = Set(session.detectedColumns.compactMap { $0.mappedField })
+        let hasISBN = detectedFields.contains(.isbn)
+        let hasTitleAndAuthor = detectedFields.contains(.title) && detectedFields.contains(.author)
+        return hasISBN || hasTitleAndAuthor
     }
 }
 
@@ -108,82 +115,109 @@ struct DetectionResultsCard: View {
         session.detectedColumns.filter { $0.mappedField != nil }.count
     }
     
-    private var requiredColumns: Int {
-        session.detectedColumns.filter { $0.isRequired }.count
+    private var hasISBN: Bool {
+        session.detectedColumns.contains { $0.mappedField == .isbn }
+    }
+    
+    private var hasEssentials: Bool {
+        let detectedFields = Set(session.detectedColumns.compactMap { $0.mappedField })
+        return hasISBN || (detectedFields.contains(.title) && detectedFields.contains(.author))
+    }
+    
+    private var hasPersonalData: Bool {
+        let detectedFields = Set(session.detectedColumns.compactMap { $0.mappedField })
+        return detectedFields.contains(.rating) || detectedFields.contains(.personalNotes) || detectedFields.contains(.readingStatus)
     }
     
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.md) {
             HStack(spacing: Theme.Spacing.sm) {
-                Image(systemName: "magnifyingglass")
+                Image(systemName: "brain")
                     .foregroundColor(Color.theme.primaryAction)
-                Text("Detection Results")
+                Text("Smart Detection Results")
                     .titleSmall()
                     .foregroundColor(Color.theme.primaryText)
             }
             
             LazyVGrid(columns: [
                 GridItem(.flexible()),
-                GridItem(.flexible()),
                 GridItem(.flexible())
             ], spacing: Theme.Spacing.md) {
-                MetricCard(
-                    value: "\(mappedColumns)",
-                    label: "Auto-mapped",
-                    color: mappedColumns > 0 ? Color.theme.success : Color.theme.secondaryText
+                SmartMetricCard(
+                    icon: "barcode",
+                    label: "ISBN Found",
+                    status: hasISBN,
+                    description: hasISBN ? "Will fetch fresh metadata" : "Will use CSV data"
                 )
                 
-                MetricCard(
-                    value: "\(requiredColumns)",
-                    label: "Required Found",
-                    color: requiredColumns >= 2 ? Color.theme.success : Color.theme.error
-                )
-                
-                MetricCard(
-                    value: session.isValidGoodreadsFormat ? "Yes" : "No",
-                    label: "Goodreads Format",
-                    color: session.isValidGoodreadsFormat ? Color.theme.success : Color.theme.warning
+                SmartMetricCard(
+                    icon: "person.text.rectangle",
+                    label: "Personal Data",
+                    status: hasPersonalData,
+                    description: hasPersonalData ? "Ratings & notes preserved" : "No personal data found"
                 )
             }
             
-            if !session.isValidGoodreadsFormat {
-                HStack(spacing: Theme.Spacing.sm) {
-                    Image(systemName: "info.circle")
-                        .foregroundColor(Color.theme.warning)
+            // Status message
+            HStack(spacing: Theme.Spacing.sm) {
+                Image(systemName: hasEssentials ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
+                    .foregroundColor(hasEssentials ? Color.theme.success : Color.theme.warning)
+                
+                VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+                    Text(hasEssentials ? "Ready for Automated Import" : "Manual Mapping Required")
+                        .bodyMedium()
+                        .foregroundColor(Color.theme.primaryText)
+                        .fontWeight(.medium)
                     
-                    Text("This doesn't look like a standard Goodreads export. You can still proceed and manually map columns.")
+                    Text(hasEssentials ? 
+                         "Found essential columns. Import will proceed automatically." :
+                         "Missing essential columns. You'll need to map them manually.")
                         .bodySmall()
                         .foregroundColor(Color.theme.secondaryText)
                 }
-                .padding(Theme.Spacing.sm)
-                .background(Color.theme.warningContainer)
-                .cornerRadius(Theme.CornerRadius.small)
             }
+            .padding(Theme.Spacing.sm)
+            .background(hasEssentials ? Color.theme.successContainer : Color.theme.warningContainer)
+            .cornerRadius(Theme.CornerRadius.small)
         }
         .padding(Theme.Spacing.md)
         .materialCard()
     }
 }
 
-struct MetricCard: View {
-    let value: String
+struct SmartMetricCard: View {
+    let icon: String
     let label: String
-    let color: Color
+    let status: Bool
+    let description: String
     
     var body: some View {
-        VStack(spacing: Theme.Spacing.xs) {
-            Text(value)
-                .titleMedium()
-                .foregroundColor(color)
-                .fontWeight(.bold)
+        VStack(spacing: Theme.Spacing.sm) {
+            HStack(spacing: Theme.Spacing.xs) {
+                Image(systemName: icon)
+                    .foregroundColor(status ? Color.theme.success : Color.theme.secondaryText)
+                
+                Image(systemName: status ? "checkmark.circle.fill" : "xmark.circle.fill")
+                    .font(.caption)
+                    .foregroundColor(status ? Color.theme.success : Color.theme.error)
+            }
             
-            Text(label)
-                .labelSmall()
-                .foregroundColor(Color.theme.secondaryText)
-                .multilineTextAlignment(.center)
+            VStack(spacing: Theme.Spacing.xs) {
+                Text(label)
+                    .labelMedium()
+                    .foregroundColor(Color.theme.primaryText)
+                    .fontWeight(.medium)
+                
+                Text(description)
+                    .labelSmall()
+                    .foregroundColor(Color.theme.secondaryText)
+                    .multilineTextAlignment(.center)
+            }
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, Theme.Spacing.sm)
+        .padding(Theme.Spacing.sm)
+        .background(status ? Color.theme.successContainer.opacity(0.3) : Color.theme.surfaceVariant)
+        .cornerRadius(Theme.CornerRadius.small)
     }
 }
 

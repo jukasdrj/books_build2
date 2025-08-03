@@ -188,20 +188,94 @@ struct CSVParser {
         return rows
     }
     
-    /// Create column definitions with sample data
+    /// Create column definitions with enhanced auto-detection for Goodreads
     private func createColumns(from headers: [String], dataRows: [[String]]) -> [CSVColumn] {
         return headers.enumerated().map { index, header in
             let sampleValues = dataRows.prefix(5).compactMap { row in
                 index < row.count ? row[index] : nil
             }.filter { !$0.isEmpty }
             
+            // Enhanced auto-detection for Goodreads columns
+            let mappedField = detectGoodreadsColumn(header)
+            
             return CSVColumn(
                 originalName: header,
                 index: index,
-                mappedField: GoodreadsColumnMappings.autoMap(columns: [header])[header],
+                mappedField: mappedField,
                 sampleValues: Array(sampleValues)
             )
         }
+    }
+    
+    /// Enhanced Goodreads column detection
+    private func detectGoodreadsColumn(_ header: String) -> BookField? {
+        let normalized = header.lowercased()
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .replacingOccurrences(of: " ", with: "")
+            .replacingOccurrences(of: "_", with: "")
+            .replacingOccurrences(of: "-", with: "")
+        
+        // ISBN detection (highest priority)
+        if normalized.contains("isbn") {
+            return .isbn
+        }
+        
+        // Title detection
+        if normalized == "title" {
+            return .title
+        }
+        
+        // Author detection
+        if normalized == "author" || normalized == "authorlfm" || normalized == "authorfirstlast" {
+            return .author
+        }
+        
+        // Rating detection (personal rating)
+        if normalized.contains("myrating") || normalized.contains("rating") {
+            return .rating
+        }
+        
+        // Notes/Review detection
+        if normalized.contains("myreview") || normalized.contains("review") || normalized.contains("notes") {
+            return .personalNotes
+        }
+        
+        // Reading status detection
+        if normalized.contains("exclusiveshelf") || normalized.contains("shelf") || normalized.contains("status") {
+            return .readingStatus
+        }
+        
+        // Date read detection
+        if normalized.contains("dateread") {
+            return .dateRead
+        }
+        
+        // Date added detection
+        if normalized.contains("dateadded") {
+            return .dateAdded
+        }
+        
+        // Publisher detection
+        if normalized.contains("publisher") {
+            return .publisher
+        }
+        
+        // Publication year
+        if normalized.contains("yearpublished") || normalized.contains("publicationyear") {
+            return .publishedDate
+        }
+        
+        // Page count
+        if normalized.contains("numberofpages") || normalized.contains("pages") {
+            return .pageCount
+        }
+        
+        // Tags/Shelves
+        if normalized.contains("mytags") || normalized.contains("bookshelves") {
+            return .tags
+        }
+        
+        return nil
     }
     
     /// Parse all rows into ParsedBook objects

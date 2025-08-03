@@ -18,7 +18,7 @@ class CSVImportService: ObservableObject {
     @Published var isImporting: Bool = false
     
     // MARK: - Private Properties
-    private let modelContext: ModelContext
+    private(set) var modelContext: ModelContext
     private let csvParser: CSVParser
     private var importTask: Task<Void, Never>?
     
@@ -87,6 +87,8 @@ class CSVImportService: ObservableObject {
         var successCount = 0
         var duplicateCount = 0
         var failCount = 0
+        var apiSuccessCount = 0
+        var apiFallbackCount = 0
         
         do {
             // Step 1: Parse CSV into books
@@ -142,7 +144,7 @@ class CSVImportService: ObservableObject {
                 return
             }
             
-            // Step 3: Import books
+            // Step 3: Import books with ISBN-first strategy
             progress.currentStep = .importing
             importProgress = progress
             
@@ -164,6 +166,14 @@ class CSVImportService: ObservableObject {
                     case .success(let bookId):
                         importedBookIds.append(bookId)
                         successCount += 1
+                        
+                        // Track whether we used API or CSV data
+                        if parsedBook.isbn != nil && !parsedBook.isbn!.isEmpty {
+                            apiSuccessCount += 1
+                        } else {
+                            apiFallbackCount += 1
+                        }
+                        
                     case .duplicate:
                         duplicateCount += 1
                     case .failure(let error):
@@ -177,13 +187,14 @@ class CSVImportService: ObservableObject {
                         bookTitle: parsedBook.title,
                         errorType: .storageError,
                         message: "Failed to save book: \(error.localizedDescription)",
-                        suggestions: ["Try importing again", "Check device storage space"]
+                        suggestions: ["Try importing again", "Check device storage space", "Ensure stable internet connection for ISBN lookups"]
                     )
                     errors.append(importError)
                     failCount += 1
+                    apiFallbackCount += 1
                 }
                 
-                // Update progress
+                // Update progress with enhanced stats
                 progress.processedBooks = index + 1
                 progress.successfulImports = successCount
                 progress.duplicatesSkipped = duplicateCount
@@ -191,8 +202,9 @@ class CSVImportService: ObservableObject {
                 progress.errors = errors
                 importProgress = progress
                 
-                // Small delay to make progress visible
-                try await Task.sleep(nanoseconds: 50_000_000) // 0.05 seconds
+                // Variable delay based on whether we made an API call
+                let delayNanoseconds: UInt64 = parsedBook.isbn != nil ? 150_000_000 : 50_000_000 // 0.15s for API calls, 0.05s otherwise
+                try await Task.sleep(nanoseconds: delayNanoseconds)
             }
             
             // Step 4: Complete
@@ -201,8 +213,25 @@ class CSVImportService: ObservableObject {
             
             try await Task.sleep(nanoseconds: 300_000_000) // 0.3 seconds
             
-            // Save any pending changes
-            try modelContext.save()
+            // Save any pending changes with proper error handling
+            do {
+                try modelContext.save()
+            } catch {
+                let saveError = ImportError(
+                    rowIndex: nil,
+                    bookTitle: nil,
+                    errorType: .storageError,
+                    message: "Failed to save imported books: \(error.localizedDescription)",
+                    suggestions: ["Check device storage space", "Close other apps to free memory", "Try importing smaller batches"]
+                )
+                errors.append(saveError)
+                progress.currentStep = .failed
+                progress.endTime = Date()
+                progress.errors = errors
+                importProgress = progress
+                isImporting = false
+                return
+            }
             
             progress.currentStep = .completed
             progress.endTime = Date()
@@ -213,7 +242,7 @@ class CSVImportService: ObservableObject {
                 bookTitle: nil,
                 errorType: .fileError,
                 message: "Import failed: \(error.localizedDescription)",
-                suggestions: ["Check file format", "Try with a smaller file", "Verify file permissions"]
+                suggestions: ["Check file format", "Try with a smaller file", "Verify file permissions", "Ensure stable internet connection"]
             )
             errors.append(importError)
             
@@ -222,11 +251,28 @@ class CSVImportService: ObservableObject {
             progress.errors = errors
         }
         
-        // Finalize
+        // Finalize with enhanced results
         importProgress = progress
         
         if let endTime = progress.endTime, let startTime = progress.startTime {
             let duration = endTime.timeIntervalSince(startTime)
+            
+            // Create enhanced summary that mentions ISBN strategy
+            var enhancedSummary = ""
+            if successCount > 0 {
+                enhancedSummary += "\(successCount) imported"
+                if apiSuccessCount > 0 {
+                    enhancedSummary += " (\(apiSuccessCount) with fresh metadata)"
+                }
+            }
+            if duplicateCount > 0 {
+                if !enhancedSummary.isEmpty { enhancedSummary += ", " }
+                enhancedSummary += "\(duplicateCount) duplicates skipped"
+            }
+            if failCount > 0 {
+                if !enhancedSummary.isEmpty { enhancedSummary += ", " }
+                enhancedSummary += "\(failCount) failed"
+            }
             
             importResult = ImportResult(
                 sessionId: session.id,
@@ -250,17 +296,100 @@ class CSVImportService: ObservableObject {
     }
     
     private func importSingleBook(_ parsedBook: ParsedBook) async throws -> ImportBookResult {
-        // Check for duplicates by title and author
+        // Check for duplicates by title and author first
         if await checkForDuplicate(title: parsedBook.title, author: parsedBook.author) {
             return .duplicate
         }
         
-        // Create BookMetadata
+        // ISBN-First Strategy: Try to get fresh metadata from Google Books API
+        var bookMetadata: BookMetadata
+        
+        if let isbn = parsedBook.isbn, !isbn.isEmpty {
+            // Attempt ISBN lookup for fresh metadata
+            do {
+                if let apiMetadata = try await fetchMetadataFromISBN(isbn) {
+                    // Success! Use fresh API metadata
+                    bookMetadata = apiMetadata
+                    
+                    // Preserve cultural data from CSV if API doesn't have it
+                    if bookMetadata.originalLanguage == nil && parsedBook.originalLanguage != nil {
+                        bookMetadata.originalLanguage = parsedBook.originalLanguage
+                    }
+                    if bookMetadata.authorNationality == nil && parsedBook.authorNationality != nil {
+                        bookMetadata.authorNationality = parsedBook.authorNationality
+                    }
+                    if bookMetadata.translator == nil && parsedBook.translator != nil {
+                        bookMetadata.translator = parsedBook.translator
+                    }
+                } else {
+                    // ISBN lookup failed, fallback to CSV data
+                    bookMetadata = createMetadataFromCSV(parsedBook)
+                }
+            } catch {
+                // API error, fallback to CSV data
+                bookMetadata = createMetadataFromCSV(parsedBook)
+            }
+        } else {
+            // No ISBN available, use CSV data
+            bookMetadata = createMetadataFromCSV(parsedBook)
+        }
+        
+        // Determine reading status
+        let readingStatus: ReadingStatus
+        if let statusString = parsedBook.readingStatus {
+            readingStatus = GoodreadsColumnMappings.mapReadingStatus(statusString)
+        } else {
+            readingStatus = .toRead
+        }
+        
+        // Create UserBook with preserved Goodreads user data
+        let userBook = UserBook(
+            dateAdded: parsedBook.dateAdded ?? Date(),
+            readingStatus: readingStatus,
+            rating: parsedBook.rating,
+            notes: parsedBook.personalNotes,
+            tags: parsedBook.tags,
+            metadata: bookMetadata
+        )
+        
+        // Set date completed if book is read
+        if readingStatus == .read {
+            userBook.dateCompleted = parsedBook.dateRead ?? Date()
+        }
+        
+        // Insert into context
+        modelContext.insert(bookMetadata)
+        modelContext.insert(userBook)
+        
+        return .success(userBook.id)
+    }
+    
+    /// Fetch fresh metadata from Google Books API using ISBN
+    private func fetchMetadataFromISBN(_ isbn: String) async throws -> BookMetadata? {
+        // Clean ISBN (remove hyphens, spaces)
+        let cleanISBN = isbn.replacingOccurrences(of: "-", with: "").replacingOccurrences(of: " ", with: "")
+        
+        // Rate limiting: add small delay to avoid hitting API limits
+        try await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
+        
+        // Use existing BookSearchService to query by ISBN
+        let searchResult = await BookSearchService.shared.search(query: "isbn:\(cleanISBN)")
+        
+        switch searchResult {
+        case .success(let books):
+            return books.first // Return the first matching book
+        case .failure(_):
+            return nil // Failed to fetch from API
+        }
+    }
+    
+    /// Create metadata from CSV data (fallback method)
+    private func createMetadataFromCSV(_ parsedBook: ParsedBook) -> BookMetadata {
         let authors = parsedBook.author?.components(separatedBy: ",")
             .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
             .filter { !$0.isEmpty } ?? []
         
-        let metadata = BookMetadata(
+        return BookMetadata(
             googleBooksID: "import-\(UUID().uuidString)", // Prefix to distinguish imports
             title: parsedBook.title ?? "",
             authors: authors,
@@ -278,35 +407,6 @@ class CSVImportService: ObservableObject {
             authorNationality: parsedBook.authorNationality,
             translator: parsedBook.translator
         )
-        
-        // Determine reading status
-        let readingStatus: ReadingStatus
-        if let statusString = parsedBook.readingStatus {
-            readingStatus = GoodreadsColumnMappings.mapReadingStatus(statusString)
-        } else {
-            readingStatus = .toRead
-        }
-        
-        // Create UserBook
-        let userBook = UserBook(
-            dateAdded: parsedBook.dateAdded ?? Date(),
-            readingStatus: readingStatus,
-            rating: parsedBook.rating,
-            notes: parsedBook.personalNotes,
-            tags: parsedBook.tags,
-            metadata: metadata
-        )
-        
-        // Set date completed if book is read
-        if readingStatus == .read {
-            userBook.dateCompleted = parsedBook.dateRead ?? Date()
-        }
-        
-        // Insert into context
-        modelContext.insert(metadata)
-        modelContext.insert(userBook)
-        
-        return .success(userBook.id)
     }
     
     private func checkForDuplicate(title: String?, author: String?) async -> Bool {
