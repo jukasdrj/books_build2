@@ -1,4 +1,4 @@
 // This file is no longer needed as wishlist functionality 
-// is handled by LibraryView(filter: .wishlist)
+// is handled by LibraryView(isWishlist: true)
 // 
-// File can be deleted
+// File can be deleted.

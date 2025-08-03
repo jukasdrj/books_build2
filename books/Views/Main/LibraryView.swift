@@ -10,11 +10,23 @@ import SwiftData
 
 struct LibraryView: View {
     @Environment(\.modelContext) private var modelContext
-    @Query(sort: \UserBook.dateAdded, order: .reverse) private var books: [UserBook]
     @State private var searchText: String = ""
     @State private var selectedLayout: LayoutType = .grid
-    @State private var selectedFilter: FilterType = .all
-    @State private var showingImportView = false
+    @State private var showingAddBookFlow = false
+    @State private var showingFilters = false
+    @State private var showingSettings = false
+    
+    let isWishlist: Bool
+    
+    @Query private var allBooks: [UserBook]
+    
+    init(isWishlist: Bool = false) {
+        self.isWishlist = isWishlist
+        let predicate = #Predicate<UserBook> { book in
+            isWishlist ? book.onWishlist == true : true
+        }
+        _allBooks = Query(filter: predicate, sort: \UserBook.dateAdded, order: .reverse)
+    }
     
     enum LayoutType: String, CaseIterable {
         case grid = "Grid"
@@ -28,51 +40,19 @@ struct LibraryView: View {
         }
     }
     
-    enum FilterType: String, CaseIterable {
-        case all = "All"
-        case tbr = "TBR"
-        case reading = "Reading"
-        case read = "Read"
-        case onHold = "On Hold"
-        case dnf = "DNF"
-        
-        var icon: String {
-            switch self {
-            case .all: return "books.vertical"
-            case .tbr: return "bookmark"
-            case .reading: return "book.pages"
-            case .read: return "checkmark.circle"
-            case .onHold: return "pause.circle"
-            case .dnf: return "xmark.circle"
-            }
-        }
-        
-        var readingStatus: ReadingStatus? {
-            switch self {
-            case .all: return nil
-            case .tbr: return .toRead
-            case .reading: return .reading
-            case .read: return .read
-            case .onHold: return .onHold
-            case .dnf: return .dnf
-            }
-        }
-    }
-    
     private var filteredBooks: [UserBook] {
-        let searchFiltered = searchText.isEmpty ? books : books.filter { book in
+        let searchFiltered = searchText.isEmpty ? allBooks : allBooks.filter { book in
             let title = book.metadata?.title ?? ""
             let authors = book.metadata?.authors.joined(separator: " ") ?? ""
             return title.localizedCaseInsensitiveContains(searchText) ||
                    authors.localizedCaseInsensitiveContains(searchText)
         }
         
-        switch selectedFilter {
-        case .all:
+        switch selectedLayout {
+        case .grid:
             return searchFiltered
-        case .tbr, .reading, .read, .onHold, .dnf:
-            guard let status = selectedFilter.readingStatus else { return searchFiltered }
-            return searchFiltered.filter { $0.readingStatus == status }
+        case .list:
+            return searchFiltered
         }
     }
     
@@ -158,13 +138,13 @@ struct LibraryView: View {
                     .frame(width: 120)
                 }
                 .padding(.horizontal, Theme.Spacing.md)
+                .padding(.vertical, Theme.Spacing.sm)
+                .background(Color.theme.surface)
             }
-            .padding(.vertical, Theme.Spacing.sm)
-            .background(Color.theme.surface)
             
             Divider()
             
-            // Books content
+            // Main content
             if filteredBooks.isEmpty {
                 EmptyLibraryView(
                     searchText: searchText,
@@ -184,11 +164,45 @@ struct LibraryView: View {
                 }
             }
         }
-        .navigationTitle("Library (\(filteredBooks.count))")
+        .navigationTitle(isWishlist ? "Wishlist (\(filteredBooks.count))" : "Library (\(filteredBooks.count))")
         .navigationBarTitleDisplayMode(.large)
-        .searchable(text: $searchText, prompt: "Search books...")
-        .sheet(isPresented: $showingImportView) {
-            CSVImportView()
+        .searchable(text: $searchText, prompt: "Search by title or author...")
+        .sheet(isPresented: $showingAddBookFlow) {
+            SearchView(isPresented: $showingAddBookFlow)
+        }
+        .sheet(isPresented: $showingFilters) {
+            // Filter view will go here
+        }
+        .sheet(isPresented: $showingSettings) {
+            SettingsView()
+        }
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                HStack(spacing: Theme.Spacing.md) {
+                    
+                    // Filter button
+                    Button {
+                        showingFilters.toggle()
+                    } label: {
+                        Image(systemName: "line.3.horizontal.decrease.circle")
+                    }
+                    .disabled(true) // TODO: Implement filters
+                    
+                    // Settings Button
+                    Button {
+                        showingSettings.toggle()
+                    } label: {
+                        Image(systemName: "gearshape")
+                    }
+
+                    // Main add button
+                    Button {
+                        showingAddBookFlow.toggle()
+                    } label: {
+                        Image(systemName: "plus")
+                    }
+                }
+            }
         }
     }
 }
