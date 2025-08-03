@@ -1,5 +1,6 @@
 import Foundation
 import SwiftData
+import SwiftUI
 
 @Model
 final class UserBook: Identifiable, @unchecked Sendable {
@@ -312,4 +313,24 @@ enum ReadingStatus: String, Codable, CaseIterable, Identifiable, Sendable {
     case dnf = "DNF - Did Not Finish"
     
     var id: Self { self }
+    
+    var containerColor: Color {
+        switch self {
+        case .toRead: return Color.theme.secondaryContainer
+        case .reading: return Color.theme.tertiaryContainer
+        case .read: return Color.theme.success.opacity(0.15)
+        case .onHold: return Color.theme.warning.opacity(0.2)
+        case .dnf: return Color.theme.error.opacity(0.15)
+        }
+    }
+    
+    var textColor: Color {
+        switch self {
+        case .toRead: return Color.theme.onSecondaryContainer
+        case .reading: return Color.theme.tertiary
+        case .read: return Color.theme.success
+        case .onHold: return Color.theme.warning
+        case .dnf: return Color.theme.error
+        }
+    }
 }

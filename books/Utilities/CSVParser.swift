@@ -341,9 +341,9 @@ struct CSVParser {
             case .tags:
                 book.tags = parseList(value)
             case .authorGender:
-                <#code#>
+                book.authorGender = AuthorGender(rawValue: value)
             case .culturalThemes:
-                <#code#>
+                book.culturalThemes = parseList(value)
             }
         }
         

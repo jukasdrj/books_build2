@@ -38,9 +38,17 @@ struct AppColorTheme {
         )
     }
     
+    var onPrimaryContainer: Color {
+        adaptiveColor(light: colorDef.primary.light, dark: colorDef.primary.dark)
+    }
+    
     // MARK: - Secondary Colors
     var secondary: Color {
         adaptiveColor(light: colorDef.secondary.light, dark: colorDef.secondary.dark)
+    }
+    
+    var onSecondary: Color {
+        adaptiveColor(light: .white, dark: colorDef.secondary.light.withAlphaComponent(0.9))
     }
     
     var secondaryContainer: Color {
@@ -48,6 +56,10 @@ struct AppColorTheme {
             light: colorDef.secondary.light.withAlphaComponent(0.12),
             dark: colorDef.secondary.dark.withAlphaComponent(0.24)
         )
+    }
+    
+    var onSecondaryContainer: Color {
+        adaptiveColor(light: colorDef.secondary.light, dark: colorDef.secondary.dark)
     }
     
     // MARK: - Tertiary Colors
@@ -67,6 +79,21 @@ struct AppColorTheme {
         adaptiveColor(light: colorDef.surface.light, dark: colorDef.surface.dark)
     }
     
+    var onSurface: Color {
+        primaryText
+    }
+    
+    var surfaceVariant: Color {
+        adaptiveColor(
+            light: colorDef.primary.light.withAlphaComponent(0.05),
+            dark: colorDef.primary.dark.withAlphaComponent(0.10)
+        )
+    }
+    
+    var onSurfaceVariant: Color {
+        primaryText.opacity(0.8)
+    }
+    
     var background: Color {
         adaptiveColor(light: colorDef.background.light, dark: colorDef.background.dark)
     }
@@ -76,11 +103,41 @@ struct AppColorTheme {
         adaptiveColor(light: colorDef.error.light, dark: colorDef.error.dark)
     }
     
+    var onError: Color {
+        adaptiveColor(light: .white, dark: colorDef.error.light)
+    }
+    
     var success: Color {
         adaptiveColor(light: colorDef.success.light, dark: colorDef.success.dark)
     }
     
+    var onSuccess: Color {
+        adaptiveColor(light: .white, dark: colorDef.success.light)
+    }
+    
+    var successContainer: Color {
+        adaptiveColor(
+            light: colorDef.success.light.withAlphaComponent(0.12),
+            dark: colorDef.success.dark.withAlphaComponent(0.24)
+        )
+    }
+    
+    var onSuccessContainer: Color {
+        adaptiveColor(light: colorDef.success.light, dark: colorDef.success.dark)
+    }
+    
     var warning: Color {
+        adaptiveColor(light: colorDef.warning.light, dark: colorDef.warning.dark)
+    }
+    
+    var warningContainer: Color {
+        adaptiveColor(
+            light: colorDef.warning.light.withAlphaComponent(0.12),
+            dark: colorDef.warning.dark.withAlphaComponent(0.24)
+        )
+    }
+    
+    var onWarningContainer: Color {
         adaptiveColor(light: colorDef.warning.light, dark: colorDef.warning.dark)
     }
     
@@ -97,6 +154,15 @@ struct AppColorTheme {
         primary.opacity(0.4)
     }
     
+    // MARK: - State Colors
+    var disabled: Color {
+        Color.primary.opacity(0.12)
+    }
+    
+    var disabledText: Color {
+        Color.primary.opacity(0.38)
+    }
+    
     // MARK: - Component Colors
     var cardBackground: Color {
         surface
@@ -106,18 +172,18 @@ struct AppColorTheme {
         primary
     }
     
-    var surfaceVariant: Color {
-        adaptiveColor(
-            light: colorDef.primary.light.withAlphaComponent(0.05),
-            dark: colorDef.primary.dark.withAlphaComponent(0.10)
-        )
-    }
-    
-    var onSurface: Color {
-        primaryText
-    }
+    var hovered: Color { primary.opacity(0.08) }
 
     // MARK: - Gradients (for that extra boho touch!)
     var gradientStart: Color { primary.opacity(0.6) }
     var gradientEnd: Color { secondary.opacity(0.4) }
+    
+    // MARK: - Cultural Colors (placeholders)
+    var cultureAfrica: Color { adaptiveColor(light: .brown, dark: .brown) }
+    var cultureAsia: Color { adaptiveColor(light: .red, dark: .red) }
+    var cultureEurope: Color { adaptiveColor(light: .blue, dark: .blue) }
+    var cultureAmericas: Color { adaptiveColor(light: .green, dark: .green) }
+    var cultureOceania: Color { adaptiveColor(light: .cyan, dark: .cyan) }
+    var cultureMiddleEast: Color { adaptiveColor(light: .purple, dark: .purple) }
+    var cultureIndigenous: Color { adaptiveColor(light: .orange, dark: .orange) }
 }

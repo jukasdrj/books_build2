@@ -24,12 +24,12 @@ struct StatusBadge: View {
                     .labelMedium()
                     .foregroundColor(Color.theme.primaryText)
                 Circle()
-                    .fill(status.color)
+                    .fill(status.textColor)
                     .frame(width: 8, height: 8)
             }
         case .compact:
             Circle()
-                .fill(status.color)
+                .fill(status.textColor)
                 .frame(width: 10, height: 10)
                 .shadow(radius: 1)
         case .capsule:
@@ -38,8 +38,8 @@ struct StatusBadge: View {
                 .fontWeight(.medium)
                 .padding(.horizontal, Theme.Spacing.sm)
                 .padding(.vertical, Theme.Spacing.xs)
-                .background(status.color.opacity(0.2))
-                .foregroundColor(status.color)
+                .background(status.textColor.opacity(0.2))
+                .foregroundColor(status.textColor)
                 .cornerRadius(Theme.CornerRadius.small)
         }
     }

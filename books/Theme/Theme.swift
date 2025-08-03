@@ -319,12 +319,12 @@ extension View {
     }
     
     // Cultural diversity indicator
-    func culturalIndicator(region: String) -> some View {
+    func culturalIndicator(region: CulturalRegion) -> some View {
         self
             .padding(.horizontal, Theme.Spacing.sm)
             .padding(.vertical, Theme.Spacing.xs)
-            .background(region.culturalColor.opacity(0.12))
-            .foregroundColor(region.culturalColor)
+            .background(region.color.opacity(0.12))
+            .foregroundColor(region.color)
             .cornerRadius(Theme.CornerRadius.small)
             .font(Theme.Typography.culturalTag)
     }

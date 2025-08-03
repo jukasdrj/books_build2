@@ -63,6 +63,6 @@ struct ThemePickerView: View {
         themeManager.switchTheme(to: theme, animated: true)
         
         // Haptic feedback for a delightful interaction
-        HapticFeedbackManager.shared.subtleUserAction()
+        HapticFeedbackManager.shared.lightImpact()
     }
 }
