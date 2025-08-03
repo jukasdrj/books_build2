@@ -51,30 +51,25 @@ final class booksUITests: XCTestCase {
         // Trigger search using return key
         searchField.typeText("\n")
         
-        // Wait for search to complete
-        let expectation = XCTNSPredicateExpectation(
-            predicate: NSPredicate(format: "exists == false"),
-            object: app.staticTexts["Searching..."]
-        )
-        wait(for: [expectation], timeout: 10)
+        // NEW: Wait for a search response (results, no results, or error) to appear
+        let searchResponseExpectation = expectation(description: "Wait for search results or no results message")
         
-        // Debugging: Print UI hierarchy and check for elements
-        print("UI Hierarchy after search for 'Swift':\n\(app.debugDescription)")
+        let resultsTable = app.tables.firstMatch
+        let noResultsText = app.staticTexts["No Results Found"]
+        let errorText = app.staticTexts.containing(NSPredicate(format: "label CONTAINS[c] 'error'")).firstMatch
         
-        let firstCellExists = app.tables.cells.firstMatch.exists
-        print("First table cell exists: \(firstCellExists)")
-
-        let noResultsTextExists = app.staticTexts["No Results Found"].exists
-        print("No Results Found text exists: \(noResultsTextExists)")
-
-        let errorTextElement = app.staticTexts.containing(NSPredicate(format: "label CONTAINS[c] 'error'")).firstMatch
-        let errorTextExists = errorTextElement.exists
-        print("Error text exists: \(errorTextExists), label: \(errorTextExists ? errorTextElement.label : "N/A")")
-
-        // Verify we get some kind of response (results, no results, or error)
-        let hasResults = app.tables.cells.count > 0
-        let hasNoResults = app.staticTexts["No Results Found"].exists
-        let hasError = app.staticTexts.containing(NSPredicate(format: "label CONTAINS[c] 'error'")).firstMatch.exists
+        let predicate = NSPredicate { _, _ in
+            return resultsTable.exists || noResultsText.exists || errorText.exists
+        }
+        
+        let expectationResult = XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: predicate, object: app)], timeout: 10)
+        
+        XCTAssert(expectationResult == .completed, "Search should provide some response")
+        
+        // These checks are now largely redundant if the expectation passes, but provide specific detail.
+        let hasResults = resultsTable.cells.count > 0
+        let hasNoResults = noResultsText.exists
+        let hasError = errorText.exists
         
         XCTAssert(hasResults || hasNoResults || hasError, "Search should provide some response")
     }

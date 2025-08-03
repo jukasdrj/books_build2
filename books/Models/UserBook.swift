@@ -17,6 +17,7 @@ final class UserBook: Identifiable, @unchecked Sendable {
             }
             
             if readingStatus == .read && oldValue != .read {
+                HapticFeedbackManager.shared.bookMarkedAsRead()
                 if dateCompleted == nil {
                     dateCompleted = Date()
                     print("UserBook: dateCompleted set to \(String(describing: dateCompleted)) due to readingStatus change to .read")

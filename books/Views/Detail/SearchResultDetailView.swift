@@ -204,6 +204,7 @@ struct SearchResultDetailView: View {
         // If book already exists, don't add it again
         guard existingBook == nil else {
             showingDuplicateAlert = true
+            HapticFeedbackManager.shared.warning()
             return
         }
         
@@ -215,8 +216,7 @@ struct SearchResultDetailView: View {
         }
         
         // Light haptic feedback for start of action
-        let impactFeedback = UIImpactFeedbackGenerator(style: .light)
-        impactFeedback.impactOccurred()
+        HapticFeedbackManager.shared.lightImpact() // Changed to use shared manager
         
         // Simulate a brief delay to show loading state
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
@@ -236,11 +236,8 @@ struct SearchResultDetailView: View {
             isAddingToWishlist = false
             
             // Success haptic feedback
-            let successFeedback = UINotificationFeedbackGenerator()
-            successFeedback.notificationOccurred(.success)
-            
             if toWishlist {
-                // Wishlist: Show success and stop
+                HapticFeedbackManager.shared.lightImpact()
                 successMessage = "📚 Added to your wishlist!"
                 
                 withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
@@ -253,7 +250,7 @@ struct SearchResultDetailView: View {
                     }
                 }
             } else {
-                // Library: Show success then navigate to edit
+                HapticFeedbackManager.shared.success()
                 successMessage = "✅ Added to your library! Customize your book..."
                 
                 withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {

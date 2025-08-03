@@ -66,6 +66,8 @@ enum BookField: String, CaseIterable, Identifiable {
     case readingStatus = "readingStatus"
     case personalNotes = "personalNotes"
     case tags = "tags"
+    case authorGender = "authorGender"
+    case culturalThemes = "culturalThemes"
     
     var id: String { rawValue }
     
@@ -89,6 +91,8 @@ enum BookField: String, CaseIterable, Identifiable {
         case .readingStatus: return "Reading Status"
         case .personalNotes: return "Personal Notes"
         case .tags: return "Tags"
+        case .authorGender: return "Author Gender"
+        case .culturalThemes: return "Cultural Themes"
         }
     }
     
@@ -109,8 +113,10 @@ enum BookField: String, CaseIterable, Identifiable {
             return .number
         case .readingStatus:
             return .enumeration(["Read", "Currently Reading", "Want to Read", "Did Not Finish"])
-        case .genre, .tags:
+        case .genre, .tags, .culturalThemes: // UPDATED: Add culturalThemes to list type
             return .list
+        case .authorGender:
+            return .enumeration(AuthorGender.allCases.map { $0.rawValue })
         }
     }
 }
@@ -145,6 +151,8 @@ struct ParsedBook {
     var readingStatus: String?
     var personalNotes: String?
     var tags: [String] = []
+    var authorGender: AuthorGender?
+    var culturalThemes: [String] = []
     
     var isValid: Bool {
         guard let title = title?.trimmingCharacters(in: .whitespacesAndNewlines),

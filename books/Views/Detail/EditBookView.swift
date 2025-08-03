@@ -330,6 +330,7 @@ struct EditBookView: View {
         // No need for explicit modelContext.save() if using @Bindable and SwiftData handles the environment
         
         onSave(userBook)
+        HapticFeedbackManager.shared.lightImpact()
         dismiss()
     }
 }
