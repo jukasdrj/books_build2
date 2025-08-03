@@ -8,17 +8,18 @@ struct LibraryView: View {
     @State private var showingAddBookFlow = false
     @State private var showingFilters = false
     @State private var showingSettings = false
+    @State private var libraryFilter = LibraryFilter.all
+    @State private var themeObserver = 0 // Simple state to trigger refresh on theme change
     
-    let isWishlist: Bool
+    private let themeManager = ThemeManager.shared
     
     @Query private var allBooks: [UserBook]
     
-    init(isWishlist: Bool = false) {
-        self.isWishlist = isWishlist
-        let predicate = #Predicate<UserBook> { book in
-            isWishlist ? book.onWishlist == true : true
+    init(filter: LibraryFilter? = nil) {
+        if let filter = filter {
+            _libraryFilter = State(initialValue: filter)
         }
-        _allBooks = Query(filter: predicate, sort: \UserBook.dateAdded, order: .reverse)
+        _allBooks = Query(sort: \UserBook.dateAdded, order: .reverse)
     }
     
     enum LayoutType: String, CaseIterable {
@@ -34,22 +35,78 @@ struct LibraryView: View {
     }
     
     private var filteredBooks: [UserBook] {
-        if searchText.isEmpty {
-            return allBooks
-        } else {
-            return allBooks.filter { book in
+        var books = allBooks
+        
+        // Apply search filter first
+        if !searchText.isEmpty {
+            books = books.filter { book in
                 let title = book.metadata?.title ?? ""
                 let authors = book.metadata?.authors.joined(separator: " ") ?? ""
                 return title.localizedCaseInsensitiveContains(searchText) ||
                        authors.localizedCaseInsensitiveContains(searchText)
             }
         }
+        
+        // Apply library filters
+        books = books.filter { book in
+            // Reading status filter
+            guard libraryFilter.readingStatus.contains(book.readingStatus) else {
+                return false
+            }
+            
+            // Wishlist filter
+            if libraryFilter.showWishlistOnly && !book.onWishlist {
+                return false
+            }
+            
+            // Owned filter
+            if libraryFilter.showOwnedOnly && !book.owned {
+                return false
+            }
+            
+            // Favorites filter
+            if libraryFilter.showFavoritesOnly && !book.isFavorited {
+                return false
+            }
+            
+            return true
+        }
+        
+        return books
+    }
+    
+    private var navigationTitle: String {
+        if libraryFilter.showWishlistOnly {
+            return "Wishlist (\(filteredBooks.count))"
+        } else {
+            return "Library (\(filteredBooks.count))"
+        }
     }
     
     var body: some View {
         VStack(spacing: 0) {
+            // Quick filter bar
+            QuickFilterBar(filter: $libraryFilter) {
+                // No longer needed since we removed "More Filters" button
+            }
+            
+            Divider()
+            
             // Layout toggle
             HStack {
+                // Active filters indicator
+                if libraryFilter.isActive {
+                    HStack(spacing: Theme.Spacing.xs) {
+                        Circle()
+                            .fill(Color.theme.primary)
+                            .frame(width: 8, height: 8)
+                        
+                        Text("Filtered")
+                            .labelSmall()
+                            .foregroundColor(Color.theme.primary)
+                    }
+                }
+                
                 Spacer()
                 
                 Picker("Layout", selection: $selectedLayout) {
@@ -69,10 +126,7 @@ struct LibraryView: View {
             
             // Main content
             if filteredBooks.isEmpty {
-                ContentUnavailableView(
-                    searchText.isEmpty ? (isWishlist ? "Wishlist is Empty" : "Library is Empty") : "No results for \"\(searchText)\"",
-                    systemImage: searchText.isEmpty ? (isWishlist ? "heart" : "books.vertical") : "magnifyingglass"
-                )
+                emptyStateView
             } else {
                 ScrollView(.vertical) {
                     Group {
@@ -86,14 +140,14 @@ struct LibraryView: View {
                 }
             }
         }
-        .navigationTitle(isWishlist ? "Wishlist (\(filteredBooks.count))" : "Library (\(filteredBooks.count))")
+        .navigationTitle(navigationTitle)
         .navigationBarTitleDisplayMode(.large)
         .searchable(text: $searchText, prompt: "Search by title or author...")
         .sheet(isPresented: $showingAddBookFlow) {
             SearchView()
         }
         .sheet(isPresented: $showingFilters) {
-            // Filter view will go here
+            LibraryFilterView(filter: $libraryFilter)
         }
         .sheet(isPresented: $showingSettings) {
             SettingsView()
@@ -101,14 +155,21 @@ struct LibraryView: View {
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 HStack(spacing: Theme.Spacing.md) {
+                    // Refresh button (only show when theme changes or for manual refresh)
+                    Button {
+                        themeObserver += 1
+                        HapticFeedbackManager.shared.lightImpact()
+                    } label: {
+                        Image(systemName: "arrow.clockwise")
+                    }
                     
                     // Filter button
                     Button {
                         showingFilters.toggle()
                     } label: {
-                        Image(systemName: "line.3.horizontal.decrease.circle")
+                        Image(systemName: libraryFilter.isActive ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle")
+                            .foregroundColor(libraryFilter.isActive ? Color.theme.primary : Color.primary)
                     }
-                    .disabled(true) // TODO: Implement filters
                     
                     // Settings Button
                     Button {
@@ -126,10 +187,60 @@ struct LibraryView: View {
                 }
             }
         }
+        .onChange(of: themeManager.currentTheme) { _, _ in
+            // Trigger refresh when theme changes
+            themeObserver += 1
+        }
+        .id(themeObserver) // Force refresh when theme changes
+    }
+    
+    @ViewBuilder
+    private var emptyStateView: some View {
+        VStack(spacing: Theme.Spacing.lg) {
+            if searchText.isEmpty {
+                if libraryFilter.showWishlistOnly {
+                    EmptyStateView(
+                        icon: "heart",
+                        title: "Your Wishlist is Empty",
+                        message: "Books you want to read will appear here. Add some books to your wishlist to get started!",
+                        actionTitle: "Find Books",
+                        action: { showingAddBookFlow = true }
+                    )
+                } else if libraryFilter.isActive {
+                    EmptyStateView(
+                        icon: "line.3.horizontal.decrease.circle",
+                        title: "No Books Match Your Filters",
+                        message: "Try adjusting your filters or add more books to your library.",
+                        actionTitle: "Clear Filters",
+                        action: { 
+                            withAnimation(.smooth) {
+                                libraryFilter = LibraryFilter.all
+                            }
+                        }
+                    )
+                } else {
+                    EmptyStateView(
+                        icon: "books.vertical",
+                        title: "Your Library is Empty",
+                        message: "Start building your reading collection by adding your first book!",
+                        actionTitle: "Add Your First Book",
+                        action: { showingAddBookFlow = true }
+                    )
+                }
+            } else {
+                EmptyStateView(
+                    icon: "magnifyingglass",
+                    title: "No Results for \"\(searchText)\"",
+                    message: "Try checking the spelling or using different search terms."
+                )
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color.theme.background)
     }
 }
 
-// MARK: - Layout Views
+// MARK: - Layout Views (unchanged - just showing for context)
 
 struct UniformGridLayoutView: View {
     let books: [UserBook]

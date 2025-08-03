@@ -3,6 +3,7 @@ import SwiftUI
 struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var showingThemePicker = false
+    @State private var showingCSVImport = false
     
     private let themeManager = ThemeManager.shared
     
@@ -13,6 +14,7 @@ struct SettingsView: View {
                 Section("Appearance") {
                     Button {
                         showingThemePicker = true
+                        HapticFeedbackManager.shared.lightImpact()
                     } label: {
                         HStack {
                             Image(systemName: "paintbrush.fill")
@@ -47,14 +49,22 @@ struct SettingsView: View {
                         icon: "target",
                         title: "Daily Page Goal",
                         subtitle: "Not set",
-                        action: {}
+                        action: {
+                            // TODO: Implement daily page goal settings
+                            print("Daily page goal tapped")
+                            HapticFeedbackManager.shared.lightImpact()
+                        }
                     )
                     
                     settingsRow(
                         icon: "calendar",
                         title: "Monthly Book Goal",
                         subtitle: "Not set",
-                        action: {}
+                        action: {
+                            // TODO: Implement monthly book goal settings
+                            print("Monthly book goal tapped")
+                            HapticFeedbackManager.shared.lightImpact()
+                        }
                     )
                 }
                 
@@ -64,14 +74,21 @@ struct SettingsView: View {
                         icon: "square.and.arrow.down",
                         title: "Import Books",
                         subtitle: "From Goodreads CSV",
-                        action: {}
+                        action: {
+                            showingCSVImport = true
+                            HapticFeedbackManager.shared.lightImpact()
+                        }
                     )
                     
                     settingsRow(
                         icon: "square.and.arrow.up",
                         title: "Export Data",
                         subtitle: "Backup your library",
-                        action: {}
+                        action: {
+                            // TODO: Implement export functionality
+                            print("Export data tapped")
+                            HapticFeedbackManager.shared.lightImpact()
+                        }
                     )
                 }
                 
@@ -81,7 +98,11 @@ struct SettingsView: View {
                         icon: "info.circle",
                         title: "App Version",
                         subtitle: "1.0.0",
-                        action: {}
+                        action: {
+                            // TODO: Show more detailed about info
+                            print("App version tapped")
+                            HapticFeedbackManager.shared.lightImpact()
+                        }
                     )
                 }
             }
@@ -91,6 +112,7 @@ struct SettingsView: View {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Done") {
                         dismiss()
+                        HapticFeedbackManager.shared.lightImpact()
                     }
                     .foregroundColor(Color.theme.primary)
                 }
@@ -98,6 +120,9 @@ struct SettingsView: View {
         }
         .sheet(isPresented: $showingThemePicker) {
             ThemePickerView()
+        }
+        .sheet(isPresented: $showingCSVImport) {
+            CSVImportView()
         }
     }
     

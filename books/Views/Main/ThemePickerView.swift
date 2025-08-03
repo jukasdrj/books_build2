@@ -64,5 +64,10 @@ struct ThemePickerView: View {
         
         // Haptic feedback for a delightful interaction
         HapticFeedbackManager.shared.lightImpact()
+        
+        // Automatically dismiss after a short delay to show the selection
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            dismiss()
+        }
     }
 }

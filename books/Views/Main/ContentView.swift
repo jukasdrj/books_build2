@@ -30,22 +30,6 @@ struct ContentView: View {
                 .tag(0)
                 
                 NavigationStack {
-                    // This now uses a filtered view of the library
-                    LibraryView(isWishlist: true)
-                        .navigationDestination(for: UserBook.self) { book in
-                            BookDetailsView(book: book)
-                        }
-                        .navigationDestination(for: BookMetadata.self) { metadata in
-                            SearchResultDetailView(bookMetadata: metadata)
-                        }
-                }
-                .tabItem {
-                    Image(systemName: selectedTab == 1 ? "heart.text.square.fill" : "heart.text.square")
-                    Text("Wishlist")
-                }
-                .tag(1)
-                
-                NavigationStack {
                     SearchView()
                         .navigationDestination(for: UserBook.self) { book in
                             BookDetailsView(book: book)
@@ -55,10 +39,10 @@ struct ContentView: View {
                         }
                 }
                 .tabItem {
-                    Image(systemName: selectedTab == 2 ? "magnifyingglass.circle.fill" : "magnifyingglass")
+                    Image(systemName: selectedTab == 1 ? "magnifyingglass.circle.fill" : "magnifyingglass")
                     Text("Search")
                 }
-                .tag(2)
+                .tag(1)
                 
                 NavigationStack {
                     StatsView()
@@ -73,8 +57,26 @@ struct ContentView: View {
                         }
                 }
                 .tabItem {
-                    Image(systemName: selectedTab == 3 ? "chart.bar.fill" : "chart.bar")
+                    Image(systemName: selectedTab == 2 ? "chart.bar.fill" : "chart.bar")
                     Text("Stats")
+                }
+                .tag(2)
+                
+                NavigationStack {
+                    CulturalDiversityView()
+                        .navigationDestination(for: UserBook.self) { book in
+                            BookDetailsView(book: book)
+                        }
+                        .navigationDestination(for: String.self) { authorName in
+                            AuthorSearchResultsView(authorName: authorName)
+                        }
+                        .navigationDestination(for: BookMetadata.self) { metadata in
+                            SearchResultDetailView(bookMetadata: metadata)
+                        }
+                }
+                .tabItem {
+                    Image(systemName: selectedTab == 3 ? "globe.americas.fill" : "globe.americas")
+                    Text("Culture")
                 }
                 .tag(3)
             }
@@ -86,7 +88,6 @@ struct ContentView: View {
         }
     }
 }
-
 
 #Preview {
     ContentView()
