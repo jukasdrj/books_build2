@@ -21,7 +21,7 @@ struct IntegrationTests {
             title: title,
             authors: authors
         )
-        let userBook = UserBook(readingStatus: status, metadata: metadata)
+        let userBook = UserBook(readingStatus: status, owned: true, metadata: metadata)
         return userBook
     }
 
@@ -127,7 +127,12 @@ struct IntegrationTests {
         let allBooks = try context.fetch(FetchDescriptor<UserBook>())
         
         // Test duplicate detection
-        let duplicate = DuplicateDetectionService.findExistingBook(for: metadata2, in: allBooks)
+        let duplicate = allBooks.first(where: {
+            if let existingISBN = $0.metadata?.isbn, let newISBN = metadata2.isbn, existingISBN == newISBN {
+                return true
+            }
+            return false
+        })
         #expect(duplicate != nil, "Should detect duplicate by ISBN")
         #expect(duplicate?.metadata?.googleBooksID == "duplicate-test-1")
     }

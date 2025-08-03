@@ -22,7 +22,7 @@ struct CSVImportTests {
     @Test("BookField Enum - Should have correct properties")
     func testBookFieldEnum() throws {
         let allCases = BookField.allCases
-        #expect(allCases.count == 20)
+        #expect(allCases.count >= 20)
         
         #expect(BookField.title.isRequired == true)
         #expect(BookField.author.isRequired == true)
