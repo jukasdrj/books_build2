@@ -18,6 +18,7 @@ struct BookCardView: View {
                 width: 120,
                 height: 180
             )
+            .accessibilityHidden(true) // Cover is decorative, info is in text
             
             // Book information - fixed height for uniformity
             VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
@@ -37,6 +38,8 @@ struct BookCardView: View {
                 HStack(spacing: Theme.Spacing.sm) {
                     if let rating = book.rating {
                         enhancedRatingStars(rating: rating)
+                            .accessibilityLabel("\(rating) out of 5 stars")
+                            .accessibilityAddTraits(.isStaticText)
                     } else {
                         // Placeholder to maintain consistent spacing
                         HStack(spacing: 2) {
@@ -46,12 +49,16 @@ struct BookCardView: View {
                                     .foregroundColor(Color.theme.outline.opacity(0.3))
                             }
                         }
+                        .accessibilityLabel("Not rated")
+                        .accessibilityAddTraits(.isStaticText)
                     }
                     
                     Spacer()
                     
                     if book.readingStatus != .toRead {
                         StatusBadge(status: book.readingStatus, style: .compact)
+                            .accessibilityLabel("Status: \(book.readingStatus.rawValue)")
+                            .accessibilityAddTraits(.isStaticText)
                     }
                 }
                 .frame(height: 16) // Fixed height for consistency
@@ -62,9 +69,14 @@ struct BookCardView: View {
         .padding(Theme.Spacing.sm)
         .materialCard()
         .materialInteractive()
+        // Enhanced VoiceOver Support
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(book.metadata?.title ?? "Unknown Title") by \(book.metadata?.authors.joined(separator: ", ") ?? "Unknown Author")")
+        .accessibilityLabel(accessibilityDescription)
         .accessibilityHint("Double tap to view book details")
+        .accessibilityAddTraits(.isButton)
+        .accessibilityAction(named: "View Details") {
+            // This will be handled by the NavigationLink
+        }
     }
     
     // MARK: - Enhanced Rating Stars (Compact for uniform cards)
@@ -78,6 +90,28 @@ struct BookCardView: View {
                     .foregroundColor(star <= rating ? Color.theme.warning : Color.theme.outline.opacity(0.3))
             }
         }
+    }
+    
+    // MARK: - Enhanced Accessibility
+    
+    private var accessibilityDescription: String {
+        var description = book.metadata?.title ?? "Unknown Title"
+        
+        if let authors = book.metadata?.authors, !authors.isEmpty {
+            description += " by \(authors.joined(separator: ", "))"
+        }
+        
+        if let rating = book.rating {
+            description += ". Rated \(rating) out of 5 stars"
+        } else {
+            description += ". Not rated"
+        }
+        
+        if book.readingStatus != .toRead {
+            description += ". Status: \(book.readingStatus.rawValue)"
+        }
+        
+        return description
     }
 }
 

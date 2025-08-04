@@ -124,12 +124,5 @@
     <!-- Enhanced multitasking and keyboard support -->
     <key>UIApplicationSupportsIndirectInputEvents</key>
     <true/>
-    
-    <!-- Device family support -->
-    <key>UIDeviceFamily</key>
-    <array>
-        <integer>1</integer> <!-- iPhone -->
-        <integer>2</integer> <!-- iPad -->
-    </array>
 </dict>
 </plist>

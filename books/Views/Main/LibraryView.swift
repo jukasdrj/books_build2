@@ -75,32 +75,20 @@ struct LibraryView: View {
         return books
     }
     
-    private var navigationTitle: String {
-        if libraryFilter.showWishlistOnly {
-            return "Wishlist (\(filteredBooks.count))"
-        } else {
-            return "Library (\(filteredBooks.count))"
-        }
-    }
-    
     var body: some View {
         VStack(spacing: 0) {
             // Quick filter bar
-            QuickFilterBar(filter: $libraryFilter) {
-                // No longer needed since we removed "More Filters" button
-            }
+            QuickFilterBar(filter: $libraryFilter) { }
             
             Divider()
             
-            // Layout toggle
+            // Layout toggle section
             HStack {
-                // Active filters indicator
                 if libraryFilter.isActive {
                     HStack(spacing: Theme.Spacing.xs) {
                         Circle()
                             .fill(Color.theme.primary)
                             .frame(width: 8, height: 8)
-                        
                         Text("Filtered")
                             .labelSmall()
                             .foregroundColor(Color.theme.primary)
@@ -111,8 +99,7 @@ struct LibraryView: View {
                 
                 Picker("Layout", selection: $selectedLayout) {
                     ForEach(LayoutType.allCases, id: \.self) { layout in
-                        Image(systemName: layout.icon)
-                            .tag(layout)
+                        Image(systemName: layout.icon).tag(layout)
                     }
                 }
                 .pickerStyle(.segmented)
@@ -124,23 +111,22 @@ struct LibraryView: View {
             
             Divider()
             
-            // Main content
+            // Content section
             if filteredBooks.isEmpty {
-                emptyStateView
+                Text("No books to display")
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .padding()
             } else {
                 ScrollView(.vertical) {
-                    Group {
-                        if selectedLayout == .grid {
-                            UniformGridLayoutView(books: filteredBooks)
-                        } else {
-                            ListLayoutView(books: filteredBooks)
-                        }
+                    if selectedLayout == .grid {
+                        UniformGridLayoutView(books: filteredBooks)
+                    } else {
+                        ListLayoutView(books: filteredBooks)
                     }
-                    .padding(.bottom, Theme.Spacing.xl) // Tab bar padding
                 }
             }
         }
-        .navigationTitle(navigationTitle)
+        .navigationTitle(libraryFilter.showWishlistOnly ? "Wishlist (\(filteredBooks.count))" : "Library (\(filteredBooks.count))")
         .navigationBarTitleDisplayMode(.large)
         .searchable(text: $searchText, prompt: "Search by title or author...")
         .sheet(isPresented: $showingAddBookFlow) {
@@ -155,156 +141,32 @@ struct LibraryView: View {
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 HStack(spacing: Theme.Spacing.md) {
-                    // Refresh button (only show when theme changes or for manual refresh)
-                    Button {
+                    Button { 
                         themeObserver += 1
                         HapticFeedbackManager.shared.lightImpact()
                     } label: {
                         Image(systemName: "arrow.clockwise")
                     }
                     
-                    // Filter button
-                    Button {
-                        showingFilters.toggle()
-                    } label: {
+                    Button { showingFilters.toggle() } label: {
                         Image(systemName: libraryFilter.isActive ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle")
                             .foregroundColor(libraryFilter.isActive ? Color.theme.primary : Color.primary)
                     }
                     
-                    // Settings Button
-                    Button {
-                        showingSettings.toggle()
-                    } label: {
+                    Button { showingSettings.toggle() } label: {
                         Image(systemName: "gearshape")
                     }
-
-                    // Main add button
-                    Button {
-                        showingAddBookFlow.toggle()
-                    } label: {
+                    
+                    Button { showingAddBookFlow.toggle() } label: {
                         Image(systemName: "plus")
                     }
                 }
             }
         }
         .onChange(of: themeManager.currentTheme) { _, _ in
-            // Trigger refresh when theme changes
             themeObserver += 1
         }
-        .id(themeObserver) // Force refresh when theme changes
-    }
-    
-    @ViewBuilder
-    private var emptyStateView: some View {
-        VStack(spacing: Theme.Spacing.xl) {
-            if searchText.isEmpty {
-                if libraryFilter.showWishlistOnly {
-                    AppStoreHeroSection(
-                        title: "Discover Your Next Read",
-                        subtitle: "Books you want to read will appear here",
-                        icon: "heart.circle.fill"
-                    )
-                    
-                    VStack(spacing: Theme.Spacing.md) {
-                        FeatureHighlightCard(
-                            icon: "magnifyingglass",
-                            title: "Search & Discover",
-                            description: "Find books from millions of titles",
-                            accentColor: Color.theme.primary
-                        )
-                        
-                        FeatureHighlightCard(
-                            icon: "square.and.arrow.down",
-                            title: "Import from Goodreads",
-                            description: "Instantly add your reading history",
-                            accentColor: Color.theme.secondary
-                        )
-                    }
-                    .padding(.horizontal, Theme.Spacing.lg)
-                    
-                    Button("Start Building Your Wishlist") {
-                        showingAddBookFlow = true
-                        HapticFeedbackManager.shared.lightImpact()
-                    }
-                    .materialButton(style: .filled, size: .large)
-                    .shadow(color: Color.theme.primary.opacity(0.3), radius: 8, x: 0, y: 4)
-                    
-                } else if libraryFilter.isActive {
-                    EmptyStateView(
-                        icon: "line.3.horizontal.decrease.circle",
-                        title: "No Books Match Your Filters",
-                        message: "Try adjusting your filters or add more books to your library to see them here.",
-                        actionTitle: "Clear All Filters",
-                        action: { 
-                            withAnimation(.smooth) {
-                                libraryFilter = LibraryFilter.all
-                            }
-                            HapticFeedbackManager.shared.lightImpact()
-                        }
-                    )
-                } else {
-                    // Main empty state - perfect for App Store screenshots
-                    AppStoreHeroSection(
-                        title: "Your Reading Journey Starts Here",
-                        subtitle: "Track books, celebrate diversity, reach your reading goals",
-                        icon: "books.vertical.circle.fill"
-                    )
-                    
-                    VStack(spacing: Theme.Spacing.md) {
-                        FeatureHighlightCard(
-                            icon: "chart.bar.fill",
-                            title: "Beautiful Reading Stats",
-                            description: "Track your progress with gorgeous charts",
-                            accentColor: Color.theme.primary
-                        )
-                        
-                        FeatureHighlightCard(
-                            icon: "globe",
-                            title: "Cultural Diversity Insights",
-                            description: "Explore voices from around the world",
-                            accentColor: Color.theme.tertiary
-                        )
-                        
-                        FeatureHighlightCard(
-                            icon: "paintbrush.fill",
-                            title: "5 Gorgeous Themes",
-                            description: "Personalize your reading sanctuary",
-                            accentColor: Color.theme.secondary
-                        )
-                    }
-                    .padding(.horizontal, Theme.Spacing.lg)
-                    
-                    Button("Add Your First Book") {
-                        showingAddBookFlow = true  
-                        HapticFeedbackManager.shared.lightImpact()
-                    }
-                    .materialButton(style: .filled, size: .large)
-                    .shadow(color: Color.theme.primary.opacity(0.3), radius: 8, x: 0, y: 4)
-                }
-            } else {
-                EmptyStateView(
-                    icon: "magnifyingglass",
-                    title: "No Results for \"\(searchText)\"",
-                    message: "Try adjusting your search terms or explore our book discovery features.",
-                    actionTitle: "Browse All Books",
-                    action: {
-                        searchText = ""
-                        HapticFeedbackManager.shared.lightImpact()
-                    }
-                )
-            }
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(
-            LinearGradient(
-                colors: [
-                    Color.theme.background,
-                    Color.theme.surface.opacity(0.5)
-                ],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-        )
+        .id(themeObserver)
     }
 }
 

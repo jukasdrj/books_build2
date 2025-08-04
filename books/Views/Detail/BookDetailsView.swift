@@ -604,7 +604,7 @@ extension UserBook {
     }
 }
 
-// MARK: - NEW: Reading Progress Section
+// MARK: - NEW: Reading Progress Section (Enhanced Accessibility)
 struct ReadingProgressSection: View {
     @Bindable var book: UserBook
     @State private var showingPageInput = false
@@ -617,6 +617,14 @@ struct ReadingProgressSection: View {
     private var progressPercentage: Int {
         guard totalPages > 0 else { return 0 }
         return min(Int((Double(book.currentPage) / Double(totalPages)) * 100), 100)
+    }
+    
+    private var accessibilityProgressDescription: String {
+        if totalPages > 0 {
+            return "Reading progress: \(book.currentPage) of \(totalPages) pages, \(progressPercentage) percent complete"
+        } else {
+            return "Reading progress: page \(book.currentPage)"
+        }
     }
     
     var body: some View {
@@ -639,6 +647,8 @@ struct ReadingProgressSection: View {
                                 .foregroundColor(Color.theme.secondaryText)
                         }
                     }
+                    .accessibilityElement(children: .combine)
+                    .accessibilityLabel(accessibilityProgressDescription)
                     
                     Spacer()
                     
@@ -648,6 +658,7 @@ struct ReadingProgressSection: View {
                             .titleSmall()
                             .fontWeight(.bold)
                             .foregroundColor(Color.theme.primaryAction)
+                            .accessibilityLabel("\(progressPercentage) percent complete")
                     }
                 }
                 
@@ -656,7 +667,9 @@ struct ReadingProgressSection: View {
                     ProgressView(value: book.readingProgress)
                         .tint(Color.theme.primaryAction)
                         .scaleEffect(y: 1.5, anchor: .center)
-                        .animation(.easeInOut(duration: 0.3), value: book.readingProgress)
+                        .animation(Theme.Animation.accessible, value: book.readingProgress)
+                        .accessibilityLabel("Reading progress")
+                        .accessibilityValue("\(progressPercentage) percent complete")
                 }
                 
                 // Action Buttons
@@ -665,12 +678,14 @@ struct ReadingProgressSection: View {
                         showingPageInput = true
                     }
                     .materialButton(style: .tonal, size: .small)
+                    .accessibilityHint("Opens page input to update your current reading progress")
                     
                     if book.readingStatus == .reading {
                         Button("Log Session") {
                             showingReadingSessionInput = true
                         }
                         .materialButton(style: .outlined, size: .small)
+                        .accessibilityHint("Opens form to log a completed reading session")
                     }
                 }
                 
@@ -694,6 +709,8 @@ struct ReadingProgressSection: View {
                 }
             }
         }
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Reading Progress Section")
         .sheet(isPresented: $showingPageInput) {
             PageInputView(
                 currentPage: Binding(

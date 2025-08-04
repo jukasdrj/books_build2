@@ -3,10 +3,9 @@ import SwiftData
 
 struct SearchView: View {
     @Environment(\.modelContext) private var modelContext
-    @Binding var selectedTab: Int
     
     @State private var searchService = BookSearchService.shared
-    @State private var searchText = ""
+    @State private var searchQuery = ""
     @State private var searchState: SearchState = .idle
     
     enum SearchState: Equatable {
@@ -14,10 +13,6 @@ struct SearchView: View {
         case searching
         case results([BookMetadata])
         case error(String)
-    }
-    
-    init(selectedTab: Binding<Int> = .constant(2)) {
-        self._selectedTab = selectedTab
     }
 
     var body: some View {
@@ -63,11 +58,28 @@ struct SearchView: View {
                     endPoint: .bottom
                 )
             )
-            .animation(Theme.Animation.standardEaseInOut, value: searchState)
+            .animation(Theme.Animation.accessible, value: searchState) // Use accessibility-aware animation
         }
         .navigationTitle("Search Books")
         .navigationBarTitleDisplayMode(.large)
         .background(Color.theme.background)
+        .searchable(text: $searchQuery, prompt: "Search by title, author, or ISBN")
+        .accessibilityLabel("Search for books")
+        .accessibilityHint("Enter a book title, author name, or ISBN to search for books in the online database")
+        .onSubmit(of: .search) {
+            performSearch()
+        }
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                if !searchQuery.isEmpty {
+                    Button("Clear") {
+                        clearSearch()
+                    }
+                    .accessibilityLabel("Clear search")
+                    .accessibilityHint("Clear the search field and results")
+                }
+            }
+        }
     }
     
     // MARK: - Enhanced Search Bar Component
@@ -79,19 +91,19 @@ struct SearchView: View {
                     .foregroundStyle(.primary)
                     .labelMedium()
                 
-                TextField("Search by title, author, or ISBN", text: $searchText)
+                TextField("Search by title, author, or ISBN", text: $searchQuery)
                     .bodyMedium()
                     .onSubmit(performSearch)
                     .submitLabel(.search)
                 
-                if !searchText.isEmpty {
+                if !searchQuery.isEmpty {
                     Button(action: clearSearch) {
                         Image(systemName: "xmark.circle.fill")
                             .foregroundStyle(.primary)
                             .labelMedium()
                     }
                     .buttonStyle(.plain)
-                    .frame(minWidth: 44, minHeight: 44)
+                    .frame(minWidth: Theme.Size.minTouchTarget, minHeight: Theme.Size.minTouchTarget)
                     .contentShape(Rectangle())
                     .accessibilityLabel("Clear search")
                 }
@@ -113,8 +125,8 @@ struct SearchView: View {
                 }
             }
             .materialButton(style: .filled, size: .medium)
-            .frame(minHeight: 44)
-            .disabled(searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || searchState == .searching)
+            .frame(minHeight: Theme.Size.minTouchTarget)
+            .disabled(searchQuery.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || searchState == .searching)
             .accessibilityLabel("Search for books")
             .accessibilityHint("Searches the online database for books matching your query")
         }
@@ -134,6 +146,7 @@ struct SearchView: View {
         .listStyle(.plain)
         .background(Color.theme.surface)
         .scrollContentBackground(.hidden)
+        .accessibilityLabel("\(books.count) search results")
     }
 
     // MARK: - Enhanced Empty State for App Store Appeal
@@ -182,31 +195,8 @@ struct SearchView: View {
                         .padding(.horizontal, Theme.Spacing.md)
                 }
             }
-            
-            // Feature highlights
-            VStack(spacing: Theme.Spacing.md) {
-                FeatureHighlightCard(
-                    icon: "globe",
-                    title: "Millions of Books",
-                    description: "Access the world's largest book database",
-                    accentColor: Color.theme.primary
-                )
-                
-                FeatureHighlightCard(
-                    icon: "sparkles",
-                    title: "Smart Search",
-                    description: "Find books by title, author, or ISBN",
-                    accentColor: Color.theme.secondary
-                )
-                
-                FeatureHighlightCard(  
-                    icon: "books.vertical",
-                    title: "Build Your Library",
-                    description: "Add books directly to your collection",
-                    accentColor: Color.theme.tertiary
-                )
-            }
-            .padding(.horizontal, Theme.Spacing.lg)
+            .accessibilityLabel("Search for books")
+            .accessibilityHint("Use the search field above to find books by title, author, or ISBN")
             
             Spacer()
         }
@@ -242,22 +232,8 @@ struct SearchView: View {
                         .padding(.horizontal, Theme.Spacing.md)
                 }
             }
-            
-            VStack(spacing: Theme.Spacing.sm) {
-                Text("Search Tips:")
-                    .font(.headline)
-                    .foregroundColor(Color.theme.primaryText)
-                
-                VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
-                    searchTip(icon: "textformat", text: "Try the book's full title")
-                    searchTip(icon: "person", text: "Search by author's name")
-                    searchTip(icon: "barcode", text: "Use ISBN for exact matches")
-                    searchTip(icon: "magnifyingglass", text: "Use simpler keywords")
-                }
-            }
-            .padding(Theme.Spacing.md)
-            .materialCard()
-            .padding(.horizontal, Theme.Spacing.lg)
+            .accessibilityLabel("No search results found")
+            .accessibilityHint("Try different search terms or check spelling")
             
             Spacer()
         }
@@ -265,32 +241,15 @@ struct SearchView: View {
         .padding(.top, Theme.Spacing.xl)
     }
     
-    private func searchTip(icon: String, text: String) -> some View {
-        HStack(spacing: Theme.Spacing.sm) {
-            Image(systemName: icon)
-                .foregroundColor(Color.theme.primary)
-                .frame(width: 20)
-            
-            Text(text)
-                .font(.subheadline)
-                .foregroundColor(Color.theme.primaryText)
-            
-            Spacer()
-        }
-    }
-    
     // MARK: - Actions
     private func performSearch() {
-        let trimmedQuery = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedQuery = searchQuery.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedQuery.isEmpty else { return }
         
         searchState = .searching
         
-        // Add haptic feedback - respect VoiceOver
-        if !UIAccessibility.isVoiceOverRunning {
-            let impactFeedback = UIImpactFeedbackGenerator(style: .light)
-            impactFeedback.impactOccurred()
-        }
+        // Add haptic feedback - respect VoiceOver and Reduce Motion
+        HapticFeedbackManager.shared.lightImpact()
         
         Task {
             let result = await searchService.search(query: trimmedQuery)
@@ -298,32 +257,19 @@ struct SearchView: View {
                 switch result {
                 case .success(let books):
                     searchState = .results(books)
-                    // Success haptic feedback - respect VoiceOver
-                    if !UIAccessibility.isVoiceOverRunning {
-                        let successFeedback = UINotificationFeedbackGenerator()
-                        successFeedback.notificationOccurred(.success)
-                    }
+                    HapticFeedbackManager.shared.success()
                 case .failure(let error):
                     searchState = .error(formatError(error))
-                    // Error haptic feedback - respect VoiceOver
-                    if !UIAccessibility.isVoiceOverRunning {
-                        let errorFeedback = UINotificationFeedbackGenerator()
-                        errorFeedback.notificationOccurred(.error)
-                    }
+                    HapticFeedbackManager.shared.error()
                 }
             }
         }
     }
     
     private func clearSearch() {
-        searchText = ""
+        searchQuery = ""
         searchState = .idle
-        
-        // Light haptic feedback for clear action - respect VoiceOver
-        if !UIAccessibility.isVoiceOverRunning {
-            let impactFeedback = UIImpactFeedbackGenerator(style: .light)
-            impactFeedback.impactOccurred()
-        }
+        HapticFeedbackManager.shared.lightImpact()
     }
     
     private func formatError(_ error: Error) -> String {

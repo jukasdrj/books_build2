@@ -115,6 +115,27 @@ enum Theme {
         
         // Add smooth animation
         static let smooth = SwiftUI.Animation.easeInOut(duration: standard)
+        
+        // MARK: - Accessibility-Aware Animations
+        
+        /// Returns animation that respects reduce motion preference
+        static func respectingReduceMotion(_ animation: SwiftUI.Animation?) -> SwiftUI.Animation? {
+            #if os(iOS)
+            return UIAccessibility.isReduceMotionEnabled ? nil : animation
+            #else
+            return animation
+            #endif
+        }
+        
+        /// Standard animation that respects accessibility preferences
+        static var accessible: SwiftUI.Animation? {
+            respectingReduceMotion(standardEaseInOut)
+        }
+        
+        /// Gentle animation that respects accessibility preferences
+        static var accessibleSpring: SwiftUI.Animation? {
+            respectingReduceMotion(gentleSpring)
+        }
     }
     
     // MARK: - Size System
@@ -455,7 +476,7 @@ struct MaterialButtonModifier: ViewModifier {
     func body(content: Content) -> some View {
         content
             .padding(size.padding)
-            .frame(minHeight: size.height)
+            .frame(minHeight: max(size.height, Theme.Size.minTouchTarget)) // Use Theme constant
             .background(backgroundColor)
             .foregroundColor(foregroundColor)
             .cornerRadius(Theme.CornerRadius.button)
@@ -465,7 +486,11 @@ struct MaterialButtonModifier: ViewModifier {
             )
             .opacity(isEnabled ? 1.0 : 0.38)
             .disabled(!isEnabled)
-            .animation(Theme.Animation.standardEaseInOut, value: isEnabled)
+            .animation(Theme.Animation.accessible, value: isEnabled) // Use accessibility-aware animation
+            // Enhanced accessibility - Fixed syntax
+            .accessibilityAddTraits(.isButton)
+            .accessibilityRespondsToUserInteraction(isEnabled)
+            .dynamicTypeSize(.large...DynamicTypeSize.accessibility3) // Support larger text
     }
     
     private var backgroundColor: SwiftUI.Color {
@@ -536,8 +561,8 @@ struct MaterialInteractiveModifier: ViewModifier {
         content
             .scaleEffect(isPressed || isGestureActive ? pressedScale : 1.0)
             .opacity(isPressed || isGestureActive ? pressedOpacity : 1.0)
-            .animation(Theme.Animation.fastEaseOut, value: isPressed)
-            .animation(Theme.Animation.fastEaseOut, value: isGestureActive)
+            .animation(Theme.Animation.accessible, value: isPressed) // Use accessibility-aware animation
+            .animation(Theme.Animation.accessible, value: isGestureActive) // Use accessibility-aware animation
             .simultaneousGesture(
                 DragGesture(minimumDistance: 0)
                     .updating($isGestureActive) { _, state, _ in

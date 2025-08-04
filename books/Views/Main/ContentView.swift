@@ -17,168 +17,206 @@ struct ContentView: View {
             iPhoneLayout
             #endif
         }
-        .navigationDestination(for: UserBook.self) { book in
-            BookDetailsView(book: book)
-        }
-        .navigationDestination(for: BookSearchResult.self) { result in
-            SearchResultDetailView(searchResult: result)
-        }
-        .navigationDestination(for: String.self) { destination in
-            destinationView(for: destination)
-        }
     }
-}
-
-// MARK: - iPad-Optimized Layout
-
-@ViewBuilder
-private var iPadLayout: some View {
-    NavigationSplitView {
-        // Sidebar for iPad
-        VStack(spacing: 0) {
-            // Header with enhanced boho styling
-            VStack(spacing: Theme.Spacing.sm) {
-                HStack {
-                    Image(systemName: "books.vertical.fill")
-                        .font(.title2)
-                        .foregroundColor(Color.theme.primary)
-                        .shadow(color: Color.theme.primary.opacity(0.3), radius: 2, x: 0, y: 1)
+    
+    // MARK: - iPad-Optimized Layout
+    
+    @ViewBuilder
+    private var iPadLayout: some View {
+        NavigationSplitView {
+            // Sidebar for iPad
+            VStack(spacing: 0) {
+                // Header with enhanced boho styling
+                VStack(spacing: Theme.Spacing.sm) {
+                    HStack {
+                        Image(systemName: "books.vertical.fill")
+                            .font(.title2)
+                            .foregroundColor(Color.theme.primary)
+                            .shadow(color: Color.theme.primary.opacity(0.3), radius: 2, x: 0, y: 1)
+                        
+                        Text("Books")
+                            .titleLarge()
+                            .foregroundColor(Color.theme.primaryText)
+                        
+                        Spacer()
+                    }
+                    .padding(.horizontal, Theme.Spacing.lg)
+                    .padding(.top, Theme.Spacing.md)
                     
-                    Text("Books")
-                        .titleLarge()
-                        .foregroundColor(Color.theme.primaryText)
-                    
-                    Spacer()
+                    Divider()
+                        .background(Color.theme.outline.opacity(0.2))
                 }
-                .padding(.horizontal, Theme.Spacing.lg)
-                .padding(.top, Theme.Spacing.md)
-                
-                Divider()
-                    .background(Color.theme.outline.opacity(0.2))
-            }
-            .background(
-                LinearGradient(
-                    colors: [Color.theme.surface, Color.theme.background],
-                    startPoint: .top,
-                    endPoint: .bottom
+                .background(
+                    LinearGradient(
+                        colors: [Color.theme.surface, Color.theme.background],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
                 )
-            )
-            
-            // Navigation Items with enhanced iPad styling
-            List(selection: $selectedTab) {
-                NavigationLink(value: 0) {
-                    Label("Library", systemImage: "books.vertical")
-                        .font(.body)
-                        .foregroundColor(selectedTab == 0 ? Color.theme.primary : Color.theme.primaryText)
-                }
-                .tag(0)
                 
-                NavigationLink(value: 1) {
-                    Label("Search", systemImage: "magnifyingglass")
-                        .font(.body)
-                        .foregroundColor(selectedTab == 1 ? Color.theme.primary : Color.theme.primaryText)
+                // Navigation Items with enhanced iPad styling
+                List {
+                    Button(action: { selectedTab = 0 }) {
+                        Label("Library", systemImage: "books.vertical")
+                            .font(.body)
+                            .foregroundColor(selectedTab == 0 ? Color.theme.primary : Color.theme.primaryText)
+                    }
+                    .listRowBackground(selectedTab == 0 ? Color.theme.primaryContainer : Color.clear)
+                    
+                    Button(action: { selectedTab = 1 }) {
+                        Label("Search", systemImage: "magnifyingglass")
+                            .font(.body)
+                            .foregroundColor(selectedTab == 1 ? Color.theme.primary : Color.theme.primaryText)
+                    }
+                    .listRowBackground(selectedTab == 1 ? Color.theme.primaryContainer : Color.clear)
+                    
+                    Button(action: { selectedTab = 2 }) {
+                        Label("Stats", systemImage: "chart.bar")
+                            .font(.body)
+                            .foregroundColor(selectedTab == 2 ? Color.theme.primary : Color.theme.primaryText)
+                    }
+                    .listRowBackground(selectedTab == 2 ? Color.theme.primaryContainer : Color.clear)
+                    
+                    Button(action: { selectedTab = 3 }) {
+                        Label("Culture", systemImage: "globe")
+                            .font(.body)
+                            .foregroundColor(selectedTab == 3 ? Color.theme.primary : Color.theme.primaryText)
+                    }
+                    .listRowBackground(selectedTab == 3 ? Color.theme.primaryContainer : Color.clear)
                 }
-                .tag(1)
-                
-                NavigationLink(value: 2) {
-                    Label("Stats", systemImage: "chart.bar")
-                        .font(.body)
-                        .foregroundColor(selectedTab == 2 ? Color.theme.primary : Color.theme.primaryText)
-                }
-                .tag(2)
-                
-                NavigationLink(value: 3) {
-                    Label("Culture", systemImage: "globe")
-                        .font(.body)
-                        .foregroundColor(selectedTab == 3 ? Color.theme.primary : Color.theme.primaryText)
-                }
-                .tag(3)
+                .listStyle(.sidebar)
+                .scrollContentBackground(.hidden)
+                .background(Color.theme.background)
             }
-            .listStyle(.sidebar)
-            .scrollContentBackground(.hidden)
+            .frame(minWidth: 280)
+            .navigationSplitViewColumnWidth(min: 280, ideal: 320, max: 400)
+            .background(Color.theme.background)
+        } detail: {
+            NavigationStack {
+                Group {
+                    switch selectedTab {
+                    case 0:
+                        LibraryView()
+                    case 1:
+                        SearchView()
+                    case 2:
+                        StatsView()
+                    case 3:
+                        CulturalDiversityView()
+                    default:
+                        LibraryView()
+                    }
+                }
+                // Move navigation destinations inside the NavigationStack
+                .navigationDestination(for: UserBook.self) { book in
+                    BookDetailsView(book: book)
+                }
+                .navigationDestination(for: BookMetadata.self) { bookMetadata in
+                    SearchResultDetailView(bookMetadata: bookMetadata)
+                }
+                .navigationDestination(for: String.self) { destination in
+                    destinationView(for: destination)
+                }
+            }
             .background(Color.theme.background)
         }
-        .frame(minWidth: 280)
-        .navigationSplitViewColumnWidth(min: 280, ideal: 320, max: 400)
-        .background(Color.theme.background)
-    } detail: {
-        NavigationStack {
-            Group {
-                switch selectedTab {
-                case 0:
-                    LibraryView()
-                case 1:
-                    SearchView()
-                case 2:
-                    StatsView()
-                case 3:
-                    CulturalDiversityView()
-                default:
-                    LibraryView()
-                }
-            }
-        }
-        .background(Color.theme.background)
+        .navigationSplitViewStyle(.balanced)
+        .tint(Color.theme.primary)
     }
-    .navigationSplitViewStyle(.balanced)
-    .tint(Color.theme.primary)
-}
-
-// MARK: - iPhone Layout
-
-@ViewBuilder
-private var iPhoneLayout: some View {
-    TabView(selection: $selectedTab) {
-        NavigationStack {
+    
+    // MARK: - iPhone Layout
+    
+    @ViewBuilder
+    private var iPhoneLayout: some View {
+        TabView(selection: $selectedTab) {
+            NavigationStack {
+                LibraryView()
+                // Move navigation destinations inside each NavigationStack
+                    .navigationDestination(for: UserBook.self) { book in
+                        BookDetailsView(book: book)
+                    }
+                    .navigationDestination(for: BookMetadata.self) { bookMetadata in
+                        SearchResultDetailView(bookMetadata: bookMetadata)
+                    }
+                    .navigationDestination(for: String.self) { destination in
+                        destinationView(for: destination)
+                    }
+            }
+            .tabItem {
+                Label("Library", systemImage: "books.vertical")
+            }
+            .tag(0)
+            
+            NavigationStack {
+                SearchView()
+                    .navigationDestination(for: UserBook.self) { book in
+                        BookDetailsView(book: book)
+                    }
+                    .navigationDestination(for: BookMetadata.self) { bookMetadata in
+                        SearchResultDetailView(bookMetadata: bookMetadata)
+                    }
+                    .navigationDestination(for: String.self) { destination in
+                        destinationView(for: destination)
+                    }
+            }
+            .tabItem {
+                Label("Search", systemImage: "magnifyingglass")
+            }
+            .tag(1)
+            
+            NavigationStack {
+                StatsView()
+                    .navigationDestination(for: UserBook.self) { book in
+                        BookDetailsView(book: book)
+                    }
+                    .navigationDestination(for: BookMetadata.self) { bookMetadata in
+                        SearchResultDetailView(bookMetadata: bookMetadata)
+                    }
+                    .navigationDestination(for: String.self) { destination in
+                        destinationView(for: destination)
+                    }
+            }
+            .tabItem {
+                Label("Stats", systemImage: "chart.bar")
+            }
+            .tag(2)
+            
+            NavigationStack {
+                CulturalDiversityView()
+                    .navigationDestination(for: UserBook.self) { book in
+                        BookDetailsView(book: book)
+                    }
+                    .navigationDestination(for: BookMetadata.self) { bookMetadata in
+                        SearchResultDetailView(bookMetadata: bookMetadata)
+                    }
+                    .navigationDestination(for: String.self) { destination in
+                        destinationView(for: destination)
+                    }
+            }
+            .tabItem {
+                Label("Culture", systemImage: "globe")
+            }
+            .tag(3)
+        }
+        .tint(Color.theme.primary)
+    }
+    
+    // MARK: - Destination View
+    
+    @ViewBuilder
+    private func destinationView(for destination: String) -> some View {
+        switch destination {
+        case "Library":
+            LibraryView()
+        case "Search":
+            SearchView()
+        case "Stats":
+            StatsView()
+        case "Culture":
+            CulturalDiversityView()
+        default:
             LibraryView()
         }
-        .tabItem {
-            Label("Library", systemImage: "books.vertical")
-        }
-        .tag(0)
-        
-        NavigationStack {
-            SearchView()
-        }
-        .tabItem {
-            Label("Search", systemImage: "magnifyingglass")
-        }
-        .tag(1)
-        
-        NavigationStack {
-            StatsView()  
-        }
-        .tabItem {
-            Label("Stats", systemImage: "chart.bar")
-        }
-        .tag(2)
-        
-        NavigationStack {
-            CulturalDiversityView()
-        }
-        .tabItem {
-            Label("Culture", systemImage: "globe")
-        }
-        .tag(3)
-    }
-    .tint(Color.theme.primary)
-}
-
-// MARK: - Destination View
-
-@ViewBuilder
-private func destinationView(for destination: String) -> some View {
-    switch destination {
-    case "Library":
-        LibraryView()
-    case "Search":
-        SearchView()
-    case "Stats":
-        StatsView()
-    case "Culture":
-        CulturalDiversityView()
-    default:
-        LibraryView()
     }
 }
 
