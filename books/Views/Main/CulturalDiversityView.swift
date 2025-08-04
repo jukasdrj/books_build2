@@ -243,9 +243,25 @@ struct CulturalDiversityView: View {
                 .shadow(color: hasBooks ? region.color.opacity(0.3) : .clear, 
                        radius: 4, x: 0, y: 2)
             
-            Text(region.flag)
+            Text(flagEmoji(for: region))
                 .font(.caption2)
                 .opacity(hasBooks ? 1.0 : 0.4)
+        }
+    }
+    
+    // Helper function to provide flag emojis for regions
+    private func flagEmoji(for region: CulturalRegion) -> String {
+        switch region {
+        case .africa: return "🌍"
+        case .asia: return "🌏"
+        case .europe: return "🌍"
+        case .northAmerica: return "🌎"
+        case .southAmerica: return "🌎"
+        case .oceania: return "🌏"
+        case .middleEast: return "🌍"
+        case .caribbean: return "🏝️"
+        case .centralAsia: return "🌏"
+        case .indigenous: return "🍃"
         }
     }
     
