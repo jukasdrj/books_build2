@@ -26,14 +26,9 @@ class DataMigrationManager: ObservableObject {
         migrationStatus = "Updating reading statuses..."
         migrationProgress = 0.5
         
-        do {
-            await performReadingStatusMigration()
-            migrationStatus = "Migration completed"
-            migrationProgress = 1.0
-        } catch {
-            migrationError = "Migration failed: \(error.localizedDescription)"
-            showingMigrationAlert = true
-        }
+        await performReadingStatusMigration()
+        migrationStatus = "Migration completed"
+        migrationProgress = 1.0
         
         isMigrating = false
     }
