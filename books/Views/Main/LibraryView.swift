@@ -308,17 +308,15 @@ struct LibraryView: View {
     }
 }
 
-// MARK: - Layout Views (unchanged - just showing for context)
+// MARK: - Layout Views (updated - iPad-optimized)
 
 struct UniformGridLayoutView: View {
     let books: [UserBook]
     
     var body: some View {
-        let columns = [
-            GridItem(.adaptive(minimum: 140), spacing: Theme.Spacing.md)
-        ]
+        let columns = createAdaptiveColumns()
         
-        LazyVGrid(columns: columns, spacing: Theme.Spacing.lg) {
+        LazyVGrid(columns: columns, spacing: adaptiveSpacing()) {
             ForEach(books) { book in
                 NavigationLink(value: book) {
                     BookCardView(book: book)
@@ -326,7 +324,53 @@ struct UniformGridLayoutView: View {
                 .buttonStyle(.plain)
             }
         }
-        .padding(Theme.Spacing.md)
+        .padding(adaptivePadding())
+    }
+    
+    // MARK: - iPad-Optimized Layout
+    
+    private func createAdaptiveColumns() -> [GridItem] {
+        #if os(iOS)
+        if UIDevice.current.userInterfaceIdiom == .pad {
+            // iPad: More columns with better max width for larger screens
+            return [GridItem(.adaptive(minimum: 140, maximum: 160), spacing: Theme.Spacing.lg)]
+        }
+        #endif
+        
+        // iPhone: Standard layout
+        return [GridItem(.adaptive(minimum: 140), spacing: Theme.Spacing.md)]
+    }
+    
+    private func adaptiveSpacing() -> CGFloat {
+        #if os(iOS)
+        if UIDevice.current.userInterfaceIdiom == .pad {
+            return Theme.Spacing.xl // More generous spacing on iPad
+        }
+        #endif
+        
+        return Theme.Spacing.lg
+    }
+    
+    private func adaptivePadding() -> EdgeInsets {
+        #if os(iOS)
+        if UIDevice.current.userInterfaceIdiom == .pad {
+            // iPad: More generous padding for better use of screen real estate
+            return EdgeInsets(
+                top: Theme.Spacing.xl, 
+                leading: Theme.Spacing.xxl, 
+                bottom: Theme.Spacing.xl, 
+                trailing: Theme.Spacing.xxl
+            )
+        }
+        #endif
+        
+        // iPhone: Standard padding
+        return EdgeInsets(
+            top: Theme.Spacing.md, 
+            leading: Theme.Spacing.md, 
+            bottom: Theme.Spacing.md, 
+            trailing: Theme.Spacing.md
+        )
     }
 }
 
