@@ -10,100 +10,188 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             List {
-                // Theme Section
-                Section("Appearance") {
+                // Theme Section - Enhanced for App Store appeal
+                Section {
                     Button {
                         showingThemePicker = true
                         HapticFeedbackManager.shared.lightImpact()
                     } label: {
-                        HStack {
-                            Image(systemName: "paintbrush.fill")
-                                .foregroundColor(Color.theme.primary)
-                                .frame(width: 24)
-                            
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("Theme")
-                                    .font(.body)
+                        HStack(spacing: Theme.Spacing.md) {
+                            // Beautiful gradient icon background
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(
+                                        LinearGradient(
+                                            colors: [
+                                                Color.theme.primary,
+                                                Color.theme.secondary
+                                            ],
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        )
+                                    )
+                                    .frame(width: 36, height: 36)
                                 
-                                Text(themeManager.currentTheme.displayName)
-                                    .font(.caption)
-                                    .foregroundColor(Color.theme.secondaryText)
+                                Image(systemName: "paintbrush.fill")
+                                    .foregroundColor(.white)
+                                    .font(.system(size: 18, weight: .medium))
+                            }
+                            .shadow(color: Color.theme.primary.opacity(0.3), radius: 4, x: 0, y: 2)
+                            
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Choose Your Theme")
+                                    .font(.headline)
+                                    .foregroundColor(Color.theme.primaryText)
+                                
+                                HStack(spacing: Theme.Spacing.xs) {
+                                    Text(themeManager.currentTheme.emoji)
+                                        .font(.title3)
+                                    
+                                    Text(themeManager.currentTheme.displayName)
+                                        .font(.subheadline)
+                                        .foregroundColor(Color.theme.secondaryText)
+                                    
+                                    Text("•")
+                                        .foregroundColor(Color.theme.outline)
+                                        .font(.caption)
+                                    
+                                    Text("5 Beautiful Options")
+                                        .font(.caption)
+                                        .foregroundColor(Color.theme.primary)
+                                        .fontWeight(.medium)
+                                }
                             }
                             
                             Spacer()
                             
-                            Text(themeManager.currentTheme.emoji)
-                                .font(.title2)
-                            
                             Image(systemName: "chevron.right")
                                 .foregroundColor(Color.theme.outline)
-                                .font(.caption)
+                                .font(.footnote)
+                                .fontWeight(.semibold)
                         }
+                        .padding(.vertical, Theme.Spacing.xs)
                     }
                     .buttonStyle(PlainButtonStyle())
+                } header: {
+                    Text("Personalization")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                        .foregroundColor(Color.theme.primaryText)
                 }
                 
-                // Reading Goals Section
-                Section("Reading Goals") {
+                // Reading Goals Section - Enhanced
+                Section {
                     settingsRow(
                         icon: "target",
-                        title: "Daily Page Goal",
-                        subtitle: "Not set",
+                        title: "Daily Reading Goal",
+                        subtitle: "Set pages or minutes per day",
                         action: {
-                            // TODO: Implement daily page goal settings
-                            print("Daily page goal tapped")
+                            // TODO: Implement daily reading goal settings
+                            print("Daily reading goal tapped")
                             HapticFeedbackManager.shared.lightImpact()
                         }
                     )
                     
                     settingsRow(
-                        icon: "calendar",
-                        title: "Monthly Book Goal",
-                        subtitle: "Not set",
+                        icon: "calendar.badge.clock",
+                        title: "Monthly Book Challenge",
+                        subtitle: "Track your reading streak",
                         action: {
                             // TODO: Implement monthly book goal settings
                             print("Monthly book goal tapped")
                             HapticFeedbackManager.shared.lightImpact()
                         }
                     )
+                } header: {
+                    Text("Reading Goals")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                        .foregroundColor(Color.theme.primaryText)
                 }
                 
-                // Data Section
-                Section("Data") {
-                    settingsRow(
-                        icon: "square.and.arrow.down",
-                        title: "Import Books",
-                        subtitle: "From Goodreads CSV",
-                        action: {
-                            showingCSVImport = true
-                            HapticFeedbackManager.shared.lightImpact()
+                // Data Section - Enhanced for CSV import prominence
+                Section {
+                    Button {
+                        showingCSVImport = true
+                        HapticFeedbackManager.shared.lightImpact()
+                    } label: {
+                        HStack(spacing: Theme.Spacing.md) {
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(Color.theme.tertiary.opacity(0.15))
+                                    .frame(width: 36, height: 36)
+                                
+                                Image(systemName: "square.and.arrow.down.fill")
+                                    .foregroundColor(Color.theme.tertiary)
+                                    .font(.system(size: 18, weight: .medium))
+                            }
+                            
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Import Your Books")
+                                    .font(.headline)
+                                    .foregroundColor(Color.theme.primaryText)
+                                
+                                HStack(spacing: Theme.Spacing.xs) {
+                                    Text("From Goodreads CSV")
+                                        .font(.subheadline)
+                                        .foregroundColor(Color.theme.secondaryText)
+                                    
+                                    Text("•")
+                                        .foregroundColor(Color.theme.outline)
+                                        .font(.caption)
+                                    
+                                    Text("Quick Setup")
+                                        .font(.caption)
+                                        .foregroundColor(Color.theme.tertiary)
+                                        .fontWeight(.medium)
+                                }
+                            }
+                            
+                            Spacer()
+                            
+                            Image(systemName: "chevron.right")
+                                .foregroundColor(Color.theme.outline)
+                                .font(.footnote)
+                                .fontWeight(.semibold)
                         }
-                    )
+                        .padding(.vertical, Theme.Spacing.xs)
+                    }
+                    .buttonStyle(PlainButtonStyle())
                     
                     settingsRow(
                         icon: "square.and.arrow.up",
-                        title: "Export Data",
-                        subtitle: "Backup your library",
+                        title: "Export Your Data",
+                        subtitle: "Backup your reading library",
                         action: {
                             // TODO: Implement export functionality
                             print("Export data tapped")
                             HapticFeedbackManager.shared.lightImpact()
                         }
                     )
+                } header: {
+                    Text("Your Library")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                        .foregroundColor(Color.theme.primaryText)
                 }
                 
                 // About Section
-                Section("About") {
+                Section {
                     settingsRow(
                         icon: "info.circle",
-                        title: "App Version",
-                        subtitle: "1.0.0",
+                        title: "About Books Tracker",
+                        subtitle: "Version 1.0.0 • Made with 💜",
                         action: {
                             // TODO: Show more detailed about info
-                            print("App version tapped")
+                            print("About tapped")
                             HapticFeedbackManager.shared.lightImpact()
                         }
                     )
+                } header: {
+                    Text("Information")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                        .foregroundColor(Color.theme.primaryText)
                 }
             }
             .navigationTitle("Settings")
@@ -115,6 +203,7 @@ struct SettingsView: View {
                         HapticFeedbackManager.shared.lightImpact()
                     }
                     .foregroundColor(Color.theme.primary)
+                    .fontWeight(.semibold)
                 }
             }
         }
@@ -134,14 +223,21 @@ struct SettingsView: View {
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
-            HStack(spacing: 16) {
-                Image(systemName: icon)
-                    .foregroundColor(Color.theme.primary)
-                    .frame(width: 24)
+            HStack(spacing: Theme.Spacing.md) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(Color.theme.primary.opacity(0.1))
+                        .frame(width: 36, height: 36)
+                    
+                    Image(systemName: icon)
+                        .foregroundColor(Color.theme.primary)
+                        .font(.system(size: 18, weight: .medium))
+                }
                 
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: 4) {
                     Text(title)
                         .font(.body)
+                        .foregroundColor(Color.theme.primaryText)
                     
                     Text(subtitle)
                         .font(.caption)
@@ -152,9 +248,10 @@ struct SettingsView: View {
                 
                 Image(systemName: "chevron.right")
                     .foregroundColor(Color.theme.outline)
-                    .font(.caption)
+                    .font(.footnote)
+                    .fontWeight(.semibold)
             }
-            .padding(.vertical, 8)
+            .padding(.vertical, Theme.Spacing.xs)
         }
         .buttonStyle(PlainButtonStyle())
     }

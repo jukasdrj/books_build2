@@ -50,8 +50,10 @@ struct CulturalDiversityView: View {
     
     var body: some View {
         ScrollView {
-            LazyVStack(spacing: Theme.Spacing.lg) {
-                headerSection
+            LazyVStack(spacing: Theme.Spacing.xl) {
+                // Enhanced hero section for App Store appeal
+                heroSection
+                culturalProgressSection
                 culturalBreakdownSection
                 languageDiversitySection
                 genderDiversitySection
@@ -61,7 +63,16 @@ struct CulturalDiversityView: View {
             .padding(.horizontal, Theme.Spacing.md)
             .padding(.bottom, Theme.Spacing.xl)
         }
-        .background(Color.theme.background)
+        .background(
+            LinearGradient(
+                colors: [
+                    Color.theme.background,
+                    Color.theme.surface.opacity(0.6)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        )
         .navigationTitle("Cultural Diversity")
         .navigationBarTitleDisplayMode(.large)
         .toolbar {
@@ -77,63 +88,164 @@ struct CulturalDiversityView: View {
         }
     }
     
-    private var headerSection: some View {
-        VStack(spacing: Theme.Spacing.md) {
+    // MARK: - Enhanced Hero Section
+    private var heroSection: some View {
+        VStack(spacing: Theme.Spacing.lg) {
+            // Beautiful visual header
+            ZStack {
+                Circle()
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                Color.theme.primary.opacity(0.2),
+                                Color.theme.tertiary.opacity(0.1)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: 120, height: 120)
+                
+                Image(systemName: "globe.americas.fill")
+                    .font(.system(size: 48, weight: .light))
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [
+                                Color.theme.primary,
+                                Color.theme.tertiary
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+            }
+            .shadow(color: Color.theme.primary.opacity(0.15), radius: 20, x: 0, y: 10)
+            
+            VStack(spacing: Theme.Spacing.md) {
+                Text("Reading the World")
+                    .font(.title)
+                    .fontWeight(.bold)
+                    .foregroundColor(Color.theme.primaryText)
+                
+                Text("Explore diverse voices and cultures through the power of literature")
+                    .font(.body)
+                    .foregroundColor(Color.theme.secondaryText)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, Theme.Spacing.md)
+                
+                // Enhanced stats display
+                HStack(spacing: Theme.Spacing.xl) {
+                    VStack(spacing: Theme.Spacing.xs) {
+                        Text("\(readBooks.count)")
+                            .font(.title)
+                            .fontWeight(.bold)
+                            .foregroundColor(Color.theme.primary)
+                        
+                        Text("Books Read")
+                            .font(.caption)
+                            .fontWeight(.medium)
+                            .foregroundColor(Color.theme.secondaryText)
+                    }
+                    
+                    VStack(spacing: Theme.Spacing.xs) {
+                        Text("\(culturalStats.keys.count)")
+                            .font(.title)
+                            .fontWeight(.bold)
+                            .foregroundColor(Color.theme.tertiary)
+                        
+                        Text("Regions")
+                            .font(.caption)
+                            .fontWeight(.medium)
+                            .foregroundColor(Color.theme.secondaryText)
+                    }
+                    
+                    VStack(spacing: Theme.Spacing.xs) {
+                        Text("\(languageStats.keys.count)")
+                            .font(.title)
+                            .fontWeight(.bold)
+                            .foregroundColor(Color.theme.secondary)
+                        
+                        Text("Languages")
+                            .font(.caption)
+                            .fontWeight(.medium)
+                            .foregroundColor(Color.theme.secondaryText)
+                    }
+                }
+            }
+        }
+        .padding(Theme.Spacing.lg)
+        .materialCard()
+        .shadow(color: Color.theme.primary.opacity(0.1), radius: 8, x: 0, y: 4)
+    }
+    
+    // MARK: - Enhanced Cultural Progress Section
+    private var culturalProgressSection: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.md) {
             HStack {
                 VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
-                    Text("Reading the World")
-                        .headlineMedium()
+                    Text("Cultural Journey Progress")
+                        .font(.headline)
+                        .fontWeight(.semibold)
+                        .foregroundColor(Color.theme.primaryText)
                     
-                    Text("Exploring diverse voices and cultures through literature")
-                        .bodyMedium()
+                    Text("Exploring voices from around the globe")
+                        .font(.subheadline)
                         .foregroundColor(Color.theme.secondaryText)
                 }
                 
                 Spacer()
                 
-                VStack(spacing: Theme.Spacing.xs) {
-                    Text("\(readBooks.count)")
-                        .readingStats()
-                    
-                    Text("Books Read")
-                        .labelSmall()
-                        .foregroundColor(Color.theme.secondaryText)
-                }
+                Text("\(culturalStats.keys.count)/\(CulturalRegion.allCases.count)")
+                    .font(.title2)
+                    .fontWeight(.bold)
+                    .foregroundColor(Color.theme.primary)
             }
             
-            // Progress towards global reading goal
-            if readBooks.count > 0 {
-                culturalProgressBar
-            }
+            // Simplified progress visualization
+            culturalProgressVisualization
         }
         .padding(Theme.Spacing.md)
         .materialCard()
     }
     
-    private var culturalProgressBar: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-            HStack {
-                Text("Cultural Regions Explored")
-                    .labelMedium()
-                
-                Spacer()
-                
-                Text("\(culturalStats.keys.count)/\(CulturalRegion.allCases.count)")
-                    .labelMedium()
-                    .foregroundColor(Color.theme.primaryAction)
-            }
-            
-            GeometryReader { geometry in
-                HStack(spacing: 2) {
-                    ForEach(CulturalRegion.allCases, id: \.self) { region in
-                        Rectangle()
-                            .fill(culturalStats[region] != nil ? region.color : Color.theme.outline.opacity(0.3))
-                            .frame(height: 8)
-                            .cornerRadius(4)
-                    }
+    // MARK: - Cultural Progress Visualization Helper
+    private var culturalProgressVisualization: some View {
+        GeometryReader { geometry in
+            HStack(spacing: 3) {
+                ForEach(CulturalRegion.allCases, id: \.self) { region in
+                    culturalRegionBar(for: region)
                 }
             }
-            .frame(height: 8)
+        }
+        .frame(height: 80)
+    }
+    
+    private func culturalRegionBar(for region: CulturalRegion) -> some View {
+        let hasBooks = culturalStats[region] != nil
+        let bookCount = culturalStats[region] ?? 0
+        let barHeight: CGFloat = hasBooks ? max(30, min(60, CGFloat(bookCount) * 8)) : 20
+        
+        return VStack(spacing: Theme.Spacing.xs) {
+            RoundedRectangle(cornerRadius: 4)
+                .fill(hasBooks ? 
+                      LinearGradient(
+                        colors: [region.color, region.color.opacity(0.7)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                      ) : 
+                      LinearGradient(
+                        colors: [Color.theme.outline.opacity(0.2), Color.theme.outline.opacity(0.1)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                      )
+                )
+                .frame(height: barHeight)
+                .shadow(color: hasBooks ? region.color.opacity(0.3) : .clear, 
+                       radius: 4, x: 0, y: 2)
+            
+            Text(region.flag)
+                .font(.caption2)
+                .opacity(hasBooks ? 1.0 : 0.4)
         }
     }
     

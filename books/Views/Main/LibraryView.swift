@@ -196,47 +196,115 @@ struct LibraryView: View {
     
     @ViewBuilder
     private var emptyStateView: some View {
-        VStack(spacing: Theme.Spacing.lg) {
+        VStack(spacing: Theme.Spacing.xl) {
             if searchText.isEmpty {
                 if libraryFilter.showWishlistOnly {
-                    EmptyStateView(
-                        icon: "heart",
-                        title: "Your Wishlist is Empty",
-                        message: "Books you want to read will appear here. Add some books to your wishlist to get started!",
-                        actionTitle: "Find Books",
-                        action: { showingAddBookFlow = true }
+                    AppStoreHeroSection(
+                        title: "Discover Your Next Read",
+                        subtitle: "Books you want to read will appear here",
+                        icon: "heart.circle.fill"
                     )
+                    
+                    VStack(spacing: Theme.Spacing.md) {
+                        FeatureHighlightCard(
+                            icon: "magnifyingglass",
+                            title: "Search & Discover",
+                            description: "Find books from millions of titles",
+                            accentColor: Color.theme.primary
+                        )
+                        
+                        FeatureHighlightCard(
+                            icon: "square.and.arrow.down",
+                            title: "Import from Goodreads",
+                            description: "Instantly add your reading history",
+                            accentColor: Color.theme.secondary
+                        )
+                    }
+                    .padding(.horizontal, Theme.Spacing.lg)
+                    
+                    Button("Start Building Your Wishlist") {
+                        showingAddBookFlow = true
+                        HapticFeedbackManager.shared.lightImpact()
+                    }
+                    .materialButton(style: .filled, size: .large)
+                    .shadow(color: Color.theme.primary.opacity(0.3), radius: 8, x: 0, y: 4)
+                    
                 } else if libraryFilter.isActive {
                     EmptyStateView(
                         icon: "line.3.horizontal.decrease.circle",
                         title: "No Books Match Your Filters",
-                        message: "Try adjusting your filters or add more books to your library.",
-                        actionTitle: "Clear Filters",
+                        message: "Try adjusting your filters or add more books to your library to see them here.",
+                        actionTitle: "Clear All Filters",
                         action: { 
                             withAnimation(.smooth) {
                                 libraryFilter = LibraryFilter.all
                             }
+                            HapticFeedbackManager.shared.lightImpact()
                         }
                     )
                 } else {
-                    EmptyStateView(
-                        icon: "books.vertical",
-                        title: "Your Library is Empty",
-                        message: "Start building your reading collection by adding your first book!",
-                        actionTitle: "Add Your First Book",
-                        action: { showingAddBookFlow = true }
+                    // Main empty state - perfect for App Store screenshots
+                    AppStoreHeroSection(
+                        title: "Your Reading Journey Starts Here",
+                        subtitle: "Track books, celebrate diversity, reach your reading goals",
+                        icon: "books.vertical.circle.fill"
                     )
+                    
+                    VStack(spacing: Theme.Spacing.md) {
+                        FeatureHighlightCard(
+                            icon: "chart.bar.fill",
+                            title: "Beautiful Reading Stats",
+                            description: "Track your progress with gorgeous charts",
+                            accentColor: Color.theme.primary
+                        )
+                        
+                        FeatureHighlightCard(
+                            icon: "globe",
+                            title: "Cultural Diversity Insights",
+                            description: "Explore voices from around the world",
+                            accentColor: Color.theme.tertiary
+                        )
+                        
+                        FeatureHighlightCard(
+                            icon: "paintbrush.fill",
+                            title: "5 Gorgeous Themes",
+                            description: "Personalize your reading sanctuary",
+                            accentColor: Color.theme.secondary
+                        )
+                    }
+                    .padding(.horizontal, Theme.Spacing.lg)
+                    
+                    Button("Add Your First Book") {
+                        showingAddBookFlow = true  
+                        HapticFeedbackManager.shared.lightImpact()
+                    }
+                    .materialButton(style: .filled, size: .large)
+                    .shadow(color: Color.theme.primary.opacity(0.3), radius: 8, x: 0, y: 4)
                 }
             } else {
                 EmptyStateView(
                     icon: "magnifyingglass",
                     title: "No Results for \"\(searchText)\"",
-                    message: "Try checking the spelling or using different search terms."
+                    message: "Try adjusting your search terms or explore our book discovery features.",
+                    actionTitle: "Browse All Books",
+                    action: {
+                        searchText = ""
+                        HapticFeedbackManager.shared.lightImpact()
+                    }
                 )
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.theme.background)
+        .background(
+            LinearGradient(
+                colors: [
+                    Color.theme.background,
+                    Color.theme.surface.opacity(0.5)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        )
     }
 }
 

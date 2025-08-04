@@ -193,30 +193,59 @@ struct EmptyStateView: View {
     
     var body: some View {
         VStack(spacing: Theme.Spacing.xl) {
-            VStack(spacing: Theme.Spacing.md) {
-                Image(systemName: icon)
-                    .labelLarge()
-                    .foregroundColor(.gray)
+            // Enhanced visual hierarchy for App Store appeal
+            VStack(spacing: Theme.Spacing.lg) {
+                // Beautiful gradient background circle for the icon
+                ZStack {
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    Color.theme.primary.opacity(0.1),
+                                    Color.theme.secondary.opacity(0.05)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 120, height: 120)
+                    
+                    Image(systemName: icon)
+                        .font(.system(size: 48, weight: .light))
+                        .foregroundStyle(
+                            LinearGradient(
+                                colors: [Color.theme.primary, Color.theme.secondary],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                }
+                .shadow(color: Color.theme.primary.opacity(0.1), radius: 20, x: 0, y: 10)
                 
-                VStack(spacing: Theme.Spacing.sm) {
+                VStack(spacing: Theme.Spacing.md) {
                     Text(title)
-                        .titleMedium()
-                        .fontWeight(.semibold)
+                        .font(.title2)
+                        .fontWeight(.bold)
+                        .foregroundColor(Color.theme.primaryText)
+                        .multilineTextAlignment(.center)
                     
                     Text(message)
-                        .bodyMedium()
-                        .foregroundColor(.secondary)
+                        .font(.body)
+                        .foregroundColor(Color.theme.secondaryText)
                         .multilineTextAlignment(.center)
-                        .padding(.horizontal)
+                        .lineLimit(3)
+                        .padding(.horizontal, Theme.Spacing.lg)
                 }
             }
             
             if let actionTitle = actionTitle, let action = action {
                 Button(actionTitle, action: action)
-                    .materialButton(style: .filled)
+                    .materialButton(style: .filled, size: .large)
+                    .shadow(color: Color.theme.primary.opacity(0.3), radius: 8, x: 0, y: 4)
             }
         }
-        .frame(maxWidth: 300)
+        .frame(maxWidth: 350)
+        .padding(Theme.Spacing.xl)
     }
 }
 
@@ -238,6 +267,93 @@ struct RefreshableScrollView<Content: View>: View {
         .refreshable {
             await onRefresh()
         }
+    }
+}
+
+// MARK: - App Store Hero Section Component
+struct AppStoreHeroSection: View {
+    let title: String
+    let subtitle: String
+    let icon: String
+    
+    var body: some View {
+        VStack(spacing: Theme.Spacing.lg) {
+            // Hero icon with beautiful gradient
+            ZStack {
+                Circle()
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                Color.theme.primary,
+                                Color.theme.secondary,
+                                Color.theme.tertiary
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: 80, height: 80)
+                    .shadow(color: Color.theme.primary.opacity(0.4), radius: 16, x: 0, y: 8)
+                
+                Image(systemName: icon)
+                    .font(.system(size: 36, weight: .medium))
+                    .foregroundColor(.white)
+            }
+            
+            VStack(spacing: Theme.Spacing.sm) {
+                Text(title)
+                    .font(.largeTitle)
+                    .fontWeight(.bold)
+                    .foregroundColor(Color.theme.primaryText)
+                    .multilineTextAlignment(.center)
+                
+                Text(subtitle)
+                    .font(.title3)
+                    .foregroundColor(Color.theme.secondaryText)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, Theme.Spacing.md)
+            }
+        }
+        .padding(Theme.Spacing.xl)
+    }
+}
+
+// MARK: - Feature Highlight Card
+struct FeatureHighlightCard: View {
+    let icon: String
+    let title: String
+    let description: String
+    let accentColor: Color
+    
+    var body: some View {
+        HStack(spacing: Theme.Spacing.md) {
+            // Icon container
+            ZStack {
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(accentColor.opacity(0.15))
+                    .frame(width: 50, height: 50)
+                
+                Image(systemName: icon)
+                    .font(.system(size: 24, weight: .medium))
+                    .foregroundColor(accentColor)
+            }
+            
+            VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+                Text(title)
+                    .font(.headline)
+                    .fontWeight(.semibold)
+                    .foregroundColor(Color.theme.primaryText)
+                
+                Text(description)
+                    .font(.subheadline)
+                    .foregroundColor(Color.theme.secondaryText)
+                    .lineLimit(2)
+            }
+            
+            Spacer()
+        }
+        .padding(Theme.Spacing.md)
+        .materialCard()
     }
 }
 

@@ -195,3 +195,10 @@ struct AppColorTheme {
     var cultureMiddleEast: Color { adaptiveColor(light: .purple, dark: .purple) }
     var cultureIndigenous: Color { adaptiveColor(light: .orange, dark: .orange) }
 }
+
+// MARK: - UIColor to Color Conversion Helper
+extension UIColor {
+    func toColor() -> Color {
+        return Color(self)
+    }
+}

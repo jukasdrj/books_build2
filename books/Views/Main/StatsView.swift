@@ -11,34 +11,46 @@ struct StatsView: View {
     
     var body: some View {
         ScrollView {
-            LazyVStack(spacing: Theme.Spacing.lg) {
-                // Quick Stats Grid
-                StatsQuickGrid(books: allBooks)
+            LazyVStack(spacing: Theme.Spacing.xl) {
+                // Enhanced hero stats section
+                heroStatsSection
                 
-                // NEW: Charts Section
+                // Charts Section with better presentation
                 if !allBooks.isEmpty {
-                    MonthlyReadsChartView(books: allBooks)
-                    
-                    GenreBreakdownChartView(books: allBooks)
+                    chartsSection
                 }
                 
-                // Enhanced stats sections
+                // Reading achievements and milestones
+                achievementsSection
+                
+                // Enhanced reading status breakdown
                 ReadingStatusBreakdown(books: allBooks)
                 
-                // NEW: Cultural Diversity Section
+                // Cultural Diversity Section
                 if !readBooks.isEmpty {
                     CulturalDiversitySection(books: readBooks)
                 }
                 
-                // Recent Activity
+                // Recent Activity with enhanced presentation
                 if !recentBooks.isEmpty {
                     RecentBooksSection(books: recentBooks)
                 }
             }
-            .padding()
+            .padding(.horizontal, Theme.Spacing.md)
             .padding(.bottom, Theme.Spacing.xl)
         }
+        .background(
+            LinearGradient(
+                colors: [
+                    Color.theme.background,
+                    Color.theme.surface.opacity(0.5)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        )
         .navigationTitle("Reading Stats")
+        .navigationBarTitleDisplayMode(.large)
     }
     
     private var recentBooks: [UserBook] {
@@ -48,6 +60,237 @@ struct StatsView: View {
              }
              .prefix(5)
              .map { $0 }
+    }
+    
+    // MARK: - Enhanced Hero Stats Section
+    private var heroStatsSection: some View {
+        VStack(spacing: Theme.Spacing.lg) {
+            // Beautiful header
+            VStack(spacing: Theme.Spacing.md) {
+                ZStack {
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    Color.theme.primary.opacity(0.2),
+                                    Color.theme.secondary.opacity(0.1)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 100, height: 100)
+                    
+                    Image(systemName: "chart.bar.fill")
+                        .font(.system(size: 40, weight: .medium))
+                        .foregroundStyle(
+                            LinearGradient(
+                                colors: [Color.theme.primary, Color.theme.secondary],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                }
+                .shadow(color: Color.theme.primary.opacity(0.2), radius: 16, x: 0, y: 8)
+                
+                VStack(spacing: Theme.Spacing.sm) {
+                    Text("Your Reading Journey")
+                        .font(.title2)
+                        .fontWeight(.bold)
+                        .foregroundColor(Color.theme.primaryText)
+                    
+                    Text("Track your progress and celebrate your achievements")
+                        .font(.body)
+                        .foregroundColor(Color.theme.secondaryText)
+                        .multilineTextAlignment(.center)
+                }
+            }
+            
+            // Enhanced Quick Stats Grid
+            LazyVGrid(columns: [
+                GridItem(.flexible()),
+                GridItem(.flexible())
+            ], spacing: Theme.Spacing.md) {
+                EnhancedStatCard(
+                    title: "Total Books",
+                    value: "\(allBooks.count)",
+                    icon: "books.vertical.fill",
+                    color: Color.theme.primary,
+                    subtitle: "in your library"
+                )
+                
+                EnhancedStatCard(
+                    title: "Books Read",
+                    value: "\(booksRead)",
+                    icon: "checkmark.circle.fill",
+                    color: Color.theme.tertiary,
+                    subtitle: "completed"
+                )
+                
+                EnhancedStatCard(
+                    title: "Currently Reading",
+                    value: "\(currentlyReading)",
+                    icon: "book.fill",
+                    color: Color.theme.secondary,
+                    subtitle: "in progress"
+                )
+                
+                EnhancedStatCard(
+                    title: "Want to Read",
+                    value: "\(wantToRead)",
+                    icon: "heart.fill",
+                    color: Color.theme.primary.opacity(0.7),
+                    subtitle: "on wishlist"
+                )
+            }
+        }
+        .padding(Theme.Spacing.lg)
+        .materialCard()
+        .shadow(color: Color.theme.primary.opacity(0.1), radius: 12, x: 0, y: 6)
+    }
+    
+    // MARK: - Enhanced Charts Section
+    private var chartsSection: some View {
+        VStack(spacing: Theme.Spacing.lg) {
+            // Monthly reading chart with enhanced presentation
+            VStack(alignment: .leading, spacing: Theme.Spacing.md) {
+                HStack {
+                    VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+                        Text("Books Read This Year")
+                            .font(.headline)
+                            .fontWeight(.semibold)
+                            .foregroundColor(Color.theme.primaryText)
+                        
+                        Text("Your reading momentum throughout the year")
+                            .font(.subheadline)
+                            .foregroundColor(Color.theme.secondaryText)
+                    }
+                    
+                    Spacer()
+                    
+                    Text("\(booksReadThisYear)")
+                        .font(.title)
+                        .fontWeight(.bold)
+                        .foregroundColor(Color.theme.primary)
+                }
+                
+                MonthlyReadsChartView(books: allBooks)
+            }
+            .padding(Theme.Spacing.md)
+            .materialCard()
+            
+            // Genre breakdown with enhanced presentation
+            VStack(alignment: .leading, spacing: Theme.Spacing.md) {
+                HStack {
+                    VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+                        Text("Genre Breakdown")
+                            .font(.headline)
+                            .fontWeight(.semibold)  
+                            .foregroundColor(Color.theme.primaryText)
+                        
+                        Text("\(uniqueGenres) different genres explored")
+                            .font(.subheadline)
+                            .foregroundColor(Color.theme.secondaryText)
+                    }
+                    
+                    Spacer()
+                }
+                
+                GenreBreakdownChartView(books: allBooks)
+            }
+            .padding(Theme.Spacing.md)
+            .materialCard()
+        }
+    }
+    
+    // MARK: - Reading Achievements Section
+    private var achievementsSection: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.md) {
+            HStack {
+                Text("Reading Achievements")
+                    .font(.headline)
+                    .fontWeight(.semibold)
+                    .foregroundColor(Color.theme.primaryText)
+                
+                Spacer()
+                
+                Image(systemName: "trophy.fill")
+                    .foregroundColor(Color.theme.tertiary)
+                    .font(.title3)
+            }
+            
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: Theme.Spacing.md) {
+                    AchievementCard(
+                        title: "First Book",
+                        description: "Started your reading journey",
+                        icon: "star.fill",
+                        isUnlocked: allBooks.count > 0,
+                        color: Color.theme.primary
+                    )
+                    
+                    AchievementCard(
+                        title: "Bookworm",
+                        description: "Read 10 books",
+                        icon: "books.vertical.fill",
+                        isUnlocked: booksRead >= 10,
+                        color: Color.theme.secondary
+                    )
+                    
+                    AchievementCard(
+                        title: "Explorer",
+                        description: "Read from 3 cultures",
+                        icon: "globe.americas.fill",
+                        isUnlocked: culturalRegionsExplored >= 3,
+                        color: Color.theme.tertiary
+                    )
+                    
+                    AchievementCard(
+                        title: "Diverse Reader",
+                        description: "Read 5 languages",
+                        icon: "text.bubble.fill",
+                        isUnlocked: languageCount >= 5,
+                        color: Color.theme.primary.opacity(0.8)
+                    )
+                }
+                .padding(.horizontal, Theme.Spacing.md)
+            }
+        }
+        .padding(Theme.Spacing.md)
+        .materialCard()
+    }
+    
+    // MARK: - Computed Properties for Enhanced Stats
+    private var booksRead: Int {
+        allBooks.filter { $0.readingStatus == .read }.count
+    }
+    
+    private var currentlyReading: Int {
+        allBooks.filter { $0.readingStatus == .reading }.count
+    }
+    
+    private var wantToRead: Int {
+        allBooks.filter { $0.readingStatus == .toRead }.count
+    }
+    
+    private var booksReadThisYear: Int {
+        let currentYear = Calendar.current.component(.year, from: Date())
+        return readBooks.filter { book in
+            guard let dateCompleted = book.dateCompleted else { return false }
+            return Calendar.current.component(.year, from: dateCompleted) == currentYear
+        }.count
+    }
+    
+    private var uniqueGenres: Int {
+        Set(readBooks.compactMap { $0.metadata?.genre }.flatMap { $0 }).count
+    }
+    
+    private var culturalRegionsExplored: Int {
+        Set(readBooks.compactMap { $0.metadata?.culturalRegion }).count
+    }
+    
+    private var languageCount: Int {
+        Set(readBooks.compactMap { $0.metadata?.originalLanguage ?? $0.metadata?.language }).count
     }
 }
 
@@ -255,82 +498,52 @@ struct CulturalDiversitySection: View {
     }
 }
 
-struct StatsQuickGrid: View {
-    let books: [UserBook]
-    
-    var body: some View {
-        LazyVGrid(columns: [
-            GridItem(.flexible()),
-            GridItem(.flexible())
-        ], spacing: 16) {
-            StatCard(
-                title: "Total Books",
-                value: "\(books.count)",
-                icon: "books.vertical",
-                color: Color.theme.primaryAction
-            )
-            
-            StatCard(
-                title: "Books Read",
-                value: "\(booksRead)",
-                icon: "checkmark.circle",
-                color: Color.theme.primaryAction.opacity(0.8)
-            )
-            
-            StatCard(
-                title: "Currently Reading",
-                value: "\(currentlyReading)",
-                icon: "book",
-                color: Color.theme.primaryAction.opacity(0.6)
-            )
-            
-            StatCard(
-                title: "Want to Read",
-                value: "\(wantToRead)",
-                icon: "heart",
-                color: Color.theme.primaryAction.opacity(0.4)
-            )
-        }
-    }
-    
-    private var booksRead: Int {
-        books.filter { $0.readingStatus == .read }.count
-    }
-    
-    private var currentlyReading: Int {
-        books.filter { $0.readingStatus == .reading }.count
-    }
-    
-    private var wantToRead: Int {
-        books.filter { $0.readingStatus == .toRead }.count
-    }
-}
-
-struct StatCard: View {
+// MARK: - Enhanced Stat Card Component
+struct EnhancedStatCard: View {
     let title: String
     let value: String
     let icon: String
     let color: Color
+    let subtitle: String
     
     var body: some View {
-        VStack(spacing: Theme.Spacing.sm) {
-            Image(systemName: icon)
-                .labelLarge()
-                .foregroundColor(color)
+        VStack(spacing: Theme.Spacing.md) {
+            // Icon with gradient background
+            ZStack {
+                Circle()
+                    .fill(color.opacity(0.15))
+                    .frame(width: 50, height: 50)
+                
+                Image(systemName: icon)
+                    .font(.system(size: 24, weight: .medium))
+                    .foregroundColor(color)
+            }
             
-            Text(value)
-                .readingStats()
-                .fontWeight(.bold)
-                .foregroundColor(Color.theme.primaryText)
-            
-            Text(title)
-                .labelMedium()
-                .multilineTextAlignment(.center)
-                .foregroundColor(Color.theme.secondaryText)
+            VStack(spacing: Theme.Spacing.xs) {
+                Text(value)
+                    .font(.title)
+                    .fontWeight(.bold)
+                    .foregroundColor(Color.theme.primaryText)
+                
+                Text(title)
+                    .font(.headline)
+                    .fontWeight(.medium)
+                    .foregroundColor(Color.theme.primaryText)
+                    .multilineTextAlignment(.center)
+                
+                Text(subtitle)
+                    .font(.caption)
+                    .foregroundColor(Color.theme.secondaryText)
+                    .multilineTextAlignment(.center)
+            }
         }
         .frame(maxWidth: .infinity)
         .padding(Theme.Spacing.md)
-        .materialCard(backgroundColor: color.opacity(0.1))
+        .materialCard()
+        .overlay(
+            RoundedRectangle(cornerRadius: Theme.CornerRadius.card)
+                .stroke(color.opacity(0.2), lineWidth: 1)
+        )
     }
 }
 
@@ -464,6 +677,58 @@ struct MetricView: View {
                 .fontWeight(.medium)
                 .foregroundColor(Color.theme.primaryText)
         }
+    }
+}
+
+// MARK: - Achievement Card Component
+struct AchievementCard: View {
+    let title: String
+    let description: String
+    let icon: String
+    let isUnlocked: Bool
+    let color: Color
+    
+    var body: some View {
+        VStack(spacing: Theme.Spacing.sm) {
+            ZStack {
+                Circle()
+                    .fill(isUnlocked ? color.opacity(0.2) : Color.theme.outline.opacity(0.1))
+                    .frame(width: 60, height: 60)
+                
+                Image(systemName: icon)
+                    .font(.system(size: 28, weight: .medium))
+                    .foregroundColor(isUnlocked ? color : Color.theme.outline)
+                
+                if !isUnlocked {
+                    Circle()
+                        .fill(Color.theme.surface.opacity(0.8))
+                        .frame(width: 60, height: 60)
+                    
+                    Image(systemName: "lock.fill")
+                        .font(.system(size: 16))
+                        .foregroundColor(Color.theme.outline)
+                }
+            }
+            
+            VStack(spacing: Theme.Spacing.xs) {
+                Text(title)
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .foregroundColor(isUnlocked ? Color.theme.primaryText : Color.theme.outline)
+                    .multilineTextAlignment(.center)
+                
+                Text(description)
+                    .font(.caption)
+                    .foregroundColor(Color.theme.secondaryText)
+                    .multilineTextAlignment(.center)
+                    .lineLimit(2)
+            }
+        }
+        .frame(width: 120)
+        .padding(Theme.Spacing.sm)
+        .materialCard()
+        .opacity(isUnlocked ? 1.0 : 0.6)
+        .animation(.spring(response: 0.5, dampingFraction: 0.8), value: isUnlocked)
     }
 }
 

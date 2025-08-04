@@ -13,60 +13,107 @@ struct ThemePickerView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: Theme.Spacing.lg) {
-                    headerSection
+                VStack(spacing: Theme.Spacing.xl) {
+                    // Enhanced header section for App Store appeal
+                    VStack(spacing: Theme.Spacing.lg) {
+                        ZStack {
+                            Circle()
+                                .fill(
+                                    LinearGradient(
+                                        colors: [
+                                            Color.theme.primary.opacity(0.2),
+                                            Color.theme.secondary.opacity(0.1)
+                                        ],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .frame(width: 100, height: 100)
+                            
+                            Image(systemName: "paintbrush.pointed.fill")
+                                .font(.system(size: 40, weight: .medium))
+                                .foregroundStyle(
+                                    LinearGradient(
+                                        colors: [Color.theme.primary, Color.theme.secondary],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                        }
+                        .shadow(color: Color.theme.primary.opacity(0.2), radius: 16, x: 0, y: 8)
+                        
+                        VStack(spacing: Theme.Spacing.sm) {
+                            Text("Choose Your Perfect Theme")
+                                .font(.title)
+                                .fontWeight(.bold)
+                                .foregroundColor(Color.theme.primaryText)
+                                .multilineTextAlignment(.center)
+                            
+                            Text("Each theme creates a unique reading sanctuary tailored to your mood and style.")
+                                .font(.body)
+                                .foregroundColor(Color.theme.secondaryText)
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal, Theme.Spacing.md)
+                        }
+                    }
                     
-                    ForEach(ThemeVariant.allCases) { theme in
-                        ThemePreviewCard(
-                            theme: theme,
-                            isSelected: selectedTheme == theme,
-                            onSelect: {
-                                selectTheme(theme)
-                            }
-                        )
+                    // Theme cards with enhanced presentation
+                    VStack(spacing: Theme.Spacing.lg) {
+                        ForEach(ThemeVariant.allCases) { theme in
+                            ThemePreviewCard(
+                                theme: theme,
+                                isSelected: selectedTheme == theme,
+                                onSelect: {
+                                    selectTheme(theme)
+                                }
+                            )
+                            .shadow(
+                                color: selectedTheme == theme ? 
+                                    theme.colorDefinition.primary.light.toColor().opacity(0.3) : 
+                                    Color.black.opacity(0.05),
+                                radius: selectedTheme == theme ? 12 : 4,
+                                x: 0,
+                                y: selectedTheme == theme ? 8 : 2
+                            )
+                        }
                     }
                 }
                 .padding(Theme.Spacing.lg)
             }
-            .background(Color.theme.surface)
-            .navigationTitle("Choose Theme")
+            .background(
+                LinearGradient(
+                    colors: [
+                        Color.theme.background,
+                        Color.theme.surface.opacity(0.8)
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+            )
+            .navigationTitle("Themes")
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Done") {
                         dismiss()
+                        HapticFeedbackManager.shared.lightImpact()
                     }
                     .foregroundColor(Color.theme.primary)
+                    .fontWeight(.semibold)
                 }
             }
         }
-    }
-    
-    @ViewBuilder
-    private var headerSection: some View {
-        VStack(spacing: Theme.Spacing.sm) {
-            Text("Personalize Your Experience")
-                .font(.title2).bold()
-                .foregroundColor(Color.theme.primaryText)
-                .multilineTextAlignment(.center)
-            
-            Text("Choose a theme that matches your reading mood.")
-                .font(.subheadline)
-                .foregroundColor(Color.theme.secondaryText)
-                .multilineTextAlignment(.center)
-        }
-        .padding(.bottom, Theme.Spacing.md)
     }
     
     private func selectTheme(_ theme: ThemeVariant) {
         selectedTheme = theme
         themeManager.switchTheme(to: theme, animated: true)
         
-        // Haptic feedback for a delightful interaction
-        HapticFeedbackManager.shared.lightImpact()
+        // Enhanced haptic feedback for a delightful interaction
+        HapticFeedbackManager.shared.mediumImpact()
         
         // Automatically dismiss after a short delay to show the selection
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             dismiss()
         }
     }

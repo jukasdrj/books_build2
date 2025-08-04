@@ -22,35 +22,25 @@ struct SearchView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // Search Bar
+            // Enhanced Search Bar
             searchBar
                 .padding()
                 .background(Color.theme.surface)
             
             Divider()
             
-            // Content Area
+            // Content Area with enhanced empty state
             Group {
                 switch searchState {
                 case .idle:
-                    ContentUnavailableView(
-                        "Search for a Book", 
-                        systemImage: "books.vertical", 
-                        description: Text("Find your next read by searching the online database.")
-                    )
-                    .foregroundColor(Color.theme.primaryText)
+                    enhancedEmptyState
                     
                 case .searching:
-                    EnhancedLoadingView(message: "Searching for books...")
+                    EnhancedLoadingView(message: "Searching millions of books")
                     
                 case .results(let books):
                     if books.isEmpty {
-                        ContentUnavailableView(
-                            "No Results Found", 
-                            systemImage: "questionmark.circle", 
-                            description: Text("Try checking the spelling or using a different search term.")
-                        )
-                        .foregroundColor(Color.theme.primaryText)
+                        noResultsState
                     } else {
                         searchResultsList(books: books)
                     }
@@ -63,7 +53,16 @@ struct SearchView: View {
                     )
                 }
             }
-            .background(Color.theme.surface)
+            .background(
+                LinearGradient(
+                    colors: [
+                        Color.theme.background,
+                        Color.theme.surface.opacity(0.5)
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+            )
             .animation(Theme.Animation.standardEaseInOut, value: searchState)
         }
         .navigationTitle("Search Books")
@@ -71,7 +70,7 @@ struct SearchView: View {
         .background(Color.theme.background)
     }
     
-    // MARK: - Search Bar Component
+    // MARK: - Enhanced Search Bar Component
     @ViewBuilder
     private var searchBar: some View {
         HStack(spacing: Theme.Spacing.sm) {
@@ -137,6 +136,149 @@ struct SearchView: View {
         .scrollContentBackground(.hidden)
     }
 
+    // MARK: - Enhanced Empty State for App Store Appeal
+    @ViewBuilder
+    private var enhancedEmptyState: some View {
+        VStack(spacing: Theme.Spacing.xl) {
+            // Beautiful hero section
+            VStack(spacing: Theme.Spacing.lg) {
+                ZStack {
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    Color.theme.primary.opacity(0.2),
+                                    Color.theme.secondary.opacity(0.1)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 120, height: 120)
+                    
+                    Image(systemName: "magnifyingglass.circle.fill")
+                        .font(.system(size: 48, weight: .light))
+                        .foregroundStyle(
+                            LinearGradient(
+                                colors: [Color.theme.primary, Color.theme.secondary],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                }
+                .shadow(color: Color.theme.primary.opacity(0.15), radius: 20, x: 0, y: 10)
+                
+                VStack(spacing: Theme.Spacing.md) {
+                    Text("Discover Your Next Great Read")
+                        .font(.title)
+                        .fontWeight(.bold)
+                        .foregroundColor(Color.theme.primaryText)
+                        .multilineTextAlignment(.center)
+                    
+                    Text("Search millions of books by title, author, or ISBN")
+                        .font(.body)
+                        .foregroundColor(Color.theme.secondaryText)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, Theme.Spacing.md)
+                }
+            }
+            
+            // Feature highlights
+            VStack(spacing: Theme.Spacing.md) {
+                FeatureHighlightCard(
+                    icon: "globe",
+                    title: "Millions of Books",
+                    description: "Access the world's largest book database",
+                    accentColor: Color.theme.primary
+                )
+                
+                FeatureHighlightCard(
+                    icon: "sparkles",
+                    title: "Smart Search",
+                    description: "Find books by title, author, or ISBN",
+                    accentColor: Color.theme.secondary
+                )
+                
+                FeatureHighlightCard(  
+                    icon: "books.vertical",
+                    title: "Build Your Library",
+                    description: "Add books directly to your collection",
+                    accentColor: Color.theme.tertiary
+                )
+            }
+            .padding(.horizontal, Theme.Spacing.lg)
+            
+            Spacer()
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(.top, Theme.Spacing.xl)
+    }
+    
+    // MARK: - Enhanced No Results State
+    @ViewBuilder
+    private var noResultsState: some View {
+        VStack(spacing: Theme.Spacing.xl) {
+            VStack(spacing: Theme.Spacing.lg) {
+                ZStack {
+                    Circle()
+                        .fill(Color.theme.outline.opacity(0.1))
+                        .frame(width: 100, height: 100)
+                    
+                    Image(systemName: "questionmark.circle.fill")
+                        .font(.system(size: 40, weight: .light))
+                        .foregroundColor(Color.theme.outline)
+                }
+                
+                VStack(spacing: Theme.Spacing.md) {
+                    Text("No Results Found")
+                        .font(.title2)
+                        .fontWeight(.semibold)
+                        .foregroundColor(Color.theme.primaryText)
+                    
+                    Text("Try checking the spelling or using different search terms")
+                        .font(.body)
+                        .foregroundColor(Color.theme.secondaryText)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, Theme.Spacing.md)
+                }
+            }
+            
+            VStack(spacing: Theme.Spacing.sm) {
+                Text("Search Tips:")
+                    .font(.headline)
+                    .foregroundColor(Color.theme.primaryText)
+                
+                VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+                    searchTip(icon: "textformat", text: "Try the book's full title")
+                    searchTip(icon: "person", text: "Search by author's name")
+                    searchTip(icon: "barcode", text: "Use ISBN for exact matches")
+                    searchTip(icon: "magnifyingglass", text: "Use simpler keywords")
+                }
+            }
+            .padding(Theme.Spacing.md)
+            .materialCard()
+            .padding(.horizontal, Theme.Spacing.lg)
+            
+            Spacer()
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(.top, Theme.Spacing.xl)
+    }
+    
+    private func searchTip(icon: String, text: String) -> some View {
+        HStack(spacing: Theme.Spacing.sm) {
+            Image(systemName: icon)
+                .foregroundColor(Color.theme.primary)
+                .frame(width: 20)
+            
+            Text(text)
+                .font(.subheadline)
+                .foregroundColor(Color.theme.primaryText)
+            
+            Spacer()
+        }
+    }
+    
     // MARK: - Actions
     private func performSearch() {
         let trimmedQuery = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
