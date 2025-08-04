@@ -28,7 +28,8 @@ struct AppColorTheme {
     }
     
     var onPrimary: Color {
-        adaptiveColor(light: .white, dark: colorDef.primary.light.withAlphaComponent(0.9))
+        // Enhanced contrast: Always use white for better readability on primary colors
+        adaptiveColor(light: .white, dark: .white)
     }
     
     var primaryContainer: Color {

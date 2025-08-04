@@ -570,10 +570,12 @@ struct ActionButtonsSection: View {
                     Image(systemName: "pencil")
                     Text("Edit Details")
                         .labelLarge()
+                        .fontWeight(.semibold)
                 }
                 .frame(maxWidth: .infinity)
             }
-            .materialButton(style: .filled, size: .large)
+            .materialButton(style: .tonal, size: .large)
+            .shadow(color: Color.theme.primary.opacity(0.2), radius: 4, x: 0, y: 2)
         }
         .padding(.top)
     }

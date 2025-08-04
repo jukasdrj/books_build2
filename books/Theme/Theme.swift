@@ -490,15 +490,18 @@ struct MaterialButtonModifier: ViewModifier {
         
         switch style {
         case .filled:
-            return SwiftUI.Color.theme.onPrimary
+            // Enhanced contrast: Always use white on filled buttons for better readability
+            return SwiftUI.Color.white
         case .tonal:
             return SwiftUI.Color.theme.onSecondaryContainer
         case .outlined, .text:
             return SwiftUI.Color.theme.primary
         case .destructive:
-            return SwiftUI.Color.theme.onError
+            // Enhanced contrast: Always use white on destructive buttons
+            return SwiftUI.Color.white
         case .success:
-            return SwiftUI.Color.theme.onSuccess
+            // Enhanced contrast: Always use white on success buttons
+            return SwiftUI.Color.white
         }
     }
     
