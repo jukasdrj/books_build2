@@ -8,6 +8,8 @@ struct SearchView: View {
     @State private var searchQuery = ""
     @State private var searchState: SearchState = .idle
     
+    @State private var showingBarcodeScanner = false
+
     enum SearchState: Equatable {
         case idle
         case searching
@@ -17,13 +19,6 @@ struct SearchView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // Enhanced Search Bar
-            searchBar
-                .padding()
-                .background(Color.theme.surface)
-            
-            Divider()
-            
             // Content Area with enhanced empty state
             Group {
                 switch searchState {
@@ -77,58 +72,26 @@ struct SearchView: View {
                     }
                     .accessibilityLabel("Clear search")
                     .accessibilityHint("Clear the search field and results")
+                    .foregroundColor(Color.theme.primaryAction)
                 }
+            }
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button {
+                    showingBarcodeScanner = true
+                } label: {
+                    Label("Scan Barcode", systemImage: "barcode.viewfinder")
+                }
+                .accessibilityLabel("Scan book barcode")
+                .accessibilityHint("Opens the camera to scan a book's ISBN barcode")
+                .foregroundColor(Color.theme.primaryAction)
             }
         }
-    }
-    
-    // MARK: - Enhanced Search Bar Component
-    @ViewBuilder
-    private var searchBar: some View {
-        HStack(spacing: Theme.Spacing.sm) {
-            HStack(spacing: Theme.Spacing.sm) {
-                Image(systemName: "magnifyingglass")
-                    .foregroundStyle(.primary)
-                    .labelMedium()
-                
-                TextField("Search by title, author, or ISBN", text: $searchQuery)
-                    .bodyMedium()
-                    .onSubmit(performSearch)
-                    .submitLabel(.search)
-                
-                if !searchQuery.isEmpty {
-                    Button(action: clearSearch) {
-                        Image(systemName: "xmark.circle.fill")
-                            .foregroundStyle(.primary)
-                            .labelMedium()
-                    }
-                    .buttonStyle(.plain)
-                    .frame(minWidth: Theme.Size.minTouchTarget, minHeight: Theme.Size.minTouchTarget)
-                    .contentShape(Rectangle())
-                    .accessibilityLabel("Clear search")
-                }
+        .sheet(isPresented: $showingBarcodeScanner) {
+            BarcodeScannerView { scannedBarcode in
+                searchQuery = scannedBarcode
+                showingBarcodeScanner = false
+                performSearch()
             }
-            .padding(.horizontal, Theme.Spacing.md)
-            .padding(.vertical, Theme.Spacing.sm)
-            .background(Color.theme.surfaceVariant)
-            .cornerRadius(Theme.CornerRadius.medium)
-            
-            Button(action: performSearch) {
-                HStack(spacing: 4) {
-                    if case .searching = searchState {
-                        ProgressView()
-                            .scaleEffect(0.8)
-                            .tint(.white)
-                    }
-                    Text("Search")
-                        .labelMedium()
-                }
-            }
-            .materialButton(style: .filled, size: .medium)
-            .frame(minHeight: Theme.Size.minTouchTarget)
-            .disabled(searchQuery.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || searchState == .searching)
-            .accessibilityLabel("Search for books")
-            .accessibilityHint("Searches the online database for books matching your query")
         }
     }
     

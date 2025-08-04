@@ -50,8 +50,8 @@ struct SearchResultDetailView: View {
                                     .fontWeight(.medium)
                                     .padding(.horizontal, Theme.Spacing.sm)
                                     .padding(.vertical, Theme.Spacing.xs)
-                                    .background(SwiftUI.Color.purple.opacity(0.2))
-                                    .foregroundColor(.purple)
+                                    .background(Color.theme.primary.opacity(0.2))
+                                    .foregroundColor(Color.theme.primary)
                                     .cornerRadius(8)
                             }
                             Spacer()
@@ -164,6 +164,7 @@ struct SearchResultDetailView: View {
                         // Handle save completion
                         print("Book details saved: \(savedBook.metadata?.title ?? "Unknown")")
                         showingEditView = false
+                        dismiss() 
                     }
                 }
             }

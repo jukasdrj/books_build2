@@ -85,7 +85,7 @@ struct ThemeColorDefinition {
     // MARK: - Purple Boho (Current)
     static let purpleBoho = ThemeColorDefinition(
         primary: (
-            light: UIColor(red: 0.45, green: 0.25, blue: 0.75, alpha: 1.0),
+            light: UIColor(red: 0.5, green: 0.3, blue: 0.8, alpha: 1.0), // CHANGE: Slightly more vibrant purple for light mode
             dark: UIColor(red: 0.75, green: 0.60, blue: 0.95, alpha: 1.0)
         ),
         secondary: (
@@ -97,12 +97,12 @@ struct ThemeColorDefinition {
             dark: UIColor(red: 0.95, green: 0.80, blue: 0.65, alpha: 1.0)
         ),
         surface: (
-            light: UIColor(red: 0.98, green: 0.97, blue: 0.99, alpha: 1.0),
-            dark: UIColor(red: 0.12, green: 0.10, blue: 0.15, alpha: 1.0)
+            light: UIColor(red: 0.93, green: 0.92, blue: 0.95, alpha: 1.0), // CHANGE: Slightly deeper cream for light surface
+            dark: UIColor(red: 0.15, green: 0.13, blue: 0.18, alpha: 1.0)  // CHANGE: Slightly more purple for dark surface
         ),
         background: (
-            light: UIColor.systemBackground,
-            dark: UIColor.systemBackground
+            light: UIColor(red: 0.96, green: 0.95, blue: 0.97, alpha: 1.0), // CHANGE: Soft cream/off-white for light background
+            dark: UIColor(red: 0.08, green: 0.06, blue: 0.12, alpha: 1.0)  // CHANGE: Very dark, subtle purple for dark background
         ),
         error: (
             light: UIColor(red: 0.75, green: 0.25, blue: 0.35, alpha: 1.0),
