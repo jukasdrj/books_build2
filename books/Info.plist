@@ -4,9 +4,9 @@
 <dict>
     <!-- Basic App Info -->
     <key>CFBundleName</key>
-    <string>Books</string>
+    <string>BookDiversity</string>
     <key>CFBundleDisplayName</key>
-    <string>Books</string>
+    <string>BookDiversity</string>
     <key>CFBundleIdentifier</key>
     <string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
     <key>CFBundleVersion</key>

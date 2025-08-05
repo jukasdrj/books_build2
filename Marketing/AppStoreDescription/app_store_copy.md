@@ -1,7 +1,7 @@
 # Books Reading Tracker - App Store Copy
 
 ## App Name
-**Books** - Reading Tracker
+**BookDiversity** - Reading Tracker
 
 ## Subtitle
 Celebrate diverse literature with beautiful tracking
@@ -10,7 +10,7 @@ Celebrate diverse literature with beautiful tracking
 
 **Transform your reading journey into a celebration of global literature.**
 
-Books Reading Tracker is the only reading app designed specifically to help you discover and celebrate cultural diversity in your reading habits. With our gorgeous purple boho aesthetic and comprehensive tracking features, every book becomes part of your beautiful literary journey.
+BookDiversity is the only reading app designed specifically to help you discover and celebrate cultural diversity in your reading habits.
 
 ### ✨ What Makes Us Special
 

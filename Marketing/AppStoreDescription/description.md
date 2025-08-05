@@ -1,8 +1,8 @@
 # App Store Description for Books Reading Tracker
 
-## 📚 Books Reading Tracker
+## 📚 BookDiversity
 
-Transform your reading journey with the Books Reading Tracker - a beautifully designed app that celebrates cultural diversity and provides seamless book tracking.
+Transform your reading journey with BookDiversity - a beautifully designed app that celebrates cultural diversity and provides seamless book tracking.
 
 ### Key Features:
 
