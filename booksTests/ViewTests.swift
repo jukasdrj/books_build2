@@ -56,10 +56,10 @@ struct ViewTests {
         #expect(libraryView != nil)
     }
     
-    @Test("WishlistLibraryView Creation - Should initialize correctly")
-    func testWishlistLibraryViewCreation() throws {
+    @Test("LibraryView with Wishlist - Should initialize correctly")
+    func testLibraryViewWithWishlistCreation() throws {
         let container = try createTestContainer()
-        let wishlistView = WishlistLibraryView().modelContainer(container)
+        let wishlistView = LibraryView(filter: .wishlistOnly).modelContainer(container)
         
         #expect(wishlistView != nil)
     }
