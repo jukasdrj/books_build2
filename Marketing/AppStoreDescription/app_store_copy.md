@@ -1,7 +1,7 @@
 # Books Reading Tracker - App Store Copy
 
 ## App Name
-**papertracks** - Reading Tracker
+**oooePaperTracks** - Reading Tracker
 
 ## Subtitle
 Celebrate diverse literature with beautiful tracking
@@ -10,7 +10,7 @@ Celebrate diverse literature with beautiful tracking
 
 **Transform your reading journey into a celebration of global literature.**
 
-papertracks is the only reading app designed specifically to help you discover and celebrate cultural diversity in your reading habits.
+oooePaperTracks is the only reading app designed specifically to help you discover and celebrate cultural diversity in your reading habits.
 
 ### ✨ What Makes Us Special
 

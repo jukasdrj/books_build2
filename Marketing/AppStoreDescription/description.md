@@ -1,8 +1,8 @@
 # App Store Description for Books Reading Tracker
 
-## 📚 papertracks
+## 📚 oooePaperTracks
 
-Transform your reading journey with papertracks - a beautifully designed app that celebrates cultural diversity and provides seamless book tracking.
+Transform your reading journey with oooePaperTracks - a beautifully designed app that celebrates cultural diversity and provides seamless book tracking.
 
 ### Key Features:
 

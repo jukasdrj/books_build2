@@ -4,9 +4,9 @@
 <dict>
     <!-- Basic App Info -->
 	<key>CFBundleName</key>
-	<string>papertracks</string>
+	<string>oooePaperTracks</string>
 	<key>CFBundleDisplayName</key>
-	<string>papertracks</string>
+	<string>oooePaperTracks</string>
     <key>CFBundleIdentifier</key>
     <string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
     <key>CFBundleVersion</key>
