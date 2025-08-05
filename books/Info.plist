@@ -3,10 +3,10 @@
 <plist version="1.0">
 <dict>
     <!-- Basic App Info -->
-    <key>CFBundleName</key>
-    <string>BookDiversity</string>
-    <key>CFBundleDisplayName</key>
-    <string>BookDiversity</string>
+	<key>CFBundleName</key>
+	<string>papertracks</string>
+	<key>CFBundleDisplayName</key>
+	<string>papertracks</string>
     <key>CFBundleIdentifier</key>
     <string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
     <key>CFBundleVersion</key>

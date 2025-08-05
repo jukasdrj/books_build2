@@ -15,3 +15,7 @@ Packages/
 Documentation.md
 Roadmap.md
 Accomplished.mdDerivedData/
+DerivedData/
+*.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+build/
