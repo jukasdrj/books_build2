@@ -1,8 +1,8 @@
 # App Store Description for Books Reading Tracker
 
-## 📚 BookDiversity
+## 📚 papertracks
 
-Transform your reading journey with BookDiversity - a beautifully designed app that celebrates cultural diversity and provides seamless book tracking.
+Transform your reading journey with papertracks - a beautifully designed app that celebrates cultural diversity and provides seamless book tracking.
 
 ### Key Features:
 
