@@ -267,3 +267,14 @@ The app is now **App Store submission ready** with:
 ## 核心理念 (Updated)
 
 The app has evolved into a **App Store-ready reading sanctuary** that celebrates both literary diversity and aesthetic beauty, providing users with a uniform, elegant interface for tracking their reading journey without distractions or visual chaos, enhanced with 5 gorgeous theme options and compelling visual storytelling optimized for App Store presentation.
+
+## New: Screenshot Mode for App Store Assets
+
+- To enable reproducible, beautiful screenshots, a global `ScreenshotMode` is now available.
+- Launch the app with the `screenshotMode` launch argument (set in Xcode scheme) or the `SCREENSHOT_MODE=1` environment variable.
+- When enabled:
+    - App launches with seeded demo UserBooks spanning all feature areas (Library, Search, Stats, Culture, Themes).
+    - All data is in-memory (real user data protected).
+    - Light mode enforced for App Store consistency.
+    - A purple gradient “Screenshot Mode” banner appears at the top of every main view for QA and safety.
+- Remove for production shipping, but perfect for App Store, TestFlight, or demo day.

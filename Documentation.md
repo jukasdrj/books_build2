@@ -213,6 +213,24 @@ User-specific book tracking including:
 - **Comprehensive Filter Sheet**: Detailed filtering options with wishlist, owned, favorites
 - **Dynamic UI**: Context-aware titles and empty states based on active filters
 
+## Screenshot Mode (App Store Asset Generation)
+
+- To create professional, on-brand screenshots, enable Screenshot Mode via launch argument or environment variable.
+- When enabled:
+    - Launches with seeded demo books for “hero” states in Library, Search, Stats, Diversity, and Theme picker.
+    - Automatically switches to light mode for App Store consistency.
+    - Disables popups, network noise, and onboarding modals for clean screenshots.
+    - Adds a purple “Screenshot Mode” banner for visual clarity that demo data is active.
+- Usage:  
+    - In Xcode: Product > Scheme > Edit Scheme > Arguments > add `screenshotMode`
+    - Or set `SCREENSHOT_MODE=1` in the environment.
+
+### Benefits
+
+- One-click to reproduce screenshot-ready hero scenes on any device or simulator (iPhone/iPad).
+- Ensures App Store submissions are pixel-perfect and safe for reviewers/marketing.
+- Will not affect end-user builds or production data.
+
 ## Future Expansion
 
 The app is designed with extensibility in mind:

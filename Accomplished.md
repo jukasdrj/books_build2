@@ -988,3 +988,10 @@ Today's session was highly productive, focusing on three major areas: implementi
 - Improves experience for users with vestibular disorders
 - Maintains visual feedback while being accessibility-conscious
 - Shows consideration for diverse user needs
+
+### [DATE] — Added ScreenshotMode System for App Store Assets
+
+- Added `ScreenshotMode` system to ensure deterministic, on-brand seeded demo data appears any time screenshots are required or for QA review.
+- Injected “hero” books and stats to all major views (Library, Search, Stats, Culture, Themes) to match App Store submission checklist.
+- Enforced light mode and visual safety banner on all primary main views.
+- Guaranteed: Real user data is never modified, only seed data is shown when ScreenshotMode is on.

@@ -77,6 +77,31 @@ struct LibraryView: View {
     
     var body: some View {
         VStack(spacing: 0) {
+            // ScreenshotMode visual banner (purple gradient, visible only in ScreenshotMode)
+            if ScreenshotMode.isEnabled {
+                ZStack {
+                    LinearGradient(
+                        colors: [Color.purple.opacity(0.85), Color.purple.opacity(0.65)],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                    HStack {
+                        Image(systemName: "camera.aperture")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                        Text("Screenshot Mode")
+                            .font(.headline)
+                            .fontWeight(.bold)
+                            .foregroundColor(.white)
+                        Spacer()
+                    }
+                    .padding(.horizontal)
+                }
+                .frame(height: 32)
+                .cornerRadius(0)
+                .shadow(color: Color.purple.opacity(0.15), radius: 7, x: 0, y: 4)
+            }
+
             // Quick filter bar
             QuickFilterBar(filter: $libraryFilter) { }
             

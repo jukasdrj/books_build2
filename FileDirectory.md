@@ -213,3 +213,5 @@ The Books Reading Tracker project is organized into several main directories wit
 - **Wishlist Integration**: Access wishlist items through filtering instead of separate tab
 - **Comprehensive Filter Sheet**: Detailed filtering options with multiple criteria
 - **Dynamic UI**: Context-aware titles and empty states based on active filters
+
+/books/Support/ScreenshotMode.swift      # Helper to enable screenshot mode and provide seeded demo data for App Store assets

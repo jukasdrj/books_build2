@@ -1,6 +1,7 @@
 // books-buildout/books/booksApp.swift
 import SwiftUI
 import SwiftData
+import ScreenshotMode // Add this import for the helper
 
 @main
 struct booksApp: App {
@@ -9,7 +10,32 @@ struct booksApp: App {
             UserBook.self,
             BookMetadata.self,
         ])
-        
+
+        // --- Screenshot Mode block ---
+        if ScreenshotMode.isEnabled {
+            // Always use in-memory storage for screenshots
+            let config = ModelConfiguration(isStoredInMemoryOnly: true)
+            do {
+                let container = try ModelContainer(for: schema, configurations: [config])
+
+                // Wipe and seed demo data
+                let context = ModelContext(container)
+                let books = ScreenshotMode.demoBooks()
+                for book in books {
+                    context.insert(book)
+                    if let metadata = book.metadata {
+                        context.insert(metadata)
+                    }
+                }
+
+                print("[ScreenshotMode] Loaded demo data for screenshots.")
+                return container
+            } catch {
+                fatalError("ScreenshotMode: Failed to create in-memory ModelContainer: \(error)")
+            }
+        }
+        // --- End Screenshot Mode block ---
+
         // Clean migration for ReadingStatus changes
         let modelConfiguration = ModelConfiguration(
             "BooksModel_v5_StatusLabels", // New version forces migration
@@ -26,7 +52,7 @@ struct booksApp: App {
             print("Could not create ModelContainer: \(error)")
             // For development, we can reset to a clean state
             print("Attempting fallback migration...")
-            
+
             // Try with a completely new database name
             let fallbackConfig = ModelConfiguration(
                 "BooksModel_Fresh_\(Date().timeIntervalSince1970)",
@@ -34,7 +60,7 @@ struct booksApp: App {
                 isStoredInMemoryOnly: false,
                 allowsSave: true
             )
-            
+
             do {
                 return try ModelContainer(for: schema, configurations: [fallbackConfig])
             } catch {
@@ -47,6 +73,7 @@ struct booksApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environment(\.colorScheme, ScreenshotMode.forceLightMode ? .light : nil)
         }
         .modelContainer(sharedModelContainer)
     }

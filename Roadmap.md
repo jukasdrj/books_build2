@@ -10,6 +10,8 @@
     * [ ] Implement theme-specific wallpapers or backgrounds
     * [ ] Add light/dark mode toggle within each theme
 
+* ✅ Implement screenshot mode with seeded demo data and App Store safety banner for all main features (Library, Search, Stats, Culture, Themes).
+
 ### Medium Term (1-3 months) 🚀
 
 * **iCloud & Sync**
