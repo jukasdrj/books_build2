@@ -13,6 +13,14 @@ struct SearchResultDetailView: View {
     @Environment(\.dismiss) private var dismiss
     
     let bookMetadata: BookMetadata
+    let fromBarcodeScanner: Bool
+    let onReturnToBarcode: (() -> Void)?
+    
+    init(bookMetadata: BookMetadata, fromBarcodeScanner: Bool = false, onReturnToBarcode: (() -> Void)? = nil) {
+        self.bookMetadata = bookMetadata
+        self.fromBarcodeScanner = fromBarcodeScanner
+        self.onReturnToBarcode = onReturnToBarcode
+    }
     
     @State private var showingDuplicateAlert = false
     @State private var existingBook: UserBook?
@@ -241,7 +249,12 @@ struct SearchResultDetailView: View {
             // Success haptic feedback
             if toWishlist {
                 HapticFeedbackManager.shared.lightImpact()
-                successMessage = "📚 Added to your wishlist! Returning to search..."
+                
+                if fromBarcodeScanner {
+                    successMessage = "📚 Added to your wishlist! Returning to scanner..."
+                } else {
+                    successMessage = "📚 Added to your wishlist! Returning to search..."
+                }
                 
                 withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
                     showingSuccessToast = true
@@ -254,9 +267,16 @@ struct SearchResultDetailView: View {
                         showingSuccessToast = false
                     }
                     
-                    // After toast starts fading, wait briefly then dismiss the view
+                    // After toast starts fading, wait briefly then handle navigation
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                        dismiss()
+                        if fromBarcodeScanner && onReturnToBarcode != nil {
+                            dismiss()
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                onReturnToBarcode?()
+                            }
+                        } else {
+                            dismiss()
+                        }
                     }
                 }
             } else {
@@ -375,7 +395,7 @@ struct DetailRow: View {
     )
     
     return NavigationStack {
-        SearchResultDetailView(bookMetadata: sampleMetadata)
+        SearchResultDetailView(bookMetadata: sampleMetadata, fromBarcodeScanner: false, onReturnToBarcode: nil)
             .modelContainer(for: [UserBook.self, BookMetadata.self], inMemory: true)
     }
 }

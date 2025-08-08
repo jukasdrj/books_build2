@@ -5,7 +5,6 @@ struct LibraryView: View {
     @Environment(\.modelContext) private var modelContext
     @State private var searchText: String = ""
     @State private var selectedLayout: LayoutType = .grid
-    @State private var showingAddBookFlow = false
     @State private var showingFilters = false
     @State private var showingSettings = false
     @State private var libraryFilter = LibraryFilter.all
@@ -154,9 +153,6 @@ struct LibraryView: View {
         .navigationTitle(libraryFilter.showWishlistOnly ? "Wishlist (\(filteredBooks.count))" : "Library (\(filteredBooks.count))")
         .navigationBarTitleDisplayMode(.large)
         .searchable(text: $searchText, prompt: "Search by title or author...")
-        .sheet(isPresented: $showingAddBookFlow) {
-            SearchView()
-        }
         .sheet(isPresented: $showingFilters) {
             LibraryFilterView(filter: $libraryFilter)
         }
@@ -180,10 +176,6 @@ struct LibraryView: View {
                     
                     Button { showingSettings.toggle() } label: {
                         Image(systemName: "gearshape")
-                    }
-                    
-                    Button { showingAddBookFlow.toggle() } label: {
-                        Image(systemName: "plus")
                     }
                 }
             }
