@@ -41,6 +41,9 @@ struct StatsView: View {
                 // Enhanced hero stats section
                 heroStatsSection
                 
+                // Reading Goals Section
+                GoalProgressCard(books: allBooks)
+                
                 // Charts Section with better presentation
                 if !allBooks.isEmpty {
                     chartsSection

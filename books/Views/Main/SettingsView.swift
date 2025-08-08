@@ -4,6 +4,7 @@ struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var showingThemePicker = false
     @State private var showingCSVImport = false
+    @State private var showingGoalSettings = false
     
     private let themeManager = ThemeManager.shared
     
@@ -81,27 +82,65 @@ struct SettingsView: View {
                 
                 // Reading Goals Section - Enhanced
                 Section {
-                    settingsRow(
-                        icon: "target",
-                        title: "Daily Reading Goal",
-                        subtitle: "Set pages or minutes per day",
-                        action: {
-                            // TODO: Implement daily reading goal settings
-                            print("Daily reading goal tapped")
-                            HapticFeedbackManager.shared.lightImpact()
+                    Button {
+                        showingGoalSettings = true
+                        HapticFeedbackManager.shared.lightImpact()
+                    } label: {
+                        HStack(spacing: Theme.Spacing.md) {
+                            // Beautiful gradient icon background
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(
+                                        LinearGradient(
+                                            colors: [
+                                                .orange,
+                                                .red
+                                            ],
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        )
+                                    )
+                                    .frame(width: 36, height: 36)
+                                
+                                Image(systemName: "target")
+                                    .foregroundColor(.white)
+                                    .font(.system(size: 18, weight: .medium))
+                            }
+                            .shadow(color: Color.orange.opacity(0.3), radius: 4, x: 0, y: 2)
+                            
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Reading Goals")
+                                    .font(.headline)
+                                    .foregroundColor(Color.theme.primaryText)
+                                
+                                HStack(spacing: Theme.Spacing.xs) {
+                                    Text("📊")
+                                        .font(.title3)
+                                    
+                                    Text("Set daily & weekly targets")
+                                        .font(.subheadline)
+                                        .foregroundColor(Color.theme.secondaryText)
+                                    
+                                    Text("•")
+                                        .foregroundColor(Color.theme.outline)
+                                        .font(.caption)
+                                    
+                                    Text("Track Your Progress")
+                                        .font(.caption)
+                                        .foregroundColor(.orange)
+                                }
+                            }
+                            
+                            Spacer()
+                            
+                            // Subtle iOS-style disclosure indicator
+                            Image(systemName: "chevron.right")
+                                .font(.caption)
+                                .fontWeight(.medium)
+                                .foregroundColor(Color.theme.outline)
                         }
-                    )
-                    
-                    settingsRow(
-                        icon: "calendar.badge.clock",
-                        title: "Monthly Book Challenge",
-                        subtitle: "Track your reading streak",
-                        action: {
-                            // TODO: Implement monthly book goal settings
-                            print("Monthly book goal tapped")
-                            HapticFeedbackManager.shared.lightImpact()
-                        }
-                    )
+                    }
+                    .buttonStyle(.plain)
                 } header: {
                     Text("Reading Goals")
                         .font(.subheadline)
@@ -212,6 +251,9 @@ struct SettingsView: View {
         }
         .sheet(isPresented: $showingCSVImport) {
             CSVImportView()
+        }
+        .sheet(isPresented: $showingGoalSettings) {
+            GoalSettingsView()
         }
     }
     
