@@ -144,24 +144,39 @@ struct AppColorTheme {
     
     // MARK: - Text Colors (Dynamic based on theme)
     var primaryText: Color {
-        primary
+        adaptiveColor(
+            light: UIColor(white: 0.12, alpha: 1.0),   // near-black for light mode
+            dark: UIColor(white: 0.95, alpha: 1.0)     // near-white for dark mode
+        )
     }
     
     var secondaryText: Color {
-        secondary.opacity(0.8)
+        adaptiveColor(
+            light: UIColor(white: 0.12, alpha: 0.70),  // 70% black
+            dark: UIColor(white: 1.00, alpha: 0.70)    // 70% white
+        )
     }
     
     var outline: Color {
-        primary.opacity(0.4)
+        adaptiveColor(
+            light: UIColor(white: 0.0, alpha: 0.12),    // subtle neutral outline
+            dark: UIColor(white: 1.0, alpha: 0.12)
+        )
     }
     
     // MARK: - State Colors
     var disabled: Color {
-        Color.primary.opacity(0.12)
+        adaptiveColor(
+            light: UIColor(white: 0.0, alpha: 0.08),     // neutral disabled bg overlay
+            dark: UIColor(white: 1.0, alpha: 0.12)
+        )
     }
     
     var disabledText: Color {
-        Color.primary.opacity(0.38)
+        adaptiveColor(
+            light: UIColor(white: 0.0, alpha: 0.38),     // neutral disabled text
+            dark: UIColor(white: 1.0, alpha: 0.38)
+        )
     }
     
     // MARK: - Component Colors
