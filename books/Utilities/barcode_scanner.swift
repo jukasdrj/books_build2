@@ -10,31 +10,81 @@ struct BarcodeScannerView: View {
     
     @State private var showingPermissionAlert = false
     @State private var permissionDenied = false
+    @State private var isTorchOn = false
+    @State private var scanningEnabled = true
+    @State private var lastScanTime: Date?
+    @State private var scanFeedback: String?
+    @State private var cameraPreview: CameraPreviewView?
     
     var body: some View {
         NavigationView {
             ZStack {
+                // Boho gradient background for areas outside camera
+                LinearGradient(
+                    colors: [Color.purple.opacity(0.3), Color.pink.opacity(0.2)],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .ignoresSafeArea()
+                
                 // Camera preview
-                CameraPreview(onBarcodeScanned: onBarcodeScanned)
+                CameraPreview(
+                    onBarcodeScanned: handleBarcodeScanned,
+                    isTorchOn: $isTorchOn,
+                    scanningEnabled: $scanningEnabled,
+                    onCameraReady: { preview in
+                        cameraPreview = preview
+                    }
+                )
                     .ignoresSafeArea()
                 
                 // Overlay with scanning frame
                 ScanningOverlay()
                 
-                // Instructions
+                // Instructions and controls
                 VStack {
+                    // Torch and focus controls
+                    HStack {
+                        Spacer()
+                        
+                        VStack(spacing: 8) {
+                            Button(action: toggleTorch) {
+                                Image(systemName: isTorchOn ? "flashlight.on.fill" : "flashlight.off.fill")
+                                    .font(.title2)
+                                    .foregroundColor(.white)
+                                    .frame(width: 44, height: 44)
+                                    .background(.black.opacity(0.6))
+                                    .clipShape(Circle())
+                            }
+                            .accessibilityLabel(isTorchOn ? "Turn off torch" : "Turn on torch")
+                            
+                            Button(action: focusCamera) {
+                                Image(systemName: "camera.metering.center.weighted")
+                                    .font(.title2)
+                                    .foregroundColor(.white)
+                                    .frame(width: 44, height: 44)
+                                    .background(.black.opacity(0.6))
+                                    .clipShape(Circle())
+                            }
+                            .accessibilityLabel("Focus camera")
+                        }
+                    }
+                    .padding(.trailing)
+                    .padding(.top, 60)
+                    
                     Spacer()
                     
                     VStack(spacing: 16) {
-                        Text("Scan ISBN Barcode")
+                        Text(scanningEnabled ? "Scan ISBN Barcode" : "Scanning...")
                             .font(.title2)
                             .fontWeight(.semibold)
                             .foregroundColor(.white)
                         
-                        Text("Position the barcode within the frame")
+                        Text(scanFeedback ?? "Position the barcode within the frame")
                             .font(.body)
                             .foregroundColor(.white.opacity(0.8))
                             .multilineTextAlignment(.center)
+                            .animation(.easeInOut(duration: 0.3), value: scanFeedback)
                     }
                     .padding()
                     .background(.black.opacity(0.6))
@@ -47,13 +97,19 @@ struct BarcodeScannerView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancel") { dismiss() }
+                    Button("Cancel") { 
+                        cleanup()
+                        dismiss() 
+                    }
                         .foregroundColor(.white)
                 }
             }
         }
         .onAppear {
             requestCameraPermission()
+        }
+        .onDisappear {
+            cleanup()
         }
         .alert("Camera Permission Required", isPresented: $showingPermissionAlert) {
             Button("Settings") {
@@ -88,11 +144,75 @@ struct BarcodeScannerView: View {
             break
         }
     }
+    
+    private func handleBarcodeScanned(_ barcode: String) {
+        // Implement scan throttling
+        let now = Date()
+        if let lastScan = lastScanTime, now.timeIntervalSince(lastScan) < 2.0 {
+            return // Too soon since last scan
+        }
+        
+        lastScanTime = now
+        scanningEnabled = false
+        
+        // Provide immediate feedback
+        withAnimation {
+            scanFeedback = "Barcode detected: \(barcode)"
+        }
+        
+        // Haptic and audio feedback
+        let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+        impactFeedback.impactOccurred()
+        
+        // Small delay for user feedback, then process
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            onBarcodeScanned(barcode)
+        }
+    }
+    
+    private func toggleTorch() {
+        isTorchOn.toggle()
+        
+        // Haptic feedback
+        let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+        impactFeedback.impactOccurred()
+    }
+    
+    private func focusCamera() {
+        cameraPreview?.focusAtCenter()
+        
+        // Haptic feedback
+        let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+        impactFeedback.impactOccurred()
+        
+        // Temporary feedback
+        withAnimation {
+            scanFeedback = "Focusing camera..."
+        }
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            withAnimation {
+                if scanFeedback == "Focusing camera..." {
+                    scanFeedback = nil
+                }
+            }
+        }
+    }
+    
+    private func cleanup() {
+        // Turn off torch when leaving
+        if isTorchOn {
+            isTorchOn = false
+        }
+    }
 }
 
 // MARK: - Camera Preview
 struct CameraPreview: UIViewRepresentable {
     let onBarcodeScanned: (String) -> Void
+    @Binding var isTorchOn: Bool
+    @Binding var scanningEnabled: Bool
+    let onCameraReady: (CameraPreviewView) -> Void
     
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
@@ -101,10 +221,15 @@ struct CameraPreview: UIViewRepresentable {
     func makeUIView(context: Context) -> CameraPreviewView {
         let view = CameraPreviewView()
         view.onBarcodeScanned = onBarcodeScanned
+        view.scanningEnabled = scanningEnabled
+        onCameraReady(view)
         return view
     }
     
-    func updateUIView(_ uiView: CameraPreviewView, context: Context) {}
+    func updateUIView(_ uiView: CameraPreviewView, context: Context) {
+        uiView.updateTorch(isOn: isTorchOn)
+        uiView.scanningEnabled = scanningEnabled
+    }
     
     class Coordinator {
         let parent: CameraPreview
@@ -118,10 +243,14 @@ struct CameraPreview: UIViewRepresentable {
 // MARK: - Camera Preview UIView
 class CameraPreviewView: UIView {
     var onBarcodeScanned: ((String) -> Void)?
+    var scanningEnabled: Bool = true
     
     private var captureSession: AVCaptureSession?
     private var previewLayer: AVCaptureVideoPreviewLayer?
+    private var videoDevice: AVCaptureDevice?
+    private var videoOutput: AVCaptureVideoDataOutput?
     private let sessionQueue = DispatchQueue(label: "camera.session.queue")
+    private let visionQueue = DispatchQueue(label: "vision.queue")
     
     init() {
         super.init(frame: .zero)
@@ -147,6 +276,45 @@ class CameraPreviewView: UIView {
         }
     }
     
+    // MARK: - Public Methods
+    func updateTorch(isOn: Bool) {
+        guard let device = videoDevice, device.hasTorch else { return }
+        
+        sessionQueue.async {
+            do {
+                try device.lockForConfiguration()
+                device.torchMode = isOn ? .on : .off
+                device.unlockForConfiguration()
+            } catch {
+                print("❌ Failed to configure torch: \(error)")
+            }
+        }
+    }
+    
+    func focusAtCenter() {
+        guard let device = videoDevice else { return }
+        
+        sessionQueue.async {
+            do {
+                try device.lockForConfiguration()
+                
+                if device.isFocusModeSupported(.autoFocus) {
+                    device.focusMode = .autoFocus
+                    device.focusPointOfInterest = CGPoint(x: 0.5, y: 0.5)
+                }
+                
+                if device.isExposureModeSupported(.autoExpose) {
+                    device.exposureMode = .autoExpose
+                    device.exposurePointOfInterest = CGPoint(x: 0.5, y: 0.5)
+                }
+                
+                device.unlockForConfiguration()
+            } catch {
+                print("❌ Failed to configure focus: \(error)")
+            }
+        }
+    }
+    
     private func setupCamera() {
         guard AVCaptureDevice.authorizationStatus(for: .video) == .authorized else {
             return
@@ -155,6 +323,21 @@ class CameraPreviewView: UIView {
         sessionQueue.async { [weak self] in
             self?.configureSession()
         }
+        
+        // Add app lifecycle observers
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(appWillEnterForeground),
+            name: UIApplication.willEnterForegroundNotification,
+            object: nil
+        )
+        
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(appDidEnterBackground),
+            name: UIApplication.didEnterBackgroundNotification,
+            object: nil
+        )
     }
     
     private func configureSession() {
@@ -171,9 +354,47 @@ class CameraPreviewView: UIView {
             return
         }
         
+        self.videoDevice = videoDevice
         session.addInput(videoInput)
         
-        // Add metadata output for barcode detection
+        // Configure video device for better scanning
+        do {
+            try videoDevice.lockForConfiguration()
+            
+            // Enable auto focus if available
+            if videoDevice.isFocusModeSupported(.continuousAutoFocus) {
+                videoDevice.focusMode = .continuousAutoFocus
+            }
+            
+            // Enable auto exposure if available
+            if videoDevice.isExposureModeSupported(.continuousAutoExposure) {
+                videoDevice.exposureMode = .continuousAutoExposure
+            }
+            
+            // Configure HDR properly - disable auto adjustment first
+            if videoDevice.activeFormat.isVideoHDRSupported {
+                videoDevice.automaticallyAdjustsVideoHDREnabled = false
+                videoDevice.isVideoHDREnabled = false // Disable HDR for faster processing
+            }
+            
+            videoDevice.unlockForConfiguration()
+        } catch {
+            print("❌ Failed to configure video device: \(error)")
+        }
+        
+        // Add video data output for Vision framework
+        let videoOutput = AVCaptureVideoDataOutput()
+        videoOutput.setSampleBufferDelegate(self, queue: visionQueue)
+        videoOutput.videoSettings = [
+            kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA
+        ]
+        
+        if session.canAddOutput(videoOutput) {
+            session.addOutput(videoOutput)
+            self.videoOutput = videoOutput
+        }
+        
+        // Keep metadata output as fallback
         let metadataOutput = AVCaptureMetadataOutput()
         if session.canAddOutput(metadataOutput) {
             session.addOutput(metadataOutput)
@@ -206,9 +427,25 @@ class CameraPreviewView: UIView {
     }
     
     private func stopSession() {
+        // Remove observers
+        NotificationCenter.default.removeObserver(self)
+        
         sessionQueue.async { [weak self] in
+            // Turn off torch before stopping
+            if let device = self?.videoDevice, device.hasTorch {
+                do {
+                    try device.lockForConfiguration()
+                    device.torchMode = .off
+                    device.unlockForConfiguration()
+                } catch {
+                    print("❌ Failed to turn off torch: \(error)")
+                }
+            }
+            
             self?.captureSession?.stopRunning()
             self?.captureSession = nil
+            self?.videoDevice = nil
+            self?.videoOutput = nil
         }
         
         DispatchQueue.main.async { [weak self] in
@@ -216,11 +453,82 @@ class CameraPreviewView: UIView {
             self?.previewLayer = nil
         }
     }
+    
+    // MARK: - App Lifecycle Management
+    @objc private func appWillEnterForeground() {
+        guard captureSession != nil else { return }
+        
+        sessionQueue.async { [weak self] in
+            self?.captureSession?.startRunning()
+        }
+    }
+    
+    @objc private func appDidEnterBackground() {
+        guard captureSession != nil else { return }
+        
+        sessionQueue.async { [weak self] in
+            // Turn off torch when going to background
+            if let device = self?.videoDevice, device.hasTorch {
+                do {
+                    try device.lockForConfiguration()
+                    device.torchMode = .off
+                    device.unlockForConfiguration()
+                } catch {
+                    print("❌ Failed to turn off torch: \(error)")
+                }
+            }
+            
+            self?.captureSession?.stopRunning()
+        }
+    }
 }
 
-// MARK: - Barcode Detection
+// MARK: - Vision Framework Integration
+extension CameraPreviewView: AVCaptureVideoDataOutputSampleBufferDelegate {
+    func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
+        guard scanningEnabled,
+              let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else {
+            return
+        }
+        
+        let request = VNDetectBarcodesRequest { [weak self] request, error in
+            guard error == nil,
+                  let results = request.results as? [VNBarcodeObservation] else {
+                return
+            }
+            
+            for result in results {
+                guard let payloadString = result.payloadStringValue,
+                      let self = self else { continue }
+                
+                let cleanedBarcode = payloadString.replacingOccurrences(of: "-", with: "")
+                if self.isValidISBN(cleanedBarcode) {
+                    DispatchQueue.main.async {
+                        self.onBarcodeScanned?(cleanedBarcode)
+                    }
+                    return
+                }
+            }
+        }
+        
+        // Configure barcode types
+        request.symbologies = [
+            .ean13, .ean8, .upce, .code128, .code39, .code93, .i2of5
+        ]
+        
+        let handler = VNImageRequestHandler(cvPixelBuffer: pixelBuffer, options: [:])
+        do {
+            try handler.perform([request])
+        } catch {
+            print("❌ Vision barcode detection failed: \(error)")
+        }
+    }
+}
+
+// MARK: - Fallback Barcode Detection (AVCapture)
 extension CameraPreviewView: AVCaptureMetadataOutputObjectsDelegate {
     func metadataOutput(_ output: AVCaptureMetadataOutput, didOutput metadataObjects: [AVMetadataObject], from connection: AVCaptureConnection) {
+        guard scanningEnabled else { return }
         
         for metadataObject in metadataObjects {
             guard let readableObject = metadataObject as? AVMetadataMachineReadableCodeObject,
@@ -231,21 +539,63 @@ extension CameraPreviewView: AVCaptureMetadataOutputObjectsDelegate {
             // Validate that this looks like an ISBN
             let cleanedBarcode = stringValue.replacingOccurrences(of: "-", with: "")
             if isValidISBN(cleanedBarcode) {
-                // Haptic feedback
-                let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
-                impactFeedback.impactOccurred()
-                
-                // Call the completion handler
                 onBarcodeScanned?(cleanedBarcode)
                 return
             }
         }
     }
     
-    private func isValidISBN(_ code: String) -> Bool {
-        // Basic ISBN validation - should be 10 or 13 digits
+    // MARK: - Enhanced ISBN Validation
+    internal func isValidISBN(_ code: String) -> Bool {
         let digitsOnly = code.filter { $0.isNumber }
-        return digitsOnly.count == 10 || digitsOnly.count == 13
+        
+        // Check length first
+        guard digitsOnly.count == 10 || digitsOnly.count == 13 else {
+            return false
+        }
+        
+        if digitsOnly.count == 10 {
+            return isValidISBN10(digitsOnly)
+        } else {
+            return isValidISBN13(digitsOnly)
+        }
+    }
+    
+    internal func isValidISBN10(_ isbn: String) -> Bool {
+        guard isbn.count == 10 else { return false }
+        
+        var sum = 0
+        for (index, char) in isbn.enumerated() {
+            if index == 9 && char.uppercased() == "X" {
+                // Last character can be 'X' (representing 10)
+                sum += 10 * 1
+            } else if let digit = char.wholeNumberValue {
+                sum += digit * (10 - index)
+            } else {
+                return false
+            }
+        }
+        
+        return sum % 11 == 0
+    }
+    
+    internal func isValidISBN13(_ isbn: String) -> Bool {
+        guard isbn.count == 13 else { return false }
+        
+        var sum = 0
+        for (index, char) in isbn.enumerated() {
+            guard let digit = char.wholeNumberValue else {
+                return false
+            }
+            
+            if index % 2 == 0 {
+                sum += digit
+            } else {
+                sum += digit * 3
+            }
+        }
+        
+        return sum % 10 == 0
     }
 }
 
