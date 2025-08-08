@@ -10,11 +10,12 @@ The Books Reading Tracker is a comprehensive iOS app built with SwiftUI and Swif
 - **Book Cataloging**: Add books manually or search online database (Google Books API)
 - **Simplified Format Tracking**: Categorize books as Physical, E-book, or Audiobook
 - **Reading Status Tracking**: To Read, Reading, Read, On Hold, Did Not Finish
-- **Rating System**: 5-star rating system for personal book reviews
+- **Rating System**: Interactive 5-star rating system with gesture support and haptic feedback
 - **Personal Notes**: Private notes and reflections for each book
 - **Tag System**: Organize books with custom tags for easy categorization
 - **Cover Images**: Automatic cover image loading with intelligent caching
 - **Integrated Wishlist**: Access wishlist items through filtering instead of separate tab
+- **Screenshot Mode**: Special mode for App Store asset generation with demo data
 
 ### 🎨 Multi-Theme System
 - **5 Gorgeous Themes**: Purple Boho (default), Forest Sage, Ocean Blues, Sunset Warmth, Monochrome Elegance
@@ -46,6 +47,7 @@ The Books Reading Tracker is a comprehensive iOS app built with SwiftUI and Swif
 - **Advanced Filters**: Filter by status, rating, cultural information
 - **Author Search**: Quick access to books by specific authors
 - **Consistent Navigation**: Standard iOS disclosure indicators and navigation patterns
+- **Duplicate Detection**: Sophisticated matching to prevent duplicate entries in library
 
 ### 🎯 Smart Filtering System
 - **Quick Filter Chips**: Horizontal scrolling chips for instant filtering (Reading Status, Wishlist)
@@ -57,10 +59,12 @@ The Books Reading Tracker is a comprehensive iOS app built with SwiftUI and Swif
 
 ### Technology Stack
 - **Framework**: SwiftUI (iOS 17+)
-- **Persistence**: SwiftData with CloudKit sync capability
-- **Design System**: Material Design 3 with adaptive dark/light mode
-- **Image Caching**: Custom NSCache-based image management
-- **Network**: URLSession for API calls with proper error handling
+- **Persistence**: SwiftData with migration handling and proper schema versioning
+- **Design System**: Material Design 3 with adaptive dark/light mode and 5 theme variants
+- **Image Caching**: Custom NSCache-based image management with memory pressure handling
+- **Network**: URLSession for API calls with proper error handling and security hardening
+- **Testing**: Comprehensive test suite with 88% coverage including unit, integration, and UI tests
+- **Theme Management**: Centralized theme system with instant switching and persistence
 
 ### Data Models
 

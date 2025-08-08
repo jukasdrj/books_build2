@@ -85,6 +85,7 @@ The Books Reading Tracker project is organized into several main directories wit
 - **CulturalDiversityView.swift**: Dedicated cultural diversity tracking and analytics.
 - **SettingsView.swift**: **Enhanced Settings view** with working **CSV import button**, **theme picker access**, and **haptic feedback** for all interactions.
 - **ThemePickerView.swift**: **Multi-theme selection interface** with **instant theme application** and **auto-dismiss**.
+- **WishlistView.swift**: Dedicated wishlist view (though wishlist is now integrated into library filtering).
 
 #### **Detail Views (/books/Views/Detail/)**
 
@@ -92,6 +93,12 @@ The Books Reading Tracker project is organized into several main directories wit
 - **EditBookView.swift**: Book information editing interface with read-only metadata fields and proper text selection.
 - **SearchResultDetailView.swift**: Detailed view for books from search results with duplicate detection, navigation improvements.
 - **AuthorSearchResultsView.swift**: View to display results for author searches.
+
+#### **Import Views (/books/Views/Import/)**
+
+- **CSVImportView.swift**: Main CSV import interface with file selection and progress tracking.
+- **ColumnMappingView.swift**: Column mapping interface for CSV import customization.
+- **ImportPreviewView.swift**: Preview imported data before final import confirmation.
 
 #### **Component Views (/books/Views/Components/)**
 
@@ -101,9 +108,11 @@ The Books Reading Tracker project is organized into several main directories wit
 - **PageInputView.swift**: Reading progress input interface.
 - **SupportingViews.swift**: Additional supporting views and utility components.
 - **shared_components.swift**: Collection of reusable UI components.
-- **QuickFilterBar.swift**: **NEW** Horizontal quick filter chips for instant library filtering.
-- **LibraryFilterView.swift**: **NEW** Comprehensive filter sheet with reading status, wishlist, and collection options.
+- **QuickFilterBar.swift**: Horizontal quick filter chips for instant library filtering.
+- **LibraryFilterView.swift**: Comprehensive filter sheet with reading status, wishlist, and collection options.
 - **ThemePreviewCard.swift**: Theme selection cards with visual previews.
+- **QuickRatingView.swift**: Interactive star rating component with gesture support.
+- **RatingGestureModifier.swift**: Custom gesture modifier for rating interactions.
 
 ---
 
@@ -114,12 +123,24 @@ The Books Reading Tracker project is organized into several main directories wit
 - **ImageCache.swift**: Image caching and memory management for book covers.
 - **DataMigrationManager.swift**: Handle SwiftData schema migrations and data updates.
 - **HapticFeedbackManager.swift**: Centralized haptic feedback system for all interactions.
-- **CSVImportService.swift**: **Enhanced CSV import service** with smart fallback strategies.
+- **CSVImportService.swift**: Enhanced CSV import service with smart fallback strategies.
 
 #### **Utilities (/books/Utilities/)**
 - **barcode_scanner.swift**: ISBN barcode scanning functionality.
 - **duplicate_detection.swift**: DuplicateDetectionService for preventing duplicate books in user's library with sophisticated matching logic.
-- **CSVParser.swift**: **Enhanced CSV parsing** with Goodreads format recognition.
+- **CSVParser.swift**: Enhanced CSV parsing with Goodreads format recognition.
+
+---
+
+### **🎯 Managers (/books/Managers/)**
+
+- **ThemeManager.swift**: Centralized theme management with persistence, switching logic, and real-time updates.
+
+---
+
+### **🔧 Support (/books/Support/)**
+
+- **ScreenshotMode.swift**: App Store screenshot mode with demo data seeding and special UI states.
 
 ---
 
@@ -214,4 +235,14 @@ The Books Reading Tracker project is organized into several main directories wit
 - **Comprehensive Filter Sheet**: Detailed filtering options with multiple criteria
 - **Dynamic UI**: Context-aware titles and empty states based on active filters
 
-/books/Support/ScreenshotMode.swift      # Helper to enable screenshot mode and provide seeded demo data for App Store assets
+### **Enhanced Interaction System**
+- **Interactive Rating**: QuickRatingView with gesture-based star rating
+- **Rating Gestures**: Custom RatingGestureModifier for smooth rating interactions  
+- **Haptic Feedback**: Comprehensive haptic feedback throughout the app
+- **Screenshot Mode**: Professional App Store asset generation capabilities
+
+### **Import System**
+- **5-Step CSV Import**: Complete workflow from file selection to final import
+- **Column Mapping**: Smart detection and custom mapping for Goodreads CSV format
+- **Preview System**: ImportPreviewView for reviewing data before import
+- **Fallback Strategies**: Multiple fallback methods for book data retrieval
