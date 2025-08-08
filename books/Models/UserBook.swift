@@ -28,12 +28,14 @@ final class UserBook: Identifiable {
                     print("UserBook: dateStarted set to \(String(describing: dateStarted)) due to readingStatus change to .read (was nil)")
                 }
                 
-                // Complete the reading progress when marked as read
+                // ENHANCED: Complete the reading progress when marked as read
                 readingProgress = 1.0
                 if let pageCount = metadata?.pageCount, pageCount > 0 {
                     currentPage = pageCount
+                    print("UserBook: Reading progress completed (1.0) and currentPage set to \(pageCount) due to .read status")
+                } else {
+                    print("UserBook: Reading progress set to 1.0, but no page count available for currentPage")
                 }
-                print("UserBook: Reading progress completed (1.0) and currentPage set to total pages due to .read status")
             }
             
             // Reset progress for non-read statuses if needed
@@ -74,8 +76,10 @@ final class UserBook: Identifiable {
     // Enhanced reading progress tracking
     var currentPage: Int = 0 {
         didSet {
-            // Auto-calculate progress percentage
-            updateReadingProgress()
+            // Auto-calculate progress percentage - but don't override completed books
+            if readingStatus != .read {
+                updateReadingProgress()
+            }
         }
     }
     var readingProgress: Double = 0.0 // 0.0 to 1.0

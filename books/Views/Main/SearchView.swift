@@ -14,6 +14,7 @@ struct SearchView: View {
     @State private var showingBarcodeScanner = false
     @State private var barcodeSearchResult: BookMetadata?
     @State private var showingBarcodeSearchResult = false
+    @State private var navigationPath = NavigationPath()
 
     enum SearchState: Equatable {
         case idle
@@ -23,126 +24,137 @@ struct SearchView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            // ScreenshotMode visual banner (purple gradient, visible only in ScreenshotMode)
-            if ScreenshotMode.isEnabled {
-                ZStack {
-                    LinearGradient(
-                        colors: [Color.purple.opacity(0.85), Color.purple.opacity(0.65)],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    )
-                    HStack {
-                        Image(systemName: "camera.aperture")
-                            .font(.headline)
-                            .foregroundColor(.white)
-                        Text("Screenshot Mode")
-                            .font(.headline)
-                            .fontWeight(.bold)
-                            .foregroundColor(.white)
-                        Spacer()
-                    }
-                    .padding(.horizontal)
-                }
-                .frame(height: 32)
-                .cornerRadius(0)
-                .shadow(color: Color.purple.opacity(0.15), radius: 7, x: 0, y: 4)
-            }
-
-            // Search Controls
-            if case .results(let books) = searchState, !books.isEmpty {
-                searchControlsBar
-            }
-
-            // Content Area with enhanced empty state
-            Group {
-                switch searchState {
-                case .idle:
-                    enhancedEmptyState
-                    
-                case .searching:
-                    EnhancedLoadingView(message: "Searching millions of books")
-                    
-                case .results(let books):
-                    if books.isEmpty {
-                        noResultsState
-                    } else {
-                        searchResultsList(books: books)
-                    }
-                    
-                case .error(let message):
-                    EnhancedErrorView(
-                        title: "Search Error",
-                        message: message,
-                        retryAction: performSearch
-                    )
-                }
-            }
-            .background(
-                LinearGradient(
-                    colors: [
-                        Color.theme.background,
-                        Color.theme.surface.opacity(0.5)
-                    ],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-            )
-            .animation(Theme.Animation.accessible, value: searchState)
-        }
-        .navigationTitle("Search Books")
-        .navigationBarTitleDisplayMode(.large)
-        .background(Color.theme.background)
-        .searchable(text: $searchQuery, prompt: "Search by title, author, or ISBN")
-        .accessibilityLabel("Search for books")
-        .accessibilityHint("Enter a book title, author name, or ISBN to search for books in the online database")
-        .onSubmit(of: .search) {
-            performSearch()
-        }
-        .onChange(of: searchQuery) { oldValue, newValue in
-            // Clear results when search query is cleared
-            if newValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !oldValue.isEmpty {
-                clearSearchResults()
-            }
-        }
-        .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
-                HStack(spacing: 8) {
-                    if !searchQuery.isEmpty {
-                        Button("Clear") {
-                            clearSearch()
+        NavigationStack(path: $navigationPath) {
+            VStack(spacing: 0) {
+                // ScreenshotMode visual banner (purple gradient, visible only in ScreenshotMode)
+                if ScreenshotMode.isEnabled {
+                    ZStack {
+                        LinearGradient(
+                            colors: [Color.purple.opacity(0.85), Color.purple.opacity(0.65)],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                        HStack {
+                            Image(systemName: "camera.aperture")
+                                .font(.headline)
+                                .foregroundColor(.white)
+                            Text("Screenshot Mode")
+                                .font(.headline)
+                                .fontWeight(.bold)
+                                .foregroundColor(.white)
+                            Spacer()
                         }
-                        .accessibilityLabel("Clear search")
-                        .accessibilityHint("Clear the search field and results")
+                        .padding(.horizontal)
+                    }
+                    .frame(height: 32)
+                    .cornerRadius(0)
+                    .shadow(color: Color.purple.opacity(0.15), radius: 7, x: 0, y: 4)
+                }
+
+                // Search Controls
+                if case .results(let books) = searchState, !books.isEmpty {
+                    searchControlsBar
+                }
+
+                // Content Area with enhanced empty state
+                Group {
+                    switch searchState {
+                    case .idle:
+                        enhancedEmptyState
+                        
+                    case .searching:
+                        EnhancedLoadingView(message: "Searching millions of books")
+                        
+                    case .results(let books):
+                        if books.isEmpty {
+                            noResultsState
+                        } else {
+                            searchResultsList(books: books)
+                        }
+                        
+                    case .error(let message):
+                        EnhancedErrorView(
+                            title: "Search Error",
+                            message: message,
+                            retryAction: performSearch
+                        )
+                    }
+                }
+                .background(
+                    LinearGradient(
+                        colors: [
+                            Color.theme.background,
+                            Color.theme.surface.opacity(0.5)
+                        ],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
+                .animation(Theme.Animation.accessible, value: searchState)
+            }
+            .navigationTitle("Search Books")
+            .navigationBarTitleDisplayMode(.large)
+            .background(Color.theme.background)
+            .searchable(text: $searchQuery, prompt: "Search by title, author, or ISBN")
+            .accessibilityLabel("Search for books")
+            .accessibilityHint("Enter a book title, author name, or ISBN to search for books in the online database")
+            .onSubmit(of: .search) {
+                performSearch()
+            }
+            .onChange(of: searchQuery) { oldValue, newValue in
+                // Clear results when search query is cleared
+                if newValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !oldValue.isEmpty {
+                    clearSearchResults()
+                }
+            }
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    HStack(spacing: 8) {
+                        if !searchQuery.isEmpty {
+                            Button("Clear") {
+                                clearSearch()
+                            }
+                            .accessibilityLabel("Clear search")
+                            .accessibilityHint("Clear the search field and results")
+                            .foregroundColor(Color.theme.primaryAction)
+                        }
+                        
+                        Button {
+                            showingBarcodeScanner = true
+                        } label: {
+                            Label("Scan Barcode", systemImage: "barcode.viewfinder")
+                        }
+                        .accessibilityLabel("Scan book barcode")
+                        .accessibilityHint("Opens the camera to scan a book's ISBN barcode")
                         .foregroundColor(Color.theme.primaryAction)
                     }
-                    
-                    Button {
-                        showingBarcodeScanner = true
-                    } label: {
-                        Label("Scan Barcode", systemImage: "barcode.viewfinder")
-                    }
-                    .accessibilityLabel("Scan book barcode")
-                    .accessibilityHint("Opens the camera to scan a book's ISBN barcode")
-                    .foregroundColor(Color.theme.primaryAction)
                 }
             }
-        }
-        .sheet(isPresented: $showingSortOptions) {
-            sortOptionsSheet
-        }
-        .sheet(isPresented: $showingBarcodeScanner) {
-            BarcodeScannerView { scannedBarcode in
-                handleBarcodeScanned(scannedBarcode)
+            .sheet(isPresented: $showingSortOptions) {
+                sortOptionsSheet
             }
-        }
-        .navigationDestination(isPresented: $showingBarcodeSearchResult) {
-            if let bookMetadata = barcodeSearchResult {
-                SearchResultDetailView(bookMetadata: bookMetadata, fromBarcodeScanner: true) {
-                    showingBarcodeSearchResult = false
+            .sheet(isPresented: $showingBarcodeScanner) {
+                BarcodeScannerView { scannedBarcode in
+                    handleBarcodeScanned(scannedBarcode)
+                }
+            }
+            .navigationDestination(for: BookMetadata.self) { bookMetadata in
+                SearchResultDetailView(
+                    bookMetadata: bookMetadata, 
+                    fromBarcodeScanner: true
+                ) {
+                    // onReturnToBarcode callback - goes back to scanner
                     showingBarcodeScanner = true
                 }
             }
+            // .navigationDestination(isPresented: $showingBarcodeSearchResult) {
+            //     if let bookMetadata = barcodeSearchResult {
+            //         SearchResultDetailView(bookMetadata: bookMetadata, fromBarcodeScanner: true) {
+            //             showingBarcodeSearchResult = false
+            //             showingBarcodeScanner = true
+            //         }
+            //     }
+            // }
         }
     }
     
@@ -531,14 +543,15 @@ struct SearchView: View {
                 switch result {
                 case .success(let books):
                     if let firstBook = books.first {
-                        barcodeSearchResult = firstBook
-                        showingBarcodeSearchResult = true
+                        navigationPath.append(firstBook)
+                        HapticFeedbackManager.shared.success()
                     } else {
+                        // FALLBACK: If no books found, show traditional search
                         searchQuery = scannedBarcode
                         performSearch()
                     }
-                    HapticFeedbackManager.shared.success()
                 case .failure(let error):
+                    // FALLBACK: If search fails, show traditional search
                     searchQuery = scannedBarcode
                     searchState = .error(formatError(error))
                     HapticFeedbackManager.shared.error()
@@ -580,6 +593,7 @@ struct SearchView: View {
         searchState = .idle
         sortOption = .relevance
         includeTranslations = true
+        navigationPath.removeLast(navigationPath.count)
         HapticFeedbackManager.shared.lightImpact()
     }
     

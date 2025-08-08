@@ -8,11 +8,15 @@ struct LibraryView: View {
     @State private var showingFilters = false
     @State private var showingSettings = false
     @State private var libraryFilter = LibraryFilter.all
-    @State private var themeObserver = 0 // Simple state to trigger refresh on theme change
+    
+    // @State private var themeObserver = 0
     
     private let themeManager = ThemeManager.shared
     
     @Query private var allBooks: [UserBook]
+    
+    @State private var stableFilteredBooks: [UserBook] = []
+    @State private var bookCount: Int = 0
     
     init(filter: LibraryFilter? = nil) {
         if let filter = filter {
@@ -135,22 +139,22 @@ struct LibraryView: View {
             
             Divider()
             
-            // Content section
-            if filteredBooks.isEmpty {
+            // Content section - Use stable filtered books
+            if stableFilteredBooks.isEmpty {
                 Text("No books to display")
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .padding()
             } else {
                 ScrollView(.vertical) {
                     if selectedLayout == .grid {
-                        UniformGridLayoutView(books: filteredBooks)
+                        UniformGridLayoutView(books: stableFilteredBooks)
                     } else {
-                        ListLayoutView(books: filteredBooks)
+                        ListLayoutView(books: stableFilteredBooks)
                     }
                 }
             }
         }
-        .navigationTitle(libraryFilter.showWishlistOnly ? "Wishlist (\(filteredBooks.count))" : "Library (\(filteredBooks.count))")
+        .navigationTitle(libraryFilter.showWishlistOnly ? "Wishlist (\(bookCount))" : "Library (\(bookCount))")
         .navigationBarTitleDisplayMode(.large)
         .searchable(text: $searchText, prompt: "Search by title or author...")
         .sheet(isPresented: $showingFilters) {
@@ -163,7 +167,7 @@ struct LibraryView: View {
             ToolbarItem(placement: .navigationBarTrailing) {
                 HStack(spacing: Theme.Spacing.md) {
                     Button { 
-                        themeObserver += 1
+                        updateStableBooks()
                         HapticFeedbackManager.shared.lightImpact()
                     } label: {
                         Image(systemName: "arrow.clockwise")
@@ -180,10 +184,38 @@ struct LibraryView: View {
                 }
             }
         }
-        .onChange(of: themeManager.currentTheme) { _, _ in
-            themeObserver += 1
+        .onAppear {
+            updateStableBooks()
         }
-        .id(themeObserver)
+        .onChange(of: filteredBooks) { _, newBooks in
+            updateStableBooks()
+        }
+        .onChange(of: searchText) { _, _ in
+            // Debounce search updates
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                updateStableBooks()
+            }
+        }
+        .onChange(of: libraryFilter) { _, _ in
+            updateStableBooks()
+        }
+        // .onChange(of: themeManager.currentTheme) { _, _ in
+        //     themeObserver += 1
+        // }
+        // .id(themeObserver)
+    }
+    
+    private func updateStableBooks() {
+        let newBooks = filteredBooks
+        let newCount = newBooks.count
+        
+        // Only update if there's a significant change
+        if stableFilteredBooks.count != newCount || stableFilteredBooks != newBooks {
+            withAnimation(.none) { // Disable animation to prevent bouncing
+                stableFilteredBooks = newBooks
+                bookCount = newCount
+            }
+        }
     }
 }
 

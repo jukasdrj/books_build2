@@ -508,19 +508,59 @@ struct BookStatusSelector: View {
     }
     
     private func updateStatus(to status: ReadingStatus) {
-        // Simple status change - let the model handle auto-date logic
+        let oldStatus = book.readingStatus
+        
+        // Update the status
         book.readingStatus = status
         
-        // Only manually handle .toRead since it clears dates
-        if status == .toRead {
+        // ENHANCED: Explicitly handle reading completion when moving to 'read' status
+        if status == .read && oldStatus != .read {
+            // Complete the reading progress
+            book.readingProgress = 1.0
+            
+            // Set current page to total pages if available
+            if let pageCount = book.metadata?.pageCount, pageCount > 0 {
+                book.currentPage = pageCount
+                print("✅ BookStatusSelector: Completed progress - currentPage set to \(pageCount), progress set to 1.0")
+            } else {
+                print("✅ BookStatusSelector: Completed progress - progress set to 1.0, no page count available")
+            }
+            
+            // Set completion date if not already set
+            if book.dateCompleted == nil {
+                book.dateCompleted = Date()
+            }
+            
+            // Set start date if not already set
+            if book.dateStarted == nil {
+                book.dateStarted = Date()
+            }
+            
+            // Haptic feedback for completion
+            HapticFeedbackManager.shared.bookMarkedAsRead()
+        }
+        
+        // Handle other status changes
+        else if status == .reading && oldStatus != .reading && book.dateStarted == nil {
+            book.dateStarted = Date()
+        }
+        else if status == .toRead {
+            // Clear dates for "To Read" status
             book.dateStarted = nil
             book.dateCompleted = nil
         }
         
+        // Force a refresh of reading progress if needed
+        if status != .read {
+            book.updateReadingProgress()
+        }
+        
+        // Save the changes
         do {
             try modelContext.save()
+            print("✅ BookStatusSelector: Status updated to \(status.rawValue) and saved successfully")
         } catch {
-            print("Failed to update status: \(error)")
+            print("❌ BookStatusSelector: Failed to update status: \(error)")
         }
     }
 }
