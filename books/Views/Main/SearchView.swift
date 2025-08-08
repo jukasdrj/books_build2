@@ -7,6 +7,9 @@ struct SearchView: View {
     @State private var searchService = BookSearchService.shared
     @State private var searchQuery = ""
     @State private var searchState: SearchState = .idle
+    @State private var sortOption: BookSearchService.SortOption = .relevance
+    @State private var showingSortOptions = false
+    @State private var includeTranslations = true
     
     @State private var showingBarcodeScanner = false
     @State private var barcodeSearchResult: BookMetadata?
@@ -46,6 +49,11 @@ struct SearchView: View {
                 .shadow(color: Color.purple.opacity(0.15), radius: 7, x: 0, y: 4)
             }
 
+            // Search Controls
+            if case .results(let books) = searchState, !books.isEmpty {
+                searchControlsBar
+            }
+
             // Content Area with enhanced empty state
             Group {
                 switch searchState {
@@ -80,7 +88,7 @@ struct SearchView: View {
                     endPoint: .bottom
                 )
             )
-            .animation(Theme.Animation.accessible, value: searchState) // Use accessibility-aware animation
+            .animation(Theme.Animation.accessible, value: searchState)
         }
         .navigationTitle("Search Books")
         .navigationBarTitleDisplayMode(.large)
@@ -93,25 +101,29 @@ struct SearchView: View {
         }
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
-                if !searchQuery.isEmpty {
-                    Button("Clear") {
-                        clearSearch()
+                HStack(spacing: 8) {
+                    if !searchQuery.isEmpty {
+                        Button("Clear") {
+                            clearSearch()
+                        }
+                        .accessibilityLabel("Clear search")
+                        .accessibilityHint("Clear the search field and results")
+                        .foregroundColor(Color.theme.primaryAction)
                     }
-                    .accessibilityLabel("Clear search")
-                    .accessibilityHint("Clear the search field and results")
+                    
+                    Button {
+                        showingBarcodeScanner = true
+                    } label: {
+                        Label("Scan Barcode", systemImage: "barcode.viewfinder")
+                    }
+                    .accessibilityLabel("Scan book barcode")
+                    .accessibilityHint("Opens the camera to scan a book's ISBN barcode")
                     .foregroundColor(Color.theme.primaryAction)
                 }
             }
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Button {
-                    showingBarcodeScanner = true
-                } label: {
-                    Label("Scan Barcode", systemImage: "barcode.viewfinder")
-                }
-                .accessibilityLabel("Scan book barcode")
-                .accessibilityHint("Opens the camera to scan a book's ISBN barcode")
-                .foregroundColor(Color.theme.primaryAction)
-            }
+        }
+        .sheet(isPresented: $showingSortOptions) {
+            sortOptionsSheet
         }
         .sheet(isPresented: $showingBarcodeScanner) {
             BarcodeScannerView { scannedBarcode in
@@ -125,6 +137,186 @@ struct SearchView: View {
                     showingBarcodeScanner = true
                 }
             }
+        }
+    }
+    
+    // MARK: - Search Controls Bar
+    @ViewBuilder
+    private var searchControlsBar: some View {
+        HStack(spacing: 12) {
+            // Sort button
+            Button {
+                showingSortOptions = true
+            } label: {
+                HStack(spacing: 4) {
+                    Image(systemName: sortOption.systemImage)
+                        .font(.caption)
+                    Text(sortOption.displayName)
+                        .font(.caption)
+                        .fontWeight(.medium)
+                    Image(systemName: "chevron.down")
+                        .font(.caption2)
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(Color.theme.primaryContainer)
+                .foregroundColor(Color.theme.onPrimaryContainer)
+                .cornerRadius(16)
+            }
+            .accessibilityLabel("Sort by \(sortOption.displayName)")
+            .accessibilityHint("Opens sort options menu")
+            
+            // Translations toggle
+            Button {
+                includeTranslations.toggle()
+                // Re-search with new setting
+                if case .results = searchState {
+                    performSearch()
+                }
+            } label: {
+                HStack(spacing: 4) {
+                    Image(systemName: includeTranslations ? "globe" : "globe.badge.chevron.backward")
+                        .font(.caption)
+                    Text(includeTranslations ? "All Languages" : "English Only")
+                        .font(.caption)
+                        .fontWeight(.medium)
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(includeTranslations ? Color.theme.tertiaryContainer : Color.theme.outline.opacity(0.1))
+                .foregroundColor(includeTranslations ? Color.theme.onTertiaryContainer : Color.theme.outline)
+                .cornerRadius(16)
+            }
+            .accessibilityLabel(includeTranslations ? "Including all languages" : "English only")
+            .accessibilityHint("Toggle to include or exclude translated works")
+            
+            Spacer()
+            
+            // Results count
+            if case .results(let books) = searchState {
+                Text("\(books.count) results")
+                    .font(.caption)
+                    .foregroundColor(Color.theme.onSurfaceVariant)
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+        .background(Color.theme.surface)
+        .overlay(
+            Rectangle()
+                .frame(height: 0.5)
+                .foregroundColor(Color.theme.outline.opacity(0.2)),
+            alignment: .bottom
+        )
+    }
+    
+    // MARK: - Sort Options Sheet
+    @ViewBuilder
+    private var sortOptionsSheet: some View {
+        NavigationStack {
+            VStack(spacing: 0) {
+                // Header
+                VStack(spacing: 8) {
+                    Text("Sort Search Results")
+                        .font(.title2)
+                        .fontWeight(.semibold)
+                        .foregroundColor(Color.theme.onSurface)
+                    
+                    Text("Choose how to order your search results")
+                        .font(.subheadline)
+                        .foregroundColor(Color.theme.onSurfaceVariant)
+                }
+                .padding(.top, 20)
+                .padding(.horizontal, 20)
+                
+                // Sort options
+                LazyVStack(spacing: 0) {
+                    ForEach(BookSearchService.SortOption.allCases) { option in
+                        Button {
+                            sortOption = option
+                            showingSortOptions = false
+                            HapticFeedbackManager.shared.mediumImpact()
+                            
+                            // Re-search with new sort option
+                            if case .results = searchState {
+                                performSearch()
+                            }
+                        } label: {
+                            HStack(spacing: 16) {
+                                ZStack {
+                                    Circle()
+                                        .fill(Color.theme.primaryContainer)
+                                        .frame(width: 40, height: 40)
+                                    
+                                    Image(systemName: option.systemImage)
+                                        .font(.system(size: 18))
+                                        .foregroundColor(Color.theme.onPrimaryContainer)
+                                }
+                                
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(option.displayName)
+                                        .font(.headline)
+                                        .foregroundColor(Color.theme.onSurface)
+                                    
+                                    Text(sortDescription(for: option))
+                                        .font(.subheadline)
+                                        .foregroundColor(Color.theme.onSurfaceVariant)
+                                        .multilineTextAlignment(.leading)
+                                }
+                                
+                                Spacer()
+                                
+                                if sortOption == option {
+                                    Image(systemName: "checkmark")
+                                        .font(.headline)
+                                        .foregroundColor(Color.theme.primary)
+                                }
+                            }
+                            .padding(.horizontal, 20)
+                            .padding(.vertical, 16)
+                            .background(
+                                sortOption == option ? 
+                                    Color.theme.primaryContainer.opacity(0.3) : 
+                                    Color.clear
+                            )
+                        }
+                        .buttonStyle(.plain)
+                        
+                        if option != BookSearchService.SortOption.allCases.last {
+                            Divider()
+                                .padding(.leading, 76)
+                        }
+                    }
+                }
+                .padding(.top, 20)
+                
+                Spacer()
+            }
+            .background(Color.theme.surface)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        showingSortOptions = false
+                    }
+                    .foregroundColor(Color.theme.primary)
+                }
+            }
+        }
+        .presentationDetents([.medium])
+        .presentationDragIndicator(.visible)
+    }
+    
+    private func sortDescription(for option: BookSearchService.SortOption) -> String {
+        switch option {
+        case .relevance:
+            return "Best matches for your search terms"
+        case .newest:
+            return "Most recently published books first"
+        case .popularity:
+            return "Popular and well-known books first"
+        case .completeness:
+            return "Books with the most complete information"
         }
     }
     
@@ -142,7 +334,7 @@ struct SearchView: View {
         .listStyle(.plain)
         .background(Color.theme.surface)
         .scrollContentBackground(.hidden)
-        .accessibilityLabel("\(books.count) search results")
+        .accessibilityLabel("\(books.count) search results sorted by \(sortOption.displayName)")
     }
 
     // MARK: - Enhanced Empty State for App Store Appeal
@@ -184,7 +376,7 @@ struct SearchView: View {
                         .foregroundColor(Color.theme.primaryText)
                         .multilineTextAlignment(.center)
                     
-                    Text("Search millions of books by title, author, or ISBN")
+                    Text("Search millions of books with smart sorting and find exactly what you're looking for")
                         .font(.body)
                         .foregroundColor(Color.theme.secondaryText)
                         .multilineTextAlignment(.center)
@@ -194,10 +386,59 @@ struct SearchView: View {
             .accessibilityLabel("Search for books")
             .accessibilityHint("Use the search field above to find books by title, author, or ISBN")
             
+            // Search features highlight
+            VStack(spacing: 12) {
+                searchFeatureRow(
+                    icon: "target",
+                    title: "Smart Relevance",
+                    description: "Find the most relevant results for your search"
+                )
+                
+                searchFeatureRow(
+                    icon: "star.fill",
+                    title: "Sort by Popularity",
+                    description: "Discover trending and highly-rated books"
+                )
+                
+                searchFeatureRow(
+                    icon: "globe",
+                    title: "All Languages",
+                    description: "Include translated works from around the world"
+                )
+            }
+            .padding(.horizontal, Theme.Spacing.lg)
+            
             Spacer()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding(.top, Theme.Spacing.xl)
+    }
+    
+    @ViewBuilder
+    private func searchFeatureRow(icon: String, title: String, description: String) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: icon)
+                .font(.system(size: 16, weight: .medium))
+                .foregroundColor(Color.theme.primary)
+                .frame(width: 24, height: 24)
+            
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                    .foregroundColor(Color.theme.primaryText)
+                
+                Text(description)
+                    .font(.caption)
+                    .foregroundColor(Color.theme.secondaryText)
+            }
+            
+            Spacer()
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+        .background(Color.theme.surfaceVariant.opacity(0.3))
+        .cornerRadius(12)
     }
     
     // MARK: - Enhanced No Results State
@@ -221,7 +462,7 @@ struct SearchView: View {
                         .fontWeight(.semibold)
                         .foregroundColor(Color.theme.primaryText)
                     
-                    Text("Try checking the spelling or using different search terms")
+                    Text("Try different search terms or check your spelling. You can also try including translated works.")
                         .font(.body)
                         .foregroundColor(Color.theme.secondaryText)
                         .multilineTextAlignment(.center)
@@ -231,10 +472,43 @@ struct SearchView: View {
             .accessibilityLabel("No search results found")
             .accessibilityHint("Try different search terms or check spelling")
             
+            // Search suggestions
+            VStack(spacing: 8) {
+                Text("Try searching for:")
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                    .foregroundColor(Color.theme.primaryText)
+                
+                LazyVStack(spacing: 6) {
+                    suggestionButton("Book titles: \"The Great Gatsby\"")
+                    suggestionButton("Author names: \"Maya Angelou\"")
+                    suggestionButton("ISBN numbers: \"9780451524935\"")
+                }
+            }
+            .padding(.horizontal, Theme.Spacing.lg)
+            
             Spacer()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding(.top, Theme.Spacing.xl)
+    }
+    
+    @ViewBuilder
+    private func suggestionButton(_ text: String) -> some View {
+        Button {
+            let suggestion = text.components(separatedBy: ": \"").last?.replacingOccurrences(of: "\"", with: "") ?? ""
+            searchQuery = suggestion
+            performSearch()
+        } label: {
+            Text(text)
+                .font(.caption)
+                .foregroundColor(Color.theme.primary)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(Color.theme.primaryContainer.opacity(0.3))
+                .cornerRadius(12)
+        }
+        .buttonStyle(.plain)
     }
     
     // MARK: - Actions
@@ -244,7 +518,11 @@ struct SearchView: View {
         HapticFeedbackManager.shared.lightImpact()
         
         Task {
-            let result = await searchService.search(query: scannedBarcode)
+            let result = await searchService.search(
+                query: scannedBarcode,
+                sortBy: sortOption,
+                includeTranslations: includeTranslations
+            )
             await MainActor.run {
                 switch result {
                 case .success(let books):
@@ -275,7 +553,11 @@ struct SearchView: View {
         HapticFeedbackManager.shared.lightImpact()
         
         Task {
-            let result = await searchService.search(query: trimmedQuery)
+            let result = await searchService.search(
+                query: trimmedQuery,
+                sortBy: sortOption,
+                includeTranslations: includeTranslations
+            )
             await MainActor.run {
                 switch result {
                 case .success(let books):
@@ -292,6 +574,8 @@ struct SearchView: View {
     private func clearSearch() {
         searchQuery = ""
         searchState = .idle
+        sortOption = .relevance
+        includeTranslations = true
         HapticFeedbackManager.shared.lightImpact()
     }
     
@@ -363,7 +647,7 @@ struct EnhancedLoadingView: View {
                     .foregroundColor(Color.theme.primaryText)
                     .multilineTextAlignment(.center)
                 
-                Text("This may take a moment")
+                Text("Using smart relevance sorting")
                     .labelSmall()
                     .foregroundColor(Color.theme.secondaryText)
             }
@@ -483,6 +767,19 @@ struct SearchResultRow: View {
                         Label("\(pageCount) pages", systemImage: "doc.text")
                             .labelSmall()
                             .foregroundStyle(Color.theme.secondaryText)
+                    }
+                    
+                    // Quality indicators
+                    if book.imageURL != nil {
+                        Image(systemName: "photo")
+                            .font(.caption2)
+                            .foregroundStyle(Color.theme.tertiary)
+                    }
+                    
+                    if book.bookDescription != nil && !book.bookDescription!.isEmpty {
+                        Image(systemName: "text.alignleft")
+                            .font(.caption2)
+                            .foregroundStyle(Color.theme.tertiary)
                     }
                 }
             }

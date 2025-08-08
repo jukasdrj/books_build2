@@ -184,8 +184,8 @@ struct GoalProgressCard: View {
         }
         .padding(20)
         .materialCard()
-        .onAppear {
-            // Update streak when view appears
+        .task {
+            // Use task instead of onAppear to properly handle async operations
             if goalsManager.isGoalsEnabled {
                 goalsManager.checkAndUpdateStreak(from: books)
             }
@@ -249,6 +249,12 @@ struct CompactGoalProgressView: View {
             .padding(.vertical, 12)
             .background(Color.secondary.opacity(0.05))
             .cornerRadius(12)
+            .task {
+                // Handle streak updates asynchronously
+                if goalsManager.isGoalsEnabled {
+                    goalsManager.checkAndUpdateStreak(from: books)
+                }
+            }
         }
     }
 }

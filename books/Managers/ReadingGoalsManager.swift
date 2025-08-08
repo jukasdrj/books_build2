@@ -105,7 +105,10 @@ class ReadingGoalsManager: ObservableObject {
     
     // MARK: - Streak Management
     var currentStreak: Int {
-        updateStreakIfNeeded()
+        // Update streak check but don't modify state during property access
+        Task {
+            await updateStreakIfNeeded()
+        }
         return currentStreakDays
     }
     
@@ -124,46 +127,68 @@ class ReadingGoalsManager: ObservableObject {
     }
     
     func checkAndUpdateStreak(from books: [UserBook]) {
+        // Dispatch to next run loop to avoid "Publishing changes from within view updates"
+        Task {
+            await performStreakUpdate(from: books)
+        }
+    }
+    
+    @MainActor
+    private func performStreakUpdate(from books: [UserBook]) async {
         let dailyProgress = getDailyProgress(from: books)
         let isGoalMet = dailyProgress.current >= dailyProgress.goal
         let today = Calendar.current.startOfDay(for: Date())
         
-        if isGoalMet {
-            // Check if we haven't already recorded today
-            if let lastCompletion = lastGoalCompletionDate,
-               Calendar.current.isDate(lastCompletion, inSameDayAs: today) {
-                return // Already recorded today
-            }
+        guard isGoalMet else { return }
+        
+        // Check if we haven't already recorded today
+        if let lastCompletion = lastGoalCompletionDate,
+           Calendar.current.isDate(lastCompletion, inSameDayAs: today) {
+            return // Already recorded today
+        }
+        
+        // Batch all state changes together
+        var newStreakDays = currentStreakDays
+        var shouldTriggerHaptic = false
+        
+        // Check if this continues the streak
+        if let lastCompletion = lastGoalCompletionDate {
+            let daysBetween = Calendar.current.dateComponents([.day], from: lastCompletion, to: today).day ?? 0
             
-            // Check if this continues the streak
-            if let lastCompletion = lastGoalCompletionDate {
-                let daysBetween = Calendar.current.dateComponents([.day], from: lastCompletion, to: today).day ?? 0
-                
-                if daysBetween == 1 {
-                    // Consecutive day - extend streak
-                    currentStreakDays += 1
-                } else if daysBetween == 0 {
-                    // Same day - no change
-                    return
-                } else {
-                    // Gap in days - reset streak to 1
-                    currentStreakDays = 1
-                }
+            if daysBetween == 1 {
+                // Consecutive day - extend streak
+                newStreakDays += 1
+                shouldTriggerHaptic = true
+            } else if daysBetween == 0 {
+                // Same day - no change
+                return
             } else {
-                // First goal completion
-                currentStreakDays = 1
+                // Gap in days - reset streak to 1
+                newStreakDays = 1
+                shouldTriggerHaptic = true
             }
-            
-            lastGoalCompletionDate = today
-            
-            // Haptic feedback for goal completion
+        } else {
+            // First goal completion
+            newStreakDays = 1
+            shouldTriggerHaptic = true
+        }
+        
+        // Apply all changes at once
+        currentStreakDays = newStreakDays
+        lastGoalCompletionDate = today
+        
+        // Trigger haptic feedback after state updates
+        if shouldTriggerHaptic {
             HapticFeedbackManager.shared.goalCompleted()
         }
     }
     
-    private func updateStreakIfNeeded() {
+    @MainActor
+    private func updateStreakIfNeeded() async {
         guard let lastCompletion = lastGoalCompletionDate else {
-            currentStreakDays = 0
+            if currentStreakDays != 0 {
+                currentStreakDays = 0
+            }
             return
         }
         
