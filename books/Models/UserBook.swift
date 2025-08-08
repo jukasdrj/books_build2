@@ -27,7 +27,22 @@ final class UserBook: Identifiable {
                     dateStarted = Date()
                     print("UserBook: dateStarted set to \(String(describing: dateStarted)) due to readingStatus change to .read (was nil)")
                 }
+                
+                // Complete the reading progress when marked as read
+                readingProgress = 1.0
+                if let pageCount = metadata?.pageCount, pageCount > 0 {
+                    currentPage = pageCount
+                }
+                print("UserBook: Reading progress completed (1.0) and currentPage set to total pages due to .read status")
             }
+            
+            // Reset progress for non-read statuses if needed
+            if readingStatus != .read && oldValue == .read {
+                // If changing from read to another status, don't auto-reset progress
+                // User might want to keep their progress
+                print("UserBook: Status changed from .read to \(readingStatus) - keeping existing progress")
+            }
+            
             print("UserBook: readingStatus didSet - dateStarted after: \(String(describing: dateStarted))")
         }
     }
@@ -182,23 +197,36 @@ final class UserBook: Identifiable {
         self.quotes = quotes
         self.readingSessions = []
         
-        // Set initial dates based on status (non-auto since didSet won't trigger in init)
+        // Set initial dates and progress based on status (non-auto since didSet won't trigger in init)
         if readingStatus == .reading {
             self.dateStarted = Date()
             print("UserBook Init: Initial dateStarted set to \(String(describing: dateStarted)) for .reading")
         } else if readingStatus == .read {
             self.dateStarted = Date()
             self.dateCompleted = Date()
-            print("UserBook Init: Initial dateStarted and dateCompleted set for .read")
+            // Complete progress for books initialized as read
+            self.readingProgress = 1.0
+            if let pageCount = metadata?.pageCount, pageCount > 0 {
+                self.currentPage = pageCount
+            }
+            print("UserBook Init: Initial dateStarted, dateCompleted, and complete progress set for .read")
         }
         
-        // Calculate initial progress
-        updateReadingProgress()
+        // Calculate initial progress (if not already set above)
+        if readingStatus != .read {
+            updateReadingProgress()
+        }
         print("UserBook Init: Completed. dateStarted: \(String(describing: dateStarted))")
     }
     
     // Enhanced progress tracking methods
     func updateReadingProgress() {
+        // Don't update progress if book is marked as read (preserve 100% completion)
+        if readingStatus == .read {
+            readingProgress = 1.0
+            return
+        }
+        
         guard let pageCount = metadata?.pageCount, pageCount > 0 else {
             readingProgress = 0.0
             return
@@ -206,7 +234,7 @@ final class UserBook: Identifiable {
         
         readingProgress = min(Double(currentPage) / Double(pageCount), 1.0)
         
-        // Auto-complete if fully read
+        // Auto-complete if fully read based on page progress
         if readingProgress >= 1.0 && readingStatus != .read {
             readingStatus = .read
         }
@@ -236,6 +264,12 @@ final class UserBook: Identifiable {
         readingSessions = sessions
         totalReadingTimeMinutes += minutes
         currentPage += pagesRead
+    }
+    
+    // Helper method to manually complete a book
+    func markAsCompleted() {
+        readingStatus = .read
+        // The didSet will handle setting progress to 1.0 and currentPage to total pages
     }
     
     func averageReadingPace() -> Double? {

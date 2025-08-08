@@ -245,9 +245,9 @@ struct BookHeaderSection: View {
                     .bookTitle()
                     .foregroundColor(Color.theme.primaryText)
                 
-                // Author name navigation using NavigationLink with value
+                // Author name navigation using NavigationLink with AuthorSearchRequest
                 if let authors = book.metadata?.authors, !authors.isEmpty {
-                    NavigationLink(value: authors.first!) {
+                    NavigationLink(value: AuthorSearchRequest(authorName: authors.first!)) {
                         Text(authors.joined(separator: ", "))
                             .authorName()
                             .foregroundStyle(Color.theme.primaryAction)

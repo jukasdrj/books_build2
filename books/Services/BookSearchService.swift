@@ -157,11 +157,23 @@ class BookSearchService: ObservableObject {
             return "isbn:\(trimmed.replacingOccurrences(of: "-", with: ""))"
         }
         
-        // Handle author-specific searches
+        // Handle author-specific searches (when coming from AuthorSearchResultsView)
+        // Check if this looks like an author name (contains spaces but no special terms)
+        let isLikelyAuthorName = trimmed.contains(" ") && 
+                                !trimmed.lowercased().contains("by ") && 
+                                !trimmed.contains("\"") &&
+                                !trimmed.contains(":") &&
+                                trimmed.split(separator: " ").count <= 4 // Reasonable author name length
+        
+        if isLikelyAuthorName {
+            return "inauthor:\"\(trimmed)\""
+        }
+        
+        // Handle author-specific searches with "by"
         if trimmed.lowercased().contains("by ") {
             let parts = trimmed.components(separatedBy: " by ")
             if parts.count == 2 {
-                return "intitle:\(parts[0]) inauthor:\(parts[1])"
+                return "intitle:\"\(parts[0])\" inauthor:\"\(parts[1])\""
             }
         }
         
@@ -170,7 +182,7 @@ class BookSearchService: ObservableObject {
             return trimmed // Keep exact phrase searches as-is
         }
         
-        // For general searches, boost title matches
+        // For general searches, boost title and author matches
         return "intitle:\(trimmed) OR inauthor:\(trimmed) OR \(trimmed)"
     }
     

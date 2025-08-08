@@ -13,8 +13,6 @@ struct ContentView: View {
             } else {
                 iPhoneLayout
             }
-            #else
-            iPhoneLayout
             #endif
         }
     }
@@ -107,7 +105,7 @@ struct ContentView: View {
                         LibraryView()
                     }
                 }
-                // Move navigation destinations inside the NavigationStack
+                // Enhanced navigation destinations inside the NavigationStack
                 .navigationDestination(for: UserBook.self) { book in
                     BookDetailsView(book: book)
                 }
@@ -116,6 +114,9 @@ struct ContentView: View {
                 }
                 .navigationDestination(for: String.self) { destination in
                     destinationView(for: destination)
+                }
+                .navigationDestination(for: AuthorSearchRequest.self) { authorRequest in
+                    AuthorSearchResultsView(authorName: authorRequest.authorName)
                 }
             }
             .background(Color.theme.background)
@@ -131,7 +132,7 @@ struct ContentView: View {
         TabView(selection: $selectedTab) {
             NavigationStack {
                 LibraryView()
-                // Move navigation destinations inside each NavigationStack
+                // Enhanced navigation destinations inside each NavigationStack
                     .navigationDestination(for: UserBook.self) { book in
                         BookDetailsView(book: book)
                     }
@@ -140,6 +141,9 @@ struct ContentView: View {
                     }
                     .navigationDestination(for: String.self) { destination in
                         destinationView(for: destination)
+                    }
+                    .navigationDestination(for: AuthorSearchRequest.self) { authorRequest in
+                        AuthorSearchResultsView(authorName: authorRequest.authorName)
                     }
             }
             .tabItem {
@@ -158,6 +162,9 @@ struct ContentView: View {
                     .navigationDestination(for: String.self) { destination in
                         destinationView(for: destination)
                     }
+                    .navigationDestination(for: AuthorSearchRequest.self) { authorRequest in
+                        AuthorSearchResultsView(authorName: authorRequest.authorName)
+                    }
             }
             .tabItem {
                 Label("Search", systemImage: "magnifyingglass")
@@ -175,6 +182,9 @@ struct ContentView: View {
                     .navigationDestination(for: String.self) { destination in
                         destinationView(for: destination)
                     }
+                    .navigationDestination(for: AuthorSearchRequest.self) { authorRequest in
+                        AuthorSearchResultsView(authorName: authorRequest.authorName)
+                    }
             }
             .tabItem {
                 Label("Stats", systemImage: "chart.bar")
@@ -191,6 +201,9 @@ struct ContentView: View {
                     }
                     .navigationDestination(for: String.self) { destination in
                         destinationView(for: destination)
+                    }
+                    .navigationDestination(for: AuthorSearchRequest.self) { authorRequest in
+                        AuthorSearchResultsView(authorName: authorRequest.authorName)
                     }
             }
             .tabItem {
@@ -215,8 +228,24 @@ struct ContentView: View {
         case "Culture":
             CulturalDiversityView()
         default:
-            LibraryView()
+            // Handle author names or other string destinations
+            if destination.starts(with: "author:") {
+                let authorName = String(destination.dropFirst(7)) // Remove "author:" prefix
+                AuthorSearchResultsView(authorName: authorName)
+            } else {
+                LibraryView()
+            }
         }
+    }
+}
+
+// MARK: - Author Search Request Type
+struct AuthorSearchRequest: Hashable, Identifiable {
+    let id = UUID()
+    let authorName: String
+    
+    init(authorName: String) {
+        self.authorName = authorName
     }
 }
 

@@ -34,122 +34,30 @@ struct SearchResultDetailView: View {
     var body: some View {
         ZStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: Theme.Spacing.lg) {
-                    // Header with cover, title, author
-                    HStack(alignment: .top, spacing: Theme.Spacing.lg) {
-                        BookCoverImage(
-                            imageURL: bookMetadata.imageURL?.absoluteString,
-                            width: 120,
-                            height: 180
-                        )
-                        
-                        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-                            Text(bookMetadata.title)
-                                .titleLarge()
-                            
-                            Text(bookMetadata.authors.joined(separator: ", "))
-                                .headlineMedium()
-                                .foregroundStyle(.secondary)
-                            
-                            // Fixed: genre is no longer optional
-                            if !bookMetadata.genre.isEmpty {
-                                Text(bookMetadata.genre.first!)
-                                    .labelMedium()
-                                    .fontWeight(.medium)
-                                    .padding(.horizontal, Theme.Spacing.sm)
-                                    .padding(.vertical, Theme.Spacing.xs)
-                                    .background(Color.theme.primary.opacity(0.2))
-                                    .foregroundColor(Color.theme.primary)
-                                    .cornerRadius(8)
-                            }
-                            Spacer()
-                        }
-                        .frame(minHeight: 180)
-                    }
+                VStack(alignment: .leading, spacing: Theme.Spacing.xl) {
+                    // Enhanced Header Section - matching BookDetailsView style
+                    SearchBookHeaderSection(bookMetadata: bookMetadata)
                     
-                    // Enhanced Action Buttons with Loading States
-                    VStack(spacing: Theme.Spacing.md) {
-                        Button(action: {
-                            addBook(toWishlist: false)
-                        }) {
-                            HStack(spacing: Theme.Spacing.sm) {
-                                if isAddingToLibrary {
-                                    ProgressView()
-                                        .scaleEffect(0.8)
-                                        .tint(.white)
-                                } else {
-                                    Image(systemName: "books.vertical.fill")
-                                }
-                                Text("Add to Library")
-                            }
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 44)
-                        }
-                        .materialButton(style: .filled)
-                        .disabled(isAddingToLibrary || isAddingToWishlist || existingBook != nil)
-                        .animation(.easeInOut(duration: 0.2), value: isAddingToLibrary)
-                        
-                        Button(action: {
-                            addBook(toWishlist: true)
-                        }) {
-                            HStack(spacing: Theme.Spacing.sm) {
-                                if isAddingToWishlist {
-                                    ProgressView()
-                                        .scaleEffect(0.8)
-                                        .tint(Color.theme.primaryAction)
-                                } else {
-                                    Image(systemName: "wand.and.stars")
-                                }
-                                Text("Add to Wishlist")
-                            }
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 44)
-                        }
-                        .materialButton(style: .outlined)
-                        .disabled(isAddingToLibrary || isAddingToWishlist || existingBook != nil)
-                        .animation(.easeInOut(duration: 0.2), value: isAddingToWishlist)
-                        
-                        // Status indicator for existing books
-                        if let existing = existingBook {
-                            HStack(spacing: Theme.Spacing.sm) {
-                                Image(systemName: "checkmark.circle.fill")
-                                    .foregroundColor(Color.theme.success)
-                                Text("Already in your \(existing.onWishlist ? "wishlist" : "library")")
-                                    .font(.subheadline)
-                                    .foregroundColor(Color.theme.secondaryText)
-                            }
-                            .padding(.horizontal, Theme.Spacing.md)
-                            .padding(.vertical, Theme.Spacing.sm)
-                            .background(Color.theme.success.opacity(0.1))
-                            .cornerRadius(8)
-                        }
-                    }
+                    // Enhanced Action Buttons Section
+                    SearchActionButtonsSection(
+                        isAddingToLibrary: $isAddingToLibrary,
+                        isAddingToWishlist: $isAddingToWishlist,
+                        existingBook: existingBook,
+                        onAddToLibrary: { addBook(toWishlist: false) },
+                        onAddToWishlist: { addBook(toWishlist: true) }
+                    )
                     
-                    // Description
+                    // Description Section - matching BookDetailsView style
                     if let description = bookMetadata.bookDescription, !description.isEmpty {
-                        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-                            Text("Description")
-                                .headlineMedium()
-                            Text(description)
-                                .bodyMedium()
-                        }
+                        DescriptionSection(description: description)
                     }
                     
-                    // Other Details
-                    VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-                        Text("Details")
-                            .headlineMedium()
-                        DetailRow(label: "Published", value: bookMetadata.publishedDate ?? "N/A")
-                        DetailRow(label: "Publisher", value: bookMetadata.publisher ?? "N/A")
-                        DetailRow(label: "Pages", value: bookMetadata.pageCount != nil ? "\(bookMetadata.pageCount!)" : "N/A")
-                        DetailRow(label: "ISBN", value: bookMetadata.isbn ?? "N/A")
-                    }
-                    .padding(.top)
-
-                    Spacer()
+                    // Publication Details Section - matching BookDetailsView style
+                    SearchPublicationDetailsSection(bookMetadata: bookMetadata)
                 }
                 .padding()
             }
+            .background(Color.theme.background)
             
             // Success Toast Overlay
             if showingSuccessToast {
@@ -163,8 +71,9 @@ struct SearchResultDetailView: View {
                 .zIndex(1)
             }
         }
-        .navigationTitle("Book Details")
+        .navigationTitle(bookMetadata.title)
         .navigationBarTitleDisplayMode(.inline)
+        .background(Color.theme.background)
         .sheet(isPresented: $showingEditView) {
             if let book = newlyAddedBook {
                 NavigationStack {
@@ -179,13 +88,10 @@ struct SearchResultDetailView: View {
         }
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
-                // Done button only appears for library additions (not wishlist)
-                // since wishlist auto-dismisses
-                Button("Done") {
-                    dismiss()
+                ShareLink(item: shareableText) {
+                    Image(systemName: "square.and.arrow.up")
+                        .foregroundColor(Color.theme.primaryAction)
                 }
-                .opacity(showingSuccessToast && !(newlyAddedBook?.onWishlist ?? false) ? 1.0 : 0.0)
-                .animation(.easeInOut(duration: 0.3), value: showingSuccessToast)
             }
         }
         .onAppear(perform: checkForDuplicate)
@@ -194,6 +100,16 @@ struct SearchResultDetailView: View {
         } message: { book in
             Text("\"\(book.metadata?.title ?? "This book")\" is already in your library with the status \"\(book.readingStatus.rawValue)\".")
         }
+    }
+    
+    private var shareableText: String {
+        var components: [String] = []
+        components.append("Check out this book: \(bookMetadata.title)")
+        components.append("By \(bookMetadata.authors.joined(separator: ", "))")
+        if let publisher = bookMetadata.publisher {
+            components.append("Published by \(publisher)")
+        }
+        return components.joined(separator: ". ")
     }
     
     private func checkForDuplicate() {
@@ -227,7 +143,7 @@ struct SearchResultDetailView: View {
         }
         
         // Light haptic feedback for start of action
-        HapticFeedbackManager.shared.lightImpact() // Changed to use shared manager
+        HapticFeedbackManager.shared.lightImpact()
         
         // Simulate a brief delay to show loading state
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
@@ -303,7 +219,218 @@ struct SearchResultDetailView: View {
     }
 }
 
-// MARK: - Success Toast Component
+// MARK: - Enhanced Header Section (matching BookDetailsView)
+struct SearchBookHeaderSection: View {
+    let bookMetadata: BookMetadata
+    
+    var body: some View {
+        HStack(alignment: .top, spacing: Theme.Spacing.lg) {
+            BookCoverImage(
+                imageURL: bookMetadata.imageURL?.absoluteString,
+                width: 120,
+                height: 180
+            )
+            .shadow(color: .black.opacity(0.2), radius: 8, x: 4, y: 4)
+            
+            VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+                Text(bookMetadata.title)
+                    .bookTitle()
+                    .foregroundColor(Color.theme.primaryText)
+                
+                // Author names with proper styling
+                Text(bookMetadata.authors.joined(separator: ", "))
+                    .authorName()
+                    .foregroundColor(Color.theme.secondaryText)
+                
+                // Genre with beautiful styling
+                if !bookMetadata.genre.isEmpty {
+                    Text(bookMetadata.genre.first!)
+                        .culturalTag()
+                        .fontWeight(.medium)
+                        .padding(.horizontal, Theme.Spacing.sm)
+                        .padding(.vertical, Theme.Spacing.xs)
+                        .background(Color.theme.primaryAction.opacity(0.2))
+                        .foregroundColor(Color.theme.primaryAction)
+                        .cornerRadius(Theme.CornerRadius.small)
+                }
+                
+                // Book preview badge
+                HStack(spacing: Theme.Spacing.xs) {
+                    Image(systemName: "magnifyingglass")
+                        .font(.caption)
+                        .foregroundColor(Color.theme.tertiary)
+                    Text("Search Result")
+                        .font(.caption)
+                        .fontWeight(.medium)
+                        .foregroundColor(Color.theme.tertiary)
+                }
+                .padding(.horizontal, Theme.Spacing.sm)
+                .padding(.vertical, Theme.Spacing.xs)
+                .background(Color.theme.tertiaryContainer)
+                .cornerRadius(Theme.CornerRadius.small)
+                
+                Spacer()
+            }
+            .frame(minHeight: 180)
+        }
+    }
+}
+
+// MARK: - Enhanced Action Buttons Section
+struct SearchActionButtonsSection: View {
+    @Binding var isAddingToLibrary: Bool
+    @Binding var isAddingToWishlist: Bool
+    let existingBook: UserBook?
+    let onAddToLibrary: () -> Void
+    let onAddToWishlist: () -> Void
+    
+    var body: some View {
+        GroupBox {
+            VStack(spacing: Theme.Spacing.md) {
+                // Status indicator for existing books
+                if let existing = existingBook {
+                    HStack(spacing: Theme.Spacing.sm) {
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundColor(Color.theme.success)
+                        Text("Already in your \(existing.onWishlist ? "wishlist" : "library")")
+                            .bodyMedium()
+                            .foregroundColor(Color.theme.secondaryText)
+                        Spacer()
+                        
+                        Text(existing.readingStatus.rawValue)
+                            .font(.caption)
+                            .fontWeight(.medium)
+                            .padding(.horizontal, Theme.Spacing.sm)
+                            .padding(.vertical, Theme.Spacing.xs)
+                            .background(existing.readingStatus.containerColor)
+                            .foregroundColor(existing.readingStatus.textColor)
+                            .cornerRadius(Theme.CornerRadius.small)
+                    }
+                    .padding(.horizontal, Theme.Spacing.md)
+                    .padding(.vertical, Theme.Spacing.sm)
+                    .background(Color.theme.success.opacity(0.1))
+                    .cornerRadius(Theme.CornerRadius.medium)
+                } else {
+                    // Action buttons for new books
+                    VStack(spacing: Theme.Spacing.sm) {
+                        Button(action: onAddToLibrary) {
+                            HStack(spacing: Theme.Spacing.sm) {
+                                if isAddingToLibrary {
+                                    ProgressView()
+                                        .scaleEffect(0.8)
+                                        .tint(.white)
+                                } else {
+                                    Image(systemName: "books.vertical.fill")
+                                }
+                                Text("Add to Library")
+                                    .labelLarge()
+                                    .fontWeight(.semibold)
+                            }
+                            .frame(maxWidth: .infinity)
+                        }
+                        .materialButton(style: .filled, size: .large)
+                        .disabled(isAddingToLibrary || isAddingToWishlist)
+                        .shadow(color: Color.theme.primary.opacity(0.3), radius: 4, x: 0, y: 2)
+                        .animation(.easeInOut(duration: 0.2), value: isAddingToLibrary)
+                        
+                        Button(action: onAddToWishlist) {
+                            HStack(spacing: Theme.Spacing.sm) {
+                                if isAddingToWishlist {
+                                    ProgressView()
+                                        .scaleEffect(0.8)
+                                        .tint(Color.theme.primaryAction)
+                                } else {
+                                    Image(systemName: "wand.and.stars")
+                                }
+                                Text("Add to Wishlist")
+                                    .labelLarge()
+                                    .fontWeight(.semibold)
+                            }
+                            .frame(maxWidth: .infinity)
+                        }
+                        .materialButton(style: .tonal, size: .large)
+                        .disabled(isAddingToLibrary || isAddingToWishlist)
+                        .animation(.easeInOut(duration: 0.2), value: isAddingToWishlist)
+                    }
+                    
+                    // Helper text
+                    HStack(spacing: Theme.Spacing.xs) {
+                        Image(systemName: "info.circle")
+                            .font(.caption)
+                            .foregroundColor(Color.theme.secondaryText)
+                        Text("Library books can be customized and tracked. Wishlist items are saved for later.")
+                            .font(.caption)
+                            .foregroundColor(Color.theme.secondaryText)
+                    }
+                    .padding(.top, Theme.Spacing.xs)
+                }
+            }
+        } label: {
+            Text("Add to Collection")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundColor(Color.theme.secondaryText)
+        }
+    }
+}
+
+// MARK: - Enhanced Publication Details Section (matching BookDetailsView)
+struct SearchPublicationDetailsSection: View {
+    let bookMetadata: BookMetadata
+    
+    var body: some View {
+        GroupBox {
+            VStack(alignment: .leading, spacing: 0) {
+                if let publisher = bookMetadata.publisher, !publisher.isEmpty {
+                    DetailRowView(
+                        label: "Publisher",
+                        value: publisher
+                    )
+                }
+                
+                if let publishedDate = bookMetadata.publishedDate, !publishedDate.isEmpty {
+                    DetailRowView(
+                        label: "Published",
+                        value: publishedDate
+                    )
+                }
+                
+                if let pageCount = bookMetadata.pageCount, pageCount > 0 {
+                    DetailRowView(
+                        label: "Pages",
+                        value: "\(pageCount)"
+                    )
+                }
+                
+                if let language = bookMetadata.language, !language.isEmpty {
+                    DetailRowView(
+                        label: "Language",
+                        value: language
+                    )
+                }
+                
+                if let isbn = bookMetadata.isbn, !isbn.isEmpty {
+                    DetailRowView(
+                        label: "ISBN",
+                        value: isbn
+                    )
+                }
+                
+                // Google Books ID (for reference)
+                DetailRowView(
+                    label: "Source",
+                    value: "Google Books",
+                    isPlaceholder: false
+                )
+            }
+        } label: {
+            Text("Publication Details")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundColor(Color.theme.secondaryText)
+        }
+    }
+}
+
+// MARK: - Enhanced Success Toast Component
 struct SuccessToast: View {
     let message: String
     @Binding var isShowing: Bool
@@ -312,25 +439,46 @@ struct SuccessToast: View {
     
     var body: some View {
         HStack(spacing: Theme.Spacing.md) {
-            Image(systemName: "checkmark.circle.fill")
-                .titleMedium()
-                .foregroundColor(Color.theme.success)
+            ZStack {
+                Circle()
+                    .fill(Color.theme.success)
+                    .frame(width: 32, height: 32)
+                
+                Image(systemName: "checkmark")
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundColor(.white)
+            }
             
             Text(message)
-                .headlineMedium()
+                .bodyMedium()
+                .fontWeight(.medium)
                 .foregroundColor(Color.theme.primaryText)
+                .multilineTextAlignment(.leading)
             
             Spacer()
         }
         .padding(.horizontal, Theme.Spacing.lg)
         .padding(.vertical, Theme.Spacing.md)
-        .background(Color.theme.cardBackground)
-        .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.theme.success.opacity(0.3), lineWidth: 1)
+        .background(
+            LinearGradient(
+                colors: [Color.theme.cardBackground, Color.theme.surface],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
         )
-        .cornerRadius(12)
-        .shadow(color: .black.opacity(0.15), radius: 10, x: 0, y: 5)
+        .overlay(
+            RoundedRectangle(cornerRadius: Theme.CornerRadius.medium)
+                .stroke(
+                    LinearGradient(
+                        colors: [Color.theme.success.opacity(0.4), Color.theme.success.opacity(0.1)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: 1.5
+                )
+        )
+        .cornerRadius(Theme.CornerRadius.medium)
+        .shadow(color: Color.theme.success.opacity(0.2), radius: 15, x: 0, y: 8)
         .scaleEffect(scale)
         .opacity(opacity)
         .allowsHitTesting(false)
@@ -354,30 +502,6 @@ struct SuccessToast: View {
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel(message)
-    }
-}
-
-// MARK: - DetailRow Component
-struct DetailRow: View {
-    let label: String
-    let value: String
-    
-    var body: some View {
-        HStack {
-            Text(label)
-                .bodyMedium()
-                .foregroundColor(Color.theme.secondaryText)
-                .frame(width: 80, alignment: .leading)
-            
-            Text(value)
-                .bodyMedium()
-                .foregroundColor(Color.theme.primaryText)
-            
-            Spacer()
-        }
-        .padding(.vertical, Theme.Spacing.xs)
-        .frame(minHeight: 44)
-        .contentShape(Rectangle())
     }
 }
 

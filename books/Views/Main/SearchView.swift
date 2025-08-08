@@ -99,6 +99,12 @@ struct SearchView: View {
         .onSubmit(of: .search) {
             performSearch()
         }
+        .onChange(of: searchQuery) { oldValue, newValue in
+            // Clear results when search query is cleared
+            if newValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !oldValue.isEmpty {
+                clearSearchResults()
+            }
+        }
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 HStack(spacing: 8) {
@@ -184,7 +190,7 @@ struct SearchView: View {
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
                 .background(includeTranslations ? Color.theme.tertiaryContainer : Color.theme.outline.opacity(0.1))
-                .foregroundColor(includeTranslations ? Color.theme.onTertiaryContainer : Color.theme.outline)
+                .foregroundColor(includeTranslations ? Color.theme.tertiary : Color.theme.outline)
                 .cornerRadius(16)
             }
             .accessibilityLabel(includeTranslations ? "Including all languages" : "English only")
@@ -576,6 +582,12 @@ struct SearchView: View {
         searchState = .idle
         sortOption = .relevance
         includeTranslations = true
+        HapticFeedbackManager.shared.lightImpact()
+    }
+    
+    private func clearSearchResults() {
+        // Clear search results and return to discovery state
+        searchState = .idle
         HapticFeedbackManager.shared.lightImpact()
     }
     
