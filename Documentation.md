@@ -40,6 +40,8 @@ The Books Reading Tracker is a comprehensive iOS app built with SwiftUI and Swif
 
 ### 🔍 Enhanced Search & Discovery
 - **Online Search**: Integration with Google Books API for book discovery
+- **Barcode Scanning**: Camera-based ISBN scanning for quick book lookup
+- **Smart Auto-Dismiss**: Wishlist additions automatically return to search after 2 seconds
 - **Clean Results Display**: Year-only publication dates for better scannability
 - **Advanced Filters**: Filter by status, rating, cultural information
 - **Author Search**: Quick access to books by specific authors
@@ -104,10 +106,16 @@ User-specific book tracking including:
 ## UX Pathways
 
 ### Adding a New Book
-1. **Search Online**: User searches Google Books database with clean, professional interface
+1. **Search Online**: User searches Google Books database via text search or barcode scanning
 2. **Select Book**: Choose from search results with year-only dates for better scannability
-3. **Set Format**: Choose from Physical, E-book, or Audiobook (simplified from 6 options)
-4. **Customize Details**: Edit/add cultural information and personal data
+3. **Quick Wishlist Addition**: 
+   - Add to wishlist with auto-dismiss after success toast (2 seconds)
+   - Clear feedback: "📚 Added to your wishlist! Returning to search..."
+   - Seamless flow back to search results
+4. **Library Addition**:
+   - Add to library opens edit view for immediate customization
+   - Set format: Physical, E-book, or Audiobook (simplified from 6 options)
+   - Customize cultural information and personal data
 5. **Save to Library**: Book added with automatic status and date tracking
 
 ### Reading Progress Management
@@ -184,6 +192,12 @@ User-specific book tracking including:
 - **Memory Management**: Proper cleanup and resource management
 
 ## Recent Enhancements
+
+### Navigation & Flow Improvements
+- **Auto-Dismiss for Wishlist**: Wishlist additions now automatically dismiss after 2 seconds
+- **Smart Success Messaging**: Clear feedback indicates auto-dismiss behavior
+- **Unified Experience**: Auto-dismiss works for both text search and barcode scanning
+- **Differentiated Flows**: Library additions maintain edit flow, wishlist streamlined
 
 ### UI Polish & Consistency
 - **Search Results**: Removed double arrows, implemented year-only date display

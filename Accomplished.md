@@ -1,6 +1,86 @@
 # Development Accomplishments Log
 
-## TODAY'S SESSION: App Store Screenshot Enhancement & Visual Polish ✅ COMPLETED 💜📸✨
+## TODAY'S SESSION: Wishlist Auto-Dismiss Enhancement ✅ COMPLETED 🎯📚✨
+
+### Overview
+Implemented intelligent auto-dismiss functionality for wishlist additions in the SearchResultDetailView. When users add books to their wishlist (whether through text search or barcode scanning), the view now automatically dismisses after displaying a success toast, creating a streamlined and intuitive user experience.
+
+### Key Activities
+1. **Auto-Dismiss Logic**: Implemented smooth automatic view dismissal for wishlist additions
+2. **Success Message Updates**: Enhanced messaging to indicate auto-dismiss behavior
+3. **Timing Optimization**: Carefully tuned animation and dismiss timing for optimal UX
+4. **Toolbar Logic Update**: Refined Done button visibility for different flows
+5. **Barcode Integration**: Confirmed feature works seamlessly with barcode scanning
+
+---
+
+### IMPLEMENTATION DETAILS
+
+#### **Auto-Dismiss Functionality**
+**Achievement**: Created intelligent auto-dismiss system for wishlist additions
+**Files Modified**: `SearchResultDetailView.swift`
+**Impact**:
+- Eliminates unnecessary manual dismissal step for wishlist additions
+- Maintains edit flow for library additions (no auto-dismiss)
+- Works consistently across all search methods (text and barcode)
+- Respects accessibility settings for animations
+
+**Technical Implementation**:
+```swift
+// Wishlist branch (lines 240-252)
+if toWishlist {
+    HapticFeedbackManager.shared.lightImpact()
+    successMessage = "📚 Added to your wishlist! Returning to search..."
+    
+    withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
+        showingSuccessToast = true
+    }
+    
+    // Show toast for 1.5 seconds, then fade out and dismiss
+    DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+        withAnimation(.easeOut(duration: 0.3)) {
+            showingSuccessToast = false
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            dismiss()
+        }
+    }
+}
+```
+
+#### **Success Message Enhancement**
+**Achievement**: Updated success messages to clearly communicate auto-dismiss behavior
+**Changes**:
+- Old: "📚 Added to your wishlist!"
+- New: "📚 Added to your wishlist! Returning to search..."
+- Provides clear user expectation of automatic navigation
+
+#### **Timing Sequence Optimization**
+**Achievement**: Carefully tuned timing for smooth, non-jarring user experience
+**Implementation**:
+1. **0.0s**: Success toast appears with spring animation
+2. **1.5s**: Toast remains fully visible (reading time)
+3. **1.5s-1.8s**: Toast fades out (0.3s animation)
+4. **2.0s**: View dismisses automatically
+5. **Total Duration**: ~2 seconds from action to dismiss
+
+#### **Toolbar Done Button Logic**
+**Achievement**: Refined Done button to only appear when needed
+**Implementation**:
+- Done button only shows for library additions (which open edit view)
+- Hidden for wishlist additions (which auto-dismiss)
+- Fixed operator precedence: `!(newlyAddedBook?.onWishlist ?? false)`
+
+#### **Barcode Scanner Integration**
+**Achievement**: Confirmed auto-dismiss works with barcode scanning flow
+**Verification**:
+- Barcode scan → ISBN search → Results list → Same SearchResultDetailView
+- Auto-dismiss applies equally to text search and barcode scan results
+- Consistent UX across all book discovery methods
+
+---
+
+## PREVIOUS SESSION: App Store Screenshot Enhancement & Visual Polish ✅ COMPLETED 💜📸✨
 
 ### Overview
 Successfully enhanced the Books Reading Tracker app with stunning visual elements optimized for App Store screenshots and approval. Implemented compelling hero sections, enhanced empty states, improved cultural diversity visualization, beautiful theme showcases, and comprehensive visual storytelling elements. The app now features App Store-ready presentation with professional visual hierarchy and engaging user onboarding experiences.

@@ -171,10 +171,12 @@ struct SearchResultDetailView: View {
         }
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
+                // Done button only appears for library additions (not wishlist)
+                // since wishlist auto-dismisses
                 Button("Done") {
                     dismiss()
                 }
-                .opacity(showingSuccessToast ? 1.0 : 0.0)
+                .opacity(showingSuccessToast && !(newlyAddedBook?.onWishlist ?? false) ? 1.0 : 0.0)
                 .animation(.easeInOut(duration: 0.3), value: showingSuccessToast)
             }
         }
@@ -239,15 +241,22 @@ struct SearchResultDetailView: View {
             // Success haptic feedback
             if toWishlist {
                 HapticFeedbackManager.shared.lightImpact()
-                successMessage = "📚 Added to your wishlist!"
+                successMessage = "📚 Added to your wishlist! Returning to search..."
                 
                 withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
                     showingSuccessToast = true
                 }
                 
-                DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+                // Show toast for 1.5 seconds, then fade out and dismiss
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                    // Start fading out the toast
                     withAnimation(.easeOut(duration: 0.3)) {
                         showingSuccessToast = false
+                    }
+                    
+                    // After toast starts fading, wait briefly then dismiss the view
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                        dismiss()
                     }
                 }
             } else {
