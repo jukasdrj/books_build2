@@ -4,6 +4,15 @@ import SwiftData
 
 @main
 struct booksApp: App {
+    @State private var themeManager = ThemeManager.shared
+    @Environment(\.colorScheme) private var colorScheme
+    
+    private var adaptiveBackground: Color {
+        // Force dependency on colorScheme to ensure updates on light/dark mode changes
+        let _ = colorScheme
+        return AppColorTheme(variant: themeManager.currentTheme).background
+    }
+    
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             UserBook.self,
@@ -71,11 +80,24 @@ struct booksApp: App {
 
     var body: some Scene {
         WindowGroup {
-            if ScreenshotMode.forceLightMode {
-                ContentView()
-                    .environment(\.colorScheme, .light)
-            } else {
-                ContentView()
+            ZStack {
+                // Background that fills entire screen including status bar
+                // This will automatically update when either theme or color scheme changes
+                adaptiveBackground
+                    .ignoresSafeArea(.all)
+                    .onChange(of: colorScheme) { _, _ in
+                        // Force refresh system UI when color scheme changes
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            themeManager.refreshSystemUI()
+                        }
+                    }
+                
+                if ScreenshotMode.forceLightMode {
+                    ContentView()
+                        .environment(\.colorScheme, .light)
+                } else {
+                    ContentView()
+                }
             }
         }
         .modelContainer(sharedModelContainer)

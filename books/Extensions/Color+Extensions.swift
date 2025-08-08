@@ -4,6 +4,18 @@ extension Color {
     static var theme = AppColorTheme(variant: .purpleBoho)
 }
 
+// MARK: - Theme Environment Key
+struct ThemeKey: EnvironmentKey {
+    static let defaultValue = AppColorTheme(variant: .purpleBoho)
+}
+
+extension EnvironmentValues {
+    var appTheme: AppColorTheme {
+        get { self[ThemeKey.self] }
+        set { self[ThemeKey.self] = newValue }
+    }
+}
+
 // Helper to create adaptive colors for light/dark mode
 private func adaptiveColor(light: UIColor, dark: UIColor) -> Color {
     return Color(UIColor { traitCollection in

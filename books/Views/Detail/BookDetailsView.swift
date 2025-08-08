@@ -64,6 +64,7 @@ struct BookDetailsView: View {
                 isEditing = false
             })
         }
+        .themeAware()
     }
     
     private func deleteBook() {

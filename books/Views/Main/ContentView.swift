@@ -5,6 +5,9 @@ struct ContentView: View {
     @AppStorage("selectedTab") private var selectedTab = 0
     @Environment(\.modelContext) private var modelContext
     
+    // Theme manager for observing theme changes
+    @State private var themeManager = ThemeManager.shared
+    
     // For tracking badge counts
     @State private var libraryCount = 0
     @State private var wishlistCount = 0
@@ -21,13 +24,24 @@ struct ContentView: View {
             }
             #endif
         }
+        .themeAware()
         .onAppear {
             updateBadgeCounts()
+            // Ensure theme is properly applied to system UI when app launches
+            ThemeManager.shared.refreshSystemUI()
         }
         .onChange(of: selectedTab) { oldValue, newValue in
             // Haptic feedback on tab switch
             HapticFeedbackManager.shared.lightImpact()
             updateBadgeCounts()
+        }
+        .onChange(of: themeManager.currentTheme) { oldTheme, newTheme in
+            // Force system UI refresh when theme changes
+            Task { @MainActor in
+                // Small delay to ensure theme propagation
+                try? await Task.sleep(nanoseconds: 50_000_000) // 50ms
+                themeManager.refreshSystemUI()
+            }
         }
     }
     
@@ -292,6 +306,7 @@ struct ContentView: View {
             }
             .tabViewStyle(.page(indexDisplayMode: .never))
             .ignoresSafeArea(.keyboard)
+            .padding(.bottom, 80) // Add padding to prevent custom tab bar from blocking content
             
             // Custom Enhanced Tab Bar
             EnhancedTabBar(
