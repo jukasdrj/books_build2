@@ -32,12 +32,14 @@ The Books Reading Tracker is a comprehensive iOS app built with SwiftUI and Swif
 - **Cultural Goal Setting**: Set and track targets for diverse reading
 
 ### 📊 Statistics & Analytics
-- **Reading Progress**: Monthly reading goals and progress tracking
+- **Reading Goals System**: Comprehensive daily and weekly goals tracking by pages or minutes
+- **Interactive Goal Ring**: Beautiful circular progress visualization with animations
+- **Reading Progress**: Monthly reading goals and progress tracking with streak counters
 - **Genre Breakdown**: Visual representation of reading genres
 - **Format Distribution**: Track reading across Physical, E-book, and Audiobook formats
 - **Cultural Distribution**: Charts showing cultural diversity in reading
 - **Reading Pace**: Track reading speed and completion times
-- **Progress Visualization**: Clean, scannable progress displays
+- **Progress Visualization**: Clean, scannable progress displays with achievement badges
 
 ### 🔍 Enhanced Search & Discovery
 - **Online Search**: Integration with Google Books API for book discovery
@@ -79,13 +81,15 @@ Core book information including:
 
 #### UserBook
 User-specific book tracking including:
-- Reading status with automatic date tracking
+- Reading status with automatic date tracking and completion synchronization
 - Personal ratings and notes
-- Progress tracking (current page, reading sessions)
+- Enhanced progress tracking (current page, reading sessions, automatic completion)
+- Daily reading goals (pages or minutes per day)
 - Cultural goal contribution tracking
 - Tag organization system
 - Social features (recommendations, discussions)
 - **Wishlist Integration**: `onWishlist` property for integrated wishlist functionality
+- **Auto-completion**: Automatically marks books as read when progress reaches 100%
 
 ### Key Components
 
@@ -111,22 +115,26 @@ User-specific book tracking including:
 
 ### Adding a New Book
 1. **Search Online**: User searches Google Books database via text search or barcode scanning
-2. **Select Book**: Choose from search results with year-only dates for better scannability
-3. **Quick Wishlist Addition**: 
+2. **Advanced Sorting**: Sort results by relevance, title, author, or publication date
+3. **Select Book**: Choose from search results with year-only dates for better scannability
+4. **Quick Wishlist Addition**: 
    - Add to wishlist with auto-dismiss after success toast (2 seconds)
    - Clear feedback: "📚 Added to your wishlist! Returning to search..."
    - Seamless flow back to search results
-4. **Library Addition**:
+   - Barcode scanner returns to scanning after wishlist additions
+5. **Library Addition**:
    - Add to library opens edit view for immediate customization
    - Set format: Physical, E-book, or Audiobook (simplified from 6 options)
    - Customize cultural information and personal data
-5. **Save to Library**: Book added with automatic status and date tracking
+6. **Save to Library**: Book added with automatic status and date tracking
 
 ### Reading Progress Management
 1. **Status Updates**: Prominent status selector in book header for easy access
 2. **Progress Tracking**: Update current page and reading sessions
-3. **Completion**: Mark as read with rating and notes
-4. **Analytics Update**: Statistics automatically refresh with enhanced visualizations
+3. **Automatic Completion**: Books marked as read automatically update to 100% progress
+4. **Goal Tracking**: Daily and weekly reading goals with progress rings
+5. **Completion**: Mark as read with rating and notes (progress syncs automatically)
+6. **Analytics Update**: Statistics automatically refresh with enhanced visualizations
 
 ### Cultural Diversity Analysis
 1. **Diversity Dashboard**: Visual overview of reading cultural distribution
@@ -197,17 +205,33 @@ User-specific book tracking including:
 
 ## Recent Enhancements
 
+### Reading Goals System
+- **Comprehensive Goal Tracking**: Daily and weekly goals by pages or minutes
+- **Beautiful Progress Ring**: Interactive circular progress visualization
+- **Streak Tracking**: Monitor consecutive days of reading achievement
+- **Smart Goal Suggestions**: Automatic weekly goal calculation from daily targets
+- **Persistent Settings**: Goals saved and restored across app sessions
+
+### Enhanced Reading Completion
+- **Automatic Progress Sync**: Books marked as read automatically update to 100% progress
+- **Page Count Synchronization**: Current page automatically set to total pages when completed
+- **Smart Status Changes**: Changing to "Read" status triggers automatic completion
+- **Manual Override Support**: Users can still adjust progress if needed
+
 ### Navigation & Flow Improvements
 - **Auto-Dismiss for Wishlist**: Wishlist additions now automatically dismiss after 2 seconds
 - **Smart Success Messaging**: Clear feedback indicates auto-dismiss behavior
 - **Unified Experience**: Auto-dismiss works for both text search and barcode scanning
+- **Enhanced Barcode Flow**: Scanner returns to scanning after wishlist additions
 - **Differentiated Flows**: Library additions maintain edit flow, wishlist streamlined
 
 ### UI Polish & Consistency
-- **Search Results**: Removed double arrows, implemented year-only date display
+- **Search Results**: Advanced sorting options with relevance, title, author, and date
+- **Enhanced Search**: Improved search algorithm with better query processing
 - **Book Details**: Redesigned with Apple Music-style headers and iOS Settings layout
 - **Status Management**: Moved status selector to prominent header position
 - **Visual Hierarchy**: Enhanced typography and spacing throughout
+- **Goal Progress Ring**: Beautiful circular progress visualization with animations
 
 ### Feature Simplification
 - **Format Options**: Reduced from 6 complex options to 3 clear categories (Physical, E-book, Audiobook)
