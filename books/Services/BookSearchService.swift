@@ -12,7 +12,6 @@ class BookSearchService: ObservableObject {
         case relevance = "relevance"
         case newest = "newest"
         case popularity = "popularity"
-        case completeness = "completeness"
         
         var id: String { rawValue }
         
@@ -21,7 +20,6 @@ class BookSearchService: ObservableObject {
             case .relevance: return "Most Relevant"
             case .newest: return "Newest First"
             case .popularity: return "Most Popular"
-            case .completeness: return "Complete Info"
             }
         }
         
@@ -30,7 +28,6 @@ class BookSearchService: ObservableObject {
             case .relevance: return "target"
             case .newest: return "calendar"
             case .popularity: return "star.fill"
-            case .completeness: return "checkmark.seal.fill"
             }
         }
     }
@@ -261,13 +258,6 @@ class BookSearchService: ObservableObject {
                 let secondPopularity = calculatePopularityScore(second)
                 return firstPopularity > secondPopularity
             }
-            
-        case .completeness:
-            return results.sorted { first, second in
-                let firstCompleteness = calculateCompletenessScore(first)
-                let secondCompleteness = calculateCompletenessScore(second)
-                return firstCompleteness > secondCompleteness
-            }
         }
     }
     
@@ -337,25 +327,6 @@ class BookSearchService: ObservableObject {
                 score += 1
             }
         }
-        
-        return score
-    }
-    
-    private func calculateCompletenessScore(_ metadata: BookMetadata) -> Double {
-        var score: Double = 0
-        
-        // Required fields
-        if !metadata.title.isEmpty { score += 2 }
-        if !metadata.authors.isEmpty { score += 2 }
-        
-        // Nice-to-have fields
-        if metadata.imageURL != nil { score += 2 }
-        if metadata.bookDescription != nil && !metadata.bookDescription!.isEmpty { score += 2 }
-        if metadata.pageCount != nil && metadata.pageCount! > 0 { score += 2 }
-        if metadata.publisher != nil && !metadata.publisher!.isEmpty { score += 1 }
-        if metadata.publishedDate != nil && !metadata.publishedDate!.isEmpty { score += 1 }
-        if metadata.isbn != nil && !metadata.isbn!.isEmpty { score += 1 }
-        if !metadata.genre.isEmpty { score += 1 }
         
         return score
     }

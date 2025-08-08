@@ -235,8 +235,6 @@ struct AuthorSearchResultsView: View {
             return "Most recently published books first"
         case .popularity:
             return "Popular and well-known books first"
-        case .completeness:
-            return "Books with the most complete information"
         }
     }
     
