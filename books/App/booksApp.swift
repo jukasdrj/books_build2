@@ -1,7 +1,6 @@
 // books-buildout/books/booksApp.swift
 import SwiftUI
 import SwiftData
-import ScreenshotMode // Add this import for the helper
 
 @main
 struct booksApp: App {
@@ -72,8 +71,12 @@ struct booksApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
-                .environment(\.colorScheme, ScreenshotMode.forceLightMode ? .light : nil)
+            if ScreenshotMode.forceLightMode {
+                ContentView()
+                    .environment(\.colorScheme, .light)
+            } else {
+                ContentView()
+            }
         }
         .modelContainer(sharedModelContainer)
     }

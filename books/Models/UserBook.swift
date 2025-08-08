@@ -3,7 +3,7 @@ import SwiftData
 import SwiftUI
 
 @Model
-final class UserBook: Identifiable, @unchecked Sendable {
+final class UserBook: Identifiable {
     var id: UUID
     var dateAdded: Date
     var dateStarted: Date?
