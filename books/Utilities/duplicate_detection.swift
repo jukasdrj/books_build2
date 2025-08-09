@@ -3,18 +3,42 @@ import SwiftData
 
 struct DuplicateDetectionService {
     
+    /// Types of duplicate detection methods
+    enum DuplicateDetectionMethod {
+        case googleBooksID
+        case isbn
+        case titleAuthor
+    }
+    
+    /// Result of duplicate detection
+    struct DuplicateDetectionResult {
+        let userBook: UserBook
+        let method: DuplicateDetectionMethod
+    }
+    
     /// Check if a book already exists in the library
     static func findExistingBook(
         for metadata: BookMetadata, 
         in userBooks: [UserBook]
     ) -> UserBook? {
+        if let result = findExistingBookWithMethod(for: metadata, in: userBooks) {
+            return result.userBook
+        }
+        return nil
+    }
+    
+    /// Check if a book already exists in the library and return the detection method
+    static func findExistingBookWithMethod(
+        for metadata: BookMetadata, 
+        in userBooks: [UserBook]
+    ) -> DuplicateDetectionResult? {
         
         // First, try to match by Google Books ID (most reliable)
         if !metadata.googleBooksID.isEmpty {
             for userBook in userBooks {
                 if let bookMetadata = userBook.metadata,
                    bookMetadata.googleBooksID == metadata.googleBooksID {
-                    return userBook
+                    return DuplicateDetectionResult(userBook: userBook, method: .googleBooksID)
                 }
             }
         }
@@ -28,7 +52,7 @@ struct DuplicateDetectionService {
                    let bookISBN = bookMetadata.isbn {
                     let cleanBookISBN = cleanISBN(bookISBN)
                     if cleanResultISBN == cleanBookISBN {
-                        return userBook
+                        return DuplicateDetectionResult(userBook: userBook, method: .isbn)
                     }
                 }
             }
@@ -46,13 +70,13 @@ struct DuplicateDetectionService {
             
             // Check for exact matches
             if resultTitle == bookTitle && resultAuthor == bookAuthor {
-                return userBook
+                return DuplicateDetectionResult(userBook: userBook, method: .titleAuthor)
             }
             
             // Check for very close matches (accounting for subtitles, etc.)
             if isVeryCloseMatch(resultTitle, bookTitle) && 
                isVeryCloseMatch(resultAuthor, bookAuthor) {
-                return userBook
+                return DuplicateDetectionResult(userBook: userBook, method: .titleAuthor)
             }
         }
         

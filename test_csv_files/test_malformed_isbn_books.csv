@@ -1,0 +1,13 @@
+Title,Author,ISBN,Year,Genre
+"Book with Invalid ISBN","Author One","123456789","2020","Fiction"
+"Book with Short ISBN","Author Two","978-0-123","2021","Non-fiction"
+"Book with Letters in ISBN","Author Three","978-0-ABC-12345-6","2019","Mystery"
+"Book with Special Characters","Author Four","978@0#452$28423%4","2022","Thriller"
+"Book with Extra Long ISBN","Author Five","978-0-452-28423-4-567-890","2018","Romance"
+"Book with Valid ISBN-10","Author Six","0-452-28423-6","2020","Classic"
+"Book with Valid ISBN-13","Author Seven","978-0-452-28423-4","2021","Science Fiction"
+"Book with Spaces Only ISBN","Author Eight","   ","2019","Biography"
+"Book with NULL ISBN","Author Nine","NULL","2020","History"
+"Book with Zero ISBN","Author Ten","0000000000000","2022","Philosophy"
+"Book with Mixed Format","Author Eleven","ISBN: 978-0-452-28423-4","2021","Poetry"
+"Book with Parentheses ISBN","Author Twelve","(978) 0-452-28423-4","2020","Drama"

@@ -13,6 +13,7 @@ struct CSVImportView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     @Environment(\.appTheme) private var currentTheme
+    @AppStorage("selectedTab") private var selectedTab = 0  // Add this to control tab selection
     
     @State private var importService: CSVImportService?
     @State private var showingFilePicker = false
@@ -76,6 +77,8 @@ struct CSVImportView: View {
                                 ImportCompletedView(
                                     result: result,
                                     onViewLibrary: {
+                                        // Navigate to Library tab then dismiss
+                                        selectedTab = 0
                                         dismiss()
                                     },
                                     onImportAnother: {
@@ -263,72 +266,142 @@ struct ImportProgressView: View {
         VStack(spacing: Theme.Spacing.xl) {
             Spacer()
             
-            // Progress Animation
-            VStack(spacing: Theme.Spacing.lg) {
-                ZStack {
-                    Circle()
-                        .stroke(currentTheme.outline, lineWidth: 8)
-                        .frame(width: 120, height: 120)
-                    
-                    if let progress = importService.importProgress {
-                        Circle()
-                            .trim(from: 0, to: progress.progress)
-                            .stroke(currentTheme.primaryAction, style: StrokeStyle(lineWidth: 8, lineCap: .round))
-                            .frame(width: 120, height: 120)
-                            .rotationEffect(.degrees(-90))
-                            .animation(Theme.Animation.gentleSpring, value: progress.progress)
-                        
-                        VStack(spacing: Theme.Spacing.xs) {
-                            Text("\(Int(progress.progress * 100))%")
-                                .titleLarge()
-                                .fontWeight(.bold)
-                                .foregroundColor(currentTheme.primaryText)
-                            
-                            Text("\(progress.processedBooks)/\(progress.totalBooks)")
-                                .labelMedium()
-                                .foregroundColor(currentTheme.secondaryText)
-                        }
-                    }
-                }
-                
-                // Status and Progress Details
-                VStack(spacing: Theme.Spacing.md) {
-                    if let progress = importService.importProgress {
-                        Text(progress.currentStep.rawValue)
-                            .titleMedium()
-                            .foregroundColor(currentTheme.primaryText)
-                            .multilineTextAlignment(.center)
-                        
-                        // Progress Summary
-                        if progress.totalBooks > 0 {
-                            VStack(spacing: Theme.Spacing.sm) {
-                                HStack {
-                                    ProgressStat(title: "Imported", value: progress.successfulImports, color: currentTheme.success)
-                                    Spacer()
-                                    ProgressStat(title: "Duplicates", value: progress.duplicatesSkipped, color: currentTheme.warning)
-                                    Spacer()
-                                    ProgressStat(title: "Failed", value: progress.failedImports, color: currentTheme.error)
-                                }
-                            }
-                            .padding(.horizontal, Theme.Spacing.lg)
-                        }
-                    }
-                }
-            }
+            // Progress Animation and Details
+            progressContent
             
             Spacer()
             
             // Cancel Button
-            Button("Cancel Import") {
-                onCancel()
-            }
-            .materialButton(style: .outlined, size: .large)
-            .padding(.horizontal, Theme.Spacing.lg)
+            cancelButton
         }
         .padding(Theme.Spacing.lg)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Import in progress")
         .accessibilityValue(importService.importProgress?.progress.formatted(.percent) ?? "Unknown progress")
+    }
+    
+    // MARK: - Sub-views
+    
+    @ViewBuilder
+    private var progressContent: some View {
+        VStack(spacing: Theme.Spacing.lg) {
+            // Progress Circle
+            progressCircle
+            
+            // Status and Details
+            if let progress = importService.importProgress {
+                progressDetails(progress)
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private var progressCircle: some View {
+        ZStack {
+            Circle()
+                .stroke(currentTheme.outline, lineWidth: 8)
+                .frame(width: 120, height: 120)
+            
+            if let progress = importService.importProgress {
+                Circle()
+                    .trim(from: 0, to: progress.progress)
+                    .stroke(currentTheme.primaryAction, style: StrokeStyle(lineWidth: 8, lineCap: .round))
+                    .frame(width: 120, height: 120)
+                    .rotationEffect(.degrees(-90))
+                    .animation(Theme.Animation.gentleSpring, value: progress.progress)
+                
+                VStack(spacing: Theme.Spacing.xs) {
+                    percentageText(progress)
+                    progressCountText(progress)
+                }
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private func percentageText(_ progress: ImportProgress) -> some View {
+        Text("\(Int(progress.progress * 100))%")
+            .titleLarge()
+            .fontWeight(.bold)
+            .foregroundColor(currentTheme.primaryText)
+    }
+    
+    @ViewBuilder
+    private func progressCountText(_ progress: ImportProgress) -> some View {
+        Text("\(progress.processedBooks)/\(progress.totalBooks)")
+            .labelMedium()
+            .foregroundColor(currentTheme.secondaryText)
+    }
+    
+    @ViewBuilder
+    private func progressDetails(_ progress: ImportProgress) -> some View {
+        VStack(spacing: Theme.Spacing.md) {
+            // Current step
+            Text(progress.currentStep.rawValue)
+                .titleMedium()
+                .foregroundColor(currentTheme.primaryText)
+                .multilineTextAlignment(.center)
+            
+            // Progress message
+            if !progress.message.isEmpty {
+                Text(progress.message)
+                    .labelMedium()
+                    .foregroundColor(currentTheme.secondaryText)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, Theme.Spacing.md)
+            }
+            
+            // Time remaining
+            if progress.estimatedTimeRemaining > 0 {
+                timeRemainingText(progress.estimatedTimeRemaining)
+            }
+            
+            // Stats summary
+            if progress.totalBooks > 0 {
+                progressStats(progress)
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private func timeRemainingText(_ timeRemaining: TimeInterval) -> some View {
+        Text("Est. time remaining: \(formatTime(timeRemaining))")
+            .labelSmall()
+            .foregroundColor(currentTheme.secondaryText.opacity(0.8))
+    }
+    
+    @ViewBuilder
+    private func progressStats(_ progress: ImportProgress) -> some View {
+        VStack(spacing: Theme.Spacing.sm) {
+            HStack {
+                ProgressStat(title: "Imported", value: progress.successfulImports, color: currentTheme.success)
+                Spacer()
+                ProgressStat(title: "Duplicates", value: progress.duplicatesSkipped, color: currentTheme.warning)
+                Spacer()
+                ProgressStat(title: "Failed", value: progress.failedImports, color: currentTheme.error)
+            }
+        }
+        .padding(.horizontal, Theme.Spacing.lg)
+    }
+    
+    @ViewBuilder
+    private var cancelButton: some View {
+        Button("Cancel Import") {
+            onCancel()
+        }
+        .materialButton(style: .outlined, size: .large)
+        .padding(.horizontal, Theme.Spacing.lg)
+    }
+    
+    private func formatTime(_ seconds: TimeInterval) -> String {
+        let minutes = Int(seconds) / 60
+        let remainingSeconds = Int(seconds) % 60
+        
+        if minutes > 0 {
+            return "\(minutes)m \(remainingSeconds)s"
+        } else {
+            return "\(remainingSeconds)s"
+        }
     }
 }
 
@@ -402,12 +475,61 @@ struct ImportCompletedView: View {
                 )
                 
                 if result.duplicatesSkipped > 0 {
-                    ResultCard(
-                        icon: "doc.on.doc",
-                        title: "Duplicates Skipped",
-                        value: "\(result.duplicatesSkipped) books",
-                        color: currentTheme.warning
-                    )
+                    VStack(spacing: Theme.Spacing.xs) {
+                        ResultCard(
+                            icon: "doc.on.doc",
+                            title: "Duplicates Skipped",
+                            value: "\(result.duplicatesSkipped) books",
+                            color: currentTheme.warning
+                        )
+                        
+                        // Show duplicate detection method breakdown
+                        if result.duplicatesISBN > 0 || result.duplicatesGoogleID > 0 || result.duplicatesTitleAuthor > 0 {
+                            HStack(spacing: Theme.Spacing.sm) {
+                                Spacer()
+                                    .frame(width: 46) // Align with card content
+                                
+                                VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+                                    if result.duplicatesISBN > 0 {
+                                        HStack(spacing: Theme.Spacing.xs) {
+                                            Image(systemName: "barcode")
+                                                .font(.caption)
+                                                .foregroundColor(currentTheme.secondaryText)
+                                            Text("\(result.duplicatesISBN) matched by ISBN")
+                                                .labelSmall()
+                                                .foregroundColor(currentTheme.secondaryText)
+                                        }
+                                    }
+                                    
+                                    if result.duplicatesGoogleID > 0 {
+                                        HStack(spacing: Theme.Spacing.xs) {
+                                            Image(systemName: "globe")
+                                                .font(.caption)
+                                                .foregroundColor(currentTheme.secondaryText)
+                                            Text("\(result.duplicatesGoogleID) matched by Google Books ID")
+                                                .labelSmall()
+                                                .foregroundColor(currentTheme.secondaryText)
+                                        }
+                                    }
+                                    
+                                    if result.duplicatesTitleAuthor > 0 {
+                                        HStack(spacing: Theme.Spacing.xs) {
+                                            Image(systemName: "textformat")
+                                                .font(.caption)
+                                                .foregroundColor(currentTheme.secondaryText)
+                                            Text("\(result.duplicatesTitleAuthor) matched by title/author")
+                                                .labelSmall()
+                                                .foregroundColor(currentTheme.secondaryText)
+                                        }
+                                    }
+                                }
+                                
+                                Spacer()
+                            }
+                            .padding(.horizontal, Theme.Spacing.md)
+                            .padding(.bottom, Theme.Spacing.sm)
+                        }
+                    }
                 }
                 
                 if result.failedImports > 0 {

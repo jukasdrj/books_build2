@@ -110,4 +110,62 @@ struct CSVImportTests {
         #expect(result.summary.contains("5 duplicates skipped"))
         #expect(result.summary.contains("10 failed"))
     }
+    
+    @Test("DuplicateDetection - Should detect duplicates by ISBN first")
+    func testISBNFirstDuplicateDetection() throws {
+        // Create test metadata with ISBN
+        let metadata1 = BookMetadata(
+            googleBooksID: "google-id-1",
+            title: "The Great Gatsby",
+            authors: ["F. Scott Fitzgerald"],
+            isbn: "978-0-7432-7356-5"
+        )
+        
+        let metadata2 = BookMetadata(
+            googleBooksID: "google-id-2",  // Different Google ID
+            title: "Great Gatsby",  // Slightly different title
+            authors: ["Fitzgerald"],  // Different author format
+            isbn: "9780743273565"  // Same ISBN without hyphens
+        )
+        
+        let userBook = UserBook(metadata: metadata1)
+        
+        // Test duplicate detection - should match by ISBN despite different title/author
+        let duplicate = DuplicateDetectionService.findExistingBook(
+            for: metadata2,
+            in: [userBook]
+        )
+        
+        #expect(duplicate != nil, "Should find duplicate by ISBN")
+        #expect(duplicate?.metadata?.googleBooksID == "google-id-1")
+    }
+    
+    @Test("DuplicateDetection - Should fallback to title/author when no ISBN")
+    func testTitleAuthorFallbackDuplicateDetection() throws {
+        // Create test metadata without ISBN
+        let metadata1 = BookMetadata(
+            googleBooksID: "google-id-1",
+            title: "To Kill a Mockingbird",
+            authors: ["Harper Lee"],
+            isbn: nil
+        )
+        
+        let metadata2 = BookMetadata(
+            googleBooksID: "google-id-2",
+            title: "to kill a mockingbird",  // Different case
+            authors: ["Harper Lee"],
+            isbn: nil
+        )
+        
+        let userBook = UserBook(metadata: metadata1)
+        
+        // Test duplicate detection - should match by title/author
+        let duplicate = DuplicateDetectionService.findExistingBook(
+            for: metadata2,
+            in: [userBook]
+        )
+        
+        #expect(duplicate != nil, "Should find duplicate by title and author")
+        #expect(duplicate?.metadata?.googleBooksID == "google-id-1")
+    }
 }

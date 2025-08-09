@@ -95,6 +95,13 @@ struct SearchView: View {
             .navigationBarTitleDisplayMode(.large)
             .background(currentTheme.background)
             .searchable(text: $searchQuery, prompt: "Search by title, author, or ISBN")
+            .searchSuggestions {
+                if searchQuery.isEmpty {
+                    Text("\"The Great Gatsby\"").searchCompletion("The Great Gatsby")
+                    Text("\"Maya Angelou\"").searchCompletion("Maya Angelou")
+                    Text("\"9780451524935\"").searchCompletion("9780451524935")
+                }
+            }
             .accessibilityLabel("Search for books")
             .accessibilityHint("Enter a book title, author name, or ISBN to search for books in the online database")
             .onSubmit(of: .search) {

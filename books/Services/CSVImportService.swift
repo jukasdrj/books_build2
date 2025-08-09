@@ -22,6 +22,12 @@ class CSVImportService: ObservableObject {
     private let csvParser: CSVParser
     private var importTask: Task<Void, Never>?
     
+    // MARK: - Performance Optimization Properties
+    private var cachedUserBooks: [UserBook]? = nil
+    private var cachedMetadata: [String: BookMetadata] = [:] // Cache by googleBooksID
+    private let batchSize = 50 // Process and save in batches
+    private let duplicateCheckCache = NSCache<NSString, NSNumber>() // Fast duplicate checking
+    
     // MARK: - Initialization
     init(modelContext: ModelContext) {
         self.modelContext = modelContext
@@ -76,6 +82,10 @@ class CSVImportService: ObservableObject {
         importResult = nil
         isImporting = false
         importTask = nil
+        // Clear caches
+        cachedUserBooks = nil
+        cachedMetadata.removeAll()
+        duplicateCheckCache.removeAllObjects()
     }
     
     // MARK: - Private Implementation
@@ -86,6 +96,9 @@ class CSVImportService: ObservableObject {
         var importedBookIds: [UUID] = []
         var successCount = 0
         var duplicateCount = 0
+        var duplicatesISBN = 0
+        var duplicatesGoogleID = 0
+        var duplicatesTitleAuthor = 0
         var failCount = 0
         var apiSuccessCount = 0
         var apiFallbackCount = 0
@@ -93,6 +106,7 @@ class CSVImportService: ObservableObject {
         do {
             // Step 1: Parse CSV into books
             progress.currentStep = .parsing
+            progress.message = "Parsing CSV file (\(session.totalRows) rows)..."
             importProgress = progress
             
             let parsedBooks = csvParser.parseBooks(from: session, columnMappings: columnMappings)
@@ -100,7 +114,7 @@ class CSVImportService: ObservableObject {
             importProgress = progress
             
             // Small delay to show parsing step
-            try await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
+            try await Task.sleep(nanoseconds: 200_000_000) // 0.2 seconds
             
             // Check if cancelled
             if Task.isCancelled {
@@ -112,9 +126,17 @@ class CSVImportService: ObservableObject {
                 return
             }
             
-            // Step 2: Validate books
+            // Step 2: Validate books and prepare caches
             progress.currentStep = .validating
+            progress.message = "Validating book data and loading existing library..."
             importProgress = progress
+            
+            // Pre-fetch all existing UserBooks for efficient duplicate checking
+            if cachedUserBooks == nil {
+                cachedUserBooks = try await fetchAllUserBooks()
+                progress.message = "Loaded \(cachedUserBooks?.count ?? 0) existing books for duplicate checking"
+                importProgress = progress
+            }
             
             let validBooks = parsedBooks.filter { book in
                 let isValid = book.isValid
@@ -132,7 +154,7 @@ class CSVImportService: ObservableObject {
                 return isValid
             }
             
-            try await Task.sleep(nanoseconds: 300_000_000) // 0.3 seconds
+            try await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
             
             // Check if cancelled
             if Task.isCancelled {
@@ -144,9 +166,14 @@ class CSVImportService: ObservableObject {
                 return
             }
             
-            // Step 3: Import books with ISBN-first strategy
+            // Step 3: Import books with batch processing and ISBN-first strategy
             progress.currentStep = .importing
+            progress.message = "Importing \(validBooks.count) books..."
             importProgress = progress
+            
+            let batchStartTime = Date()
+            var booksToInsert: [UserBook] = []
+            var metadataToInsert: [BookMetadata] = []
             
             for (index, parsedBook) in validBooks.enumerated() {
                 // Check for cancellation
@@ -160,22 +187,34 @@ class CSVImportService: ObservableObject {
                 }
                 
                 do {
-                    let result = try await importSingleBook(parsedBook)
+                    let result = try await importSingleBookOptimized(parsedBook)
                     
                     switch result {
-                    case .success(let bookId):
-                        importedBookIds.append(bookId)
+                    case .success(let bookData):
+                        booksToInsert.append(bookData.userBook)
+                        if bookData.isNewMetadata {
+                            metadataToInsert.append(bookData.metadata)
+                        }
+                        importedBookIds.append(bookData.userBook.id)
                         successCount += 1
                         
                         // Track whether we used API or CSV data
-                        if parsedBook.isbn != nil && !parsedBook.isbn!.isEmpty {
+                        if parsedBook.isbn != nil && !parsedBook.isbn!.isEmpty && bookData.fromAPI {
                             apiSuccessCount += 1
                         } else {
                             apiFallbackCount += 1
                         }
                         
-                    case .duplicate:
+                    case .duplicate(let method):
                         duplicateCount += 1
+                        switch method {
+                        case .isbn:
+                            duplicatesISBN += 1
+                        case .googleBooksID:
+                            duplicatesGoogleID += 1
+                        case .titleAuthor:
+                            duplicatesTitleAuthor += 1
+                        }
                     case .failure(let error):
                         errors.append(error)
                         failCount += 1
@@ -186,7 +225,7 @@ class CSVImportService: ObservableObject {
                         rowIndex: parsedBook.rowIndex,
                         bookTitle: parsedBook.title,
                         errorType: .storageError,
-                        message: "Failed to save book: \(error.localizedDescription)",
+                        message: "Failed to process book: \(error.localizedDescription)",
                         suggestions: ["Try importing again", "Check device storage space", "Ensure stable internet connection for ISBN lookups"]
                     )
                     errors.append(importError)
@@ -194,17 +233,66 @@ class CSVImportService: ObservableObject {
                     apiFallbackCount += 1
                 }
                 
-                // Update progress with enhanced stats
+                // Batch processing: Save every batchSize books or at the end
+                if booksToInsert.count >= batchSize || index == validBooks.count - 1 {
+                    // Insert metadata first
+                    for metadata in metadataToInsert {
+                        modelContext.insert(metadata)
+                    }
+                    
+                    // Then insert UserBooks
+                    for userBook in booksToInsert {
+                        modelContext.insert(userBook)
+                    }
+                    
+                    // Save the batch
+                    do {
+                        try modelContext.save()
+                        // Update cached books with new additions
+                        cachedUserBooks?.append(contentsOf: booksToInsert)
+                    } catch {
+                        // Handle batch save error
+                        for book in booksToInsert {
+                            let importError = ImportError(
+                                rowIndex: nil,
+                                bookTitle: book.metadata?.title,
+                                errorType: .storageError,
+                                message: "Failed to save batch: \(error.localizedDescription)",
+                                suggestions: ["Check device storage", "Try smaller import batches"]
+                            )
+                            errors.append(importError)
+                            failCount += booksToInsert.count
+                            successCount -= booksToInsert.count
+                        }
+                    }
+                    
+                    // Clear batch arrays
+                    booksToInsert.removeAll()
+                    metadataToInsert.removeAll()
+                }
+                
+                // Update progress with enhanced stats and timing info
+                let batchElapsed = Date().timeIntervalSince(batchStartTime)
+                let avgTimePerBook = batchElapsed / Double(index + 1)
+                let estimatedRemaining = avgTimePerBook * Double(validBooks.count - index - 1)
+                
                 progress.processedBooks = index + 1
                 progress.successfulImports = successCount
                 progress.duplicatesSkipped = duplicateCount
+                progress.duplicatesISBN = duplicatesISBN
+                progress.duplicatesGoogleID = duplicatesGoogleID
+                progress.duplicatesTitleAuthor = duplicatesTitleAuthor
                 progress.failedImports = failCount
                 progress.errors = errors
+                progress.message = "Processing book \(index + 1) of \(validBooks.count) (Est. \(Int(estimatedRemaining))s remaining)"
+                progress.estimatedTimeRemaining = estimatedRemaining
                 importProgress = progress
                 
-                // Variable delay based on whether we made an API call
-                let delayNanoseconds: UInt64 = parsedBook.isbn != nil ? 150_000_000 : 50_000_000 // 0.15s for API calls, 0.05s otherwise
-                try await Task.sleep(nanoseconds: delayNanoseconds)
+                // Adaptive delay: less delay for cached operations, more for API calls
+                if index % 10 == 0 { // Only delay every 10th book to speed up
+                    let delayNanoseconds: UInt64 = parsedBook.isbn != nil ? 100_000_000 : 10_000_000 // 0.1s for API calls, 0.01s otherwise
+                    try await Task.sleep(nanoseconds: delayNanoseconds)
+                }
             }
             
             // Step 4: Complete
@@ -280,6 +368,9 @@ class CSVImportService: ObservableObject {
                 successfulImports: successCount,
                 failedImports: failCount,
                 duplicatesSkipped: duplicateCount,
+                duplicatesISBN: duplicatesISBN,
+                duplicatesGoogleID: duplicatesGoogleID,
+                duplicatesTitleAuthor: duplicatesTitleAuthor,
                 duration: duration,
                 errors: errors,
                 importedBookIds: importedBookIds
@@ -295,38 +386,100 @@ class CSVImportService: ObservableObject {
         case failure(ImportError)
     }
     
-    private func importSingleBook(_ parsedBook: ParsedBook) async throws -> ImportBookResult {
-        // Check for duplicates by title and author first
-        if await checkForDuplicate(title: parsedBook.title, author: parsedBook.author) {
-            return .duplicate
+    private struct ImportBookData {
+        let userBook: UserBook
+        let metadata: BookMetadata
+        let isNewMetadata: Bool
+        let fromAPI: Bool
+    }
+    
+    private enum OptimizedImportResult {
+        case success(ImportBookData)
+        case duplicate(DuplicateDetectionService.DuplicateDetectionMethod)
+        case failure(ImportError)
+    }
+    
+    /// Optimized version of importSingleBook that returns more data for batch processing
+    private func importSingleBookOptimized(_ parsedBook: ParsedBook) async throws -> OptimizedImportResult {
+        // ONLY process books with valid ISBNs
+        guard let isbn = parsedBook.isbn, !isbn.isEmpty else {
+            print("[CSV Import] Skipping book without ISBN: \(parsedBook.title ?? "Unknown")")
+            return .failure(ImportError(
+                rowIndex: parsedBook.rowIndex,
+                bookTitle: parsedBook.title,
+                errorType: .validationError,
+                message: "No ISBN found - cannot verify book identity",
+                suggestions: ["Add ISBN to CSV", "Manually add this book through search"]
+            ))
         }
         
-        // Enhanced Image-First Strategy: Try multiple approaches to get cover images
-        var bookMetadata: BookMetadata
+        let cleanISBN = isbn.replacingOccurrences(of: "-", with: "")
+                            .replacingOccurrences(of: " ", with: "")
+                            .trimmingCharacters(in: .whitespacesAndNewlines)
         
-        // Strategy 1: ISBN lookup for fresh metadata with images
-        if let isbn = parsedBook.isbn, !isbn.isEmpty {
+        // Check for duplicates using ISBN
+        let existingBooks = cachedUserBooks ?? []
+        for existingBook in existingBooks {
+            if let existingISBN = existingBook.metadata?.isbn?.replacingOccurrences(of: "-", with: "").replacingOccurrences(of: " ", with: ""),
+               existingISBN == cleanISBN {
+                print("[CSV Import] Duplicate detected by ISBN: \(cleanISBN)")
+                return .duplicate(.isbn)
+            }
+        }
+        
+        // Update progress message
+        if var progress = importProgress {
+            progress.message = "Looking up ISBN: \(cleanISBN)..."
+            importProgress = progress
+        }
+        
+        // Fetch metadata from API using ISBN
+        var bookMetadata: BookMetadata
+        var fromAPI = false
+        
+        // Check metadata cache first
+        if let cached = cachedMetadata["isbn:\(cleanISBN)"] {
+            bookMetadata = cached
+            fromAPI = true
+            print("[CSV Import] Using cached metadata for ISBN: \(cleanISBN)")
+        } else {
+            // Fetch from Google Books API
             do {
                 if let apiMetadata = try await fetchMetadataFromISBN(isbn) {
-                    // Success! Use fresh API metadata with images
+                    // Success! Use API metadata exclusively
                     bookMetadata = apiMetadata
+                    fromAPI = true
                     
-                    // Preserve cultural data from CSV if API doesn't have it
-                    enrichMetadataWithCSVData(&bookMetadata, from: parsedBook)
+                    // Cache the metadata
+                    cachedMetadata[apiMetadata.googleBooksID] = apiMetadata
+                    cachedMetadata["isbn:\(cleanISBN)"] = apiMetadata
+                    
+                    print("[CSV Import] Successfully fetched metadata for ISBN: \(cleanISBN)")
                 } else {
-                    // ISBN lookup failed, try title/author search
-                    bookMetadata = try await fetchMetadataByTitleAuthor(parsedBook) ?? createMetadataFromCSV(parsedBook)
+                    // ISBN not found in Google Books
+                    print("[CSV Import] ISBN not found in Google Books: \(cleanISBN)")
+                    return .failure(ImportError(
+                        rowIndex: parsedBook.rowIndex,
+                        bookTitle: parsedBook.title,
+                        errorType: .networkError,
+                        message: "ISBN \(cleanISBN) not found in Google Books",
+                        suggestions: ["Verify ISBN is correct", "Book may not be in Google Books database"]
+                    ))
                 }
             } catch {
-                // API error, try title/author search as fallback
-                bookMetadata = try await fetchMetadataByTitleAuthor(parsedBook) ?? createMetadataFromCSV(parsedBook)
+                // API error
+                print("[CSV Import] API error for ISBN \(cleanISBN): \(error.localizedDescription)")
+                return .failure(ImportError(
+                    rowIndex: parsedBook.rowIndex,
+                    bookTitle: parsedBook.title,
+                    errorType: .networkError,
+                    message: "Failed to fetch book data: \(error.localizedDescription)",
+                    suggestions: ["Check internet connection", "Try again later"]
+                ))
             }
-        } else {
-            // No ISBN, try title/author search for images
-            bookMetadata = try await fetchMetadataByTitleAuthor(parsedBook) ?? createMetadataFromCSV(parsedBook)
         }
         
-        // Determine reading status
+        // Determine reading status from CSV (user data we trust)
         let readingStatus: ReadingStatus
         if let statusString = parsedBook.readingStatus {
             readingStatus = GoodreadsColumnMappings.mapReadingStatus(statusString)
@@ -334,29 +487,36 @@ class CSVImportService: ObservableObject {
             readingStatus = .toRead
         }
         
-        // Check if metadata with this googleBooksID already exists
+        // Check if metadata with this googleBooksID already exists in cache or context
         let googleBooksIDToFind = bookMetadata.googleBooksID
-        let existingMetadataQuery = FetchDescriptor<BookMetadata>(
-            predicate: #Predicate<BookMetadata> { metadata in
-                metadata.googleBooksID == googleBooksIDToFind
-            }
-        )
-        
-        let existingMetadata = try? modelContext.fetch(existingMetadataQuery).first
-        
-        // Use existing metadata if found, otherwise insert new metadata
         var finalMetadata: BookMetadata
-        if let existing = existingMetadata {
-            finalMetadata = existing
-            // Optionally enrich existing metadata with any new CSV data
-            enrichMetadataWithCSVData(&finalMetadata, from: parsedBook)
+        var isNewMetadata = false
+        
+        // Check cached metadata first
+        if let cached = cachedMetadata[googleBooksIDToFind] {
+            finalMetadata = cached
         } else {
-            // Insert new metadata first to establish its identity in the context
-            modelContext.insert(bookMetadata)
-            finalMetadata = bookMetadata
+            // Check in context
+            let existingMetadataQuery = FetchDescriptor<BookMetadata>(
+                predicate: #Predicate<BookMetadata> { metadata in
+                    metadata.googleBooksID == googleBooksIDToFind
+                }
+            )
+            
+            if let existing = try? modelContext.fetch(existingMetadataQuery).first {
+                finalMetadata = existing
+                // Cache it
+                cachedMetadata[googleBooksIDToFind] = existing
+            } else {
+                // New metadata - will be inserted in batch
+                finalMetadata = bookMetadata
+                isNewMetadata = true
+                // Cache it
+                cachedMetadata[googleBooksIDToFind] = bookMetadata
+            }
         }
         
-        // Create UserBook with preserved Goodreads user data
+        // Create UserBook with user data from CSV and metadata from API
         let userBook = UserBook(
             dateAdded: parsedBook.dateAdded ?? Date(),
             readingStatus: readingStatus,
@@ -366,189 +526,73 @@ class CSVImportService: ObservableObject {
             metadata: finalMetadata
         )
         
-        // Set date completed if book is read
+        // Set date completed if book is read (user data from CSV)
         if readingStatus == .read {
             userBook.dateCompleted = parsedBook.dateRead ?? Date()
         }
         
-        // Insert UserBook into context after metadata is already inserted
-        modelContext.insert(userBook)
-        
-        return .success(userBook.id)
+        return .success(ImportBookData(
+            userBook: userBook,
+            metadata: finalMetadata,
+            isNewMetadata: isNewMetadata,
+            fromAPI: fromAPI
+        ))
     }
+    // REMOVED: Old importSingleBook method - We only use the optimized version that requires ISBN
     
     /// Fetch fresh metadata from Google Books API using ISBN
     private func fetchMetadataFromISBN(_ isbn: String) async throws -> BookMetadata? {
         // Clean ISBN (remove hyphens, spaces)
-        let cleanISBN = isbn.replacingOccurrences(of: "-", with: "").replacingOccurrences(of: " ", with: "")
+        let cleanISBN = isbn.replacingOccurrences(of: "-", with: "")
+                            .replacingOccurrences(of: " ", with: "")
+                            .trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        // Add logging for debugging
+        print("[CSV Import] Searching for book with ISBN: \(cleanISBN)")
         
         // Rate limiting: add small delay to avoid hitting API limits
         try await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
         
-        // Use existing BookSearchService to query by ISBN
-        let searchResult = await BookSearchService.shared.search(query: "isbn:\(cleanISBN)")
+        // Pass clean ISBN without prefix - let BookSearchService handle formatting
+        let searchResult = await BookSearchService.shared.search(query: cleanISBN)
         
         switch searchResult {
         case .success(let books):
-            return books.first // Return the first matching book
-        case .failure(_):
-            return nil // Failed to fetch from API
-        }
-    }
-    
-    /// Enhanced: Fetch metadata by title and author as fallback
-    private func fetchMetadataByTitleAuthor(_ parsedBook: ParsedBook) async throws -> BookMetadata? {
-        guard let title = parsedBook.title?.trimmingCharacters(in: .whitespacesAndNewlines),
-              !title.isEmpty else {
-            return nil
-        }
-        
-        // Construct search query
-        var searchQuery = title
-        if let author = parsedBook.author?.trimmingCharacters(in: .whitespacesAndNewlines), !author.isEmpty {
-            // Take first author name for cleaner search
-            let firstAuthor = author.components(separatedBy: ",").first?.trimmingCharacters(in: .whitespacesAndNewlines) ?? author
-            searchQuery += " author:\(firstAuthor)"
-        }
-        
-        // Rate limiting: add delay to avoid hitting API limits
-        try await Task.sleep(nanoseconds: 200_000_000) // 0.2 seconds
-        
-        // Use existing BookSearchService to search by title and author
-        let searchResult = await BookSearchService.shared.search(query: searchQuery)
-        
-        switch searchResult {
-        case .success(let books):
-            // Try to find the best match based on title similarity
-            return findBestMatch(books: books, targetTitle: title, targetAuthor: parsedBook.author)
-        case .failure(_):
-            return nil
-        }
-    }
-    
-    /// Find the best matching book from search results
-    private func findBestMatch(books: [BookMetadata], targetTitle: String, targetAuthor: String?) -> BookMetadata? {
-        guard !books.isEmpty else { return nil }
-        
-        let normalizedTargetTitle = normalizeForComparison(targetTitle)
-        let normalizedTargetAuthor = targetAuthor?.components(separatedBy: ",").first?.trimmingCharacters(in: .whitespacesAndNewlines)
-        
-        // Score each book and return the best match
-        let scoredBooks = books.map { book -> (book: BookMetadata, score: Double) in
-            let titleScore = calculateTitleSimilarity(
-                normalizeForComparison(book.title),
-                normalizedTargetTitle
-            )
-            
-            let authorScore: Double
-            if let targetAuthor = normalizedTargetAuthor,
-               let bookAuthor = book.authors.first {
-                authorScore = calculateTitleSimilarity(
-                    normalizeForComparison(bookAuthor),
-                    normalizeForComparison(targetAuthor)
-                )
+            if let book = books.first {
+                print("[CSV Import] Found book via ISBN: \(book.title) - Has image: \(book.imageURL != nil)")
+                return book
             } else {
-                authorScore = 0.0
+                print("[CSV Import] No results for ISBN: \(cleanISBN)")
+                return nil
             }
-            
-            // Weighted scoring: title is more important than author
-            let combinedScore = (titleScore * 0.7) + (authorScore * 0.3)
-            return (book: book, score: combinedScore)
-        }
-        
-        // Return the highest scoring book if it's above threshold
-        let bestMatch = scoredBooks.max(by: { $0.score < $1.score })
-        if let bestMatch = bestMatch, bestMatch.score > 0.6 { // 60% similarity threshold
-            return bestMatch.book
-        }
-        
-        return nil
-    }
-    
-    /// Calculate title similarity using basic string matching
-    private func calculateTitleSimilarity(_ title1: String, _ title2: String) -> Double {
-        let words1 = Set(title1.components(separatedBy: .whitespacesAndNewlines))
-        let words2 = Set(title2.components(separatedBy: .whitespacesAndNewlines))
-        
-        let intersection = words1.intersection(words2)
-        let union = words1.union(words2)
-        
-        guard !union.isEmpty else { return 0.0 }
-        return Double(intersection.count) / Double(union.count)
-    }
-    
-    /// Normalize string for comparison
-    private func normalizeForComparison(_ text: String) -> String {
-        return text.lowercased()
-            .replacingOccurrences(of: "[^a-z0-9\\s]", with: "", options: .regularExpression)
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-    }
-    
-    /// Enrich API metadata with cultural data from CSV
-    private func enrichMetadataWithCSVData(_ metadata: inout BookMetadata, from parsedBook: ParsedBook) {
-        if metadata.originalLanguage == nil && parsedBook.originalLanguage != nil {
-            metadata.originalLanguage = parsedBook.originalLanguage
-        }
-        if metadata.authorNationality == nil && parsedBook.authorNationality != nil {
-            metadata.authorNationality = parsedBook.authorNationality
-        }
-        if metadata.translator == nil && parsedBook.translator != nil {
-            metadata.translator = parsedBook.translator
+        case .failure(let error):
+            print("[CSV Import] ISBN search failed: \(error.localizedDescription)")
+            return nil
         }
     }
     
-    /// Create metadata from CSV data (fallback method)
-    private func createMetadataFromCSV(_ parsedBook: ParsedBook) -> BookMetadata {
-        let authors = parsedBook.author?.components(separatedBy: ",")
-            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-            .filter { !$0.isEmpty } ?? []
-        
-        return BookMetadata(
-            googleBooksID: "import-\(UUID().uuidString)", // Prefix to distinguish imports
-            title: parsedBook.title ?? "",
-            authors: authors,
-            publishedDate: parsedBook.publishedDate,
-            pageCount: parsedBook.pageCount,
-            bookDescription: parsedBook.description,
-            imageURL: nil, // No image from CSV
-            language: parsedBook.language,
-            previewLink: nil,
-            infoLink: nil,
-            publisher: parsedBook.publisher,
-            isbn: parsedBook.isbn,
-            genre: parsedBook.genre,
-            originalLanguage: parsedBook.originalLanguage,
-            authorNationality: parsedBook.authorNationality,
-            translator: parsedBook.translator
-        )
-    }
+    // REMOVED: fetchMetadataByTitleAuthor - We only trust ISBN lookups
+    // REMOVED: findBestMatch - No title/author fuzzy matching needed
+    // REMOVED: calculateTitleSimilarity - Not needed without title matching
+    // REMOVED: normalizeForComparison - Not needed without text matching
+    // REMOVED: enrichMetadataWithCSVData - We don't mix CSV data with API data
+    // REMOVED: createMetadataFromCSV - We never create metadata from CSV
     
-    private func checkForDuplicate(title: String?, author: String?) async -> Bool {
-        guard let title = title?.trimmingCharacters(in: .whitespacesAndNewlines),
-              let author = author?.trimmingCharacters(in: .whitespacesAndNewlines),
-              !title.isEmpty, !author.isEmpty else {
-            return false
+    /// Fetch all UserBooks from the model context for duplicate checking (with caching)
+    private func fetchAllUserBooks() async throws -> [UserBook] {
+        // Return cached books if available
+        if let cached = cachedUserBooks {
+            return cached
         }
         
-        // Query existing books
+        // Otherwise fetch and cache
         let descriptor = FetchDescriptor<UserBook>()
-        let existingBooks = try? modelContext.fetch(descriptor)
-        
-        return existingBooks?.contains { book in
-            guard let existingTitle = book.metadata?.title,
-                  let existingAuthors = book.metadata?.authors else {
-                return false
-            }
-            
-            let titleMatch = existingTitle.lowercased() == title.lowercased()
-            let authorMatch = existingAuthors.contains { existingAuthor in
-                existingAuthor.lowercased().contains(author.lowercased()) ||
-                author.lowercased().contains(existingAuthor.lowercased())
-            }
-            
-            return titleMatch && authorMatch
-        } ?? false
+        let books = try modelContext.fetch(descriptor)
+        cachedUserBooks = books
+        return books
     }
+    
+    // REMOVED: createTempMetadataForDuplicateCheck - Not needed since we only process books with ISBN
 }
 
 // MARK: - Preview Helpers
@@ -575,7 +619,8 @@ extension CSVImportService {
             fileSize: 15420,
             totalRows: 3,
             detectedColumns: sampleColumns,
-            sampleData: sampleData
+            sampleData: sampleData,
+            allData: sampleData  // For sample/preview, use same data
         )
     }
 }

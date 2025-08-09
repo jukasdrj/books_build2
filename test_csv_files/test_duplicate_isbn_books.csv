@@ -1,0 +1,11 @@
+Title,Author,ISBN,Rating,Notes
+"The Great Gatsby","F. Scott Fitzgerald","978-0-7432-7356-5","5","First copy"
+"The Great Gatsby (Special Edition)","F.S. Fitzgerald","978-0-7432-7356-5","4","Duplicate ISBN, different title"
+"Great Gatsby","Fitzgerald","9780743273565","5","Same ISBN without hyphens"
+"1984","George Orwell","978-0-452-28423-4","5","Original"
+"Nineteen Eighty-Four","George Orwell","978-0-452-28423-4","4","Same book, different title format"
+"Harry Potter and the Philosopher's Stone","J.K. Rowling","978-0-439-70818-5","5","UK title"
+"Harry Potter and the Sorcerer's Stone","J.K. Rowling","978-0-439-70818-5","5","US title, same ISBN"
+"The Hobbit","J.R.R. Tolkien","978-0-547-92822-4","5","First entry"
+"The Hobbit: There and Back Again","Tolkien, J.R.R.","978-0-547-92822-4","4","Same ISBN, full title"
+"To Kill a Mockingbird","Harper Lee","978-0-06-112008-4","5","Classic edition"

@@ -149,6 +149,15 @@ class BookSearchService: ObservableObject {
     private func buildOptimizedQuery(_ query: String) -> String {
         let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
         
+        // Check if it's already an ISBN query (handle CSVImportService calls)
+        if trimmed.hasPrefix("isbn:") {
+            // Already formatted, ensure clean ISBN after prefix
+            let isbnPart = String(trimmed.dropFirst(5))
+                .replacingOccurrences(of: "-", with: "")
+                .replacingOccurrences(of: " ", with: "")
+            return "isbn:\(isbnPart)"
+        }
+        
         // Handle ISBN searches
         if isISBN(trimmed) {
             return "isbn:\(trimmed.replacingOccurrences(of: "-", with: ""))"

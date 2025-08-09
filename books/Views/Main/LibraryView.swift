@@ -172,6 +172,10 @@ struct LibraryView: View {
         }
         .onAppear {
             updateStableBooks()
+            // Add sample data for development/testing if library is empty
+            #if DEBUG
+            addSampleDataIfNeeded()
+            #endif
         }
         .onChange(of: allBooks) { _, _ in
             updateStableBooks()
@@ -223,6 +227,28 @@ struct LibraryView: View {
             }
         }
     }
+    
+    #if DEBUG
+    private func addSampleDataIfNeeded() {
+        // Only add sample data if library is empty and not in screenshot mode
+        guard allBooks.isEmpty && !ScreenshotMode.isEnabled else { return }
+        
+        let sampleBooks = ScreenshotMode.demoBooks()
+        for book in sampleBooks {
+            modelContext.insert(book)
+            if let metadata = book.metadata {
+                modelContext.insert(metadata)
+            }
+        }
+        
+        do {
+            try modelContext.save()
+            print("Added \(sampleBooks.count) sample books for development")
+        } catch {
+            print("Failed to save sample books: \(error)")
+        }
+    }
+    #endif
 }
 
 // MARK: - Layout Views (updated - iPad-optimized)
@@ -238,7 +264,9 @@ struct UniformGridLayoutView: View {
                 NavigationLink(value: book) {
                     BookCardView(book: book)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(PlainButtonStyle())
+                .accessibilityLabel("View details for \(book.metadata?.title ?? "Unknown Title")")
+                .accessibilityHint("Opens book details screen")
             }
         }
         .padding(adaptivePadding())
@@ -300,7 +328,8 @@ struct ListLayoutView: View {
                 NavigationLink(value: book) {
                     BookRowView(userBook: book)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(PlainButtonStyle())
+                .accessibilityLabel("View details for \(book.metadata?.title ?? "Unknown Title")")
                 
                 if book.id != books.last?.id {
                     Divider()

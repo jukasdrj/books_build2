@@ -17,6 +17,7 @@ struct CSVImportSession {
     let totalRows: Int
     let detectedColumns: [CSVColumn]
     let sampleData: [[String]] // First 5-10 rows for preview
+    let allData: [[String]] // All rows including header
     let createdAt: Date = Date()
     
     var isValidGoodreadsFormat: Bool {
@@ -196,10 +197,15 @@ struct ImportProgress {
     var successfulImports: Int = 0
     var failedImports: Int = 0
     var duplicatesSkipped: Int = 0
+    var duplicatesISBN: Int = 0  // Duplicates found by ISBN
+    var duplicatesGoogleID: Int = 0  // Duplicates found by Google Books ID
+    var duplicatesTitleAuthor: Int = 0  // Duplicates found by title/author matching
     var startTime: Date?
     var endTime: Date?
     var isCancelled: Bool = false
     var errors: [ImportError] = []
+    var message: String = ""  // Detailed progress message
+    var estimatedTimeRemaining: TimeInterval = 0  // Estimated time to completion
     
     var progress: Double {
         guard totalBooks > 0 else { return 0 }
@@ -247,6 +253,9 @@ enum ImportErrorType {
     case parseError         // CSV format issues
     case validationError    // Invalid book data
     case duplicateError     // Book already exists
+    case duplicateISBN      // Duplicate found by ISBN match
+    case duplicateGoogleID  // Duplicate found by Google Books ID
+    case duplicateTitleAuthor // Duplicate found by title/author fuzzy matching
     case networkError       // Failed to fetch additional data
     case storageError       // Failed to save to database
 }
@@ -258,6 +267,9 @@ struct ImportResult {
     let successfulImports: Int
     let failedImports: Int
     let duplicatesSkipped: Int
+    let duplicatesISBN: Int  // Duplicates found by ISBN
+    let duplicatesGoogleID: Int  // Duplicates found by Google Books ID
+    let duplicatesTitleAuthor: Int  // Duplicates found by title/author matching
     let duration: TimeInterval
     let errors: [ImportError]
     let importedBookIds: [UUID]
@@ -284,6 +296,22 @@ struct ImportResult {
         
         if duplicatesSkipped > 0 {
             components.append("\(duplicatesSkipped) duplicates skipped")
+            
+            // Add details about duplicate types if available
+            var duplicateDetails: [String] = []
+            if duplicatesISBN > 0 {
+                duplicateDetails.append("\(duplicatesISBN) by ISBN")
+            }
+            if duplicatesGoogleID > 0 {
+                duplicateDetails.append("\(duplicatesGoogleID) by Google ID")
+            }
+            if duplicatesTitleAuthor > 0 {
+                duplicateDetails.append("\(duplicatesTitleAuthor) by title/author")
+            }
+            
+            if !duplicateDetails.isEmpty {
+                components[components.count - 1] = "\(duplicatesSkipped) duplicates skipped (\(duplicateDetails.joined(separator: ", ")))"
+            }
         }
         
         if failedImports > 0 {

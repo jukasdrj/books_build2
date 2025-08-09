@@ -210,9 +210,9 @@ struct ContentView: View {
                     }
                 }
             }
+            .withNavigationDestinations() // Apply navigation destinations inside NavigationStack
             .background(theme.background)
         }
-        .withNavigationDestinations()
         .navigationSplitViewStyle(.balanced)
         .tint(theme.primary)
     }
@@ -251,8 +251,8 @@ struct ContentView: View {
                 )
             }
             .ignoresSafeArea(.keyboard, edges: .bottom)
+            .withNavigationDestinations() // Apply navigation destinations inside NavigationStack
         }
-        .withNavigationDestinations()
     }
     
 }

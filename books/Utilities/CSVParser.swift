@@ -66,6 +66,14 @@ struct CSVParser {
     
     /// Parse CSV from URL with basic validation
     func parseCSV(from url: URL) throws -> CSVImportSession {
+        // Start accessing security-scoped resource for sandboxed file access
+        let accessing = url.startAccessingSecurityScopedResource()
+        defer {
+            if accessing {
+                url.stopAccessingSecurityScopedResource()
+            }
+        }
+        
         // Validate file exists and size
         guard FileManager.default.fileExists(atPath: url.path) else {
             throw CSVError.fileNotFound
@@ -82,9 +90,19 @@ struct CSVParser {
             throw CSVError.emptyFile
         }
         
-        // Read file content
-        guard let content = try? String(contentsOf: url, encoding: config.encoding) else {
-            throw CSVError.invalidEncoding
+        // Read file content with proper error handling
+        let content: String
+        do {
+            content = try String(contentsOf: url, encoding: config.encoding)
+        } catch {
+            // Try alternative encodings if UTF-8 fails
+            if let alternateContent = try? String(contentsOf: url, encoding: .utf16) {
+                content = alternateContent
+            } else if let alternateContent = try? String(contentsOf: url, encoding: .isoLatin1) {
+                content = alternateContent
+            } else {
+                throw CSVError.invalidEncoding
+            }
         }
         
         if content.isEmpty {
@@ -116,7 +134,8 @@ struct CSVParser {
             fileSize: fileSize,
             totalRows: dataRows.count,
             detectedColumns: columns,
-            sampleData: sampleData
+            sampleData: sampleData,
+            allData: rows // Store all rows for actual import
         )
     }
     
@@ -282,8 +301,8 @@ struct CSVParser {
     func parseBooks(from session: CSVImportSession, columnMappings: [String: BookField]) -> [ParsedBook] {
         var books: [ParsedBook] = []
         
-        // Skip header row, start from index 1
-        let dataRows = Array(session.sampleData.dropFirst())
+        // Use ALL data, not just sample data. Skip header row, start from index 1
+        let dataRows = Array(session.allData.dropFirst())
         
         for (rowIndex, row) in dataRows.enumerated() {
             let book = parseBook(from: row, columns: session.detectedColumns, mappings: columnMappings, rowIndex: rowIndex + 2) // +2 because we skip header and are 1-indexed
