@@ -248,8 +248,6 @@ extension Color {
         return isDark ? 
             Color(white: 0.9) : // Light color for dark mode
             Color(white: 0.1)   // Dark color for light mode
-        
-        return self
     }
     
     /// Checks if this color provides sufficient contrast against the given background
