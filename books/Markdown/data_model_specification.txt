@@ -1,87 +1,181 @@
-# Data-Model Specification – Release v1.0
+# Data Model Specification – Current Implementation
 
-This document defines the canonical schema for SwiftData entities used in the Books iOS app.
+This document defines the canonical schema for SwiftData entities used in the Books iOS reading tracker app.
+
+**Last Updated**: January 9, 2025
+**Version**: Current Implementation (Post-Theme System Fix)
 
 ---
 
 ## 1. Entity: `BookMetadata`
 
-| Field            | Type    | Optional | Default | Notes                                                 |
-|------------------|---------|----------|---------|-------------------------------------------------------|
-| `googleBooksID`  | String  | ❌       | –       | Primary identifier when fetched online; UUID when manual. |
-| `title`          | String  | ❌       | –       | Trimmed, max 512 chars.                               |
-| `authors`        | [String]| ❌       | –       | ≥ 1 author. Normalized "Last, First" not enforced yet.|
-| `publishedDate`  | String  | ✅       | –       | Preferred ISO-8601 `yyyy-MM-dd`; may be year-only.    |
-| `pageCount`      | Int     | ✅       | –       | Positive integer.                                     |
-| `publisher`      | String  | ✅       | –       |                                                       |
-| `isbn`           | String  | ✅       | –       | 10 or 13 digits, no dashes; validation deferred.      |
-| `imageURL`       | URL     | ✅       | –       | Cover thumbnail.                                      |
-| `bookDescription`| String  | ✅       | –       | Plain-text/Markdown; max 10k chars.                   |
-| `language`       | String  | ✅       | –       | Primary language code (e.g., "en", "es").             |
-| `previewLink`    | URL     | ✅       | –       | Google Books preview URL.                             |
-| `infoLink`       | URL     | ✅       | –       | Google Books info page URL.                           |
-| `genre`          | [String]| ✅       | –       | Categories/genres from Google Books API.               |
-| `originalLanguage`| String | ✅       | –       | Original publication language if translated.           |
-| `authorNationality`| String| ✅      | –       | Primary author's nationality.                         |
-| `translator`     | String  | ✅       | –       | Translator name if applicable.                        |
-| `format`         | Enum    | ✅       | –       | Physical, digital, audiobook format.                 |
+| Field                     | Type       | Optionality | Default | Notes                                                            |
+|---------------------------|------------|-------------|---------|------------------------------------------------------------------|
+| `googleBooksID`           | String     | ❌          | –       | Primary ID (Google Books) or UUID (manual entry)                |
+| `title`                   | String     | ❌          | –       | Trimmed, max 512 chars                                           |
+| `authorsString`           | String     | (private)   | `""`    | `|||`-separated storage for authors array                      |
+| `publishedDate`           | String?    | ✅          | –       | ISO-8601 or year-only string                                     |
+| `pageCount`               | Int?       | ✅          | –       | Positive integer                                                 |
+| `bookDescription`         | String?    | ✅          | –       | Plain-text/Markdown, max 10k chars                               |
+| `imageURL`                | URL?       | ✅          | –       | Cover thumbnail URL                                              |
+| `language`                | String?    | ✅          | –       | BCP 47 language code (e.g., "en-US")                             |
+| `previewLink`             | URL?       | ✅          | –       | Google Books preview URL                                         |
+| `infoLink`                | URL?       | ✅          | –       | Google Books info page URL                                       |
+| `publisher`               | String?    | ✅          | –       |                                                                  |
+| `isbn`                    | String?    | ✅          | –       | 10 or 13 digits, no dashes                                       |
+| `genreString`             | String     | (private)   | `""`    | `|||`-separated storage for genre array                          |
+| `originalLanguage`        | String?    | ✅          | –       | Original publication language if translated                      |
+| `authorNationality`       | String?    | ✅          | –       | Primary author's nationality                                     |
+| `translator`              | String?    | ✅          | –       | Translator name if applicable                                    |
+| `format`                  | BookFormat?| ✅          | –       | `.physical`, `.ebook`, `.audiobook`                              |
+| `authorGender`            | AuthorGender?| ✅        | –       | `.male`, `.female`, `.nonBinary`, etc.                           |
+| `authorEthnicity`         | String?    | ✅          | –       |                                                                  |
+| `culturalRegion`          | CulturalRegion?| ✅      | –       | `.africa`, `.asia`, `.europe`, etc.                              |
+| `originalPublicationCountry` | String?    | ✅       | –       |                                                                  |
+| `translatorNationality`   | String?    | ✅          | –       |                                                                  |
+| `culturalThemesString`    | String     | (private)   | `""`    | `|||`-separated storage for cultural themes array                |
+| `indigenousAuthor`        | Bool       | ❌          | `false` |                                                                  |
+| `marginalizedVoice`       | Bool       | ❌          | `false` |                                                                  |
+| `readingDifficulty`       | ReadingDifficulty?| ✅ | –       | `.easy`, `.moderate`, `.challenging`                             |
+| `timeToRead`              | Int?       | ✅          | –       | Estimated minutes                                                |
+| `contentWarningsString`   | String     | (private)   | `""`    | `|||`-separated storage for content warnings array               |
+| `awardsString`            | String     | (private)   | `""`    | `|||`-separated storage for awards array                         |
+| `series`                  | String?    | ✅          | –       | Series name                                                      |
+| `seriesNumber`            | Int?       | ✅          | –       | Book number in series                                            |
 
-### Relationships
-• _Zero-or-many_ `UserBook` objects reference a single `BookMetadata`.
-• Cascade delete: only remove `BookMetadata` when no `UserBook` points to it.
+**Computed Properties**:
+- `authors: [String]`
+- `genre: [String]`
+- `culturalThemes: [String]`
+- `contentWarnings: [String]`
+- `awards: [String]`
+
+**Relationships**:
+- `userBooks: [UserBook]` (Inverse of `UserBook.metadata`)
 
 ---
 
 ## 2. Entity: `UserBook`
 
-### Core Fields
-| Field            | Type   | Optional | Default            | Notes                                                         |
-|------------------|--------|----------|--------------------|---------------------------------------------------------------|
-| `id`             | UUID   | ❌       | Auto-generated     | Primary key.                                                  |
-| `metadata`       | Link→BookMetadata | ✅ | –              | Many : 1 relationship (optional for initialization).          |
-| `readingStatus`  | Enum   | ❌       | `toRead`           | `.toRead`, `.reading`, `.read`, `.onHold`, `.dnf`             |
-| `onWishlist`     | Bool   | ❌       | `false`            | True → separate wishlist view.                                |
-| `isFavorited`    | Bool   | ❌       | `false`            | User's favorite books.                                        |
-| `owned`          | Bool   | ❌       | `true`             | Whether user physically owns the book.                        |
-| `rating`         | Int    | ✅       | –                  | 1-5 inclusive.                                                |
-| `notes`          | String | ✅       | –                  | Private; max 5k chars.                                       |
-| `tags`           | [String]| ❌      | `[]`               | User-defined tags for organization.                           |
-| `dateAdded`      | Date   | ❌       | `Date()`           | Set on insertion.                                             |
-| `dateStarted`    | Date   | ✅       | –                  | Auto-set when status → `.reading` if nil.                     |
-| `dateCompleted`  | Date   | ✅       | –                  | Auto-set when status → `.read`.                               |
+| Field                     | Type           | Optionality | Default        | Notes                                                            |
+|---------------------------|----------------|-------------|----------------|------------------------------------------------------------------|
+| `id`                      | UUID           | ❌          | Auto-generated | Primary key                                                      |
+| `dateAdded`               | Date           | ❌          | `Date()`       | Set on insertion                                                 |
+| `dateStarted`             | Date?          | ✅          | –              | Auto-set when status becomes `.reading`                         |
+| `dateCompleted`           | Date?          | ✅          | –              | Auto-set when status becomes `.read`                            |
+| `readingStatus`           | ReadingStatus  | ❌          | `.toRead`      | `.toRead`, `.reading`, `.read`, `.onHold`, `.dnf`                |
+| `isFavorited`             | Bool           | ❌          | `false`        | User's favorite books                                            |
+| `owned`                   | Bool           | ❌          | `true`         | Whether user physically owns the book                            |
+| `onWishlist`              | Bool           | ❌          | `false`        | Integrated into library filtering                                |
+| `rating`                  | Int?           | ✅          | –              | 1-5 inclusive                                                    |
+| `notes`                   | String?        | ✅          | –              | Private notes, max 5k chars                                      |
+| `tagsString`              | String         | (private)   | `""`           | `|||`-separated storage for tags array                           |
+| `quotesString`            | String         | (private)   | `""`           | `†††`-separated storage for quotes array                         |
+| `readingSessionsData`     | String         | (private)   | `""`           | JSON-encoded storage for reading sessions                        |
+| `currentPage`             | Int            | ❌          | `0`            | Current reading position                                         |
+| `readingProgress`         | Double         | ❌          | `0.0`          | 0.0 to 1.0, auto-calculated from `currentPage`                   |
+| `estimatedFinishDate`     | Date?          | ✅          | –              | Calculated from reading pace                                     |
+| `totalReadingTimeMinutes` | Int            | ❌          | `0`            | Cumulative reading time                                          |
+| `dailyReadingGoal`        | Int?           | ✅          | –              | Target pages per day                                             |
+| `personalRating`          | Double?        | ✅          | –              | 0.0 to 5.0 for more granular ratings                             |
+| `contributesToCulturalGoal` | Bool           | ❌          | `false`        | Whether book counts toward diversity goals                       |
+| `culturalGoalCategory`    | String?        | ✅          | –              | e.g., "African Literature"                                     |
+| `isPublic`                | Bool           | ❌          | `false`        | Whether reading data is publicly visible                         |
+| `recommendedBy`           | String?        | ✅          | –              | Who recommended this book                                        |
+| `wouldRecommend`          | Bool?          | ✅          | –              | User's recommendation status                                     |
+| `discussionNotes`         | String?        | ✅          | –              | Notes for book clubs or discussions                              |
 
-### Enhanced Reading Progress Tracking
-| Field                | Type   | Optional | Default | Notes                                                     |
-|---------------------|--------|----------|---------|-----------------------------------------------------------|
-| `currentPage`       | Int    | ❌       | `0`     | Current reading position; triggers progress calculation.   |
-| `readingProgress`   | Double | ❌       | `0.0`   | 0.0 to 1.0 calculated from currentPage/totalPages.       |
-| `estimatedFinishDate` | Date | ✅       | –       | Calculated from reading pace and daily goals.            |
-| `totalReadingTimeMinutes` | Int | ❌   | `0`     | Cumulative reading time across all sessions.             |
-| `dailyReadingGoal`  | Int    | ✅       | –       | Target pages per day.                                     |
-| `personalRating`    | Double | ✅       | –       | 0.0 to 5.0 for more granular ratings.                    |
+**Computed Properties**:
+- `tags: [String]`
+- `quotes: [String]?`
+- `readingSessions: [ReadingSession]`
 
-### Cultural Diversity Tracking
-| Field                      | Type   | Optional | Default | Notes                                        |
-|---------------------------|--------|----------|---------|----------------------------------------------|
-| `contributesToCulturalGoal` | Bool   | ❌       | `false` | Whether book counts toward diversity goals.  |
-| `culturalGoalCategory`     | String | ✅       | –       | e.g., "African Literature", "Translated Works" |
-
-### Social and Sharing Features
-| Field              | Type   | Optional | Default | Notes                                      |
-|-------------------|--------|----------|---------|--------------------------------------------|
-| `isPublic`        | Bool   | ❌       | `false` | Whether reading data is publicly visible. |
-| `recommendedBy`   | String | ✅       | –       | Who recommended this book.                 |
-| `wouldRecommend`  | Bool   | ✅       | –       | User's recommendation status.              |
-| `discussionNotes` | String | ✅       | –       | Notes for book clubs or discussions.       |
-
-### Complex Data (Stored as JSON Strings)
-| Field               | Computed Type      | Storage Type | Notes                                    |
-|--------------------|-------------------|--------------|------------------------------------------|
-| `quotes`           | [String]?         | String       | Separated by "†††", max content varies. |
-| `readingSessions`  | [ReadingSession]  | String       | JSON-encoded reading session data.      |
+**Relationships**:
+- `metadata: BookMetadata?` (Delete Rule: Nullify)
 
 ---
 
 ## 3. Supporting Types
 
-### ReadingStatus Enum
+### `ReadingStatus` Enum (String, Codable)
+- `toRead` = "TBR - To Be Read"
+- `reading` = "Reading"
+- `read` = "Read"
+- `onHold` = "On Hold"
+- `dnf` = "DNF - Did Not Finish"
+
+### `BookFormat` Enum (String, Codable)
+- `physical` = "Physical"
+- `ebook` = "E-book"
+- `audiobook` = "Audiobook"
+
+### `AuthorGender` Enum (String, Codable)
+- `male`
+- `female`
+- `nonBinary`
+- `other`
+- `unknown`
+
+### `CulturalRegion` Enum (String, Codable)
+- `africa`
+- `asia`
+- `europe`
+- `americas`
+- `oceania`
+- `middleEast`
+- `indigenous`
+
+### `ReadingDifficulty` Enum (String, Codable)
+- `easy`
+- `moderate`
+- `challenging`
+- `academic`
+
+### `ReadingSession` Struct (Codable)
+- `id: UUID`
+- `date: Date`
+- `durationMinutes: Int`
+- `pagesRead: Int`
+
+---
+
+## 4. Key Implementation Details
+
+### Automatic Status Handling
+- **Date Management**: `dateStarted` and `dateCompleted` are auto-set based on `readingStatus` changes
+- **Progress Synchronization**: When status changes to `.read`, `readingProgress` is set to `1.0` and `currentPage` is set to total pages
+- **Validation**: Rating, notes, tags, and other fields have built-in validation with non-fatal fallbacks
+
+### Data Storage Patterns
+- **Array Storage**: Arrays stored as delimited strings (`|||` for most arrays, `†††` for quotes)
+- **JSON Storage**: Complex objects like `ReadingSession` stored as JSON-encoded strings
+- **SwiftData Compatibility**: All stored properties use SwiftData-compatible types
+
+### Relationships
+- **One-to-Many**: `BookMetadata` → `UserBook[]` with delete rule `.nullify`
+- **Navigation-Safe**: `BookMetadata` implements `Hashable` using `googleBooksID` for stable SwiftUI navigation
+
+### Computed Properties
+Many properties expose array interfaces while storing data as strings internally:
+- Authors, genres, cultural themes, content warnings, awards (stored with `|||` separator)
+- Quotes (stored with `†††` separator)
+- Reading sessions (stored as JSON)
+
+---
+
+## 5. Recent Changes
+
+**January 2025**:
+- Enhanced `BookMetadata` with extensive cultural diversity tracking fields
+- Added automatic reading completion synchronization in `UserBook`
+- Implemented reading goals and progress tracking
+- Added social features (recommendations, discussions)
+- Improved data validation with non-fatal error handling
+
+**Current Implementation Status**:
+- ✅ All fields implemented in SwiftData models
+- ✅ Computed properties working for array access
+- ✅ Automatic status and date handling functional
+- ✅ Cultural diversity tracking fully operational
+- ✅ Reading goals and progress tracking integrated
+- ✅ Build success confirmed with iPhone 16 simulator

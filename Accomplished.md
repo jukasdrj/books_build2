@@ -1,16 +1,17 @@
 # Development Accomplishments Log
 
-## LATEST SESSION: Theme Environment Fixes & Build Success ✅ COMPLETED 💜🔧✨
+## LATEST SESSION: Theme Switching Reactivity Fix & Build Success ✅ COMPLETED 💜🔧✨
 
 ### Overview
-Successfully resolved all remaining build issues and theme environment problems. The Books Reading Tracker app now builds completely without errors for iPhone 16 simulator (arm64-apple-ios18.0-simulator) and all SwiftUI previews work correctly. Fixed theme environment issues in preview sections and corrected Material Card modifier usage throughout the codebase.
+Successfully resolved the critical theme switching issue where the theme picker selections weren't updating the UI. Implemented a reactive theme environment system using @Bindable ThemeStore wrapper that makes theme changes propagate instantly across all views. The Books Reading Tracker app now builds completely without errors and features fully functional live theme switching without requiring app restarts.
 
 ### Key Activities
-1. **Theme Environment Resolution**: Fixed missing `currentTheme` environment variables in all preview sections
-2. **Preview Structure Fixes**: Corrected SwiftUI preview macro compatibility issues
-3. **Material Card Corrections**: Fixed incorrect `backgroundColor` parameter usage in materialCard modifiers
-4. **Build Verification**: Successfully compiled entire project with zero errors
-5. **Warning Resolution**: Addressed deprecation warnings while maintaining functionality
+1. **Theme Switching Reactivity Fix**: Resolved critical issue where theme picker selections weren't updating the UI
+2. **Reactive Environment System**: Implemented @Bindable ThemeStore wrapper for live theme updates
+3. **Theme Environment Resolution**: Fixed missing `currentTheme` environment variables in all preview sections
+4. **Preview Structure Fixes**: Corrected SwiftUI preview macro compatibility issues
+5. **Material Card Corrections**: Fixed incorrect `backgroundColor` parameter usage in materialCard modifiers
+6. **Build Verification**: Successfully compiled entire project with zero errors
 
 ---
 
@@ -73,6 +74,45 @@ struct ComponentPreview: View {
 - Preview structures follow proper Swift result builder patterns
 - Environment values properly injected with correct theme types
 - Developer productivity restored for preview-driven development
+
+#### **Theme Switching Reactivity Fix**
+**Achievement**: Resolved critical issue where theme picker selections weren't updating the UI across views
+**Root Cause**: Static environment injection at app startup prevented reactive updates when ThemeStore.currentTheme changed
+**Files Modified**: `booksApp.swift`
+**Technical Implementation**:
+```swift
+// Before: Static environment injection
+var body: some Scene {
+    WindowGroup {
+        // Static snapshot - never updates when theme changes
+        ContentView()
+            .environment(\.themeStore, themeStore) 
+            .environment(\.appTheme, themeStore.appTheme) // Static!
+    }
+}
+
+// After: Reactive environment wrapper
+var body: some Scene {
+    WindowGroup {
+        ThemedRootView(themeStore: themeStore)
+    }
+}
+
+struct ThemedRootView: View {
+    @Bindable var themeStore: ThemeStore // Observes changes
+    
+    var body: some View {
+        // ... app content ...
+        .environment(\.themeStore, themeStore)
+        .environment(\.appTheme, themeStore.appTheme) // Updates reactively!
+    }
+}
+```
+**Impact**:
+- Theme switching now works instantly without app restarts
+- All UI colors update immediately when themes are selected from picker
+- Theme picker automatically dismisses showing new theme colors
+- Reactive environment updates propagate to all views using @Environment(\.appTheme)
 
 #### **Build Success Achievement**
 **Achievement**: Project successfully builds without errors
