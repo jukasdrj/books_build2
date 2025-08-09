@@ -9,6 +9,7 @@ import SwiftUI
 import UIKit
 
 struct BookCoverImage: View {
+    @Environment(\.appTheme) private var currentTheme
     let imageURL: String?
     let width: CGFloat
     let height: CGFloat
@@ -42,7 +43,7 @@ struct BookCoverImage: View {
                     .clipped()
                     .overlay(
                         RoundedRectangle(cornerRadius: 8)
-                            .stroke(Color.theme.outline.opacity(0.2), lineWidth: 0.5)
+                            .stroke(currentTheme.outline.opacity(0.2), lineWidth: 0.5)
                     )
                     .shadow(
                         color: Color.black.opacity(0.1),
@@ -167,6 +168,7 @@ struct BookCoverImage: View {
 // MARK: - Enhanced Placeholder Views
 
 struct LoadingPlaceholder: View {
+    @Environment(\.appTheme) private var currentTheme
     let width: CGFloat
     let height: CGFloat
     @State private var isAnimating = false
@@ -177,8 +179,8 @@ struct LoadingPlaceholder: View {
                 // Base gradient background
                 LinearGradient(
                     colors: [
-                        Color.theme.surfaceVariant,
-                        Color.theme.cardBackground
+                        currentTheme.surfaceVariant,
+                        currentTheme.cardBackground
                     ],
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
@@ -192,8 +194,8 @@ struct LoadingPlaceholder: View {
                         LinearGradient(
                             colors: [
                                 Color.clear,
-                                Color.theme.primary.opacity(0.1),
-                                Color.theme.tertiary.opacity(0.1),
+                                currentTheme.primary.opacity(0.1),
+                                currentTheme.tertiary.opacity(0.1),
                                 Color.clear
                             ],
                             startPoint: .leading,
@@ -213,15 +215,15 @@ struct LoadingPlaceholder: View {
             if height > 60 {
                 Text("Loading...")
                     .font(.system(size: 10, weight: .medium))
-                    .foregroundColor(Color.theme.secondaryText)
+                    .foregroundColor(currentTheme.secondaryText)
             }
         }
         .frame(width: width, height: height)
-        .background(Color.theme.cardBackground)
+        .background(currentTheme.cardBackground)
         .cornerRadius(8)
         .overlay(
             RoundedRectangle(cornerRadius: 8)
-                .stroke(Color.theme.outline.opacity(0.2), lineWidth: 0.5)
+                .stroke(currentTheme.outline.opacity(0.2), lineWidth: 0.5)
         )
         .onAppear {
             isAnimating = true
@@ -231,6 +233,7 @@ struct LoadingPlaceholder: View {
 }
 
 struct ErrorPlaceholder: View {
+    @Environment(\.appTheme) private var currentTheme
     let width: CGFloat
     let height: CGFloat
     let errorMessage: String
@@ -243,13 +246,13 @@ struct ErrorPlaceholder: View {
                 .resizable()
                 .scaledToFit()
                 .frame(width: width * 0.3, height: height * 0.3)
-                .foregroundColor(Color.theme.warning)
+                .foregroundColor(currentTheme.warning)
             
             if showDetails {
                 VStack(spacing: Theme.Spacing.xs) {
                     Text(errorMessage)
                         .labelSmall()
-                        .foregroundColor(Color.theme.secondaryText)
+                        .foregroundColor(currentTheme.secondaryText)
                         .multilineTextAlignment(.center)
                         .lineLimit(2)
                     
@@ -257,16 +260,16 @@ struct ErrorPlaceholder: View {
                         onRetry()
                     }
                     .labelSmall()
-                    .foregroundColor(Color.theme.primaryAction)
+                    .foregroundColor(currentTheme.primaryAction)
                 }
             }
         }
         .frame(width: width, height: height)
-        .background(Color.theme.cardBackground)
+        .background(currentTheme.cardBackground)
         .cornerRadius(8)
         .overlay(
             RoundedRectangle(cornerRadius: 8)
-                .stroke(Color.theme.outline.opacity(0.2), lineWidth: 0.5)
+                .stroke(currentTheme.outline.opacity(0.2), lineWidth: 0.5)
         )
         .accessibilityLabel("Failed to load book cover")
         .accessibilityHint("Double tap to retry loading")
@@ -274,6 +277,7 @@ struct ErrorPlaceholder: View {
 }
 
 struct PlaceholderBookCover: View {
+    @Environment(\.appTheme) private var currentTheme
     let width: CGFloat
     let height: CGFloat
     
@@ -284,8 +288,8 @@ struct PlaceholderBookCover: View {
                 // Background gradient
                 LinearGradient(
                     colors: [
-                        Color.theme.gradientStart,
-                        Color.theme.gradientEnd
+                        currentTheme.gradientStart,
+                        currentTheme.gradientEnd
                     ],
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
@@ -298,8 +302,8 @@ struct PlaceholderBookCover: View {
                     .foregroundStyle(
                         LinearGradient(
                             colors: [
-                                Color.theme.primary,
-                                Color.theme.tertiary
+                                currentTheme.primary,
+                                currentTheme.tertiary
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
@@ -311,18 +315,18 @@ struct PlaceholderBookCover: View {
                 VStack {
                     HStack {
                         Circle()
-                            .fill(Color.theme.primary.opacity(0.2))
+                            .fill(currentTheme.primary.opacity(0.2))
                             .frame(width: 3, height: 3)
                         Spacer()
                         Circle()
-                            .fill(Color.theme.tertiary.opacity(0.3))
+                            .fill(currentTheme.tertiary.opacity(0.3))
                             .frame(width: 2, height: 2)
                     }
                     Spacer()
                     HStack {
                         Spacer()
                         Circle()
-                            .fill(Color.theme.secondary.opacity(0.2))
+                            .fill(currentTheme.secondary.opacity(0.2))
                             .frame(width: 2, height: 2)
                     }
                 }
@@ -333,15 +337,15 @@ struct PlaceholderBookCover: View {
             if height > 60 {
                 Text("No Cover")
                     .font(.system(size: 10, weight: .medium))
-                    .foregroundColor(Color.theme.secondaryText)
+                    .foregroundColor(currentTheme.secondaryText)
             }
         }
         .frame(width: width, height: height)
         .background(
             LinearGradient(
                 colors: [
-                    Color.theme.cardBackground,
-                    Color.theme.surfaceVariant
+                    currentTheme.cardBackground,
+                    currentTheme.surfaceVariant
                 ],
                 startPoint: .top,
                 endPoint: .bottom
@@ -353,8 +357,8 @@ struct PlaceholderBookCover: View {
                 .stroke(
                     LinearGradient(
                         colors: [
-                            Color.theme.outline.opacity(0.3),
-                            Color.theme.outline.opacity(0.1)
+                            currentTheme.outline.opacity(0.3),
+                            currentTheme.outline.opacity(0.1)
                         ],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
@@ -367,44 +371,53 @@ struct PlaceholderBookCover: View {
     }
 }
 
-#Preview {
-    VStack(spacing: 20) {
-        VStack(spacing: Theme.Spacing.lg) {
-            HStack(spacing: Theme.Spacing.md) {
-                // Test with valid URL
-                BookCoverImage(
-                    imageURL: "https://books.google.com/books/content?id=M30_sYfUfgAC&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
-                    width: 100,
-                    height: 150
-                )
-                
-                // Test with invalid URL
-                BookCoverImage(
-                    imageURL: "https://invalid-url.com/image.jpg",
-                    width: 100,
-                    height: 150
-                )
-                
-                // Test with nil URL
-                BookCoverImage(
-                    imageURL: nil,
-                    width: 100,
-                    height: 150
-                )
+struct BookCoverImagePreview: View {
+    @Environment(\.appTheme) private var currentTheme
+    
+    var body: some View {
+        VStack(spacing: 20) {
+            VStack(spacing: Theme.Spacing.lg) {
+                HStack(spacing: Theme.Spacing.md) {
+                    // Test with valid URL
+                    BookCoverImage(
+                        imageURL: "https://books.google.com/books/content?id=M30_sYfUfgAC&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+                        width: 100,
+                        height: 150
+                    )
+                    
+                    // Test with invalid URL
+                    BookCoverImage(
+                        imageURL: "https://invalid-url.com/image.jpg",
+                        width: 100,
+                        height: 150
+                    )
+                    
+                    // Test with nil URL
+                    BookCoverImage(
+                        imageURL: nil,
+                        width: 100,
+                        height: 150
+                    )
+                }
             }
+            
+            HStack {
+                Text("Valid URL")
+                Spacer()
+                Text("Invalid URL")
+                Spacer()
+                Text("No URL")
+            }
+            .labelSmall()
+            .foregroundColor(currentTheme.secondaryText)
         }
-        
-        HStack {
-            Text("Valid URL")
-            Spacer()
-            Text("Invalid URL")
-            Spacer()
-            Text("No URL")
-        }
-        .labelSmall()
-        .foregroundColor(Color.theme.secondaryText)
+        .padding()
+        .background(currentTheme.surface)
     }
-    .padding()
-    .background(Color.theme.surface)
-    .preferredColorScheme(.dark)
+}
+
+#Preview {
+    BookCoverImagePreview()
+        .environment(\.appTheme, AppColorTheme(variant: .purpleBoho))
+        .preferredColorScheme(.dark)
 }

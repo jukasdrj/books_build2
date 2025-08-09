@@ -4,6 +4,7 @@ import SwiftData
 struct EditBookView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.appTheme) private var currentTheme
     
     @Bindable var userBook: UserBook
     let onSave: (UserBook) -> Void
@@ -51,11 +52,11 @@ struct EditBookView: View {
                     VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
                         Text("Book Title")
                             .labelMedium()
-                            .foregroundColor(Color.theme.secondaryText)
+                            .foregroundColor(currentTheme.secondaryText)
                         Text(title)
                             .bodyMedium()
                             .textSelection(.enabled)
-                            .foregroundColor(Color.theme.primaryText)
+                            .foregroundColor(currentTheme.primaryText)
                             .padding(.vertical, Theme.Spacing.sm)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .accessibilityHint("Read-only book metadata")
@@ -64,11 +65,11 @@ struct EditBookView: View {
                     VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
                         Text("Authors")
                             .labelMedium()
-                            .foregroundColor(Color.theme.secondaryText)
+                            .foregroundColor(currentTheme.secondaryText)
                         Text(authors)
                             .bodyMedium()
                             .textSelection(.enabled)
-                            .foregroundColor(Color.theme.primaryText)
+                            .foregroundColor(currentTheme.primaryText)
                             .padding(.vertical, Theme.Spacing.sm)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .accessibilityHint("Read-only book metadata")
@@ -76,15 +77,15 @@ struct EditBookView: View {
                 } header: {
                     Text("Book Information")
                         .titleSmall()
-                        .foregroundColor(Color.theme.primaryText)
+                        .foregroundColor(currentTheme.primaryText)
                 } footer: {
                     HStack(spacing: Theme.Spacing.xs) {
                         Image(systemName: "lock.shield")
-                            .foregroundColor(Color.theme.secondaryText)
+                            .foregroundColor(currentTheme.secondaryText)
                             .font(.caption)
                         Text("Title, authors, and other publication data are provided by Google Books and cannot be edited to maintain data consistency.")
                             .labelSmall()
-                            .foregroundColor(Color.theme.secondaryText)
+                            .foregroundColor(currentTheme.secondaryText)
                     }
                 }
                 
@@ -94,7 +95,7 @@ struct EditBookView: View {
                     VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
                         Text("Book Format")
                             .labelMedium()
-                            .foregroundColor(Color.theme.secondaryText)
+                            .foregroundColor(currentTheme.secondaryText)
                         
                         LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: Theme.Spacing.sm) {
                             ForEach(BookFormat.allCases, id: \.self) { format in
@@ -102,18 +103,18 @@ struct EditBookView: View {
                                     VStack(spacing: Theme.Spacing.xs) {
                                         Image(systemName: format.icon)
                                             .font(.system(size: 20))
-                                            .foregroundColor(selectedFormat == format ? Color.theme.onPrimary : Color.theme.primaryAction)
+                                            .foregroundColor(selectedFormat == format ? currentTheme.onPrimary : currentTheme.primaryAction)
                                         Text(format.rawValue)
                                             .labelSmall()
-                                            .foregroundColor(selectedFormat == format ? Color.theme.onPrimary : Color.theme.primaryText)
+                                            .foregroundColor(selectedFormat == format ? currentTheme.onPrimary : currentTheme.primaryText)
                                     }
                                     .frame(height: 60)
                                     .frame(maxWidth: .infinity)
-                                    .background(selectedFormat == format ? Color.theme.primaryAction : Color.theme.cardBackground)
+                                    .background(selectedFormat == format ? currentTheme.primaryAction : currentTheme.cardBackground)
                                     .cornerRadius(Theme.CornerRadius.medium)
                                     .overlay(
                                         RoundedRectangle(cornerRadius: Theme.CornerRadius.medium)
-                                            .stroke(selectedFormat == format ? Color.theme.primaryAction : Color.theme.outline, lineWidth: 1)
+                                            .stroke(selectedFormat == format ? currentTheme.primaryAction : currentTheme.outline, lineWidth: 1)
                                     )
                                 }
                                 .buttonStyle(.plain)
@@ -124,11 +125,11 @@ struct EditBookView: View {
                     VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
                         Text("Publisher")
                             .labelMedium()
-                            .foregroundColor(Color.theme.secondaryText)
+                            .foregroundColor(currentTheme.secondaryText)
                         Text(publisher.isEmpty ? "Not available" : publisher)
                             .bodyMedium()
                             .textSelection(.enabled)
-                            .foregroundColor(Color.theme.primaryText)
+                            .foregroundColor(currentTheme.primaryText)
                             .padding(.vertical, Theme.Spacing.sm)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .accessibilityHint("Read-only book metadata")
@@ -137,11 +138,11 @@ struct EditBookView: View {
                     VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
                         Text("Publication Date")
                             .labelMedium()
-                            .foregroundColor(Color.theme.secondaryText)
+                            .foregroundColor(currentTheme.secondaryText)
                         Text(publishedDate.isEmpty ? "Not available" : publishedDate)
                             .bodyMedium()
                             .textSelection(.enabled)
-                            .foregroundColor(Color.theme.primaryText)
+                            .foregroundColor(currentTheme.primaryText)
                             .padding(.vertical, Theme.Spacing.sm)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .accessibilityHint("Read-only book metadata")
@@ -150,11 +151,11 @@ struct EditBookView: View {
                     VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
                         Text("Page Count")
                             .labelMedium()
-                            .foregroundColor(Color.theme.secondaryText)
+                            .foregroundColor(currentTheme.secondaryText)
                         Text(pageCount.isEmpty ? "Not available" : "\(pageCount) pages")
                             .bodyMedium()
                             .textSelection(.enabled)
-                            .foregroundColor(Color.theme.primaryText)
+                            .foregroundColor(currentTheme.primaryText)
                             .padding(.vertical, Theme.Spacing.sm)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .accessibilityHint("Read-only book metadata")
@@ -163,11 +164,11 @@ struct EditBookView: View {
                     VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
                         Text("ISBN")
                             .labelMedium()
-                            .foregroundColor(Color.theme.secondaryText)
+                            .foregroundColor(currentTheme.secondaryText)
                         Text(isbn.isEmpty ? "Not available" : isbn)
                             .bodyMedium()
                             .textSelection(.enabled)
-                            .foregroundColor(Color.theme.primaryText)
+                            .foregroundColor(currentTheme.primaryText)
                             .padding(.vertical, Theme.Spacing.sm)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .accessibilityHint("Read-only book metadata")
@@ -175,15 +176,15 @@ struct EditBookView: View {
                 } header: {
                     Text("Format & Publication")
                         .titleSmall()
-                        .foregroundColor(Color.theme.primaryText)
+                        .foregroundColor(currentTheme.primaryText)
                 } footer: {
                     HStack(spacing: Theme.Spacing.xs) {
                         Image(systemName: "info.circle")
-                            .foregroundColor(Color.theme.secondaryText)
+                            .foregroundColor(currentTheme.secondaryText)
                             .font(.caption)
                         Text("Only the book format can be customized. Other publication details are managed by Google Books.")
                             .labelSmall()
-                            .foregroundColor(Color.theme.secondaryText)
+                            .foregroundColor(currentTheme.secondaryText)
                     }
                 }
                 
@@ -192,11 +193,11 @@ struct EditBookView: View {
                     VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
                         Text("Edition Language")
                             .labelMedium()
-                            .foregroundColor(Color.theme.secondaryText)
+                            .foregroundColor(currentTheme.secondaryText)
                         Text(language.isEmpty ? "Not available" : language)
                             .bodyMedium()
                             .textSelection(.enabled)
-                            .foregroundColor(Color.theme.primaryText)
+                            .foregroundColor(currentTheme.primaryText)
                             .padding(.vertical, Theme.Spacing.sm)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .accessibilityHint("Read-only book metadata")
@@ -205,7 +206,7 @@ struct EditBookView: View {
                     VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
                         Text("Original Language")
                             .labelMedium()
-                            .foregroundColor(Color.theme.secondaryText)
+                            .foregroundColor(currentTheme.secondaryText)
                         TextField("Original publication language", text: $originalLanguage)
                             .bodyMedium()
                             .frame(minHeight: 44)
@@ -214,7 +215,7 @@ struct EditBookView: View {
                     VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
                         Text("Author's Cultural Background")
                             .labelMedium()
-                            .foregroundColor(Color.theme.secondaryText)
+                            .foregroundColor(currentTheme.secondaryText)
                         TextField("Author's nationality or cultural origin", text: $authorNationality)
                             .bodyMedium()
                             .frame(minHeight: 44)
@@ -223,7 +224,7 @@ struct EditBookView: View {
                     VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
                         Text("Translator")
                             .labelMedium()
-                            .foregroundColor(Color.theme.secondaryText)
+                            .foregroundColor(currentTheme.secondaryText)
                         TextField("Translator name (if applicable)", text: $translator)
                             .bodyMedium()
                             .frame(minHeight: 44)
@@ -231,16 +232,16 @@ struct EditBookView: View {
                 } header: {
                     Text("Cultural & Language Details")
                         .titleSmall()
-                        .foregroundColor(Color.theme.primaryText)
+                        .foregroundColor(currentTheme.primaryText)
                 } footer: {
                     VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
                         HStack(spacing: Theme.Spacing.xs) {
                             Image(systemName: "info.circle")
-                                .foregroundColor(Color.theme.secondaryText)
+                                .foregroundColor(currentTheme.secondaryText)
                                 .font(.caption)
                             Text("Add your own cultural and translation details to help track the diversity of your reading.")
                                 .labelSmall()
-                                .foregroundColor(Color.theme.secondaryText)
+                                .foregroundColor(currentTheme.secondaryText)
                         }
                     }
                 }
@@ -250,7 +251,7 @@ struct EditBookView: View {
                     VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
                         Text("Tags")
                             .labelMedium()
-                            .foregroundColor(Color.theme.secondaryText)
+                            .foregroundColor(currentTheme.secondaryText)
                         TextField("Enter tags separated by commas", text: $tags)
                             .bodyMedium()
                             .frame(minHeight: 44)
@@ -258,11 +259,11 @@ struct EditBookView: View {
                 } header: {
                     Text("Organization")
                         .titleSmall()
-                        .foregroundColor(Color.theme.primaryText)
+                        .foregroundColor(currentTheme.primaryText)
                 } footer: {
                     Text("Use tags to organize and categorize your books. Example: Fiction, Favorite, Philosophy, Must-Read")
                         .labelSmall()
-                        .foregroundColor(Color.theme.secondaryText)
+                        .foregroundColor(currentTheme.secondaryText)
                 }
                 
                 // Personal Notes Section
@@ -270,7 +271,7 @@ struct EditBookView: View {
                     VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
                         Text("Personal Reading Notes")
                             .labelMedium()
-                            .foregroundColor(Color.theme.secondaryText)
+                            .foregroundColor(currentTheme.secondaryText)
                         TextField("Your thoughts, reflections, and notes...", text: $personalNotes, axis: .vertical)
                             .lineLimit(3...8)
                             .bodyMedium()
@@ -279,10 +280,10 @@ struct EditBookView: View {
                 } header: {
                     Text("Personal Notes")
                         .titleSmall()
-                        .foregroundColor(Color.theme.primaryText)
+                        .foregroundColor(currentTheme.primaryText)
                 }
             }
-            .background(Color.theme.surface)
+            .background(currentTheme.surface)
             .scrollContentBackground(.hidden)
             .navigationTitle("Edit Book Details")
             .navigationBarTitleDisplayMode(.inline)
@@ -290,7 +291,7 @@ struct EditBookView: View {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
                         .bodyMedium()
-                        .foregroundColor(Color.theme.secondaryText)
+                        .foregroundColor(currentTheme.secondaryText)
                 }
                 
                 ToolbarItem(placement: .confirmationAction) {
@@ -298,7 +299,7 @@ struct EditBookView: View {
                         saveAndDismiss()
                     }
                     .labelLarge()
-                    .foregroundColor(Color.theme.primaryAction)
+                    .foregroundColor(currentTheme.primaryAction)
                 }
             }
         }

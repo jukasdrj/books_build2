@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct ThemePreviewCard: View {
+    @Environment(\.appTheme) private var currentTheme
     let theme: ThemeVariant
     let isSelected: Bool
     let onSelect: () -> Void
@@ -19,7 +20,7 @@ struct ThemePreviewCard: View {
             if isSelected {
                 Label("Selected", systemImage: "checkmark.circle.fill")
                     .font(.caption.weight(.medium))
-                    .foregroundColor(Color.theme.success)
+                    .foregroundColor(currentTheme.success)
                     .padding(.top, Theme.Spacing.sm)
             } else {
                 // Placeholder to maintain layout consistency
@@ -32,13 +33,13 @@ struct ThemePreviewCard: View {
         .padding(Theme.Spacing.lg)
         .background(
             RoundedRectangle(cornerRadius: Theme.CornerRadius.large)
-                .fill(Color.theme.cardBackground)
+                .fill(currentTheme.surface)
                 .shadow(color: .black.opacity(0.05), radius: 5, y: 3)
         )
         .overlay(
             RoundedRectangle(cornerRadius: Theme.CornerRadius.large)
                 .stroke(
-                    isSelected ? Color.theme.primary : Color.theme.outline.opacity(0.2),
+                    isSelected ? currentTheme.primary : currentTheme.outline.opacity(0.2),
                     lineWidth: isSelected ? 2 : 1
                 )
         )
@@ -70,11 +71,11 @@ struct ThemePreviewCard: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(theme.displayName)
                     .font(.headline)
-                    .foregroundColor(Color.theme.primaryText)
+                    .foregroundColor(currentTheme.primaryText)
                 
                 Text(theme.description)
                     .font(.subheadline)
-                    .foregroundColor(Color.theme.secondaryText)
+                    .foregroundColor(currentTheme.secondaryText)
             }
             Spacer()
         }

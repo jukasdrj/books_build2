@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ThemePickerView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.appTheme) private var theme
     @State private var selectedTheme: ThemeVariant
     
     private let themeManager = ThemeManager.shared
@@ -48,8 +49,8 @@ struct ThemePickerView: View {
                                 .fill(
                                     LinearGradient(
                                         colors: [
-                                            Color.theme.primary.opacity(0.2),
-                                            Color.theme.secondary.opacity(0.1)
+                                            theme.primary.opacity(0.2),
+                                            theme.secondary.opacity(0.1)
                                         ],
                                         startPoint: .topLeading,
                                         endPoint: .bottomTrailing
@@ -61,24 +62,24 @@ struct ThemePickerView: View {
                                 .font(.system(size: 40, weight: .medium))
                                 .foregroundStyle(
                                     LinearGradient(
-                                        colors: [Color.theme.primary, Color.theme.secondary],
+                                        colors: [theme.primary, theme.secondary],
                                         startPoint: .topLeading,
                                         endPoint: .bottomTrailing
                                     )
                                 )
                         }
-                        .shadow(color: Color.theme.primary.opacity(0.2), radius: 16, x: 0, y: 8)
+                        .shadow(color: theme.primary.opacity(0.2), radius: 16, x: 0, y: 8)
                         
                         VStack(spacing: Theme.Spacing.sm) {
                             Text("Choose Your Perfect Theme")
                                 .font(.title)
                                 .fontWeight(.bold)
-                                .foregroundColor(Color.theme.primaryText)
+                                .foregroundColor(theme.primaryText)
                                 .multilineTextAlignment(.center)
                             
                             Text("Each theme creates a unique reading sanctuary tailored to your mood and style.")
                                 .font(.body)
-                                .foregroundColor(Color.theme.secondaryText)
+                                .foregroundColor(theme.secondaryText)
                                 .multilineTextAlignment(.center)
                                 .padding(.horizontal, Theme.Spacing.md)
                         }
@@ -110,8 +111,8 @@ struct ThemePickerView: View {
             .background(
                 LinearGradient(
                     colors: [
-                        Color.theme.background,
-                        Color.theme.surface.opacity(0.8)
+                        theme.background,
+                        theme.surface.opacity(0.8)
                     ],
                     startPoint: .top,
                     endPoint: .bottom
@@ -125,7 +126,7 @@ struct ThemePickerView: View {
                         dismiss()
                         HapticFeedbackManager.shared.lightImpact()
                     }
-                    .foregroundColor(Color.theme.primary)
+                    .foregroundColor(theme.primary)
                     .fontWeight(.semibold)
                 }
             }

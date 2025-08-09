@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct QuickRatingView: View {
+    @Environment(\.appTheme) private var currentTheme
     @Binding var rating: Int?
     @Binding var isVisible: Bool
     let onRatingComplete: (Int) -> Void
@@ -33,16 +34,16 @@ struct QuickRatingView: View {
                     VStack(spacing: Theme.Spacing.sm) {
                         Image(systemName: "star.circle.fill")
                             .font(.system(size: 32))
-                            .foregroundColor(Color.theme.warning)
-                            .shadow(color: Color.theme.warning.opacity(0.3), radius: 4, x: 0, y: 2)
+                            .foregroundColor(currentTheme.warning)
+                            .shadow(color: currentTheme.warning.opacity(0.3), radius: 4, x: 0, y: 2)
                         
                         Text("Rate this Book")
                             .titleLarge()
-                            .foregroundColor(Color.theme.primaryText)
+                            .foregroundColor(currentTheme.primaryText)
                         
                         Text("Tap a star to rate")
                             .bodyMedium()
-                            .foregroundColor(Color.theme.secondaryText)
+                            .foregroundColor(currentTheme.secondaryText)
                     }
                     
                     // Star Rating Picker with Purple Boho Styling
@@ -54,9 +55,9 @@ struct QuickRatingView: View {
                             } label: {
                                 Image(systemName: star <= selectedRating ? "star.fill" : "star")
                                     .font(.system(size: 28, weight: .medium))
-                                    .foregroundColor(star <= selectedRating ? Color.theme.warning : Color.theme.outline)
+                                    .foregroundColor(star <= selectedRating ? currentTheme.warning : currentTheme.outline)
                                     .shadow(
-                                        color: star <= selectedRating ? Color.theme.warning.opacity(0.4) : Color.clear,
+                                        color: star <= selectedRating ? currentTheme.warning.opacity(0.4) : Color.clear,
                                         radius: star <= selectedRating ? 3 : 0,
                                         x: 0,
                                         y: 1
@@ -110,15 +111,15 @@ struct QuickRatingView: View {
                     // Purple boho gradient background
                     LinearGradient(
                         gradient: Gradient(colors: [
-                            Color.theme.surface,
-                            Color.theme.surface.opacity(0.98)
+                            currentTheme.surface,
+                            currentTheme.surface.opacity(0.98)
                         ]),
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
                 }
                 .materialCard(cornerRadius: Theme.CornerRadius.large)
-                .shadow(color: Color.theme.primary.opacity(0.1), radius: 20, x: 0, y: 10)
+                .shadow(color: currentTheme.primary.opacity(0.1), radius: 20, x: 0, y: 10)
                 .scaleEffect(scale)
                 .opacity(opacity)
                 .padding(Theme.Spacing.xl)

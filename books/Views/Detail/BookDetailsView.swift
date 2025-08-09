@@ -4,6 +4,7 @@ import SwiftData
 struct BookDetailsView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.appTheme) private var currentTheme
     
     @Bindable var book: UserBook
     @State private var isEditing = false
@@ -75,6 +76,7 @@ struct BookDetailsView: View {
 
 // MARK: - NEW: Tags Display Section
 struct BookTagsDisplaySection: View {
+    @Environment(\.appTheme) private var currentTheme
     @Bindable var book: UserBook
     @State private var showingTagsManager = false
     @State private var newTag = ""
@@ -87,7 +89,7 @@ struct BookTagsDisplaySection: View {
                 HStack {
                     Text("Tags")
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(Color.theme.secondaryText)
+                        .foregroundColor(currentTheme.secondaryText)
                     
                     Spacer()
                     
@@ -95,14 +97,14 @@ struct BookTagsDisplaySection: View {
                         showingAddTag = true
                     }
                     .labelMedium()
-                    .foregroundColor(Color.theme.primaryAction)
+                    .foregroundColor(currentTheme.primaryAction)
                 }
                 
                 // Tags display
                 if book.tags.isEmpty {
                     Text("No tags added")
                         .bodySmall()
-                        .foregroundColor(Color.theme.secondaryText)
+                        .foregroundColor(currentTheme.secondaryText)
                         .italic()
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.vertical, Theme.Spacing.sm)
@@ -151,6 +153,7 @@ struct BookTagsDisplaySection: View {
 
 // MARK: - Tag Components
 struct TagChip: View {
+    @Environment(\.appTheme) private var currentTheme
     let tag: String
     let onRemove: () -> Void
     
@@ -162,12 +165,12 @@ struct TagChip: View {
             Button(action: onRemove) {
                 Image(systemName: "xmark")
                     .labelSmall()
-                    .foregroundColor(Color.theme.secondaryText)
+                    .foregroundColor(currentTheme.secondaryText)
             }
         }
         .padding(.horizontal, Theme.Spacing.sm)
         .padding(.vertical, Theme.Spacing.xs)
-        .background(Color.theme.surfaceVariant)
+        .background(currentTheme.surfaceVariant)
         .cornerRadius(Theme.CornerRadius.small)
     }
 }
@@ -230,6 +233,7 @@ struct FlowLayout: Layout {
 
 // MARK: - Header Section
 struct BookHeaderSection: View {
+    @Environment(\.appTheme) private var currentTheme
     var book: UserBook
     
     var body: some View {
@@ -244,21 +248,21 @@ struct BookHeaderSection: View {
             VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
                 Text(book.metadata?.title ?? "Unknown Title")
                     .bookTitle()
-                    .foregroundColor(Color.theme.primaryText)
+                    .foregroundColor(currentTheme.primaryText)
                 
                 // Author name navigation using NavigationLink with AuthorSearchRequest
                 if let authors = book.metadata?.authors, !authors.isEmpty {
                     NavigationLink(value: AuthorSearchRequest(authorName: authors.first!)) {
                         Text(authors.joined(separator: ", "))
                             .authorName()
-                            .foregroundStyle(Color.theme.primaryAction)
+                            .foregroundStyle(currentTheme.primaryAction)
                             .underline()
                     }
                     .buttonStyle(.plain)
                 } else {
                     Text("Unknown Author")
                         .authorName()
-                        .foregroundStyle(Color.theme.secondaryText)
+                        .foregroundStyle(currentTheme.secondaryText)
                 }
                 
                 if let genre = book.metadata?.genre, !genre.isEmpty {
@@ -267,8 +271,8 @@ struct BookHeaderSection: View {
                         .fontWeight(.medium)
                         .padding(.horizontal, Theme.Spacing.sm)
                         .padding(.vertical, Theme.Spacing.xs)
-                        .background(Color.theme.primaryAction.opacity(0.2))
-                        .foregroundColor(Color.theme.primaryAction)
+                        .background(currentTheme.primaryAction.opacity(0.2))
+                        .foregroundColor(currentTheme.primaryAction)
                         .cornerRadius(Theme.CornerRadius.small)
                 }
                 
@@ -285,6 +289,7 @@ struct BookHeaderSection: View {
 
 // MARK: - Rating Section
 struct RatingSection: View {
+    @Environment(\.appTheme) private var currentTheme
     @Binding var rating: Int?
     
     var body: some View {
@@ -300,7 +305,7 @@ struct RatingSection: View {
                     }) {
                         Image(systemName: star <= (rating ?? 0) ? "star.fill" : "star")
                             .font(.title)
-                            .foregroundColor(Color.theme.accentHighlight)
+                            .foregroundColor(currentTheme.accentHighlight)
                     }
                     .scaleEffect(star == rating ? 1.25 : 1.0)
                     .animation(Theme.Animation.bouncySpring, value: rating)
@@ -310,13 +315,14 @@ struct RatingSection: View {
         } label: {
             Text("Your Rating")
                 .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(Color.theme.secondaryText)
+                .foregroundColor(currentTheme.secondaryText)
         }
     }
 }
 
 // MARK: - Description Section
 struct DescriptionSection: View {
+    @Environment(\.appTheme) private var currentTheme
     let description: String
     @State private var isExpanded = false
     
@@ -345,13 +351,14 @@ struct DescriptionSection: View {
         } label: {
             Text("Description")
                 .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(Color.theme.secondaryText)
+                .foregroundColor(currentTheme.secondaryText)
         }
     }
 }
 
 // MARK: - Notes Section
 struct NotesSection: View {
+    @Environment(\.appTheme) private var currentTheme
     @Binding var notes: String?
     
     var body: some View {
@@ -366,13 +373,14 @@ struct NotesSection: View {
         } label: {
             Text("Personal Notes")
                 .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(Color.theme.secondaryText)
+                .foregroundColor(currentTheme.secondaryText)
         }
     }
 }
 
 // MARK: - Publication Details Section - ENHANCED
 struct PublicationDetailsSection: View {
+    @Environment(\.appTheme) private var currentTheme
     let book: UserBook
     
     var body: some View {
@@ -402,7 +410,7 @@ struct PublicationDetailsSection: View {
         } label: {
             Text("Details")
                 .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(Color.theme.secondaryText)
+                .foregroundColor(currentTheme.secondaryText)
         }
     }
     
@@ -428,6 +436,7 @@ struct PublicationDetailsSection: View {
 
 // MARK: - Enhanced Detail Row View - iOS Settings Style
 struct DetailRowView: View {
+    @Environment(\.appTheme) private var currentTheme
     let label: String
     let value: String
     var icon: String? = nil
@@ -438,13 +447,13 @@ struct DetailRowView: View {
             // Label - iOS Settings style (left-aligned, lighter weight)
             Text(label)
                 .font(.system(size: 16, weight: .regular))
-                .foregroundColor(Color.theme.primaryText)
+                .foregroundColor(currentTheme.primaryText)
                 .frame(maxWidth: .infinity, alignment: .leading)
             
             // Value - Right-aligned with more prominence
             Text(value)
                 .font(.system(size: 16, weight: .medium))
-                .foregroundColor(isPlaceholder ? Color.theme.secondaryText.opacity(0.7) : Color.theme.secondaryText)
+                .foregroundColor(isPlaceholder ? currentTheme.secondaryText.opacity(0.7) : currentTheme.secondaryText)
                 .italic(isPlaceholder)
                 .multilineTextAlignment(.trailing)
                 .frame(maxWidth: .infinity, alignment: .trailing)
@@ -551,6 +560,7 @@ struct PublicationInfoView: View {
 
 // MARK: - Action Buttons Section
 struct ActionButtonsSection: View {
+    @Environment(\.appTheme) private var currentTheme
     let onEdit: () -> Void
     let onDelete: () -> Void
     
@@ -576,7 +586,7 @@ struct ActionButtonsSection: View {
                 .frame(maxWidth: .infinity)
             }
             .materialButton(style: .tonal, size: .large)
-            .shadow(color: Color.theme.primary.opacity(0.2), radius: 4, x: 0, y: 2)
+            .shadow(color: currentTheme.primary.opacity(0.2), radius: 4, x: 0, y: 2)
         }
         .padding(.top)
     }
@@ -607,6 +617,7 @@ extension UserBook {
 
 // MARK: - NEW: Reading Progress Section (Enhanced Accessibility)
 struct ReadingProgressSection: View {
+    @Environment(\.appTheme) private var currentTheme
     @Bindable var book: UserBook
     @State private var showingPageInput = false
     @State private var showingReadingSessionInput = false
@@ -636,16 +647,16 @@ struct ReadingProgressSection: View {
                     VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
                         Text("Reading Progress")
                             .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(Color.theme.primaryText)
+                            .foregroundColor(currentTheme.primaryText)
                         
                         if totalPages > 0 {
                             Text("\(book.currentPage) of \(totalPages) pages")
                                 .bodyMedium()
-                                .foregroundColor(Color.theme.secondaryText)
+                                .foregroundColor(currentTheme.secondaryText)
                         } else {
                             Text("Page \(book.currentPage)")
                                 .bodyMedium()
-                                .foregroundColor(Color.theme.secondaryText)
+                                .foregroundColor(currentTheme.secondaryText)
                         }
                     }
                     .accessibilityElement(children: .combine)
@@ -658,7 +669,7 @@ struct ReadingProgressSection: View {
                         Text("\(progressPercentage)%")
                             .titleSmall()
                             .fontWeight(.bold)
-                            .foregroundColor(Color.theme.primaryAction)
+                            .foregroundColor(currentTheme.primaryAction)
                             .accessibilityLabel("\(progressPercentage) percent complete")
                     }
                 }
@@ -666,7 +677,7 @@ struct ReadingProgressSection: View {
                 // Progress Bar
                 if totalPages > 0 {
                     ProgressView(value: book.readingProgress)
-                        .tint(Color.theme.primaryAction)
+                        .tint(currentTheme.primaryAction)
                         .scaleEffect(y: 1.5, anchor: .center)
                         .animation(Theme.Animation.accessible, value: book.readingProgress)
                         .accessibilityLabel("Reading progress")
@@ -695,11 +706,11 @@ struct ReadingProgressSection: View {
                     HStack(spacing: Theme.Spacing.xs) {
                         Image(systemName: "calendar")
                             .labelSmall()
-                            .foregroundColor(Color.theme.secondaryText)
+                            .foregroundColor(currentTheme.secondaryText)
                         
                         Text("Estimated finish: \(estimatedFinish.formatted(date: .abbreviated, time: .omitted))")
                             .labelSmall()
-                            .foregroundColor(Color.theme.secondaryText)
+                            .foregroundColor(currentTheme.secondaryText)
                     }
                     .padding(.top, Theme.Spacing.xs)
                 }
@@ -743,7 +754,7 @@ struct ReadingProgressSection: View {
             Text("Reading Stats")
                 .labelMedium()
                 .fontWeight(.semibold)
-                .foregroundColor(Color.theme.primaryText)
+                .foregroundColor(currentTheme.primaryText)
             
             HStack(spacing: Theme.Spacing.lg) {
                 StatItemView(
@@ -772,6 +783,7 @@ struct ReadingProgressSection: View {
 
 // MARK: - Reading Stats Item
 struct StatItemView: View {
+    @Environment(\.appTheme) private var currentTheme
     let icon: String
     let value: String
     let label: String
@@ -780,16 +792,16 @@ struct StatItemView: View {
         VStack(spacing: Theme.Spacing.xs) {
             Image(systemName: icon)
                 .labelMedium()
-                .foregroundColor(Color.theme.primaryAction)
+                .foregroundColor(currentTheme.primaryAction)
             
             Text(value)
                 .labelMedium()
                 .fontWeight(.bold)
-                .foregroundColor(Color.theme.primaryText)
+                .foregroundColor(currentTheme.primaryText)
             
             Text(label)
                 .labelSmall()
-                .foregroundColor(Color.theme.secondaryText)
+                .foregroundColor(currentTheme.secondaryText)
         }
         .frame(maxWidth: .infinity)
     }
@@ -798,6 +810,7 @@ struct StatItemView: View {
 // MARK: - Reading Session Input View
 struct ReadingSessionInputView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.appTheme) private var currentTheme
     @Bindable var book: UserBook
     
     @State private var durationText = ""
@@ -834,14 +847,14 @@ struct ReadingSessionInputView: View {
                             Text("Reading Pace")
                             Spacer()
                             Text(String(format: "%.1f pages/hour", Double(pages) / (Double(duration) / 60.0)))
-                                .foregroundColor(Color.theme.primaryAction)
+                                .foregroundColor(currentTheme.primaryAction)
                         }
                         
                         HStack {
                             Text("New Current Page")
                             Spacer()
                             Text("\(book.currentPage + pages)")
-                                .foregroundColor(Color.theme.primaryAction)
+                                .foregroundColor(currentTheme.primaryAction)
                         }
                     }
                 }

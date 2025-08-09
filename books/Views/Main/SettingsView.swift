@@ -2,6 +2,7 @@ import SwiftUI
 
 struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.appTheme) private var currentTheme
     @State private var showingThemePicker = false
     @State private var showingCSVImport = false
     @State private var showingGoalSettings = false
@@ -24,8 +25,8 @@ struct SettingsView: View {
                                     .fill(
                                         LinearGradient(
                                             colors: [
-                                                Color.theme.primary,
-                                                Color.theme.secondary
+                                                currentTheme.primary,
+                                                currentTheme.secondary
                                             ],
                                             startPoint: .topLeading,
                                             endPoint: .bottomTrailing
@@ -37,12 +38,12 @@ struct SettingsView: View {
                                     .foregroundColor(.white)
                                     .font(.system(size: 18, weight: .medium))
                             }
-                            .shadow(color: Color.theme.primary.opacity(0.3), radius: 4, x: 0, y: 2)
+                            .shadow(color: currentTheme.primary.opacity(0.3), radius: 4, x: 0, y: 2)
                             
                             VStack(alignment: .leading, spacing: 4) {
                                 Text("Choose Your Theme")
                                     .font(.headline)
-                                    .foregroundColor(Color.theme.primaryText)
+                                    .foregroundColor(currentTheme.primaryText)
                                 
                                 HStack(spacing: Theme.Spacing.xs) {
                                     Text(themeManager.currentTheme.emoji)
@@ -50,15 +51,15 @@ struct SettingsView: View {
                                     
                                     Text(themeManager.currentTheme.displayName)
                                         .font(.subheadline)
-                                        .foregroundColor(Color.theme.secondaryText)
+                                        .foregroundColor(currentTheme.secondaryText)
                                     
                                     Text("•")
-                                        .foregroundColor(Color.theme.outline)
+                                        .foregroundColor(currentTheme.outline)
                                         .font(.caption)
                                     
                                     Text("5 Beautiful Options")
                                         .font(.caption)
-                                        .foregroundColor(Color.theme.primary)
+                                        .foregroundColor(currentTheme.primary)
                                         .fontWeight(.medium)
                                 }
                             }
@@ -66,7 +67,7 @@ struct SettingsView: View {
                             Spacer()
                             
                             Image(systemName: "chevron.right")
-                                .foregroundColor(Color.theme.outline)
+                                .foregroundColor(currentTheme.outline)
                                 .font(.footnote)
                                 .fontWeight(.semibold)
                         }
@@ -77,7 +78,7 @@ struct SettingsView: View {
                     Text("Personalization")
                         .font(.subheadline)
                         .fontWeight(.semibold)
-                        .foregroundColor(Color.theme.primaryText)
+                        .foregroundColor(currentTheme.primaryText)
                 }
                 
                 // Reading Goals Section - Enhanced
@@ -111,7 +112,7 @@ struct SettingsView: View {
                             VStack(alignment: .leading, spacing: 4) {
                                 Text("Reading Goals")
                                     .font(.headline)
-                                    .foregroundColor(Color.theme.primaryText)
+                                    .foregroundColor(currentTheme.primaryText)
                                 
                                 HStack(spacing: Theme.Spacing.xs) {
                                     Text("📊")
@@ -119,10 +120,10 @@ struct SettingsView: View {
                                     
                                     Text("Set daily & weekly targets")
                                         .font(.subheadline)
-                                        .foregroundColor(Color.theme.secondaryText)
+                                        .foregroundColor(currentTheme.secondaryText)
                                     
                                     Text("•")
-                                        .foregroundColor(Color.theme.outline)
+                                        .foregroundColor(currentTheme.outline)
                                         .font(.caption)
                                     
                                     Text("Track Your Progress")
@@ -137,7 +138,7 @@ struct SettingsView: View {
                             Image(systemName: "chevron.right")
                                 .font(.caption)
                                 .fontWeight(.medium)
-                                .foregroundColor(Color.theme.outline)
+                                .foregroundColor(currentTheme.outline)
                         }
                     }
                     .buttonStyle(.plain)
@@ -145,7 +146,7 @@ struct SettingsView: View {
                     Text("Reading Goals")
                         .font(.subheadline)
                         .fontWeight(.semibold)
-                        .foregroundColor(Color.theme.primaryText)
+                        .foregroundColor(currentTheme.primaryText)
                 }
                 
                 // Data Section - Enhanced for CSV import prominence
@@ -157,31 +158,31 @@ struct SettingsView: View {
                         HStack(spacing: Theme.Spacing.md) {
                             ZStack {
                                 RoundedRectangle(cornerRadius: 8)
-                                    .fill(Color.theme.tertiary.opacity(0.15))
+                                    .fill(currentTheme.tertiary.opacity(0.15))
                                     .frame(width: 36, height: 36)
                                 
                                 Image(systemName: "square.and.arrow.down.fill")
-                                    .foregroundColor(Color.theme.tertiary)
+                                    .foregroundColor(currentTheme.tertiary)
                                     .font(.system(size: 18, weight: .medium))
                             }
                             
                             VStack(alignment: .leading, spacing: 4) {
                                 Text("Import Your Books")
                                     .font(.headline)
-                                    .foregroundColor(Color.theme.primaryText)
+                                    .foregroundColor(currentTheme.primaryText)
                                 
                                 HStack(spacing: Theme.Spacing.xs) {
                                     Text("From Goodreads CSV")
                                         .font(.subheadline)
-                                        .foregroundColor(Color.theme.secondaryText)
+                                        .foregroundColor(currentTheme.secondaryText)
                                     
                                     Text("•")
-                                        .foregroundColor(Color.theme.outline)
+                                        .foregroundColor(currentTheme.outline)
                                         .font(.caption)
                                     
                                     Text("Quick Setup")
                                         .font(.caption)
-                                        .foregroundColor(Color.theme.tertiary)
+                                        .foregroundColor(currentTheme.tertiary)
                                         .fontWeight(.medium)
                                 }
                             }
@@ -189,7 +190,7 @@ struct SettingsView: View {
                             Spacer()
                             
                             Image(systemName: "chevron.right")
-                                .foregroundColor(Color.theme.outline)
+                                .foregroundColor(currentTheme.outline)
                                 .font(.footnote)
                                 .fontWeight(.semibold)
                         }
@@ -211,7 +212,7 @@ struct SettingsView: View {
                     Text("Your Library")
                         .font(.subheadline)
                         .fontWeight(.semibold)
-                        .foregroundColor(Color.theme.primaryText)
+                        .foregroundColor(currentTheme.primaryText)
                 }
                 
                 // About Section
@@ -230,7 +231,7 @@ struct SettingsView: View {
                     Text("Information")
                         .font(.subheadline)
                         .fontWeight(.semibold)
-                        .foregroundColor(Color.theme.primaryText)
+                        .foregroundColor(currentTheme.primaryText)
                 }
             }
             .navigationTitle("Settings")
@@ -241,7 +242,7 @@ struct SettingsView: View {
                         dismiss()
                         HapticFeedbackManager.shared.lightImpact()
                     }
-                    .foregroundColor(Color.theme.primary)
+                    .foregroundColor(currentTheme.primary)
                     .fontWeight(.semibold)
                 }
             }
@@ -268,28 +269,28 @@ struct SettingsView: View {
             HStack(spacing: Theme.Spacing.md) {
                 ZStack {
                     RoundedRectangle(cornerRadius: 8)
-                        .fill(Color.theme.primary.opacity(0.1))
+                        .fill(currentTheme.primary.opacity(0.1))
                         .frame(width: 36, height: 36)
                     
                     Image(systemName: icon)
-                        .foregroundColor(Color.theme.primary)
+                        .foregroundColor(currentTheme.primary)
                         .font(.system(size: 18, weight: .medium))
                 }
                 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(title)
                         .font(.body)
-                        .foregroundColor(Color.theme.primaryText)
+                        .foregroundColor(currentTheme.primaryText)
                     
                     Text(subtitle)
                         .font(.caption)
-                        .foregroundColor(Color.theme.secondaryText)
+                        .foregroundColor(currentTheme.secondaryText)
                 }
                 
                 Spacer()
                 
                 Image(systemName: "chevron.right")
-                    .foregroundColor(Color.theme.outline)
+                    .foregroundColor(currentTheme.outline)
                     .font(.footnote)
                     .fontWeight(.semibold)
             }

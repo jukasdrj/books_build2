@@ -9,8 +9,9 @@ import SwiftUI
 import SwiftData
 
 struct SearchResultDetailView: View {
-    @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
+    @Environment(\.appTheme) private var currentTheme
     
     let bookMetadata: BookMetadata
     let fromBarcodeScanner: Bool
@@ -57,7 +58,7 @@ struct SearchResultDetailView: View {
                 }
                 .padding()
             }
-            .background(Color.theme.background)
+            .background(currentTheme.background)
             
             // Success Toast Overlay
             if showingSuccessToast {
@@ -73,7 +74,7 @@ struct SearchResultDetailView: View {
         }
         .navigationTitle(bookMetadata.title)
         .navigationBarTitleDisplayMode(.inline)
-        .background(Color.theme.background)
+        .background(currentTheme.background)
         .sheet(isPresented: $showingEditView) {
             if let book = newlyAddedBook {
                 NavigationStack {
@@ -90,7 +91,7 @@ struct SearchResultDetailView: View {
             ToolbarItem(placement: .navigationBarTrailing) {
                 ShareLink(item: shareableText) {
                     Image(systemName: "square.and.arrow.up")
-                        .foregroundColor(Color.theme.primaryAction)
+                        .foregroundColor(currentTheme.primaryAction)
                 }
             }
         }
@@ -221,6 +222,7 @@ struct SearchResultDetailView: View {
 
 // MARK: - Enhanced Header Section (matching BookDetailsView)
 struct SearchBookHeaderSection: View {
+    @Environment(\.appTheme) private var currentTheme
     let bookMetadata: BookMetadata
     
     var body: some View {
@@ -235,12 +237,12 @@ struct SearchBookHeaderSection: View {
             VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
                 Text(bookMetadata.title)
                     .bookTitle()
-                    .foregroundColor(Color.theme.primaryText)
+                    .foregroundColor(currentTheme.primaryText)
                 
                 // Author names with proper styling
                 Text(bookMetadata.authors.joined(separator: ", "))
                     .authorName()
-                    .foregroundColor(Color.theme.secondaryText)
+                    .foregroundColor(currentTheme.secondaryText)
                 
                 // Genre with beautiful styling
                 if !bookMetadata.genre.isEmpty {
@@ -249,8 +251,8 @@ struct SearchBookHeaderSection: View {
                         .fontWeight(.medium)
                         .padding(.horizontal, Theme.Spacing.sm)
                         .padding(.vertical, Theme.Spacing.xs)
-                        .background(Color.theme.primaryAction.opacity(0.2))
-                        .foregroundColor(Color.theme.primaryAction)
+                        .background(currentTheme.primaryAction.opacity(0.2))
+                        .foregroundColor(currentTheme.primaryAction)
                         .cornerRadius(Theme.CornerRadius.small)
                 }
                 
@@ -258,15 +260,15 @@ struct SearchBookHeaderSection: View {
                 HStack(spacing: Theme.Spacing.xs) {
                     Image(systemName: "magnifyingglass")
                         .font(.caption)
-                        .foregroundColor(Color.theme.tertiary)
+                        .foregroundColor(currentTheme.tertiary)
                     Text("Search Result")
                         .font(.caption)
                         .fontWeight(.medium)
-                        .foregroundColor(Color.theme.tertiary)
+                        .foregroundColor(currentTheme.tertiary)
                 }
                 .padding(.horizontal, Theme.Spacing.sm)
                 .padding(.vertical, Theme.Spacing.xs)
-                .background(Color.theme.tertiaryContainer)
+                .background(currentTheme.tertiaryContainer)
                 .cornerRadius(Theme.CornerRadius.small)
                 
                 Spacer()
@@ -278,6 +280,7 @@ struct SearchBookHeaderSection: View {
 
 // MARK: - Enhanced Action Buttons Section
 struct SearchActionButtonsSection: View {
+    @Environment(\.appTheme) private var currentTheme
     @Binding var isAddingToLibrary: Bool
     @Binding var isAddingToWishlist: Bool
     let existingBook: UserBook?
@@ -291,10 +294,10 @@ struct SearchActionButtonsSection: View {
                 if let existing = existingBook {
                     HStack(spacing: Theme.Spacing.sm) {
                         Image(systemName: "checkmark.circle.fill")
-                            .foregroundColor(Color.theme.success)
+                            .foregroundColor(currentTheme.success)
                         Text("Already in your \(existing.onWishlist ? "wishlist" : "library")")
                             .bodyMedium()
-                            .foregroundColor(Color.theme.secondaryText)
+                            .foregroundColor(currentTheme.secondaryText)
                         Spacer()
                         
                         Text(existing.readingStatus.rawValue)
@@ -308,7 +311,7 @@ struct SearchActionButtonsSection: View {
                     }
                     .padding(.horizontal, Theme.Spacing.md)
                     .padding(.vertical, Theme.Spacing.sm)
-                    .background(Color.theme.success.opacity(0.1))
+                    .background(currentTheme.success.opacity(0.1))
                     .cornerRadius(Theme.CornerRadius.medium)
                 } else {
                     // Action buttons for new books
@@ -330,7 +333,7 @@ struct SearchActionButtonsSection: View {
                         }
                         .materialButton(style: .filled, size: .large)
                         .disabled(isAddingToLibrary || isAddingToWishlist)
-                        .shadow(color: Color.theme.primary.opacity(0.3), radius: 4, x: 0, y: 2)
+                        .shadow(color: currentTheme.primary.opacity(0.3), radius: 4, x: 0, y: 2)
                         .animation(.easeInOut(duration: 0.2), value: isAddingToLibrary)
                         
                         Button(action: onAddToWishlist) {
@@ -338,7 +341,7 @@ struct SearchActionButtonsSection: View {
                                 if isAddingToWishlist {
                                     ProgressView()
                                         .scaleEffect(0.8)
-                                        .tint(Color.theme.primaryAction)
+                                        .tint(currentTheme.primaryAction)
                                 } else {
                                     Image(systemName: "wand.and.stars")
                                 }
@@ -357,10 +360,10 @@ struct SearchActionButtonsSection: View {
                     HStack(spacing: Theme.Spacing.xs) {
                         Image(systemName: "info.circle")
                             .font(.caption)
-                            .foregroundColor(Color.theme.secondaryText)
+                            .foregroundColor(currentTheme.secondaryText)
                         Text("Library books can be customized and tracked. Wishlist items are saved for later.")
                             .font(.caption)
-                            .foregroundColor(Color.theme.secondaryText)
+                            .foregroundColor(currentTheme.secondaryText)
                     }
                     .padding(.top, Theme.Spacing.xs)
                 }
@@ -368,13 +371,14 @@ struct SearchActionButtonsSection: View {
         } label: {
             Text("Add to Collection")
                 .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(Color.theme.secondaryText)
+                .foregroundColor(currentTheme.secondaryText)
         }
     }
 }
 
 // MARK: - Enhanced Publication Details Section (matching BookDetailsView)
 struct SearchPublicationDetailsSection: View {
+    @Environment(\.appTheme) private var currentTheme
     let bookMetadata: BookMetadata
     
     var body: some View {
@@ -425,13 +429,14 @@ struct SearchPublicationDetailsSection: View {
         } label: {
             Text("Publication Details")
                 .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(Color.theme.secondaryText)
+                .foregroundColor(currentTheme.secondaryText)
         }
     }
 }
 
 // MARK: - Enhanced Success Toast Component
 struct SuccessToast: View {
+    @Environment(\.appTheme) private var currentTheme
     let message: String
     @Binding var isShowing: Bool
     @State private var scale: CGFloat = 0.3
@@ -441,7 +446,7 @@ struct SuccessToast: View {
         HStack(spacing: Theme.Spacing.md) {
             ZStack {
                 Circle()
-                    .fill(Color.theme.success)
+                    .fill(currentTheme.success)
                     .frame(width: 32, height: 32)
                 
                 Image(systemName: "checkmark")
@@ -452,7 +457,7 @@ struct SuccessToast: View {
             Text(message)
                 .bodyMedium()
                 .fontWeight(.medium)
-                .foregroundColor(Color.theme.primaryText)
+                .foregroundColor(currentTheme.primaryText)
                 .multilineTextAlignment(.leading)
             
             Spacer()
@@ -461,7 +466,7 @@ struct SuccessToast: View {
         .padding(.vertical, Theme.Spacing.md)
         .background(
             LinearGradient(
-                colors: [Color.theme.cardBackground, Color.theme.surface],
+                colors: [currentTheme.cardBackground, currentTheme.surface],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
@@ -470,7 +475,7 @@ struct SuccessToast: View {
             RoundedRectangle(cornerRadius: Theme.CornerRadius.medium)
                 .stroke(
                     LinearGradient(
-                        colors: [Color.theme.success.opacity(0.4), Color.theme.success.opacity(0.1)],
+                        colors: [currentTheme.success.opacity(0.4), currentTheme.success.opacity(0.1)],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     ),
@@ -478,7 +483,7 @@ struct SuccessToast: View {
                 )
         )
         .cornerRadius(Theme.CornerRadius.medium)
-        .shadow(color: Color.theme.success.opacity(0.2), radius: 15, x: 0, y: 8)
+        .shadow(color: currentTheme.success.opacity(0.2), radius: 15, x: 0, y: 8)
         .scaleEffect(scale)
         .opacity(opacity)
         .allowsHitTesting(false)

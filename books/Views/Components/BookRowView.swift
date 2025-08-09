@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct BookRowView: View {
+    @Environment(\.appTheme) private var theme
     let userBook: UserBook
     
     var body: some View {
@@ -41,8 +42,8 @@ struct BookRowView: View {
         .frame(minHeight: UnifiedBookCard.Dimensions.rowHeight)
         .padding(.horizontal, Theme.Spacing.md)
         .padding(.vertical, Theme.Spacing.sm)
+        .background(theme.surface)
         .materialCard(
-            backgroundColor: Color.theme.surface,
             elevation: Theme.Elevation.level1
         )
         .materialInteractive(

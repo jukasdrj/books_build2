@@ -75,6 +75,7 @@ enum UnifiedBookCard {
 // MARK: - Unified Book Cover Component
 
 struct UnifiedBookCoverView: View {
+    @Environment(\.appTheme) private var currentTheme
     let imageURL: String?
     let width: CGFloat
     let height: CGFloat
@@ -90,7 +91,7 @@ struct UnifiedBookCoverView: View {
                 .overlay(
                     Image(systemName: "book.closed")
                         .font(.system(size: placeholderIconSize, weight: .light))
-                        .foregroundStyle(Color.theme.onSurfaceVariant.opacity(0.6))
+                        .foregroundStyle(currentTheme.onSurfaceVariant.opacity(0.6))
                 )
             
             // Book cover image with consistent treatment
@@ -143,8 +144,8 @@ struct UnifiedBookCoverView: View {
     private var placeholderGradient: LinearGradient {
         LinearGradient(
             colors: [
-                Color.theme.surfaceVariant,
-                Color.theme.surfaceVariant.opacity(0.7)
+                currentTheme.surfaceVariant,
+                currentTheme.surfaceVariant.opacity(0.7)
             ],
             startPoint: .topLeading,
             endPoint: .bottomTrailing
@@ -154,9 +155,9 @@ struct UnifiedBookCoverView: View {
     private var shimmerGradient: LinearGradient {
         LinearGradient(
             colors: [
-                Color.theme.primary.opacity(0.1),
-                Color.theme.secondary.opacity(0.05),
-                Color.theme.primary.opacity(0.1)
+                currentTheme.primary.opacity(0.1),
+                currentTheme.secondary.opacity(0.05),
+                currentTheme.primary.opacity(0.1)
             ],
             startPoint: .topLeading,
             endPoint: .bottomTrailing
@@ -167,6 +168,7 @@ struct UnifiedBookCoverView: View {
 // MARK: - Unified Book Information Component
 
 struct UnifiedBookInfoView: View {
+    @Environment(\.appTheme) private var currentTheme
     let title: String
     let authors: [String]
     let rating: Int?
@@ -180,7 +182,7 @@ struct UnifiedBookInfoView: View {
             // Title with consistent typography
             Text(title)
                 .font(titleFont)
-                .foregroundColor(Color.theme.primaryText)
+                .foregroundColor(currentTheme.primaryText)
                 .lineLimit(titleLineLimit)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .frame(height: titleHeight, alignment: .top)
@@ -189,7 +191,7 @@ struct UnifiedBookInfoView: View {
             if !authors.isEmpty {
                 Text(authors.joined(separator: ", "))
                     .font(authorFont)
-                    .foregroundColor(Color.theme.secondaryText)
+                    .foregroundColor(currentTheme.secondaryText)
                     .lineLimit(authorLineLimit)
                     .frame(height: authorHeight, alignment: .top)
             }
@@ -272,6 +274,7 @@ struct UnifiedBookInfoView: View {
 // MARK: - Unified Rating Component
 
 struct UnifiedRatingView: View {
+    @Environment(\.appTheme) private var currentTheme
     let rating: Int?
     let style: BookDisplayStyle
     
@@ -282,14 +285,14 @@ struct UnifiedRatingView: View {
                 ForEach(1...5, id: \.self) { star in
                     Image(systemName: star <= rating ? "star.fill" : "star")
                         .font(.system(size: starSize, weight: .medium))
-                        .foregroundColor(star <= rating ? Color.theme.tertiary : Color.theme.outline.opacity(0.3))
+                        .foregroundColor(star <= rating ? currentTheme.tertiary : currentTheme.outline.opacity(0.3))
                 }
                 
                 // Rating number for row layout
                 if style == .row {
                     Text("(\(rating))")
                         .font(UnifiedBookCard.Typography.rowMeta)
-                        .foregroundColor(Color.theme.tertiary)
+                        .foregroundColor(currentTheme.tertiary)
                         .fontWeight(.medium)
                 }
             } else {
@@ -297,7 +300,7 @@ struct UnifiedRatingView: View {
                 ForEach(1...5, id: \.self) { _ in
                     Image(systemName: "star")
                         .font(.system(size: starSize))
-                        .foregroundColor(Color.theme.outline.opacity(0.2))
+                        .foregroundColor(currentTheme.outline.opacity(0.2))
                 }
             }
         }
@@ -373,20 +376,21 @@ struct UnifiedStatusBadge: View {
 // MARK: - Unified Progress View Component
 
 struct UnifiedProgressView: View {
+    @Environment(\.appTheme) private var currentTheme
     let progress: Double
     
     var body: some View {
         HStack(spacing: Theme.Spacing.sm) {
             ProgressView(value: progress)
                 .progressViewStyle(
-                    LinearProgressViewStyle(tint: Color.theme.primary)
+                    LinearProgressViewStyle(tint: currentTheme.primary)
                 )
                 .frame(width: 100)
                 .scaleEffect(y: 0.6)
             
             Text("\(Int(progress * 100))%")
                 .font(UnifiedBookCard.Typography.rowMeta)
-                .foregroundColor(Color.theme.secondaryText)
+                .foregroundColor(currentTheme.secondaryText)
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(Int(progress * 100))% complete")
@@ -397,18 +401,19 @@ struct UnifiedProgressView: View {
 // MARK: - Unified Language Indicator Component
 
 struct UnifiedLanguageIndicator: View {
+    @Environment(\.appTheme) private var currentTheme
     let language: String
     
     var body: some View {
         Text(language.uppercased())
             .font(UnifiedBookCard.Typography.rowMeta)
             .fontWeight(.semibold)
-            .foregroundColor(Color.theme.tertiary)
+            .foregroundColor(currentTheme.tertiary)
             .padding(.horizontal, Theme.Spacing.xs)
             .padding(.vertical, 2)
             .background(
                 RoundedRectangle(cornerRadius: Theme.CornerRadius.small)
-                    .fill(Color.theme.tertiaryContainer.opacity(0.3))
+                    .fill(currentTheme.tertiaryContainer.opacity(0.3))
             )
             .accessibilityLabel("Language: \(language)")
             .accessibilityAddTraits(.isStaticText)
@@ -431,6 +436,7 @@ extension View {
 }
 
 struct ShimmerEffectModifier: ViewModifier {
+    @Environment(\.appTheme) private var currentTheme
     @State private var phase: CGFloat = 0
     
     func body(content: Content) -> some View {
@@ -439,7 +445,7 @@ struct ShimmerEffectModifier: ViewModifier {
                 LinearGradient(
                     colors: [
                         Color.clear,
-                        Color.theme.primary.opacity(0.2),
+                        currentTheme.primary.opacity(0.2),
                         Color.clear
                     ],
                     startPoint: .leading,
@@ -483,66 +489,76 @@ extension View {
 
 // MARK: - Preview Helpers
 
-#Preview("Unified Components") {
-    ScrollView {
-        VStack(spacing: Theme.Spacing.xl) {
-            // Card style preview
-            VStack(alignment: .leading, spacing: Theme.Spacing.md) {
-                Text("Card Style")
-                    .titleLarge()
-                
-                HStack(spacing: Theme.Spacing.md) {
-                    UnifiedBookCoverView(
-                        imageURL: nil,
-                        width: UnifiedBookCard.Dimensions.cardCoverWidth,
-                        height: UnifiedBookCard.Dimensions.cardCoverHeight,
-                        style: .card
-                    )
+struct UnifiedComponentsPreview: View {
+    @Environment(\.appTheme) private var currentTheme
+    
+    var body: some View {
+        ScrollView {
+            VStack(spacing: Theme.Spacing.xl) {
+                // Card style preview
+                VStack(alignment: .leading, spacing: Theme.Spacing.md) {
+                    Text("Card Style")
+                        .titleLarge()
                     
-                    UnifiedBookInfoView(
-                        title: "The Seven Husbands of Evelyn Hugo",
-                        authors: ["Taylor Jenkins Reid"],
-                        rating: 4,
-                        status: .reading,
-                        progress: 0.6,
-                        language: "en",
-                        layout: .card
-                    )
+                    HStack(spacing: Theme.Spacing.md) {
+                        UnifiedBookCoverView(
+                            imageURL: nil,
+                            width: UnifiedBookCard.Dimensions.cardCoverWidth,
+                            height: UnifiedBookCard.Dimensions.cardCoverHeight,
+                            style: .card
+                        )
+                        
+                        UnifiedBookInfoView(
+                            title: "The Seven Husbands of Evelyn Hugo",
+                            authors: ["Taylor Jenkins Reid"],
+                            rating: 4,
+                            status: .reading,
+                            progress: 0.6,
+                            language: "en",
+                            layout: .card
+                        )
+                    }
+                }
+                
+                Divider()
+                
+                // Row style preview
+                VStack(alignment: .leading, spacing: Theme.Spacing.md) {
+                    Text("Row Style")
+                        .titleLarge()
+                    
+                    HStack(spacing: Theme.Spacing.md) {
+                        UnifiedBookCoverView(
+                            imageURL: nil,
+                            width: UnifiedBookCard.Dimensions.rowCoverWidth,
+                            height: UnifiedBookCard.Dimensions.rowCoverHeight,
+                            style: .row
+                        )
+                        
+                        UnifiedBookInfoView(
+                            title: "Persepolis",
+                            authors: ["Marjane Satrapi"],
+                            rating: 5,
+                            status: .read,
+                            progress: 1.0,
+                            language: "fr",
+                            layout: .row
+                        )
+                        
+                        Spacer()
+                        
+                        UnifiedLanguageIndicator(language: "fr")
+                    }
                 }
             }
-            
-            Divider()
-            
-            // Row style preview
-            VStack(alignment: .leading, spacing: Theme.Spacing.md) {
-                Text("Row Style")
-                    .titleLarge()
-                
-                HStack(spacing: Theme.Spacing.md) {
-                    UnifiedBookCoverView(
-                        imageURL: nil,
-                        width: UnifiedBookCard.Dimensions.rowCoverWidth,
-                        height: UnifiedBookCard.Dimensions.rowCoverHeight,
-                        style: .row
-                    )
-                    
-                    UnifiedBookInfoView(
-                        title: "Persepolis",
-                        authors: ["Marjane Satrapi"],
-                        rating: 5,
-                        status: .read,
-                        progress: 1.0,
-                        language: "fr",
-                        layout: .row
-                    )
-                    
-                    Spacer()
-                    
-                    UnifiedLanguageIndicator(language: "fr")
-                }
-            }
+            .padding(Theme.Spacing.lg)
         }
-        .padding(Theme.Spacing.lg)
+        .background(currentTheme.background)
     }
-    .background(Color.theme.background)
+}
+
+#Preview("Unified Components") {
+    UnifiedComponentsPreview()
+        .environment(\.appTheme, AppColorTheme(variant: .purpleBoho))
+        .preferredColorScheme(.light)
 }

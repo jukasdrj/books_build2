@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct QuickFilterBar: View {
+    @Environment(\.appTheme) private var theme
     @Binding var filter: LibraryFilter
     let onShowFullFilters: () -> Void
     
@@ -15,7 +16,7 @@ struct QuickFilterBar: View {
                         }
                         HapticFeedbackManager.shared.lightImpact()
                     }
-                    .materialChip(isSelected: false, backgroundColor: Color.theme.tertiaryContainer)
+                    .materialChip(isSelected: false, backgroundColor: theme.tertiaryContainer)
                 }
                 
                 // Reading status chips
@@ -49,7 +50,7 @@ struct QuickFilterBar: View {
             .padding(.horizontal, Theme.Spacing.md)
         }
         .padding(.vertical, Theme.Spacing.sm)
-        .background(Color.theme.surface)
+        .background(theme.surface)
     }
 }
 

@@ -3,6 +3,7 @@ import SwiftData
 
 struct CulturalDiversityView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.appTheme) private var currentTheme
     @Query private var books: [UserBook]
     
     @State private var selectedRegion: CulturalRegion?
@@ -92,8 +93,8 @@ struct CulturalDiversityView: View {
         .background(
             LinearGradient(
                 colors: [
-                    Color.theme.background,
-                    Color.theme.surface.opacity(0.6)
+                    currentTheme.background,
+                    currentTheme.surface.opacity(0.6)
                 ],
                 startPoint: .top,
                 endPoint: .bottom
@@ -123,8 +124,8 @@ struct CulturalDiversityView: View {
                     .fill(
                         LinearGradient(
                             colors: [
-                                Color.theme.primary.opacity(0.2),
-                                Color.theme.tertiary.opacity(0.1)
+                                currentTheme.primary.opacity(0.2),
+                                currentTheme.tertiary.opacity(0.1)
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
@@ -137,25 +138,25 @@ struct CulturalDiversityView: View {
                     .foregroundStyle(
                         LinearGradient(
                             colors: [
-                                Color.theme.primary,
-                                Color.theme.tertiary
+                                currentTheme.primary,
+                                currentTheme.tertiary
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
                     )
             }
-            .shadow(color: Color.theme.primary.opacity(0.15), radius: 20, x: 0, y: 10)
+            .shadow(color: currentTheme.primary.opacity(0.15), radius: 20, x: 0, y: 10)
             
             VStack(spacing: Theme.Spacing.md) {
                 Text("Reading the World")
                     .font(.title)
                     .fontWeight(.bold)
-                    .foregroundColor(Color.theme.primaryText)
+                    .foregroundColor(currentTheme.primaryText)
                 
                 Text("Explore diverse voices and cultures through the power of literature")
                     .font(.body)
-                    .foregroundColor(Color.theme.secondaryText)
+                    .foregroundColor(currentTheme.secondaryText)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, Theme.Spacing.md)
                 
@@ -165,43 +166,43 @@ struct CulturalDiversityView: View {
                         Text("\(readBooks.count)")
                             .font(.title)
                             .fontWeight(.bold)
-                            .foregroundColor(Color.theme.primary)
+                            .foregroundColor(currentTheme.primary)
                         
                         Text("Books Read")
                             .font(.caption)
                             .fontWeight(.medium)
-                            .foregroundColor(Color.theme.secondaryText)
+                            .foregroundColor(currentTheme.secondaryText)
                     }
                     
                     VStack(spacing: Theme.Spacing.xs) {
                         Text("\(culturalStats.keys.count)")
                             .font(.title)
                             .fontWeight(.bold)
-                            .foregroundColor(Color.theme.tertiary)
+                            .foregroundColor(currentTheme.tertiary)
                         
                         Text("Regions")
                             .font(.caption)
                             .fontWeight(.medium)
-                            .foregroundColor(Color.theme.secondaryText)
+                            .foregroundColor(currentTheme.secondaryText)
                     }
                     
                     VStack(spacing: Theme.Spacing.xs) {
                         Text("\(languageStats.keys.count)")
                             .font(.title)
                             .fontWeight(.bold)
-                            .foregroundColor(Color.theme.secondary)
+                            .foregroundColor(currentTheme.secondary)
                         
                         Text("Languages")
                             .font(.caption)
                             .fontWeight(.medium)
-                            .foregroundColor(Color.theme.secondaryText)
+                            .foregroundColor(currentTheme.secondaryText)
                     }
                 }
             }
         }
         .padding(Theme.Spacing.lg)
         .materialCard()
-        .shadow(color: Color.theme.primary.opacity(0.1), radius: 8, x: 0, y: 4)
+        .shadow(color: currentTheme.primary.opacity(0.1), radius: 8, x: 0, y: 4)
     }
     
     // MARK: - Enhanced Cultural Progress Section
@@ -212,11 +213,11 @@ struct CulturalDiversityView: View {
                     Text("Cultural Journey Progress")
                         .font(.headline)
                         .fontWeight(.semibold)
-                        .foregroundColor(Color.theme.primaryText)
+                        .foregroundColor(currentTheme.primaryText)
                     
                     Text("Exploring voices from around the globe")
                         .font(.subheadline)
-                        .foregroundColor(Color.theme.secondaryText)
+                        .foregroundColor(currentTheme.secondaryText)
                 }
                 
                 Spacer()
@@ -224,7 +225,7 @@ struct CulturalDiversityView: View {
                 Text("\(culturalStats.keys.count)/\(CulturalRegion.allCases.count)")
                     .font(.title2)
                     .fontWeight(.bold)
-                    .foregroundColor(Color.theme.primary)
+                    .foregroundColor(currentTheme.primary)
             }
             
             // Simplified progress visualization
@@ -260,7 +261,7 @@ struct CulturalDiversityView: View {
                         endPoint: .bottom
                       ) : 
                       LinearGradient(
-                        colors: [Color.theme.outline.opacity(0.2), Color.theme.outline.opacity(0.1)],
+                        colors: [currentTheme.outline.opacity(0.2), currentTheme.outline.opacity(0.1)],
                         startPoint: .top,
                         endPoint: .bottom
                       )
@@ -329,7 +330,7 @@ struct CulturalDiversityView: View {
                 
                 Text("\(Int((Double(count) / Double(readBooks.count)) * 100))% of collection")
                     .labelSmall()
-                    .foregroundColor(Color.theme.secondaryText)
+                    .foregroundColor(currentTheme.secondaryText)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
@@ -356,11 +357,11 @@ struct CulturalDiversityView: View {
                         
                         Text("\(count)")
                             .labelMedium()
-                            .foregroundColor(Color.theme.primaryAction)
+                            .foregroundColor(currentTheme.primaryAction)
                         
                         Text("books")
                             .labelMedium()
-                            .foregroundColor(Color.theme.secondaryText)
+                            .foregroundColor(currentTheme.secondaryText)
                     }
                     .padding(.vertical, Theme.Spacing.xs)
                 }
@@ -383,16 +384,16 @@ struct CulturalDiversityView: View {
                 ForEach(genderDiversityStats.sorted(by: { $0.value > $1.value }), id: \.key) { gender, count in
                     VStack(spacing: Theme.Spacing.sm) {
                         Image(systemName: gender.icon)
-                            .foregroundColor(Color.theme.secondaryAction)
+                            .foregroundColor(currentTheme.secondaryAction)
                             .frame(width: Theme.Size.iconLarge, height: Theme.Size.iconLarge)
                         
                         Text("\(count)")
                             .titleSmall()
-                            .foregroundColor(Color.theme.primaryAction)
+                            .foregroundColor(currentTheme.primaryAction)
                         
                         Text(gender.rawValue)
                             .labelSmall()
-                            .foregroundColor(Color.theme.secondaryText)
+                            .foregroundColor(currentTheme.secondaryText)
                             .multilineTextAlignment(.center)
                     }
                     .padding(Theme.Spacing.sm)
@@ -431,20 +432,20 @@ struct CulturalDiversityView: View {
         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
             Text(title)
                 .labelLarge()
-                .foregroundColor(Color.theme.primaryText)
+                .foregroundColor(currentTheme.primaryText)
             
             HStack {
                 Text("\(progress)")
                     .titleMedium()
-                    .foregroundColor(Color.theme.primaryAction)
+                    .foregroundColor(currentTheme.primaryAction)
                 
                 Text("/ \(target)")
                     .bodyMedium()
-                    .foregroundColor(Color.theme.secondaryText)
+                    .foregroundColor(currentTheme.secondaryText)
             }
             
             ProgressView(value: Double(progress), total: Double(target))
-                .tint(Color.theme.primaryAction)
+                .tint(currentTheme.primaryAction)
                 .scaleEffect(y: 0.5)
         }
         .padding(Theme.Spacing.md)
@@ -461,33 +462,33 @@ struct CulturalDiversityView: View {
                 VStack(spacing: Theme.Spacing.xs) {
                     Text("\(indigenousAuthorsCount)")
                         .readingStats()
-                        .foregroundColor(Color.theme.cultureIndigenous)
+                        .foregroundColor(currentTheme.cultureIndigenous)
                     
                     Text("Indigenous Authors")
                         .labelSmall()
-                        .foregroundColor(Color.theme.secondaryText)
+                        .foregroundColor(currentTheme.secondaryText)
                         .multilineTextAlignment(.center)
                 }
                 
                 VStack(spacing: Theme.Spacing.xs) {
                     Text("\(marginizedVoicesCount)")
                         .readingStats()
-                        .foregroundColor(Color.theme.secondaryAction)
+                        .foregroundColor(currentTheme.secondaryAction)
                     
                     Text("Marginalized Voices")
                         .labelSmall()
-                        .foregroundColor(Color.theme.secondaryText)
+                        .foregroundColor(currentTheme.secondaryText)
                         .multilineTextAlignment(.center)
                 }
                 
                 VStack(spacing: Theme.Spacing.xs) {
                     Text("\(translatedWorksCount)")
                         .readingStats()
-                        .foregroundColor(Color.theme.tertiary)
+                        .foregroundColor(currentTheme.tertiary)
                     
                     Text("Translated Works")
                         .labelSmall()
-                        .foregroundColor(Color.theme.secondaryText)
+                        .foregroundColor(currentTheme.secondaryText)
                         .multilineTextAlignment(.center)
                 }
             }
@@ -512,6 +513,7 @@ struct CulturalDiversityView: View {
 
 struct CulturalGoalsView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.appTheme) private var currentTheme
     
     var body: some View {
         NavigationStack {
@@ -519,14 +521,14 @@ struct CulturalGoalsView: View {
                 VStack(spacing: Theme.Spacing.lg) {
                     Text("Set your cultural reading goals for this year")
                         .bodyLarge()
-                        .foregroundColor(Color.theme.secondaryText)
+                        .foregroundColor(currentTheme.secondaryText)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, Theme.Spacing.md)
                     
                     // Cultural goals content will be implemented here
                     Text("Cultural Goals Setup Coming Soon")
                         .titleMedium()
-                        .foregroundColor(Color.theme.secondaryText)
+                        .foregroundColor(currentTheme.secondaryText)
                         .padding(Theme.Spacing.xl)
                 }
             }

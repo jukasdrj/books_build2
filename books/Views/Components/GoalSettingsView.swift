@@ -3,6 +3,7 @@ import SwiftUI
 struct GoalSettingsView: View {
     @StateObject private var goalsManager = ReadingGoalsManager.shared
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.appTheme) private var currentTheme
     
     var body: some View {
         NavigationStack {
@@ -98,7 +99,7 @@ struct GoalSettingsView: View {
                                         .font(.caption)
                                         .foregroundColor(.secondary)
                                 }
-                                .accentColor(Color.theme.primary)
+                                .accentColor(currentTheme.primary)
                             } else {
                                 Slider(
                                     value: Binding(
@@ -118,7 +119,7 @@ struct GoalSettingsView: View {
                                         .font(.caption)
                                         .foregroundColor(.secondary)
                                 }
-                                .accentColor(Color.theme.primary)
+                                .accentColor(currentTheme.primary)
                             }
                         }
                         
@@ -171,7 +172,7 @@ struct GoalSettingsView: View {
                                         .font(.caption)
                                         .foregroundColor(.secondary)
                                 }
-                                .accentColor(Color.theme.secondary)
+                                .accentColor(currentTheme.secondary)
                             } else {
                                 Slider(
                                     value: Binding(
@@ -191,7 +192,7 @@ struct GoalSettingsView: View {
                                         .font(.caption)
                                         .foregroundColor(.secondary)
                                 }
-                                .accentColor(Color.theme.secondary)
+                                .accentColor(currentTheme.secondary)
                             }
                         }
                     } header: {
@@ -316,6 +317,7 @@ struct GoalSettingsView: View {
 }
 
 struct GoalPresetButton: View {
+    @Environment(\.appTheme) private var currentTheme
     let title: String
     let description: String
     let pagesGoal: Int
@@ -339,14 +341,14 @@ struct GoalPresetButton: View {
                             .font(.caption)
                             .padding(.horizontal, 8)
                             .padding(.vertical, 4)
-                            .background(Color.theme.primary.opacity(0.1))
+                            .background(currentTheme.primary.opacity(0.1))
                             .cornerRadius(8)
                         
                         Text("\(minutesGoal) min/day")
                             .font(.caption)
                             .padding(.horizontal, 8)
                             .padding(.vertical, 4)
-                            .background(Color.theme.secondary.opacity(0.1))
+                            .background(currentTheme.secondary.opacity(0.1))
                             .cornerRadius(8)
                     }
                 }

@@ -73,6 +73,7 @@ struct GoalProgressRing: View {
 }
 
 struct GoalProgressCard: View {
+    @Environment(\.appTheme) private var currentTheme
     @StateObject private var goalsManager = ReadingGoalsManager.shared
     let books: [UserBook]
     
@@ -128,7 +129,7 @@ struct GoalProgressCard: View {
                         goal: dailyProgress.goal,
                         title: "Today",
                         subtitle: goalsManager.goalType.displayName,
-                        color: Color.theme.primary,
+                        color: currentTheme.primary,
                         size: 100
                     )
                     
@@ -138,7 +139,7 @@ struct GoalProgressCard: View {
                         goal: weeklyProgress.goal,
                         title: "This Week",
                         subtitle: goalsManager.goalType.displayName,
-                        color: Color.theme.secondary,
+                        color: currentTheme.secondary,
                         size: 100
                     )
                 }
@@ -194,6 +195,7 @@ struct GoalProgressCard: View {
 }
 
 struct CompactGoalProgressView: View {
+    @Environment(\.appTheme) private var currentTheme
     @StateObject private var goalsManager = ReadingGoalsManager.shared
     let books: [UserBook]
     
@@ -205,12 +207,12 @@ struct CompactGoalProgressView: View {
                 // Mini progress ring
                 ZStack {
                     Circle()
-                        .stroke(Color.theme.primary.opacity(0.2), lineWidth: 4)
+                        .stroke(currentTheme.primary.opacity(0.2), lineWidth: 4)
                         .frame(width: 40, height: 40)
                     
                     Circle()
                         .trim(from: 0, to: dailyProgress.percentage)
-                        .stroke(Color.theme.primary, lineWidth: 4)
+                        .stroke(currentTheme.primary, lineWidth: 4)
                         .frame(width: 40, height: 40)
                         .rotationEffect(.degrees(-90))
                         .animation(.easeInOut(duration: 0.8), value: dailyProgress.percentage)

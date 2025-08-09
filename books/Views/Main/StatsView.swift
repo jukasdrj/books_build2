@@ -3,6 +3,7 @@ import SwiftData
 
 struct StatsView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.appTheme) private var currentTheme
     @Query private var allBooks: [UserBook]
     
     private var readBooks: [UserBook] {
@@ -71,8 +72,8 @@ struct StatsView: View {
         .background(
             LinearGradient(
                 colors: [
-                    Color.theme.background,
-                    Color.theme.surface.opacity(0.5)
+                    currentTheme.background,
+                    currentTheme.surface.opacity(0.5)
                 ],
                 startPoint: .top,
                 endPoint: .bottom
@@ -101,8 +102,8 @@ struct StatsView: View {
                         .fill(
                             LinearGradient(
                                 colors: [
-                                    Color.theme.primary.opacity(0.2),
-                                    Color.theme.secondary.opacity(0.1)
+                                    currentTheme.primary.opacity(0.2),
+                                    currentTheme.secondary.opacity(0.1)
                                 ],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
@@ -114,23 +115,23 @@ struct StatsView: View {
                         .font(.system(size: 40, weight: .medium))
                         .foregroundStyle(
                             LinearGradient(
-                                colors: [Color.theme.primary, Color.theme.secondary],
+                                colors: [currentTheme.primary, currentTheme.secondary],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             )
                         )
                 }
-                .shadow(color: Color.theme.primary.opacity(0.2), radius: 16, x: 0, y: 8)
+                .shadow(color: currentTheme.primary.opacity(0.2), radius: 16, x: 0, y: 8)
                 
                 VStack(spacing: Theme.Spacing.sm) {
                     Text("Your Reading Journey")
                         .font(.title2)
                         .fontWeight(.bold)
-                        .foregroundColor(Color.theme.primaryText)
+                        .foregroundColor(currentTheme.primaryText)
                     
                     Text("Track your progress and celebrate your achievements")
                         .font(.body)
-                        .foregroundColor(Color.theme.secondaryText)
+                        .foregroundColor(currentTheme.secondaryText)
                         .multilineTextAlignment(.center)
                 }
             }
@@ -144,7 +145,7 @@ struct StatsView: View {
                     title: "Total Books",
                     value: "\(allBooks.count)",
                     icon: "books.vertical.fill",
-                    color: Color.theme.primary,
+                    color: currentTheme.primary,
                     subtitle: "in your library"
                 )
                 
@@ -152,7 +153,7 @@ struct StatsView: View {
                     title: "Books Read",
                     value: "\(booksRead)",
                     icon: "checkmark.circle.fill",
-                    color: Color.theme.tertiary,
+                    color: currentTheme.tertiary,
                     subtitle: "completed"
                 )
                 
@@ -160,7 +161,7 @@ struct StatsView: View {
                     title: "Currently Reading",
                     value: "\(currentlyReading)",
                     icon: "book.fill",
-                    color: Color.theme.secondary,
+                    color: currentTheme.secondary,
                     subtitle: "in progress"
                 )
                 
@@ -168,14 +169,14 @@ struct StatsView: View {
                     title: "Want to Read",
                     value: "\(wantToRead)",
                     icon: "heart.fill",
-                    color: Color.theme.primary.opacity(0.7),
+                    color: currentTheme.primary.opacity(0.7),
                     subtitle: "on wishlist"
                 )
             }
         }
         .padding(Theme.Spacing.lg)
         .materialCard()
-        .shadow(color: Color.theme.primary.opacity(0.1), radius: 12, x: 0, y: 6)
+        .shadow(color: currentTheme.primary.opacity(0.1), radius: 12, x: 0, y: 6)
     }
     
     // MARK: - Enhanced Charts Section
@@ -188,11 +189,11 @@ struct StatsView: View {
                         Text("Books Read This Year")
                             .font(.headline)
                             .fontWeight(.semibold)
-                            .foregroundColor(Color.theme.primaryText)
+                            .foregroundColor(currentTheme.primaryText)
                         
                         Text("Your reading momentum throughout the year")
                             .font(.subheadline)
-                            .foregroundColor(Color.theme.secondaryText)
+                            .foregroundColor(currentTheme.secondaryText)
                     }
                     
                     Spacer()
@@ -200,7 +201,7 @@ struct StatsView: View {
                     Text("\(booksReadThisYear)")
                         .font(.title)
                         .fontWeight(.bold)
-                        .foregroundColor(Color.theme.primary)
+                        .foregroundColor(currentTheme.primary)
                 }
                 
                 MonthlyReadsChartView(books: allBooks)
@@ -215,11 +216,11 @@ struct StatsView: View {
                         Text("Genre Breakdown")
                             .font(.headline)
                             .fontWeight(.semibold)  
-                            .foregroundColor(Color.theme.primaryText)
+                            .foregroundColor(currentTheme.primaryText)
                         
                         Text("\(uniqueGenres) different genres explored")
                             .font(.subheadline)
-                            .foregroundColor(Color.theme.secondaryText)
+                            .foregroundColor(currentTheme.secondaryText)
                     }
                     
                     Spacer()
@@ -239,12 +240,12 @@ struct StatsView: View {
                 Text("Reading Achievements")
                     .font(.headline)
                     .fontWeight(.semibold)
-                    .foregroundColor(Color.theme.primaryText)
+                    .foregroundColor(currentTheme.primaryText)
                 
                 Spacer()
                 
                 Image(systemName: "trophy.fill")
-                    .foregroundColor(Color.theme.tertiary)
+                    .foregroundColor(currentTheme.tertiary)
                     .font(.title3)
             }
             
@@ -255,7 +256,7 @@ struct StatsView: View {
                         description: "Started your reading journey",
                         icon: "star.fill",
                         isUnlocked: allBooks.count > 0,
-                        color: Color.theme.primary
+                        color: currentTheme.primary
                     )
                     
                     AchievementCard(
@@ -263,7 +264,7 @@ struct StatsView: View {
                         description: "Read 10 books",
                         icon: "books.vertical.fill",
                         isUnlocked: booksRead >= 10,
-                        color: Color.theme.secondary
+                        color: currentTheme.secondary
                     )
                     
                     AchievementCard(
@@ -271,7 +272,7 @@ struct StatsView: View {
                         description: "Read from 3 cultures",
                         icon: "globe.americas.fill",
                         isUnlocked: culturalRegionsExplored >= 3,
-                        color: Color.theme.tertiary
+                        color: currentTheme.tertiary
                     )
                     
                     AchievementCard(
@@ -279,7 +280,7 @@ struct StatsView: View {
                         description: "Read 5 languages",
                         icon: "text.bubble.fill",
                         isUnlocked: languageCount >= 5,
-                        color: Color.theme.primary.opacity(0.8)
+                        color: currentTheme.primary.opacity(0.8)
                     )
                 }
                 .padding(.horizontal, Theme.Spacing.md)
@@ -325,6 +326,7 @@ struct StatsView: View {
 
 // NEW: Cultural Diversity Section for Stats View
 struct CulturalDiversitySection: View {
+    @Environment(\.appTheme) private var currentTheme
     let books: [UserBook]
     
     private var culturalStats: [CulturalRegion: Int] {
@@ -379,7 +381,7 @@ struct CulturalDiversitySection: View {
         VStack(alignment: .leading, spacing: Theme.Spacing.md) {
             Text("Cultural Diversity")
                 .titleLarge()
-                .foregroundColor(Color.theme.primaryText)
+                .foregroundColor(currentTheme.primaryText)
             
             // Cultural Progress Overview
             culturalProgressOverview
@@ -412,7 +414,7 @@ struct CulturalDiversitySection: View {
                 
                 Text("\(culturalStats.keys.count)/\(CulturalRegion.allCases.count) regions")
                     .labelMedium()
-                    .foregroundColor(Color.theme.primaryAction)
+                    .foregroundColor(currentTheme.primaryAction)
             }
             
             // Progress bar showing cultural regions explored
@@ -435,7 +437,7 @@ struct CulturalDiversitySection: View {
             Text("Top Cultural Regions")
                 .bodyMedium()
                 .fontWeight(.medium)
-                .foregroundColor(Color.theme.primaryText)
+                .foregroundColor(currentTheme.primaryText)
             
             VStack(spacing: Theme.Spacing.xs) {
                 ForEach(culturalStats.sorted(by: { $0.value > $1.value }).prefix(3), id: \.key) { region, count in
@@ -446,18 +448,18 @@ struct CulturalDiversitySection: View {
                         
                         Text(region.rawValue)
                             .bodyMedium()
-                            .foregroundColor(Color.theme.primaryText)
+                            .foregroundColor(currentTheme.primaryText)
                         
                         Spacer()
                         
                         Text("\(count)")
                             .labelMedium()
                             .fontWeight(.medium)
-                            .foregroundColor(Color.theme.primaryText)
+                            .foregroundColor(currentTheme.primaryText)
                         
                         Text("(\(Int((Double(count) / Double(books.count)) * 100))%)")
                             .labelSmall()
-                            .foregroundColor(Color.theme.secondaryText)
+                            .foregroundColor(currentTheme.secondaryText)
                     }
                     .padding(.vertical, 2)
                 }
@@ -470,25 +472,25 @@ struct CulturalDiversitySection: View {
             Text("Language Diversity")
                 .bodyMedium()
                 .fontWeight(.medium)
-                .foregroundColor(Color.theme.primaryText)
+                .foregroundColor(currentTheme.primaryText)
             
             VStack(spacing: Theme.Spacing.xs) {
                 ForEach(languageStats.sorted(by: { $0.value > $1.value }).prefix(3), id: \.key) { language, count in
                     HStack {
                         Text(language.capitalized)
                             .bodyMedium()
-                            .foregroundColor(Color.theme.primaryText)
+                            .foregroundColor(currentTheme.primaryText)
                         
                         Spacer()
                         
                         Text("\(count)")
                             .labelMedium()
                             .fontWeight(.medium)
-                            .foregroundColor(Color.theme.primaryText)
+                            .foregroundColor(currentTheme.primaryText)
                         
                         Text("books")
                             .labelSmall()
-                            .foregroundColor(Color.theme.secondaryText)
+                            .foregroundColor(currentTheme.secondaryText)
                     }
                     .padding(.vertical, 2)
                 }
@@ -501,12 +503,12 @@ struct CulturalDiversitySection: View {
             Text("Diverse Voices")
                 .bodyMedium()
                 .fontWeight(.medium)
-                .foregroundColor(Color.theme.primaryText)
+                .foregroundColor(currentTheme.primaryText)
             
             HStack(spacing: Theme.Spacing.md) {
-                diverseVoicesStat(title: "Indigenous", count: indigenousAuthorsCount, color: Color.theme.primaryAction)
-                diverseVoicesStat(title: "Marginalized", count: marginizedVoicesCount, color: Color.theme.secondaryAction)
-                diverseVoicesStat(title: "Translated", count: translatedWorksCount, color: Color.theme.accentHighlight)
+                diverseVoicesStat(title: "Indigenous", count: indigenousAuthorsCount, color: currentTheme.primaryAction)
+                diverseVoicesStat(title: "Marginalized", count: marginizedVoicesCount, color: currentTheme.secondaryAction)
+                diverseVoicesStat(title: "Translated", count: translatedWorksCount, color: currentTheme.accentHighlight)
             }
         }
     }
@@ -520,7 +522,7 @@ struct CulturalDiversitySection: View {
             
             Text(title)
                 .labelSmall()
-                .foregroundColor(Color.theme.secondaryText)
+                .foregroundColor(currentTheme.secondaryText)
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)
@@ -529,6 +531,7 @@ struct CulturalDiversitySection: View {
 
 // MARK: - Enhanced Stat Card Component
 struct EnhancedStatCard: View {
+    @Environment(\.appTheme) private var currentTheme
     let title: String
     let value: String
     let icon: String
@@ -552,17 +555,17 @@ struct EnhancedStatCard: View {
                 Text(value)
                     .font(.title)
                     .fontWeight(.bold)
-                    .foregroundColor(Color.theme.primaryText)
+                    .foregroundColor(currentTheme.primaryText)
                 
                 Text(title)
                     .font(.headline)
                     .fontWeight(.medium)
-                    .foregroundColor(Color.theme.primaryText)
+                    .foregroundColor(currentTheme.primaryText)
                     .multilineTextAlignment(.center)
                 
                 Text(subtitle)
                     .font(.caption)
-                    .foregroundColor(Color.theme.secondaryText)
+                    .foregroundColor(currentTheme.secondaryText)
                     .multilineTextAlignment(.center)
             }
         }
@@ -577,13 +580,14 @@ struct EnhancedStatCard: View {
 }
 
 struct ReadingStatusBreakdown: View {
+    @Environment(\.appTheme) private var currentTheme
     let books: [UserBook]
     
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.md) {
             Text("Reading Status")
                 .titleLarge()
-                .foregroundColor(Color.theme.primaryText)
+                .foregroundColor(currentTheme.primaryText)
             
             VStack(spacing: Theme.Spacing.sm) {
                 StatusRow(status: .read, count: booksRead, total: books.count)
@@ -609,6 +613,7 @@ struct ReadingStatusBreakdown: View {
 }
 
 struct StatusRow: View {
+    @Environment(\.appTheme) private var currentTheme
     let status: ReadingStatus
     let count: Int
     let total: Int
@@ -617,32 +622,33 @@ struct StatusRow: View {
         HStack {
             Text(status.rawValue)
                 .bodyLarge()
-                .foregroundColor(Color.theme.primaryText)
+                .foregroundColor(currentTheme.primaryText)
             
             Spacer()
             
             Text("\(count)")
                 .bodyLarge()
                 .fontWeight(.medium)
-                .foregroundColor(Color.theme.primaryText)
+                .foregroundColor(currentTheme.primaryText)
             
             if total > 0 {
                 Text("(\(Int(Double(count) / Double(total) * 100))%)")
                     .labelSmall()
-                    .foregroundColor(Color.theme.secondaryText)
+                    .foregroundColor(currentTheme.secondaryText)
             }
         }
     }
 }
 
 struct RecentBooksSection: View {
+    @Environment(\.appTheme) private var currentTheme
     let books: [UserBook]
     
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.md) {
             Text("Recently Completed")
                 .titleLarge()
-                .foregroundColor(Color.theme.primaryText)
+                .foregroundColor(currentTheme.primaryText)
             
             ForEach(books, id: \.self) { book in
                 HStack(spacing: Theme.Spacing.md) {
@@ -656,18 +662,18 @@ struct RecentBooksSection: View {
                         Text(book.metadata?.title ?? "Unknown Title")
                             .bodyMedium()
                             .fontWeight(.medium)
-                            .foregroundColor(Color.theme.primaryText)
+                            .foregroundColor(currentTheme.primaryText)
                             .lineLimit(1)
                         
                         Text(book.metadata?.authors.joined(separator: ", ") ?? "Unknown Author")
                             .labelMedium()
-                            .foregroundColor(Color.theme.secondaryText)
+                            .foregroundColor(currentTheme.secondaryText)
                             .lineLimit(1)
                         
                         if let dateCompleted = book.dateCompleted {
                             Text("Completed \(dateCompleted.formatted(date: .abbreviated, time: .omitted))")
                                 .labelSmall()
-                                .foregroundColor(Color.theme.secondaryText)
+                                .foregroundColor(currentTheme.secondaryText)
                         }
                     }
                     
@@ -678,7 +684,7 @@ struct RecentBooksSection: View {
                             ForEach(1...rating, id: \.self) { _ in
                                 Image(systemName: "star.fill")
                                     .labelSmall()
-                                    .foregroundColor(Color.theme.accentHighlight)
+                                    .foregroundColor(currentTheme.accentHighlight)
                             }
                         }
                     }
@@ -692,6 +698,7 @@ struct RecentBooksSection: View {
 }
 
 struct MetricView: View {
+    @Environment(\.appTheme) private var currentTheme
     let label: String
     let value: String
     
@@ -699,18 +706,19 @@ struct MetricView: View {
         VStack(alignment: .leading, spacing: 8) {
             Text(label)
                 .bodyMedium()
-                .foregroundColor(Color.theme.primaryText)
+                .foregroundColor(currentTheme.primaryText)
             
             Text(value)
                 .bodyLarge()
                 .fontWeight(.medium)
-                .foregroundColor(Color.theme.primaryText)
+                .foregroundColor(currentTheme.primaryText)
         }
     }
 }
 
 // MARK: - Achievement Card Component
 struct AchievementCard: View {
+    @Environment(\.appTheme) private var currentTheme
     let title: String
     let description: String
     let icon: String
@@ -721,21 +729,21 @@ struct AchievementCard: View {
         VStack(spacing: Theme.Spacing.sm) {
             ZStack {
                 Circle()
-                    .fill(isUnlocked ? color.opacity(0.2) : Color.theme.outline.opacity(0.1))
+                    .fill(isUnlocked ? color.opacity(0.2) : currentTheme.outline.opacity(0.1))
                     .frame(width: 60, height: 60)
                 
                 Image(systemName: icon)
                     .font(.system(size: 28, weight: .medium))
-                    .foregroundColor(isUnlocked ? color : Color.theme.outline)
+                    .foregroundColor(isUnlocked ? color : currentTheme.outline)
                 
                 if !isUnlocked {
                     Circle()
-                        .fill(Color.theme.surface.opacity(0.8))
+                        .fill(currentTheme.surface.opacity(0.8))
                         .frame(width: 60, height: 60)
                     
                     Image(systemName: "lock.fill")
                         .font(.system(size: 16))
-                        .foregroundColor(Color.theme.outline)
+                        .foregroundColor(currentTheme.outline)
                 }
             }
             
@@ -743,12 +751,12 @@ struct AchievementCard: View {
                 Text(title)
                     .font(.subheadline)
                     .fontWeight(.semibold)
-                    .foregroundColor(isUnlocked ? Color.theme.primaryText : Color.theme.outline)
+                    .foregroundColor(isUnlocked ? currentTheme.primaryText : currentTheme.outline)
                     .multilineTextAlignment(.center)
                 
                 Text(description)
                     .font(.caption)
-                    .foregroundColor(Color.theme.secondaryText)
+                    .foregroundColor(currentTheme.secondaryText)
                     .multilineTextAlignment(.center)
                     .lineLimit(2)
             }

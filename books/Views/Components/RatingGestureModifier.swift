@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct RatingGestureModifier: ViewModifier {
+    @Environment(\.appTheme) private var currentTheme
     let book: UserBook
     let onQuickRate: () -> Void
     let onLongPressRate: () -> Void
@@ -80,19 +81,19 @@ struct RatingGestureModifier: ViewModifier {
                         VStack(spacing: Theme.Spacing.xs) {
                             Image(systemName: hasTriggeredSwipe ? "star.fill" : "arrow.right")
                                 .font(.system(size: 20, weight: .medium))
-                                .foregroundColor(hasTriggeredSwipe ? Color.theme.warning : Color.theme.primary)
+                                .foregroundColor(hasTriggeredSwipe ? currentTheme.warning : currentTheme.primary)
                                 .scaleEffect(hasTriggeredSwipe ? 1.2 : 1.0)
                                 .animation(.spring(response: 0.3), value: hasTriggeredSwipe)
                             
                             if hasTriggeredSwipe {
                                 Text("5 ★")
                                     .labelSmall()
-                                    .foregroundColor(Color.theme.warning)
+                                    .foregroundColor(currentTheme.warning)
                                     .transition(.scale.combined(with: .opacity))
                             } else {
                                 Text("Swipe")
                                     .labelSmall()
-                                    .foregroundColor(Color.theme.primary)
+                                    .foregroundColor(currentTheme.primary)
                             }
                         }
                         .padding(.trailing, Theme.Spacing.md)
@@ -108,9 +109,9 @@ struct RatingGestureModifier: ViewModifier {
                             Spacer()
                             Image(systemName: "hand.tap")
                                 .font(.system(size: 18))
-                                .foregroundColor(Color.theme.primary)
+                                .foregroundColor(currentTheme.primary)
                                 .padding(Theme.Spacing.sm)
-                                .background(Color.theme.primaryContainer)
+                                .background(currentTheme.primaryContainer)
                                 .clipShape(Circle())
                                 .shadow(radius: 2)
                                 .transition(.scale.combined(with: .opacity))
@@ -143,42 +144,45 @@ extension View {
 
 // MARK: - Preview
 
-#Preview {
-    struct PreviewWrapper: View {
-        @State private var userBook = UserBook()
-        
-        var body: some View {
-            VStack(spacing: Theme.Spacing.lg) {
-                Text("Swipe right or long press to test gestures")
-                    .bodyMedium()
-                    .multilineTextAlignment(.center)
-                
-                RoundedRectangle(cornerRadius: Theme.CornerRadius.medium)
-                    .fill(Color.theme.primaryContainer)
-                    .frame(width: 200, height: 100)
-                    .overlay {
-                        Text("Book Card\nGesture Test")
-                            .titleMedium()
-                            .multilineTextAlignment(.center)
-                            .foregroundColor(Color.theme.onPrimaryContainer)
-                    }
-                    .ratingGestures(
-                        for: userBook,
-                        onQuickRate: {
-                            print("Quick 5-star rating applied!")
-                        },
-                        onLongPressRate: {
-                            print("Long press - show rating picker")
-                        }
-                    )
-                
-                Text("↑ Try swiping right or holding")
-                    .labelSmall()
-                    .foregroundColor(Color.theme.secondaryText)
-            }
-            .padding(Theme.Spacing.xl)
-        }
-    }
+struct RatingGestureModifierPreview: View {
+    @Environment(\.appTheme) private var currentTheme
+    @State private var userBook = UserBook()
     
-    return PreviewWrapper()
+    var body: some View {
+        VStack(spacing: Theme.Spacing.lg) {
+            Text("Swipe right or long press to test gestures")
+                .bodyMedium()
+                .multilineTextAlignment(.center)
+            
+            RoundedRectangle(cornerRadius: Theme.CornerRadius.medium)
+                .fill(currentTheme.primaryContainer)
+                .frame(width: 200, height: 100)
+                .overlay {
+                    Text("Book Card\nGesture Test")
+                        .titleMedium()
+                        .multilineTextAlignment(.center)
+                        .foregroundColor(currentTheme.onPrimaryContainer)
+                }
+                .ratingGestures(
+                    for: userBook,
+                    onQuickRate: {
+                        print("Quick 5-star rating applied!")
+                    },
+                    onLongPressRate: {
+                        print("Long press - show rating picker")
+                    }
+                )
+            
+            Text("↑ Try swiping right or holding")
+                .labelSmall()
+                .foregroundColor(currentTheme.secondaryText)
+        }
+        .padding(Theme.Spacing.xl)
+    }
+}
+
+#Preview {
+    RatingGestureModifierPreview()
+        .environment(\.appTheme, AppColorTheme(variant: .purpleBoho))
+        .preferredColorScheme(.light)
 }

@@ -185,107 +185,165 @@ enum Theme {
     }
 }
 
+// MARK: - Theme-Aware Helpers
+// We'll keep the material component helpers but simplify typography
+
+struct ThemeAwareCardModifier: ViewModifier {
+    @Environment(\.appTheme) private var currentTheme
+    let cornerRadius: CGFloat
+    let elevation: (color: SwiftUI.Color, radius: CGFloat, x: CGFloat, y: CGFloat)
+    
+    func body(content: Content) -> some View {
+        content
+            .background(currentTheme.cardBackground)
+            .cornerRadius(cornerRadius)
+            .shadow(
+                color: elevation.color,
+                radius: elevation.radius,
+                x: elevation.x,
+                y: elevation.y
+            )
+    }
+}
+
+struct ThemeAwareChipModifier: ViewModifier {
+    @Environment(\.appTheme) private var currentTheme
+    let isSelected: Bool
+    let backgroundColor: SwiftUI.Color?
+    
+    func body(content: Content) -> some View {
+        content
+            .padding(.horizontal, Theme.Spacing.md)
+            .padding(.vertical, Theme.Spacing.sm)
+            .background(
+                backgroundColor ?? (isSelected ? currentTheme.secondaryContainer : currentTheme.surfaceVariant)
+            )
+            .foregroundColor(
+                isSelected ? currentTheme.onSecondaryContainer : currentTheme.onSurfaceVariant
+            )
+            .cornerRadius(Theme.CornerRadius.chip)
+            .overlay(
+                RoundedRectangle(cornerRadius: Theme.CornerRadius.chip)
+                    .stroke(currentTheme.outline.opacity(isSelected ? 0 : 0.5), lineWidth: 0.5)
+            )
+    }
+}
+
+struct ThemeAwareFABModifier: ViewModifier {
+    @Environment(\.appTheme) private var currentTheme
+    let size: FABSize
+    let backgroundColor: SwiftUI.Color?
+    
+    func body(content: Content) -> some View {
+        content
+            .frame(width: size.width, height: size.height)
+            .background(backgroundColor ?? currentTheme.primaryAction)
+            .foregroundColor(currentTheme.onPrimary)
+            .cornerRadius(Theme.CornerRadius.fab)
+            .shadow(
+                color: Theme.Elevation.fab.color,
+                radius: Theme.Elevation.fab.radius,
+                x: Theme.Elevation.fab.x,
+                y: Theme.Elevation.fab.y
+            )
+    }
+}
+
 // MARK: - Typography View Modifiers
+// Simple, direct approach using modifier pattern
+struct TypographyModifier: ViewModifier {
+    @Environment(\.appTheme) private var currentTheme
+    let font: Font
+    let color: (AppColorTheme) -> Color
+    
+    func body(content: Content) -> some View {
+        content
+            .font(font)
+            .foregroundColor(color(currentTheme))
+    }
+}
+
 extension View {
     // Display styles
     func displayLarge() -> some View {
-        self.font(Theme.Typography.displayLarge)
-            .foregroundColor(SwiftUI.Color.theme.primaryText)
+        modifier(TypographyModifier(font: Theme.Typography.displayLarge, color: { $0.primaryText }))
     }
     
     func displayMedium() -> some View {
-        self.font(Theme.Typography.displayMedium)
-            .foregroundColor(SwiftUI.Color.theme.primaryText)
+        modifier(TypographyModifier(font: Theme.Typography.displayMedium, color: { $0.primaryText }))
     }
     
     func displaySmall() -> some View {
-        self.font(Theme.Typography.displaySmall)
-            .foregroundColor(SwiftUI.Color.theme.primaryText)
+        modifier(TypographyModifier(font: Theme.Typography.displaySmall, color: { $0.primaryText }))
     }
     
     // Headline styles
     func headlineLarge() -> some View {
-        self.font(Theme.Typography.headlineLarge)
-            .foregroundColor(SwiftUI.Color.theme.primaryText)
+        modifier(TypographyModifier(font: Theme.Typography.headlineLarge, color: { $0.primaryText }))
     }
     
     func headlineMedium() -> some View {
-        self.font(Theme.Typography.headlineMedium)
-            .foregroundColor(SwiftUI.Color.theme.primaryText)
+        modifier(TypographyModifier(font: Theme.Typography.headlineMedium, color: { $0.primaryText }))
     }
     
     func headlineSmall() -> some View {
-        self.font(Theme.Typography.headlineSmall)
-            .foregroundColor(SwiftUI.Color.theme.primaryText)
+        modifier(TypographyModifier(font: Theme.Typography.headlineSmall, color: { $0.primaryText }))
     }
     
     // Title styles
     func titleLarge() -> some View {
-        self.font(Theme.Typography.titleLarge)
-            .foregroundColor(SwiftUI.Color.theme.primaryText)
+        modifier(TypographyModifier(font: Theme.Typography.titleLarge, color: { $0.primaryText }))
     }
     
     func titleMedium() -> some View {
-        self.font(Theme.Typography.titleMedium)
-            .foregroundColor(SwiftUI.Color.theme.primaryText)
+        modifier(TypographyModifier(font: Theme.Typography.titleMedium, color: { $0.primaryText }))
     }
     
     func titleSmall() -> some View {
-        self.font(Theme.Typography.titleSmall)
-            .foregroundColor(SwiftUI.Color.theme.primaryText)
+        modifier(TypographyModifier(font: Theme.Typography.titleSmall, color: { $0.primaryText }))
     }
     
     // Body styles
     func bodyLarge() -> some View {
-        self.font(Theme.Typography.bodyLarge)
-            .foregroundColor(SwiftUI.Color.theme.primaryText)
+        modifier(TypographyModifier(font: Theme.Typography.bodyLarge, color: { $0.primaryText }))
     }
     
     func bodyMedium() -> some View {
-        self.font(Theme.Typography.bodyMedium)
-            .foregroundColor(SwiftUI.Color.theme.primaryText)
+        modifier(TypographyModifier(font: Theme.Typography.bodyMedium, color: { $0.primaryText }))
     }
     
     func bodySmall() -> some View {
-        self.font(Theme.Typography.bodySmall)
-            .foregroundColor(SwiftUI.Color.theme.secondaryText)
+        modifier(TypographyModifier(font: Theme.Typography.bodySmall, color: { $0.secondaryText }))
     }
     
     // Label styles
     func labelLarge() -> some View {
-        self.font(Theme.Typography.labelLarge)
-            .foregroundColor(SwiftUI.Color.theme.primaryText)
+        modifier(TypographyModifier(font: Theme.Typography.labelLarge, color: { $0.primaryText }))
     }
     
     func labelMedium() -> some View {
-        self.font(Theme.Typography.labelMedium)
-            .foregroundColor(SwiftUI.Color.theme.secondaryText)
+        modifier(TypographyModifier(font: Theme.Typography.labelMedium, color: { $0.secondaryText }))
     }
     
     func labelSmall() -> some View {
-        self.font(Theme.Typography.labelSmall)
-            .foregroundColor(SwiftUI.Color.theme.secondaryText)
+        modifier(TypographyModifier(font: Theme.Typography.labelSmall, color: { $0.secondaryText }))
     }
     
     // Reading-specific styles
     func bookTitle() -> some View {
-        self.font(Theme.Typography.bookTitle)
-            .foregroundColor(SwiftUI.Color.theme.primaryText)
+        modifier(TypographyModifier(font: Theme.Typography.bookTitle, color: { $0.primaryText }))
     }
     
     func authorName() -> some View {
-        self.font(Theme.Typography.authorName)
-            .foregroundColor(SwiftUI.Color.theme.secondaryText)
+        modifier(TypographyModifier(font: Theme.Typography.authorName, color: { $0.secondaryText }))
     }
     
     func readingStats() -> some View {
-        self.font(Theme.Typography.readingStats)
-            .foregroundColor(SwiftUI.Color.theme.primary)
+        modifier(TypographyModifier(font: Theme.Typography.readingStats, color: { $0.primary }))
     }
     
     func culturalTag() -> some View {
-        self.font(Theme.Typography.culturalTag)
-            .foregroundColor(SwiftUI.Color.theme.onSecondaryContainer)
+        modifier(TypographyModifier(font: Theme.Typography.culturalTag, color: { $0.onSecondaryContainer }))
     }
 }
 
@@ -294,19 +352,10 @@ extension View {
     
     // Card styles with proper elevation
     func materialCard(
-        backgroundColor: SwiftUI.Color = SwiftUI.Color.theme.cardBackground,
         cornerRadius: CGFloat = Theme.CornerRadius.card,
         elevation: (color: SwiftUI.Color, radius: CGFloat, x: CGFloat, y: CGFloat) = Theme.Elevation.card
     ) -> some View {
-        self
-            .background(backgroundColor)
-            .cornerRadius(cornerRadius)
-            .shadow(
-                color: elevation.color,
-                radius: elevation.radius,
-                x: elevation.x,
-                y: elevation.y
-            )
+        self.modifier(ThemeAwareCardModifier(cornerRadius: cornerRadius, elevation: elevation))
     }
     
     // Enhanced button styles
@@ -323,20 +372,7 @@ extension View {
         isSelected: Bool = false,
         backgroundColor: SwiftUI.Color? = nil
     ) -> some View {
-        self
-            .padding(.horizontal, Theme.Spacing.md)
-            .padding(.vertical, Theme.Spacing.sm)
-            .background(
-                backgroundColor ?? (isSelected ? SwiftUI.Color.theme.secondaryContainer : SwiftUI.Color.theme.surfaceVariant)
-            )
-            .foregroundColor(
-                isSelected ? SwiftUI.Color.theme.onSecondaryContainer : SwiftUI.Color.theme.onSurfaceVariant
-            )
-            .cornerRadius(Theme.CornerRadius.chip)
-            .overlay(
-                RoundedRectangle(cornerRadius: Theme.CornerRadius.chip)
-                    .stroke(SwiftUI.Color.theme.outline.opacity(isSelected ? 0 : 0.5), lineWidth: 0.5)
-            )
+        self.modifier(ThemeAwareChipModifier(isSelected: isSelected, backgroundColor: backgroundColor))
     }
     
     // Cultural diversity indicator
@@ -364,31 +400,19 @@ extension View {
     // Floating Action Button
     func materialFAB(
         size: FABSize = .regular,
-        backgroundColor: SwiftUI.Color = SwiftUI.Color.theme.primaryAction
+        backgroundColor: SwiftUI.Color? = nil
     ) -> some View {
-        self
-            .frame(width: size.width, height: size.height)
-            .background(backgroundColor)
-            .foregroundColor(SwiftUI.Color.theme.onPrimary)
-            .cornerRadius(Theme.CornerRadius.fab)
-            .shadow(
-                color: Theme.Elevation.fab.color,
-                radius: Theme.Elevation.fab.radius,
-                x: Theme.Elevation.fab.x,
-                y: Theme.Elevation.fab.y
-            )
+        self.modifier(ThemeAwareFABModifier(size: size, backgroundColor: backgroundColor))
     }
     
     // Interactive state handling with enhanced Material Design 3 feedback
     func materialInteractive(
         pressedScale: CGFloat = 0.95,
-        pressedOpacity: Double = 0.8,
-        hoveredColor: SwiftUI.Color = SwiftUI.Color.theme.hovered
+        pressedOpacity: Double = 0.8
     ) -> some View {
         self.modifier(MaterialInteractiveModifier(
             pressedScale: pressedScale,
-            pressedOpacity: pressedOpacity,
-            hoveredColor: hoveredColor
+            pressedOpacity: pressedOpacity
         ))
     }
     
@@ -469,6 +493,7 @@ enum FABSize {
 }
 
 struct MaterialButtonModifier: ViewModifier {
+    @Environment(\.appTheme) private var currentTheme
     let style: MaterialButtonStyle
     let size: MaterialButtonSize
     let isEnabled: Bool
@@ -494,33 +519,33 @@ struct MaterialButtonModifier: ViewModifier {
     }
     
     private var backgroundColor: SwiftUI.Color {
-        guard isEnabled else { return SwiftUI.Color.theme.disabled }
+        guard isEnabled else { return currentTheme.disabled }
         
         switch style {
         case .filled:
-            return SwiftUI.Color.theme.primary
+            return currentTheme.primary
         case .tonal:
-            return SwiftUI.Color.theme.secondaryContainer
+            return currentTheme.secondaryContainer
         case .outlined, .text:
             return SwiftUI.Color.clear
         case .destructive:
-            return SwiftUI.Color.theme.error
+            return currentTheme.error
         case .success:
-            return SwiftUI.Color.theme.success
+            return currentTheme.success
         }
     }
     
     private var foregroundColor: SwiftUI.Color {
-        guard isEnabled else { return SwiftUI.Color.theme.disabledText }
+        guard isEnabled else { return currentTheme.disabledText }
         
         switch style {
         case .filled:
             // Enhanced contrast: Always use white on filled buttons for better readability
             return SwiftUI.Color.white
         case .tonal:
-            return SwiftUI.Color.theme.onSecondaryContainer
+            return currentTheme.onSecondaryContainer
         case .outlined, .text:
-            return SwiftUI.Color.theme.primary
+            return currentTheme.primary
         case .destructive:
             // Enhanced contrast: Always use white on destructive buttons
             return SwiftUI.Color.white
@@ -531,11 +556,11 @@ struct MaterialButtonModifier: ViewModifier {
     }
     
     private var borderColor: SwiftUI.Color {
-        guard isEnabled else { return SwiftUI.Color.theme.outline.opacity(0.12) }
+        guard isEnabled else { return currentTheme.outline.opacity(0.12) }
         
         switch style {
         case .outlined:
-            return SwiftUI.Color.theme.outline
+            return currentTheme.outline
         default:
             return SwiftUI.Color.clear
         }
@@ -552,7 +577,6 @@ struct MaterialButtonModifier: ViewModifier {
 struct MaterialInteractiveModifier: ViewModifier {
     let pressedScale: CGFloat
     let pressedOpacity: Double
-    let hoveredColor: SwiftUI.Color
     
     @State private var isPressed = false
     @GestureState private var isGestureActive = false

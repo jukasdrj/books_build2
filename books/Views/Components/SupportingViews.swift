@@ -4,6 +4,7 @@ import SwiftData
 // MARK: - Status Badge
 // A reusable view to display the reading status of a book, with different styles.
 struct StatusBadge: View {
+    @Environment(\.appTheme) private var currentTheme
     let status: ReadingStatus
     let style: Style
     
@@ -22,7 +23,7 @@ struct StatusBadge: View {
             HStack(spacing: Theme.Spacing.xs) {
                 Text(status.rawValue)
                     .labelMedium()
-                    .foregroundColor(Color.theme.primaryText)
+                    .foregroundColor(currentTheme.primaryText)
                 Circle()
                     .fill(status.textColor)
                     .frame(width: 8, height: 8)
@@ -411,6 +412,7 @@ struct EnhancedEditBookView: View {
 
 // MARK: - Styled Text Field Component
 struct StyledTextField: View {
+    @Environment(\.appTheme) private var currentTheme
     let label: String
     @Binding var text: String
     let icon: String
@@ -423,12 +425,12 @@ struct StyledTextField: View {
             HStack(spacing: Theme.Spacing.xs) {
                 Image(systemName: icon)
                     .font(.system(size: 16))
-                    .foregroundColor(Color.theme.primaryAction)
+                    .foregroundColor(currentTheme.primaryAction)
                     .frame(width: 20)
                 
                 Text(label)
                     .labelLarge()
-                    .foregroundColor(Color.theme.primaryText)
+                    .foregroundColor(currentTheme.primaryText)
             }
             
             TextField(placeholder, text: $text)
@@ -444,6 +446,7 @@ struct StyledTextField: View {
 
 // MARK: - Styled Text Editor Component
 struct StyledTextEditor: View {
+    @Environment(\.appTheme) private var currentTheme
     let label: String
     @Binding var text: String
     let icon: String
@@ -454,12 +457,12 @@ struct StyledTextEditor: View {
             HStack(spacing: Theme.Spacing.xs) {
                 Image(systemName: icon)
                     .font(.system(size: 16))
-                    .foregroundColor(Color.theme.primaryAction)
+                    .foregroundColor(currentTheme.primaryAction)
                     .frame(width: 20)
                 
                 Text(label)
                     .labelLarge()
-                    .foregroundColor(Color.theme.primaryText)
+                    .foregroundColor(currentTheme.primaryText)
             }
             
             TextField(placeholder, text: $text, axis: .vertical)

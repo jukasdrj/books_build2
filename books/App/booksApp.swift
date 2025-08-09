@@ -94,6 +94,8 @@ struct booksApp: App {
                     }
                 }
             }
+            // Integrate new EnvironmentKey-based theme provider
+            .environment(\.appTheme, AppColorTheme(variant: themeManager.currentTheme))
             .onChange(of: colorScheme) { _, _ in
                 // Force refresh system UI when color scheme changes
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {

@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct ColumnMappingView: View {
+    @Environment(\.appTheme) private var currentTheme
     let session: CSVImportSession
     @Binding var columnMappings: [String: BookField]
     let onNext: () -> Void
@@ -81,7 +82,7 @@ struct ColumnMappingView: View {
                 .disabled(!requiredMappingsComplete)
             }
             .padding(Theme.Spacing.md)
-            .background(Color.theme.surface)
+            .background(currentTheme.surface)
         }
     }
 }
@@ -89,6 +90,7 @@ struct ColumnMappingView: View {
 // MARK: - Mapping Header
 
 struct MappingHeader: View {
+    @Environment(\.appTheme) private var currentTheme
     let totalColumns: Int
     let mappedColumns: Int
     let requiredComplete: Bool
@@ -99,11 +101,11 @@ struct MappingHeader: View {
                 VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
                     Text("Map Columns")
                         .titleLarge()
-                        .foregroundColor(Color.theme.primaryText)
+                        .foregroundColor(currentTheme.primaryText)
                     
                     Text("Connect your CSV columns to book fields")
                         .bodyMedium()
-                        .foregroundColor(Color.theme.secondaryText)
+                        .foregroundColor(currentTheme.secondaryText)
                 }
                 
                 Spacer()
@@ -111,12 +113,12 @@ struct MappingHeader: View {
                 VStack(alignment: .trailing, spacing: Theme.Spacing.xs) {
                     Text("\(mappedColumns)/\(totalColumns)")
                         .titleMedium()
-                        .foregroundColor(Color.theme.primaryAction)
+                        .foregroundColor(currentTheme.primaryAction)
                         .fontWeight(.bold)
                     
                     Text("mapped")
                         .labelSmall()
-                        .foregroundColor(Color.theme.secondaryText)
+                        .foregroundColor(currentTheme.secondaryText)
                 }
             }
             
@@ -124,12 +126,12 @@ struct MappingHeader: View {
             GeometryReader { geometry in
                 ZStack(alignment: .leading) {
                     Rectangle()
-                        .fill(Color.theme.outline.opacity(0.3))
+                        .fill(currentTheme.outline.opacity(0.3))
                         .frame(height: 4)
                         .cornerRadius(2)
                     
                     Rectangle()
-                        .fill(Color.theme.primaryAction)
+                        .fill(currentTheme.primaryAction)
                         .frame(
                             width: geometry.size.width * (totalColumns > 0 ? Double(mappedColumns) / Double(totalColumns) : 0),
                             height: 4
@@ -144,33 +146,34 @@ struct MappingHeader: View {
             if !requiredComplete {
                 HStack(spacing: Theme.Spacing.sm) {
                     Image(systemName: "exclamationmark.circle")
-                        .foregroundColor(Color.theme.warning)
+                        .foregroundColor(currentTheme.warning)
                     
                     Text("Title and Author columns are required")
                         .bodySmall()
-                        .foregroundColor(Color.theme.secondaryText)
+                        .foregroundColor(currentTheme.secondaryText)
                 }
                 .padding(Theme.Spacing.sm)
-                .background(Color.theme.warningContainer)
+                .background(currentTheme.warningContainer)
                 .cornerRadius(Theme.CornerRadius.small)
             }
             
             Divider()
         }
         .padding(Theme.Spacing.md)
-        .background(Color.theme.surface)
+        .background(currentTheme.surface)
     }
 }
 
 // MARK: - Search Bar
 
 struct SearchBar: View {
+    @Environment(\.appTheme) private var currentTheme
     @Binding var searchText: String
     
     var body: some View {
         HStack(spacing: Theme.Spacing.sm) {
             Image(systemName: "magnifyingglass")
-                .foregroundColor(Color.theme.secondaryText)
+                .foregroundColor(currentTheme.secondaryText)
             
             TextField("Search columns...", text: $searchText)
                 .bodyMedium()
@@ -178,12 +181,12 @@ struct SearchBar: View {
             if !searchText.isEmpty {
                 Button(action: { searchText = "" }) {
                     Image(systemName: "xmark.circle.fill")
-                        .foregroundColor(Color.theme.secondaryText)
+                        .foregroundColor(currentTheme.secondaryText)
                 }
             }
         }
         .padding(Theme.Spacing.md)
-        .background(Color.theme.surfaceVariant)
+        .background(currentTheme.surfaceVariant)
         .cornerRadius(Theme.CornerRadius.medium)
         .padding(.horizontal, Theme.Spacing.md)
         .padding(.bottom, Theme.Spacing.sm)
@@ -193,6 +196,7 @@ struct SearchBar: View {
 // MARK: - Column Mapping Row
 
 struct ColumnMappingRow: View {
+    @Environment(\.appTheme) private var currentTheme
     let column: CSVColumn
     let selectedField: BookField?
     let onFieldSelected: (BookField?) -> Void
@@ -207,13 +211,13 @@ struct ColumnMappingRow: View {
                 VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
                     Text(column.originalName)
                         .bodyMedium()
-                        .foregroundColor(Color.theme.primaryText)
+                        .foregroundColor(currentTheme.primaryText)
                         .fontWeight(.medium)
                     
                     if column.hasSampleData {
                         Text("Sample: \(column.sampleValues.first ?? "")")
                             .labelSmall()
-                            .foregroundColor(Color.theme.secondaryText)
+                            .foregroundColor(currentTheme.secondaryText)
                             .lineLimit(1)
                     }
                 }
@@ -227,29 +231,29 @@ struct ColumnMappingRow: View {
                             VStack(alignment: .trailing, spacing: Theme.Spacing.xs) {
                                 Text(field.displayName)
                                     .bodyMedium()
-                                    .foregroundColor(Color.theme.primaryAction)
+                                    .foregroundColor(currentTheme.primaryAction)
                                 
                                 if field.isRequired {
                                     Text("Required")
                                         .labelSmall()
-                                        .foregroundColor(Color.theme.success)
+                                        .foregroundColor(currentTheme.success)
                                         .fontWeight(.medium)
                                 }
                             }
                         } else {
                             Text("Select field...")
                                 .bodyMedium()
-                                .foregroundColor(Color.theme.secondaryText)
+                                .foregroundColor(currentTheme.secondaryText)
                         }
                         
                         Image(systemName: "chevron.down")
                             .labelSmall()
-                            .foregroundColor(Color.theme.secondaryText)
+                            .foregroundColor(currentTheme.secondaryText)
                     }
                 }
                 .padding(.horizontal, Theme.Spacing.sm)
                 .padding(.vertical, Theme.Spacing.xs)
-                .background(Color.theme.surfaceVariant)
+                .background(currentTheme.surfaceVariant)
                 .cornerRadius(Theme.CornerRadius.small)
             }
             
@@ -260,10 +264,10 @@ struct ColumnMappingRow: View {
                         ForEach(Array(column.sampleValues.prefix(3).enumerated()), id: \.offset) { _, value in
                             Text(value)
                                 .labelSmall()
-                                .foregroundColor(Color.theme.secondaryText)
+                                .foregroundColor(currentTheme.secondaryText)
                                 .padding(.horizontal, Theme.Spacing.xs)
                                 .padding(.vertical, 2)
-                                .background(Color.theme.outline.opacity(0.1))
+                                .background(currentTheme.outline.opacity(0.1))
                                 .cornerRadius(Theme.CornerRadius.small)
                         }
                     }

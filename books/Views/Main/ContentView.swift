@@ -5,6 +5,7 @@ struct ContentView: View {
     @AppStorage("selectedTab") private var selectedTab = 0
     @Environment(\.modelContext) private var modelContext
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.appTheme) private var theme
     
     // Theme manager for observing theme changes
     @State private var themeManager = ThemeManager.shared
@@ -30,7 +31,6 @@ struct ContentView: View {
         }
         .id(themeRefreshID) // Force complete view refresh on theme changes
         .fullStatusBarTheming() // Apply complete status bar theming (background + style)
-        .enhancedThemeAware() // Use enhanced theme awareness for reliable updates
         .preferredColorScheme(getPreferredColorScheme()) // Apply color scheme based on theme
         .onAppear {
             updateBadgeCounts()
@@ -64,14 +64,9 @@ struct ContentView: View {
     
     private func getPreferredColorScheme() -> ColorScheme? {
         // Determine the preferred color scheme based on the current theme
-        switch themeManager.currentTheme {
-        case .darkRose, .darkPurple, .blueMaterial:
-            return .dark
-        case .vanillaCream, .purpleBoho, .candlelight:
-            return .light
-        case .systemDefault:
-            return nil // Let the system decide
-        }
+        // Since all our themes support both light and dark modes, let system decide
+        // This allows proper adaptation to system appearance changes
+        return nil
     }
     
     private func forceThemeRefresh() {
@@ -138,7 +133,7 @@ struct ContentView: View {
                             Circle()
                                 .fill(
                                     LinearGradient(
-                                        colors: [Color.theme.primary.opacity(0.2), Color.theme.secondary.opacity(0.1)],
+                                        colors: [theme.primary.opacity(0.2), theme.secondary.opacity(0.1)],
                                         startPoint: .topLeading,
                                         endPoint: .bottomTrailing
                                     )
@@ -149,17 +144,17 @@ struct ContentView: View {
                                 .font(.headline)
                                 .foregroundStyle(
                                     LinearGradient(
-                                        colors: [Color.theme.primary, Color.theme.secondary],
+                                        colors: [theme.primary, theme.secondary],
                                         startPoint: .topLeading,
                                         endPoint: .bottomTrailing
                                     )
                                 )
                         }
-                        .shadow(color: Color.theme.primary.opacity(0.15), radius: 4, x: 0, y: 2)
+                        .shadow(color: theme.primary.opacity(0.15), radius: 4, x: 0, y: 2)
                         
                         Text("PaperTracks")
                             .titleLarge()
-                            .foregroundColor(Color.theme.primaryText)
+                            .foregroundColor(theme.primaryText)
                         
                         Spacer()
                     }
@@ -167,11 +162,11 @@ struct ContentView: View {
                     .padding(.top, Theme.Spacing.md)
                     
                     Divider()
-                        .background(Color.theme.outline.opacity(0.2))
+                        .background(theme.outline.opacity(0.2))
                 }
                 .background(
                     LinearGradient(
-                        colors: [Color.theme.surface, Color.theme.background],
+                        colors: [theme.surface, theme.background],
                         startPoint: .top,
                         endPoint: .bottom
                     )
@@ -253,11 +248,11 @@ struct ContentView: View {
                 }
                 .listStyle(.sidebar)
                 .scrollContentBackground(.hidden)
-                .background(Color.theme.background)
+                .background(theme.background)
             }
             .frame(minWidth: 280)
             .navigationSplitViewColumnWidth(min: 280, ideal: 320, max: 400)
-            .background(Color.theme.background)
+            .background(theme.background)
         } detail: {
             NavigationStack {
                 Group {
@@ -288,10 +283,10 @@ struct ContentView: View {
                     AuthorSearchResultsView(authorName: authorRequest.authorName)
                 }
             }
-            .background(Color.theme.background)
+            .background(theme.background)
         }
         .navigationSplitViewStyle(.balanced)
-        .tint(Color.theme.primary)
+        .tint(theme.primary)
     }
     
     // MARK: - Enhanced iPhone Layout with Custom Tab Bar
@@ -413,6 +408,8 @@ struct ContentView: View {
 
 // MARK: - Enhanced Navigation Item for iPad
 struct EnhancedNavItem: View {
+    @Environment(\.appTheme) private var theme
+    
     let title: String
     let icon: String
     let selectedIcon: String
@@ -424,7 +421,7 @@ struct EnhancedNavItem: View {
         HStack(spacing: Theme.Spacing.md) {
             // Animated selection indicator
             Rectangle()
-                .fill(Color.theme.primary)
+                .fill(theme.primary)
                 .frame(width: 3)
                 .opacity(isSelected ? 1 : 0)
                 .animation(.spring(response: 0.3, dampingFraction: 0.8), value: isSelected)
@@ -432,14 +429,14 @@ struct EnhancedNavItem: View {
             // Icon with animation
             Image(systemName: isSelected ? selectedIcon : icon)
                 .font(.system(size: 18, weight: .medium))
-                .foregroundColor(isSelected ? Color.theme.primary : Color.theme.onSurface)
+                .foregroundColor(isSelected ? theme.primary : theme.onSurface)
                 .scaleEffect(isSelected ? 1.1 : 1.0)
                 .animation(.spring(response: 0.3, dampingFraction: 0.8), value: isSelected)
             
             // Title
             Text(title)
                 .font(.system(size: 16, weight: isSelected ? .semibold : .medium))
-                .foregroundColor(isSelected ? Color.theme.primary : Color.theme.onSurface)
+                .foregroundColor(isSelected ? theme.primary : theme.onSurface)
             
             Spacer()
             
@@ -453,8 +450,8 @@ struct EnhancedNavItem: View {
                     .padding(.vertical, 4)
                     .background(
                         Capsule()
-                            .fill(Color.theme.primary)
-                            .shadow(color: Color.theme.primary.opacity(0.3), radius: 2, x: 0, y: 1)
+                            .fill(theme.primary)
+                            .shadow(color: theme.primary.opacity(0.3), radius: 2, x: 0, y: 1)
                     )
                     .scaleEffect(isSelected ? 1.1 : 1.0)
                     .animation(.spring(response: 0.3, dampingFraction: 0.8), value: isSelected)
@@ -464,7 +461,7 @@ struct EnhancedNavItem: View {
         .padding(.horizontal, Theme.Spacing.md)
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(isSelected ? Color.theme.primaryContainer.opacity(0.3) : Color.clear)
+                .fill(isSelected ? theme.primaryContainer.opacity(0.3) : Color.clear)
                 .animation(.easeInOut(duration: 0.2), value: isSelected)
         )
         .contentShape(Rectangle())
@@ -473,6 +470,7 @@ struct EnhancedNavItem: View {
 
 // MARK: - Enhanced Custom Tab Bar for iPhone
 struct EnhancedTabBar: View {
+    @Environment(\.appTheme) private var theme
     @Binding var selectedTab: Int
     let libraryCount: Int
     let wishlistCount: Int
@@ -492,7 +490,7 @@ struct EnhancedTabBar: View {
             HStack {
                 ForEach(0..<tabItems.count, id: \.self) { index in
                     Rectangle()
-                        .fill(selectedTab == index ? Color.theme.primary : Color.clear)
+                        .fill(selectedTab == index ? theme.primary : Color.clear)
                         .frame(height: 2)
                         .animation(.spring(response: 0.4, dampingFraction: 0.8), value: selectedTab)
                 }
@@ -523,11 +521,11 @@ struct EnhancedTabBar: View {
             .overlay(
                 Rectangle()
                     .frame(height: 0.5)
-                    .foregroundColor(Color.theme.outline.opacity(0.2)),
+                    .foregroundColor(theme.outline.opacity(0.2)),
                 alignment: .top
             )
         }
-        .background(Color.theme.surface.opacity(0.95))
+        .background(theme.surface.opacity(0.95))
     }
     
     private func badgeCount(for index: Int) -> Int? {
@@ -547,6 +545,7 @@ struct TabBarItem {
 }
 
 struct EnhancedTabBarButton: View {
+    @Environment(\.appTheme) private var theme
     let item: TabBarItem
     let isSelected: Bool
     let badge: Int?
@@ -558,7 +557,7 @@ struct EnhancedTabBarButton: View {
                 ZStack {
                     // Background circle for selected state
                     Circle()
-                        .fill(Color.theme.primaryContainer.opacity(0.3))
+                        .fill(theme.primaryContainer.opacity(0.3))
                         .frame(width: 32, height: 32)
                         .scaleEffect(isSelected ? 1.0 : 0.0)
                         .animation(.spring(response: 0.3, dampingFraction: 0.8), value: isSelected)
@@ -566,7 +565,7 @@ struct EnhancedTabBarButton: View {
                     // Icon
                     Image(systemName: isSelected ? item.selectedIcon : item.icon)
                         .font(.system(size: 20, weight: .medium))
-                        .foregroundColor(isSelected ? Color.theme.primary : Color.theme.onSurfaceVariant)
+                        .foregroundColor(isSelected ? theme.primary : theme.onSurfaceVariant)
                         .scaleEffect(isSelected ? 1.1 : 1.0)
                         .animation(.spring(response: 0.3, dampingFraction: 0.8), value: isSelected)
                     
@@ -580,8 +579,8 @@ struct EnhancedTabBarButton: View {
                             .padding(.vertical, 2)
                             .background(
                                 Capsule()
-                                    .fill(Color.theme.error)
-                                    .shadow(color: Color.theme.error.opacity(0.3), radius: 2, x: 0, y: 1)
+                                    .fill(theme.error)
+                                    .shadow(color: theme.error.opacity(0.3), radius: 2, x: 0, y: 1)
                             )
                             .offset(x: 12, y: -12)
                             .scaleEffect(isSelected ? 1.1 : 1.0)
@@ -593,7 +592,7 @@ struct EnhancedTabBarButton: View {
                 Text(badgeTitle)
                     .font(.caption2)
                     .fontWeight(isSelected ? .semibold : .medium)
-                    .foregroundColor(isSelected ? Color.theme.primary : Color.theme.onSurfaceVariant)
+                    .foregroundColor(isSelected ? theme.primary : theme.onSurfaceVariant)
                     .lineLimit(1)
                     .animation(.easeInOut(duration: 0.2), value: isSelected)
             }

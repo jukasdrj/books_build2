@@ -20,6 +20,7 @@ struct LibraryFilter: Codable, Equatable {
 struct LibraryFilterView: View {
     @Binding var filter: LibraryFilter
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.appTheme) private var currentTheme
     
     var body: some View {
         NavigationStack {
@@ -36,7 +37,7 @@ struct LibraryFilterView: View {
                 }
                 .padding(Theme.Spacing.lg)
             }
-            .background(Color.theme.background)
+            .background(currentTheme.background)
             .navigationTitle("Filter Library")
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
@@ -66,7 +67,7 @@ struct LibraryFilterView: View {
         VStack(alignment: .leading, spacing: Theme.Spacing.md) {
             Text("Quick Filters")
                 .titleMedium()
-                .foregroundColor(Color.theme.primaryText)
+                .foregroundColor(currentTheme.primaryText)
             
             LazyVGrid(columns: [
                 GridItem(.flexible()),
@@ -123,7 +124,7 @@ struct LibraryFilterView: View {
             HStack {
                 Text("Reading Status")
                     .titleMedium()
-                    .foregroundColor(Color.theme.primaryText)
+                    .foregroundColor(currentTheme.primaryText)
                 
                 Spacer()
                 
@@ -170,7 +171,7 @@ struct LibraryFilterView: View {
         VStack(alignment: .leading, spacing: Theme.Spacing.md) {
             Text("Collection Filters")
                 .titleMedium()
-                .foregroundColor(Color.theme.primaryText)
+                .foregroundColor(currentTheme.primaryText)
             
             VStack(spacing: Theme.Spacing.sm) {
                 FilterToggleRow(
@@ -205,6 +206,7 @@ struct LibraryFilterView: View {
 // MARK: - Supporting Views
 
 struct QuickFilterChip: View {
+    @Environment(\.appTheme) private var currentTheme
     let title: String
     let subtitle: String
     let isSelected: Bool
@@ -224,22 +226,22 @@ struct QuickFilterChip: View {
             VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
                 Text(title)
                     .labelLarge()
-                    .foregroundColor(isSelected ? Color.theme.onPrimary : Color.theme.primaryText)
+                    .foregroundColor(isSelected ? currentTheme.onPrimary : currentTheme.primaryText)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 
                 Text(subtitle)
                     .labelSmall()
-                    .foregroundColor(isSelected ? Color.theme.onPrimary.opacity(0.8) : Color.theme.secondaryText)
+                    .foregroundColor(isSelected ? currentTheme.onPrimary.opacity(0.8) : currentTheme.secondaryText)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
             .padding(Theme.Spacing.md)
             .background(
                 RoundedRectangle(cornerRadius: Theme.CornerRadius.medium)
-                    .fill(isSelected ? Color.theme.primary : Color.theme.surfaceVariant)
+                    .fill(isSelected ? currentTheme.primary : currentTheme.surfaceVariant)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: Theme.CornerRadius.medium)
-                    .stroke(isSelected ? Color.theme.primary : Color.theme.outline.opacity(0.3), lineWidth: 1)
+                    .stroke(isSelected ? currentTheme.primary : currentTheme.outline.opacity(0.3), lineWidth: 1)
             )
         }
         .buttonStyle(.plain)
@@ -250,6 +252,7 @@ struct QuickFilterChip: View {
 }
 
 struct ReadingStatusFilterChip: View {
+    @Environment(\.appTheme) private var currentTheme
     let status: ReadingStatus
     let isSelected: Bool
     let action: () -> Void
@@ -263,24 +266,24 @@ struct ReadingStatusFilterChip: View {
                 
                 Text(status.rawValue)
                     .labelMedium()
-                    .foregroundColor(isSelected ? Color.theme.onPrimary : Color.theme.primaryText)
+                    .foregroundColor(isSelected ? currentTheme.onPrimary : currentTheme.primaryText)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 
                 if isSelected {
                     Image(systemName: "checkmark")
                         .font(.caption)
-                        .foregroundColor(Color.theme.onPrimary)
+                        .foregroundColor(currentTheme.onPrimary)
                 }
             }
             .padding(.horizontal, Theme.Spacing.md)
             .padding(.vertical, Theme.Spacing.sm)
             .background(
                 RoundedRectangle(cornerRadius: Theme.CornerRadius.medium)
-                    .fill(isSelected ? Color.theme.primary : Color.theme.surfaceVariant)
+                    .fill(isSelected ? currentTheme.primary : currentTheme.surfaceVariant)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: Theme.CornerRadius.medium)
-                    .stroke(isSelected ? Color.theme.primary : Color.theme.outline.opacity(0.3), lineWidth: 1)
+                    .stroke(isSelected ? currentTheme.primary : currentTheme.outline.opacity(0.3), lineWidth: 1)
             )
         }
         .buttonStyle(.plain)
@@ -288,6 +291,7 @@ struct ReadingStatusFilterChip: View {
 }
 
 struct FilterToggleRow: View {
+    @Environment(\.appTheme) private var currentTheme
     let title: String
     let subtitle: String
     let icon: String
@@ -296,23 +300,23 @@ struct FilterToggleRow: View {
     var body: some View {
         HStack(spacing: Theme.Spacing.md) {
             Image(systemName: icon)
-                .foregroundColor(Color.theme.primary)
+                .foregroundColor(currentTheme.primary)
                 .frame(width: 24, height: 24)
             
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
                     .bodyMedium()
-                    .foregroundColor(Color.theme.primaryText)
+                    .foregroundColor(currentTheme.primaryText)
                 
                 Text(subtitle)
                     .labelSmall()
-                    .foregroundColor(Color.theme.secondaryText)
+                    .foregroundColor(currentTheme.secondaryText)
             }
             
             Spacer()
             
             Toggle("", isOn: $isOn)
-                .tint(Color.theme.primary)
+                .tint(currentTheme.primary)
                 .onChange(of: isOn) { _, newValue in
                     HapticFeedbackManager.shared.lightImpact()
                 }

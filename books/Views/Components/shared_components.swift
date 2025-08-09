@@ -3,6 +3,7 @@ import SwiftData
 
 // MARK: - Book List Item (used in multiple views)
 struct BookListItem: View {
+    @Environment(\.appTheme) private var currentTheme
     let book: UserBook
     let onAuthorTap: ((String) -> Void)?
     
@@ -33,14 +34,14 @@ struct BookListItem: View {
                     }) {
                         Text(authors.joined(separator: ", "))
                             .authorName()
-                            .foregroundColor(Color.theme.primaryAction)
+                            .foregroundColor(currentTheme.primaryAction)
                             .underline(true)
                     }
                     .buttonStyle(.plain)
                 } else {
                     Text(book.metadata?.authors.joined(separator: ", ") ?? "Unknown Author")
                         .authorName() // Use .authorName() even for plain display
-                        .foregroundColor(Color.theme.secondaryText)
+                        .foregroundColor(currentTheme.secondaryText)
                 }
                 
                 HStack(spacing: Theme.Spacing.sm) {
@@ -53,7 +54,7 @@ struct BookListItem: View {
                             ForEach(1...5, id: \.self) { star in
                                 Image(systemName: star <= rating ? "star.fill" : "star")
                                     .labelSmall()
-                                    .foregroundColor(star <= rating ? Color.theme.accentHighlight : Color.theme.secondaryText.opacity(0.3))
+                                    .foregroundColor(star <= rating ? currentTheme.accentHighlight : currentTheme.secondaryText.opacity(0.3))
                             }
                         }
                         .accessibilityLabel("\(rating) out of 5 stars")
@@ -85,6 +86,7 @@ struct BookListItem: View {
 struct AddBookView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.appTheme) private var currentTheme
     
     @State private var title = ""
     @State private var authors = ""
@@ -117,7 +119,7 @@ struct AddBookView: View {
                 ratingSection
                 personalNotesSection
             }
-            .background(Color.theme.surface)
+            .background(currentTheme.surface)
             .scrollContentBackground(.hidden)
             .navigationTitle("Add Book")
             .navigationBarTitleDisplayMode(.large)
@@ -136,7 +138,7 @@ struct AddBookView: View {
                     }
                     .disabled(!isFormValid)
                     .labelLarge()
-                    .foregroundColor(isFormValid ? Color.theme.primaryAction : Color.theme.disabledText)
+                    .foregroundColor(isFormValid ? currentTheme.primaryAction : currentTheme.disabledText)
                 }
             }
         }
@@ -246,7 +248,7 @@ struct AddBookView: View {
         } footer: {
             Text("Help track the cultural diversity of your reading by adding author nationality and original language information.")
                 .labelSmall()
-                .foregroundColor(Color.theme.secondaryText)
+                .foregroundColor(currentTheme.secondaryText)
         }
     }
     
@@ -256,7 +258,7 @@ struct AddBookView: View {
             VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
                 HStack {
                     Image(systemName: "book.closed")
-                        .foregroundColor(Color.theme.primaryAction)
+                        .foregroundColor(currentTheme.primaryAction)
                         .frame(width: 20)
                     Text("Status")
                         .labelLarge()
@@ -286,7 +288,7 @@ struct AddBookView: View {
             VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
                 HStack {
                     Image(systemName: "star")
-                        .foregroundColor(Color.theme.primaryAction)
+                        .foregroundColor(currentTheme.primaryAction)
                         .frame(width: 20)
                     Text("Rating")
                         .labelLarge()
@@ -299,7 +301,7 @@ struct AddBookView: View {
                                 personalRating = personalRating == star ? 0 : star 
                             }) {
                                 Image(systemName: star <= personalRating ? "star.fill" : "star")
-                                    .foregroundColor(star <= personalRating ? Color.theme.accentHighlight : Color.theme.secondaryText)
+                                    .foregroundColor(star <= personalRating ? currentTheme.accentHighlight : currentTheme.secondaryText)
                                     .font(.title3)
                             }
                             .buttonStyle(.plain)
@@ -315,7 +317,7 @@ struct AddBookView: View {
                             personalRating = 0
                         }
                         .labelSmall()
-                        .foregroundColor(Color.theme.secondaryText)
+                        .foregroundColor(currentTheme.secondaryText)
                     }
                 }
                 .accessibilityElement()
@@ -334,7 +336,7 @@ struct AddBookView: View {
             VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
                 HStack {
                     Image(systemName: "note.text")
-                        .foregroundColor(Color.theme.primaryAction)
+                        .foregroundColor(currentTheme.primaryAction)
                         .frame(width: 20)
                     Text("Personal Notes")
                         .labelLarge()
@@ -350,7 +352,7 @@ struct AddBookView: View {
         } footer: {
             Text("Personal notes are private and separate from the book's description.")
                 .labelSmall()
-                .foregroundColor(Color.theme.secondaryText)
+                .foregroundColor(currentTheme.secondaryText)
         }
     }
     
@@ -413,6 +415,7 @@ struct AddBookView: View {
 
 // MARK: - Form Field Component
 struct FormField: View {
+    @Environment(\.appTheme) private var currentTheme
     let label: String
     let icon: String
     @Binding var text: String
@@ -425,17 +428,17 @@ struct FormField: View {
             HStack(spacing: Theme.Spacing.xs) {
                 Image(systemName: icon)
                     .labelMedium()
-                    .foregroundColor(Color.theme.primaryAction)
+                    .foregroundColor(currentTheme.primaryAction)
                     .frame(width: 20)
                 
                 Text(label)
                     .labelLarge()
-                    .foregroundColor(Color.theme.primaryText)
+                    .foregroundColor(currentTheme.primaryText)
                 
                 if isRequired {
                     Text("*")
                         .labelLarge()
-                        .foregroundColor(Color.theme.error)
+                        .foregroundColor(currentTheme.error)
                 }
             }
             

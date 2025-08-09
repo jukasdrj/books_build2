@@ -3,6 +3,7 @@ import SwiftData
 
 struct LibraryView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.appTheme) private var currentTheme
     @State private var searchText: String = ""
     @State private var selectedLayout: LayoutType = .grid
     @State private var showingFilters = false
@@ -115,11 +116,11 @@ struct LibraryView: View {
                 if libraryFilter.isActive {
                     HStack(spacing: Theme.Spacing.xs) {
                         Circle()
-                            .fill(Color.theme.primary)
+                            .fill(currentTheme.primary)
                             .frame(width: 8, height: 8)
                         Text("Filtered")
                             .labelSmall()
-                            .foregroundColor(Color.theme.primary)
+                            .foregroundColor(currentTheme.primary)
                     }
                 }
                 
@@ -135,7 +136,7 @@ struct LibraryView: View {
             }
             .padding(.horizontal, Theme.Spacing.md)
             .padding(.vertical, Theme.Spacing.sm)
-            .background(Color.theme.surface)
+            .background(currentTheme.surface)
             
             Divider()
             
@@ -175,7 +176,7 @@ struct LibraryView: View {
                     
                     Button { showingFilters.toggle() } label: {
                         Image(systemName: libraryFilter.isActive ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle")
-                            .foregroundColor(libraryFilter.isActive ? Color.theme.primary : Color.primary)
+                            .foregroundColor(libraryFilter.isActive ? currentTheme.primary : Color.primary)
                     }
                     
                     Button { showingSettings.toggle() } label: {

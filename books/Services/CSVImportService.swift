@@ -334,6 +334,28 @@ class CSVImportService: ObservableObject {
             readingStatus = .toRead
         }
         
+        // Check if metadata with this googleBooksID already exists
+        let googleBooksIDToFind = bookMetadata.googleBooksID
+        let existingMetadataQuery = FetchDescriptor<BookMetadata>(
+            predicate: #Predicate<BookMetadata> { metadata in
+                metadata.googleBooksID == googleBooksIDToFind
+            }
+        )
+        
+        let existingMetadata = try? modelContext.fetch(existingMetadataQuery).first
+        
+        // Use existing metadata if found, otherwise insert new metadata
+        var finalMetadata: BookMetadata
+        if let existing = existingMetadata {
+            finalMetadata = existing
+            // Optionally enrich existing metadata with any new CSV data
+            enrichMetadataWithCSVData(&finalMetadata, from: parsedBook)
+        } else {
+            // Insert new metadata first to establish its identity in the context
+            modelContext.insert(bookMetadata)
+            finalMetadata = bookMetadata
+        }
+        
         // Create UserBook with preserved Goodreads user data
         let userBook = UserBook(
             dateAdded: parsedBook.dateAdded ?? Date(),
@@ -341,7 +363,7 @@ class CSVImportService: ObservableObject {
             rating: parsedBook.rating,
             notes: parsedBook.personalNotes,
             tags: parsedBook.tags,
-            metadata: bookMetadata
+            metadata: finalMetadata
         )
         
         // Set date completed if book is read
@@ -349,8 +371,7 @@ class CSVImportService: ObservableObject {
             userBook.dateCompleted = parsedBook.dateRead ?? Date()
         }
         
-        // Insert into context
-        modelContext.insert(bookMetadata)
+        // Insert UserBook into context after metadata is already inserted
         modelContext.insert(userBook)
         
         return .success(userBook.id)

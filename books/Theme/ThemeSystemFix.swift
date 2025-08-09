@@ -1,3 +1,4 @@
+#warning("Deprecated. Use @Environment(appTheme) instead.")
 import SwiftUI
 import Combine
 

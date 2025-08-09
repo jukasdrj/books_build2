@@ -12,6 +12,7 @@ import UniformTypeIdentifiers
 struct CSVImportView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.appTheme) private var currentTheme
     
     @State private var importService: CSVImportService?
     @State private var showingFilePicker = false
@@ -86,7 +87,7 @@ struct CSVImportView: View {
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
-                .background(Color.theme.surface)
+                .background(currentTheme.surface)
                 .navigationTitle("Import from Goodreads")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
@@ -124,15 +125,15 @@ struct CSVImportView: View {
                     ProgressView()
                         .progressViewStyle(CircularProgressViewStyle())
                         .scaleEffect(1.5)
-                        .foregroundColor(Color.theme.primaryAction)
+                        .foregroundColor(currentTheme.primaryAction)
                     
                     Text("Initializing import service...")
                         .bodyMedium()
-                        .foregroundColor(Color.theme.secondaryText)
+                        .foregroundColor(currentTheme.secondaryText)
                         .padding(.top, Theme.Spacing.md)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(Color.theme.surface)
+                .background(currentTheme.surface)
                 .navigationTitle("Import from Goodreads")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
@@ -254,6 +255,7 @@ struct CSVImportView: View {
 // MARK: - Import Progress View
 
 struct ImportProgressView: View {
+    @Environment(\.appTheme) private var currentTheme
     @ObservedObject var importService: CSVImportService
     let onCancel: () -> Void
     
@@ -265,13 +267,13 @@ struct ImportProgressView: View {
             VStack(spacing: Theme.Spacing.lg) {
                 ZStack {
                     Circle()
-                        .stroke(Color.theme.outline, lineWidth: 8)
+                        .stroke(currentTheme.outline, lineWidth: 8)
                         .frame(width: 120, height: 120)
                     
                     if let progress = importService.importProgress {
                         Circle()
                             .trim(from: 0, to: progress.progress)
-                            .stroke(Color.theme.primaryAction, style: StrokeStyle(lineWidth: 8, lineCap: .round))
+                            .stroke(currentTheme.primaryAction, style: StrokeStyle(lineWidth: 8, lineCap: .round))
                             .frame(width: 120, height: 120)
                             .rotationEffect(.degrees(-90))
                             .animation(Theme.Animation.gentleSpring, value: progress.progress)
@@ -280,11 +282,11 @@ struct ImportProgressView: View {
                             Text("\(Int(progress.progress * 100))%")
                                 .titleLarge()
                                 .fontWeight(.bold)
-                                .foregroundColor(Color.theme.primaryText)
+                                .foregroundColor(currentTheme.primaryText)
                             
                             Text("\(progress.processedBooks)/\(progress.totalBooks)")
                                 .labelMedium()
-                                .foregroundColor(Color.theme.secondaryText)
+                                .foregroundColor(currentTheme.secondaryText)
                         }
                     }
                 }
@@ -294,18 +296,18 @@ struct ImportProgressView: View {
                     if let progress = importService.importProgress {
                         Text(progress.currentStep.rawValue)
                             .titleMedium()
-                            .foregroundColor(Color.theme.primaryText)
+                            .foregroundColor(currentTheme.primaryText)
                             .multilineTextAlignment(.center)
                         
                         // Progress Summary
                         if progress.totalBooks > 0 {
                             VStack(spacing: Theme.Spacing.sm) {
                                 HStack {
-                                    ProgressStat(title: "Imported", value: progress.successfulImports, color: Color.theme.success)
+                                    ProgressStat(title: "Imported", value: progress.successfulImports, color: currentTheme.success)
                                     Spacer()
-                                    ProgressStat(title: "Duplicates", value: progress.duplicatesSkipped, color: Color.theme.warning)
+                                    ProgressStat(title: "Duplicates", value: progress.duplicatesSkipped, color: currentTheme.warning)
                                     Spacer()
-                                    ProgressStat(title: "Failed", value: progress.failedImports, color: Color.theme.error)
+                                    ProgressStat(title: "Failed", value: progress.failedImports, color: currentTheme.error)
                                 }
                             }
                             .padding(.horizontal, Theme.Spacing.lg)
@@ -331,6 +333,7 @@ struct ImportProgressView: View {
 }
 
 struct ProgressStat: View {
+    @Environment(\.appTheme) private var currentTheme
     let title: String
     let value: Int
     let color: Color
@@ -344,7 +347,7 @@ struct ProgressStat: View {
             
             Text(title)
                 .labelSmall()
-                .foregroundColor(Color.theme.secondaryText)
+                .foregroundColor(currentTheme.secondaryText)
         }
     }
 }
@@ -352,6 +355,7 @@ struct ProgressStat: View {
 // MARK: - Import Completed View
 
 struct ImportCompletedView: View {
+    @Environment(\.appTheme) private var currentTheme
     let result: ImportResult
     let onViewLibrary: () -> Void
     let onImportAnother: () -> Void
@@ -365,12 +369,12 @@ struct ImportCompletedView: View {
                 // Success icon
                 ZStack {
                     Circle()
-                        .fill(Color.theme.successContainer)
+                        .fill(currentTheme.successContainer)
                         .frame(width: 100, height: 100)
                     
                     Image(systemName: "checkmark.circle.fill")
                         .font(.system(size: 50))
-                        .foregroundColor(Color.theme.success)
+                        .foregroundColor(currentTheme.success)
                 }
                 
                 // Title and Summary
@@ -378,12 +382,12 @@ struct ImportCompletedView: View {
                     Text("Import Complete!")
                         .titleLarge()
                         .fontWeight(.bold)
-                        .foregroundColor(Color.theme.primaryText)
+                        .foregroundColor(currentTheme.primaryText)
                         .multilineTextAlignment(.center)
                     
                     Text(result.summary)
                         .bodyMedium()
-                        .foregroundColor(Color.theme.secondaryText)
+                        .foregroundColor(currentTheme.secondaryText)
                         .multilineTextAlignment(.center)
                 }
             }
@@ -394,7 +398,7 @@ struct ImportCompletedView: View {
                     icon: "checkmark.circle",
                     title: "Successfully Imported",
                     value: "\(result.successfulImports) books",
-                    color: Color.theme.success
+                    color: currentTheme.success
                 )
                 
                 if result.duplicatesSkipped > 0 {
@@ -402,7 +406,7 @@ struct ImportCompletedView: View {
                         icon: "doc.on.doc",
                         title: "Duplicates Skipped",
                         value: "\(result.duplicatesSkipped) books",
-                        color: Color.theme.warning
+                        color: currentTheme.warning
                     )
                 }
                 
@@ -411,7 +415,7 @@ struct ImportCompletedView: View {
                         icon: "exclamationmark.triangle",
                         title: "Failed to Import",
                         value: "\(result.failedImports) books",
-                        color: Color.theme.error
+                        color: currentTheme.error
                     )
                 }
                 
@@ -420,7 +424,7 @@ struct ImportCompletedView: View {
                     icon: "clock",
                     title: "Import Duration",
                     value: formatDuration(result.duration),
-                    color: Color.theme.primaryAction
+                    color: currentTheme.primaryAction
                 )
             }
             .padding(.horizontal, Theme.Spacing.lg)
@@ -453,6 +457,7 @@ struct ImportCompletedView: View {
 }
 
 struct ResultCard: View {
+    @Environment(\.appTheme) private var currentTheme
     let icon: String
     let title: String
     let value: String
@@ -468,12 +473,12 @@ struct ResultCard: View {
             VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
                 Text(title)
                     .labelMedium()
-                    .foregroundColor(Color.theme.secondaryText)
+                    .foregroundColor(currentTheme.secondaryText)
                 
                 Text(value)
                     .bodyLarge()
                     .fontWeight(.semibold)
-                    .foregroundColor(Color.theme.primaryText)
+                    .foregroundColor(currentTheme.primaryText)
             }
             
             Spacer()
@@ -486,6 +491,7 @@ struct ResultCard: View {
 // MARK: - Progress Header
 
 struct ImportProgressHeader: View {
+    @Environment(\.appTheme) private var currentTheme
     let currentStep: CSVImportView.ImportStep
     
     private let steps: [(CSVImportView.ImportStep, String)] = [
@@ -520,7 +526,7 @@ struct ImportProgressHeader: View {
                         // Connector line
                         if index < steps.count - 1 {
                             Rectangle()
-                                .fill(isStepCompleted(step.0) ? Color.theme.primaryAction : Color.theme.outline)
+                                .fill(isStepCompleted(step.0) ? currentTheme.primaryAction : currentTheme.outline)
                                 .frame(height: 2)
                                 .frame(maxWidth: .infinity)
                         }
@@ -532,22 +538,22 @@ struct ImportProgressHeader: View {
             Divider()
         }
         .padding(.top, Theme.Spacing.md)
-        .background(Color.theme.surface)
+        .background(currentTheme.surface)
     }
     
     private func stepColor(for step: CSVImportView.ImportStep) -> Color {
         if isStepCompleted(step) || step == currentStep {
-            return Color.theme.primaryAction
+            return currentTheme.primaryAction
         } else {
-            return Color.theme.outline
+            return currentTheme.outline
         }
     }
     
     private func stepTextColor(for step: CSVImportView.ImportStep) -> Color {
         if isStepCompleted(step) || step == currentStep {
-            return Color.theme.primaryText
+            return currentTheme.primaryText
         } else {
-            return Color.theme.secondaryText
+            return currentTheme.secondaryText
         }
     }
     
@@ -561,6 +567,7 @@ struct ImportProgressHeader: View {
 // MARK: - File Selection View
 
 struct FileSelectionView: View {
+    @Environment(\.appTheme) private var currentTheme
     let onSelectFile: () -> Void
     let selectedFile: URL?
     
@@ -570,18 +577,18 @@ struct FileSelectionView: View {
                 // Icon
                 Image(systemName: "doc.text.below.ecg")
                     .font(.system(size: 80))
-                    .foregroundColor(Color.theme.primaryAction)
+                    .foregroundColor(currentTheme.primaryAction)
                 
                 // Title and description
                 VStack(spacing: Theme.Spacing.sm) {
                     Text("Import Your Goodreads Library")
                         .titleLarge()
-                        .foregroundColor(Color.theme.primaryText)
+                        .foregroundColor(currentTheme.primaryText)
                         .multilineTextAlignment(.center)
                     
                     Text("Select your Goodreads export CSV file to import your books into your personal library.")
                         .bodyMedium()
-                        .foregroundColor(Color.theme.secondaryText)
+                        .foregroundColor(currentTheme.secondaryText)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, Theme.Spacing.lg)
                 }
@@ -593,25 +600,26 @@ struct FileSelectionView: View {
                     // Show selected file
                     HStack(spacing: Theme.Spacing.md) {
                         Image(systemName: "doc.text")
-                            .foregroundColor(Color.theme.primaryAction)
+                            .foregroundColor(currentTheme.primaryAction)
                         
                         VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
                             Text(selectedFile.lastPathComponent)
                                 .bodyMedium()
-                                .foregroundColor(Color.theme.primaryText)
+                                .foregroundColor(currentTheme.primaryText)
                             
                             Text("Ready to import")
                                 .labelSmall()
-                                .foregroundColor(Color.theme.success)
+                                .foregroundColor(currentTheme.success)
                         }
                         
                         Spacer()
                         
                         Image(systemName: "checkmark.circle.fill")
-                            .foregroundColor(Color.theme.success)
+                            .foregroundColor(currentTheme.success)
                     }
                     .padding(Theme.Spacing.md)
-                    .materialCard(backgroundColor: Color.theme.successContainer)
+                    .background(currentTheme.successContainer)
+                    .materialCard()
                 }
                 
                 // Select file button
@@ -639,14 +647,16 @@ struct FileSelectionView: View {
 // MARK: - Instructions Card
 
 struct InstructionsCard: View {
+    @Environment(\.appTheme) private var currentTheme
+    
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.md) {
             HStack(spacing: Theme.Spacing.sm) {
                 Image(systemName: "info.circle")
-                    .foregroundColor(Color.theme.primaryAction)
+                    .foregroundColor(currentTheme.primaryAction)
                 Text("How to export from Goodreads")
                     .titleSmall()
-                    .foregroundColor(Color.theme.primaryText)
+                    .foregroundColor(currentTheme.primaryText)
             }
             
             VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
@@ -662,6 +672,7 @@ struct InstructionsCard: View {
 }
 
 struct InstructionStep: View {
+    @Environment(\.appTheme) private var currentTheme
     let number: Int
     let text: String
     
@@ -670,14 +681,14 @@ struct InstructionStep: View {
             Text("\(number)")
                 .labelSmall()
                 .fontWeight(.bold)
-                .foregroundColor(Color.theme.onPrimary)
+                .foregroundColor(currentTheme.onPrimary)
                 .frame(width: 20, height: 20)
-                .background(Color.theme.primaryAction)
+                .background(currentTheme.primaryAction)
                 .clipShape(Circle())
             
             Text(text)
                 .bodyMedium()
-                .foregroundColor(Color.theme.primaryText)
+                .foregroundColor(currentTheme.primaryText)
         }
     }
 }

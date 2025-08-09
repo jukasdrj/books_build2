@@ -3,6 +3,7 @@ import SwiftData
 
 struct SearchView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.appTheme) private var currentTheme
     
     @State private var searchService = BookSearchService.shared
     @State private var searchQuery = ""
@@ -83,8 +84,8 @@ struct SearchView: View {
                 .background(
                     LinearGradient(
                         colors: [
-                            Color.theme.background,
-                            Color.theme.surface.opacity(0.5)
+                            currentTheme.background,
+                            currentTheme.surface.opacity(0.5)
                         ],
                         startPoint: .top,
                         endPoint: .bottom
@@ -94,7 +95,7 @@ struct SearchView: View {
             }
             .navigationTitle("Search Books")
             .navigationBarTitleDisplayMode(.large)
-            .background(Color.theme.background)
+            .background(currentTheme.background)
             .searchable(text: $searchQuery, prompt: "Search by title, author, or ISBN")
             .accessibilityLabel("Search for books")
             .accessibilityHint("Enter a book title, author name, or ISBN to search for books in the online database")
@@ -116,7 +117,7 @@ struct SearchView: View {
                             }
                             .accessibilityLabel("Clear search")
                             .accessibilityHint("Clear the search field and results")
-                            .foregroundColor(Color.theme.primaryAction)
+                            .foregroundColor(currentTheme.primaryAction)
                         }
                         
                         Button {
@@ -126,7 +127,7 @@ struct SearchView: View {
                         }
                         .accessibilityLabel("Scan book barcode")
                         .accessibilityHint("Opens the camera to scan a book's ISBN barcode")
-                        .foregroundColor(Color.theme.primaryAction)
+                        .foregroundColor(currentTheme.primaryAction)
                     }
                 }
             }
@@ -177,8 +178,8 @@ struct SearchView: View {
                 }
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
-                .background(Color.theme.primaryContainer)
-                .foregroundColor(Color.theme.onPrimaryContainer)
+                .background(currentTheme.primaryContainer)
+                .foregroundColor(currentTheme.onPrimaryContainer)
                 .cornerRadius(16)
             }
             .accessibilityLabel("Sort by \(sortOption.displayName)")
@@ -201,8 +202,8 @@ struct SearchView: View {
                 }
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
-                .background(includeTranslations ? Color.theme.tertiaryContainer : Color.theme.outline.opacity(0.1))
-                .foregroundColor(includeTranslations ? Color.theme.tertiary : Color.theme.outline)
+                .background(includeTranslations ? currentTheme.tertiaryContainer : currentTheme.outline.opacity(0.1))
+                .foregroundColor(includeTranslations ? currentTheme.tertiary : currentTheme.outline)
                 .cornerRadius(16)
             }
             .accessibilityLabel(includeTranslations ? "Including all languages" : "English only")
@@ -214,16 +215,16 @@ struct SearchView: View {
             if case .results(let books) = searchState {
                 Text("\(books.count) results")
                     .font(.caption)
-                    .foregroundColor(Color.theme.onSurfaceVariant)
+                    .foregroundColor(currentTheme.onSurfaceVariant)
             }
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 8)
-        .background(Color.theme.surface)
+        .background(currentTheme.surface)
         .overlay(
             Rectangle()
                 .frame(height: 0.5)
-                .foregroundColor(Color.theme.outline.opacity(0.2)),
+                .foregroundColor(currentTheme.outline.opacity(0.2)),
             alignment: .bottom
         )
     }
@@ -238,11 +239,11 @@ struct SearchView: View {
                     Text("Sort Search Results")
                         .font(.title2)
                         .fontWeight(.semibold)
-                        .foregroundColor(Color.theme.onSurface)
+                        .foregroundColor(currentTheme.onSurface)
                     
                     Text("Choose how to order your search results")
                         .font(.subheadline)
-                        .foregroundColor(Color.theme.onSurfaceVariant)
+                        .foregroundColor(currentTheme.onSurfaceVariant)
                 }
                 .padding(.top, 20)
                 .padding(.horizontal, 20)
@@ -263,22 +264,22 @@ struct SearchView: View {
                             HStack(spacing: 16) {
                                 ZStack {
                                     Circle()
-                                        .fill(Color.theme.primaryContainer)
+                                        .fill(currentTheme.primaryContainer)
                                         .frame(width: 40, height: 40)
                                     
                                     Image(systemName: option.systemImage)
                                         .font(.system(size: 18))
-                                        .foregroundColor(Color.theme.onPrimaryContainer)
+                                        .foregroundColor(currentTheme.onPrimaryContainer)
                                 }
                                 
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text(option.displayName)
                                         .font(.headline)
-                                        .foregroundColor(Color.theme.onSurface)
+                                        .foregroundColor(currentTheme.onSurface)
                                     
                                     Text(sortDescription(for: option))
                                         .font(.subheadline)
-                                        .foregroundColor(Color.theme.onSurfaceVariant)
+                                        .foregroundColor(currentTheme.onSurfaceVariant)
                                         .multilineTextAlignment(.leading)
                                 }
                                 
@@ -287,14 +288,14 @@ struct SearchView: View {
                                 if sortOption == option {
                                     Image(systemName: "checkmark")
                                         .font(.headline)
-                                        .foregroundColor(Color.theme.primary)
+                                        .foregroundColor(currentTheme.primary)
                                 }
                             }
                             .padding(.horizontal, 20)
                             .padding(.vertical, 16)
                             .background(
                                 sortOption == option ? 
-                                    Color.theme.primaryContainer.opacity(0.3) : 
+                                    currentTheme.primaryContainer.opacity(0.3) : 
                                     Color.clear
                             )
                         }
@@ -310,14 +311,14 @@ struct SearchView: View {
                 
                 Spacer()
             }
-            .background(Color.theme.surface)
+            .background(currentTheme.surface)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Done") {
                         showingSortOptions = false
                     }
-                    .foregroundColor(Color.theme.primary)
+                    .foregroundColor(currentTheme.primary)
                 }
             }
         }
@@ -343,12 +344,12 @@ struct SearchView: View {
             NavigationLink(value: book) {
                 SearchResultRow(book: book)
             }
-            .listRowBackground(Color.theme.cardBackground)
+            .listRowBackground(currentTheme.cardBackground)
             .listRowSeparator(.hidden)
             .padding(.vertical, Theme.Spacing.xs)
         }
         .listStyle(.plain)
-        .background(Color.theme.surface)
+        .background(currentTheme.surface)
         .scrollContentBackground(.hidden)
         .accessibilityLabel("\(books.count) search results sorted by \(sortOption.displayName)")
     }
@@ -364,8 +365,8 @@ struct SearchView: View {
                         .fill(
                             LinearGradient(
                                 colors: [
-                                    Color.theme.primary.opacity(0.2),
-                                    Color.theme.secondary.opacity(0.1)
+                                    currentTheme.primary.opacity(0.2),
+                                    currentTheme.secondary.opacity(0.1)
                                 ],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
@@ -377,24 +378,24 @@ struct SearchView: View {
                         .font(.system(size: 48, weight: .light))
                         .foregroundStyle(
                             LinearGradient(
-                                colors: [Color.theme.primary, Color.theme.secondary],
+                                colors: [currentTheme.primary, currentTheme.secondary],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             )
                         )
                 }
-                .shadow(color: Color.theme.primary.opacity(0.15), radius: 20, x: 0, y: 10)
+                .shadow(color: currentTheme.primary.opacity(0.15), radius: 20, x: 0, y: 10)
                 
                 VStack(spacing: Theme.Spacing.md) {
                     Text("Discover Your Next Great Read")
                         .font(.title)
                         .fontWeight(.bold)
-                        .foregroundColor(Color.theme.primaryText)
+                        .foregroundColor(currentTheme.primaryText)
                         .multilineTextAlignment(.center)
                     
                     Text("Search millions of books with smart sorting and find exactly what you're looking for")
                         .font(.body)
-                        .foregroundColor(Color.theme.secondaryText)
+                        .foregroundColor(currentTheme.secondaryText)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, Theme.Spacing.md)
                 }
@@ -435,25 +436,25 @@ struct SearchView: View {
         HStack(spacing: 12) {
             Image(systemName: icon)
                 .font(.system(size: 16, weight: .medium))
-                .foregroundColor(Color.theme.primary)
+                .foregroundColor(currentTheme.primary)
                 .frame(width: 24, height: 24)
             
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
                     .font(.subheadline)
                     .fontWeight(.medium)
-                    .foregroundColor(Color.theme.primaryText)
+                    .foregroundColor(currentTheme.primaryText)
                 
                 Text(description)
                     .font(.caption)
-                    .foregroundColor(Color.theme.secondaryText)
+                    .foregroundColor(currentTheme.secondaryText)
             }
             
             Spacer()
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 8)
-        .background(Color.theme.surfaceVariant.opacity(0.3))
+        .background(currentTheme.surfaceVariant.opacity(0.3))
         .cornerRadius(12)
     }
     
@@ -464,23 +465,23 @@ struct SearchView: View {
             VStack(spacing: Theme.Spacing.lg) {
                 ZStack {
                     Circle()
-                        .fill(Color.theme.outline.opacity(0.1))
+                        .fill(currentTheme.outline.opacity(0.1))
                         .frame(width: 100, height: 100)
                     
                     Image(systemName: "questionmark.circle.fill")
                         .font(.system(size: 40, weight: .light))
-                        .foregroundColor(Color.theme.outline)
+                        .foregroundColor(currentTheme.outline)
                 }
                 
                 VStack(spacing: Theme.Spacing.md) {
                     Text("No Results Found")
                         .font(.title2)
                         .fontWeight(.semibold)
-                        .foregroundColor(Color.theme.primaryText)
+                        .foregroundColor(currentTheme.primaryText)
                     
                     Text("Try different search terms or check your spelling. You can also try including translated works.")
                         .font(.body)
-                        .foregroundColor(Color.theme.secondaryText)
+                        .foregroundColor(currentTheme.secondaryText)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, Theme.Spacing.md)
                 }
@@ -493,7 +494,7 @@ struct SearchView: View {
                 Text("Try searching for:")
                     .font(.subheadline)
                     .fontWeight(.medium)
-                    .foregroundColor(Color.theme.primaryText)
+                    .foregroundColor(currentTheme.primaryText)
                 
                 LazyVStack(spacing: 6) {
                     suggestionButton("Book titles: \"The Great Gatsby\"")
@@ -518,10 +519,10 @@ struct SearchView: View {
         } label: {
             Text(text)
                 .font(.caption)
-                .foregroundColor(Color.theme.primary)
+                .foregroundColor(currentTheme.primary)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
-                .background(Color.theme.primaryContainer.opacity(0.3))
+                .background(currentTheme.primaryContainer.opacity(0.3))
                 .cornerRadius(12)
         }
         .buttonStyle(.plain)
@@ -617,6 +618,7 @@ struct SearchView: View {
 
 // MARK: - Enhanced Loading View
 struct EnhancedLoadingView: View {
+    @Environment(\.appTheme) private var currentTheme
     let message: String
     @State private var isAnimating = false
     @State private var dotCount = 0
@@ -628,7 +630,7 @@ struct EnhancedLoadingView: View {
             ZStack {
                 // Background circle
                 Circle()
-                    .stroke(Color.theme.outline.opacity(0.3), lineWidth: 3)
+                    .stroke(currentTheme.outline.opacity(0.3), lineWidth: 3)
                     .frame(width: 60, height: 60)
                 
                 // Animated progress circle - respect Reduce Motion
@@ -636,7 +638,7 @@ struct EnhancedLoadingView: View {
                     .trim(from: 0, to: 0.3)
                     .stroke(
                         LinearGradient(
-                            colors: [Color.theme.primaryAction, Color.theme.primaryAction.opacity(0.3)],
+                            colors: [currentTheme.primaryAction, currentTheme.primaryAction.opacity(0.3)],
                             startPoint: .leading,
                             endPoint: .trailing
                         ),
@@ -653,7 +655,7 @@ struct EnhancedLoadingView: View {
                 
                 // Inner pulse - respect Reduce Motion
                 Circle()
-                    .fill(Color.theme.primaryAction.opacity(0.2))
+                    .fill(currentTheme.primaryAction.opacity(0.2))
                     .frame(width: 30, height: 30)
                     .scaleEffect(isAnimating ? 1.2 : 0.8)
                     .opacity(isAnimating ? 0.3 : 0.8)
@@ -668,12 +670,12 @@ struct EnhancedLoadingView: View {
             VStack(spacing: Theme.Spacing.sm) {
                 Text(message + String(repeating: ".", count: dotCount))
                     .bodyMedium()
-                    .foregroundColor(Color.theme.primaryText)
+                    .foregroundColor(currentTheme.primaryText)
                     .multilineTextAlignment(.center)
                 
                 Text("Using smart relevance sorting")
                     .labelSmall()
-                    .foregroundColor(Color.theme.secondaryText)
+                    .foregroundColor(currentTheme.secondaryText)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -691,6 +693,7 @@ struct EnhancedLoadingView: View {
 
 // MARK: - Enhanced Error View
 struct EnhancedErrorView: View {
+    @Environment(\.appTheme) private var currentTheme
     let title: String
     let message: String
     let retryAction: () -> Void
@@ -700,15 +703,15 @@ struct EnhancedErrorView: View {
             VStack(spacing: Theme.Spacing.md) {
                 Image(systemName: "exclamationmark.triangle.fill")
                     .headlineSmall()
-                    .foregroundColor(Color.theme.error)
+                    .foregroundColor(currentTheme.error)
                 
                 Text(title)
                     .titleMedium()
-                    .foregroundColor(Color.theme.primaryText)
+                    .foregroundColor(currentTheme.primaryText)
                 
                 Text(message)
                     .bodyMedium()
-                    .foregroundColor(Color.theme.secondaryText)
+                    .foregroundColor(currentTheme.secondaryText)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, Theme.Spacing.lg)
             }
@@ -738,6 +741,7 @@ struct EnhancedErrorView: View {
 
 // MARK: - Search Result Row (Enhanced)
 struct SearchResultRow: View {
+    @Environment(\.appTheme) private var currentTheme
     let book: BookMetadata
     @State private var isImageLoading = true
 
@@ -753,7 +757,7 @@ struct SearchResultRow: View {
                 // Loading shimmer effect for book cover
                 if isImageLoading {
                     RoundedRectangle(cornerRadius: 4)
-                        .fill(Color.theme.outline.opacity(0.3))
+                        .fill(currentTheme.outline.opacity(0.3))
                         .frame(width: 50, height: 70)
                         .shimmer()
                 }
@@ -777,33 +781,33 @@ struct SearchResultRow: View {
                 
                 Text(book.authors.joined(separator: ", "))
                     .bodyMedium()
-                    .foregroundStyle(Color.theme.secondaryText)
+                    .foregroundStyle(currentTheme.secondaryText)
                     .lineLimit(1)
                 
                 HStack(spacing: Theme.Spacing.md) {
                     if let publishedYear = extractYear(from: book.publishedDate) {
                         Label(publishedYear, systemImage: "calendar")
                             .labelSmall()
-                            .foregroundStyle(Color.theme.secondaryText)
+                            .foregroundStyle(currentTheme.secondaryText)
                     }
                     
                     if let pageCount = book.pageCount {
                         Label("\(pageCount) pages", systemImage: "doc.text")
                             .labelSmall()
-                            .foregroundStyle(Color.theme.secondaryText)
+                            .foregroundStyle(currentTheme.secondaryText)
                     }
                     
                     // Quality indicators
                     if book.imageURL != nil {
                         Image(systemName: "photo")
                             .font(.caption2)
-                            .foregroundStyle(Color.theme.tertiary)
+                            .foregroundStyle(currentTheme.tertiary)
                     }
                     
                     if book.bookDescription != nil && !book.bookDescription!.isEmpty {
                         Image(systemName: "text.alignleft")
                             .font(.caption2)
-                            .foregroundStyle(Color.theme.tertiary)
+                            .foregroundStyle(currentTheme.tertiary)
                     }
                 }
             }
