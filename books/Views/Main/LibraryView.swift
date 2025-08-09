@@ -140,7 +140,6 @@ struct LibraryView: View {
                 }
             }
         }
-        .withNavigationDestinations()
         .navigationTitle(libraryFilter.showWishlistOnly ? "Wishlist (\(bookCount))" : "Library (\(bookCount))")
         .navigationBarTitleDisplayMode(.large)
         .searchable(text: $searchText, prompt: "Search by title or author...")

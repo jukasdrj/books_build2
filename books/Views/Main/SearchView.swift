@@ -15,7 +15,6 @@ struct SearchView: View {
     @State private var showingBarcodeScanner = false
     @State private var barcodeSearchResult: BookMetadata?
     @State private var showingBarcodeSearchResult = false
-    @State private var navigationPath = NavigationPath()
 
     enum SearchState: Equatable {
         case idle
@@ -525,7 +524,8 @@ struct SearchView: View {
                 switch result {
                 case .success(let books):
                     if let firstBook = books.first {
-                        navigationPath.append(firstBook)
+                        // Navigate to the first book found via barcode
+                        searchState = .results([firstBook])
                         HapticFeedbackManager.shared.success()
                     } else {
                         // FALLBACK: If no books found, show traditional search
@@ -575,7 +575,6 @@ struct SearchView: View {
         searchState = .idle
         sortOption = .relevance
         includeTranslations = true
-        navigationPath.removeLast(navigationPath.count)
         HapticFeedbackManager.shared.lightImpact()
     }
     

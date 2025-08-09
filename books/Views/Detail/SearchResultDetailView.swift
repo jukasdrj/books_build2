@@ -85,6 +85,7 @@ struct SearchResultDetailView: View {
                         dismiss() 
                     }
                 }
+                .withNavigationDestinations()
             }
         }
         .toolbar {

@@ -875,6 +875,7 @@ struct ReadingSessionInputView: View {
                 }
             }
         }
+        .withNavigationDestinations()
     }
     
     private var isValidInput: Bool {

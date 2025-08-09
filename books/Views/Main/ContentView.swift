@@ -209,10 +209,10 @@ struct ContentView: View {
                         LibraryView()
                     }
                 }
-                .withNavigationDestinations()
             }
             .background(theme.background)
         }
+        .withNavigationDestinations()
         .navigationSplitViewStyle(.balanced)
         .tint(theme.primary)
     }

@@ -132,24 +132,32 @@ struct AuthorSearchResultsView: View {
     // MARK: - Sort Options Sheet
     @ViewBuilder
     private var sortOptionsSheet: some View {
-        NavigationStack {
-            VStack(spacing: 0) {
-                // Header
-                VStack(spacing: 8) {
-                    Text("Sort \(authorName)'s Books")
-                        .font(.title2)
-                        .fontWeight(.semibold)
-                        .foregroundColor(currentTheme.onSurface)
-                    
-                    Text("Choose how to order the search results")
-                        .font(.subheadline)
-                        .foregroundColor(currentTheme.onSurfaceVariant)
-                }
-                .padding(.top, 20)
-                .padding(.horizontal, 20)
+        VStack(spacing: 0) {
+            // Header with Close button
+            HStack {
+                Text("Sort \(authorName)'s Books")
+                    .font(.title2)
+                    .fontWeight(.semibold)
+                    .foregroundColor(currentTheme.onSurface)
                 
-                // Sort options
-                LazyVStack(spacing: 0) {
+                Spacer()
+                
+                Button("Done") {
+                    showingSortOptions = false
+                }
+                .foregroundColor(currentTheme.primary)
+            }
+            .padding(.horizontal, 20)
+            .padding(.top, 20)
+            
+            Text("Choose how to order the search results")
+                .font(.subheadline)
+                .foregroundColor(currentTheme.onSurfaceVariant)
+                .padding(.horizontal, 20)
+                .padding(.top, 8)
+            
+            // Sort options
+            VStack(spacing: 0) {
                     ForEach(BookSearchService.SortOption.allCases) { option in
                         Button {
                             sortOption = option
@@ -214,16 +222,6 @@ struct AuthorSearchResultsView: View {
                 Spacer()
             }
             .background(currentTheme.surface)
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
-                        showingSortOptions = false
-                    }
-                    .foregroundColor(currentTheme.primary)
-                }
-            }
-        }
         .presentationDetents([.medium])
         .presentationDragIndicator(.visible)
     }
