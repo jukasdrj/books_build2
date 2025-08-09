@@ -80,30 +80,40 @@ struct booksApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ZStack {
-                // Status bar background color layer
-                themeStore.appTheme.background
-                    .ignoresSafeArea()
-                
-                Group {
-                    if ScreenshotMode.forceLightMode {
-                        ContentView()
-                            .environment(\.colorScheme, .light)
-                    } else {
-                        ContentView()
-                    }
-                }
-            }
-            // Integrate environment-based theme system
-            .environment(themeStore)
-            .environment(\.appTheme, themeStore.appTheme)
-            .onChange(of: colorScheme) { _, _ in
-                // Force refresh system UI when color scheme changes
-                // No longer needed with new theming system
-            }
-            .statusBarHidden(false)
-            .preferredColorScheme(ScreenshotMode.forceLightMode ? .light : nil)
+            ThemedRootView(themeStore: themeStore)
         }
         .modelContainer(sharedModelContainer)
+    }
+}
+
+/// Wrapper view that observes ThemeStore and provides reactive theme environment
+struct ThemedRootView: View {
+    @Bindable var themeStore: ThemeStore
+    @Environment(\.colorScheme) private var colorScheme
+    
+    var body: some View {
+        ZStack {
+            // Status bar background color layer
+            themeStore.appTheme.background
+                .ignoresSafeArea()
+            
+            Group {
+                if ScreenshotMode.forceLightMode {
+                    ContentView()
+                        .environment(\.colorScheme, .light)
+                } else {
+                    ContentView()
+                }
+            }
+        }
+        // Integrate environment-based theme system with reactive updates
+        .environment(\.themeStore, themeStore)
+        .environment(\.appTheme, themeStore.appTheme)
+        .onChange(of: colorScheme) { _, _ in
+            // Force refresh system UI when color scheme changes
+            // No longer needed with new theming system
+        }
+        .statusBarHidden(false)
+        .preferredColorScheme(ScreenshotMode.forceLightMode ? .light : nil)
     }
 }
