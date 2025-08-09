@@ -163,25 +163,14 @@ enum Theme {
         static let profileImageSize: CGFloat = 40
     }
     
-    // MARK: - Color Aliases
-    // This enum makes it easy and safe to use our custom colors from the Asset Catalog.
-    // Example Usage: `Color.theme.primaryAction`
-    // The actual color definitions are in `Color+Extensions.swift`.
+    // MARK: - Color Aliases (Legacy)
+    // These color aliases have been deprecated in favor of the dynamic theme system.
+    // Use @Environment(\.appTheme) in your SwiftUI views instead.
+    // This enum is kept temporarily for compatibility but should not be used in new code.
     enum Color {
-        static let PrimaryAction = SwiftUI.Color.theme.primaryAction
-        static let Surface = SwiftUI.Color.theme.surface
-        static let CardBackground = SwiftUI.Color.theme.cardBackground
-        static let PrimaryText = SwiftUI.Color.theme.primaryText
-        static let SecondaryText = SwiftUI.Color.theme.secondaryText
-        static let AccentHighlight = SwiftUI.Color.theme.tertiary
-        
-        // Additional Material Design 3 colors
-        static let Success = SwiftUI.Color.theme.success
-        static let Warning = SwiftUI.Color.theme.warning
-        static let Error = SwiftUI.Color.theme.error
-        static let OnSurface = SwiftUI.Color.theme.onSurface
-        static let Outline = SwiftUI.Color.theme.outline
-        static let SurfaceVariant = SwiftUI.Color.theme.surfaceVariant
+        // Legacy color aliases removed - use @Environment(\.appTheme) instead
+        // Example: @Environment(\.appTheme) private var currentTheme
+        // Then use: currentTheme.primaryAction instead of Theme.Color.PrimaryAction
     }
 }
 

@@ -50,6 +50,7 @@ struct StatusBadge: View {
 struct EnhancedEditBookView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.appTheme) private var currentTheme
     
     @Bindable var book: UserBook
     
@@ -91,7 +92,7 @@ struct EnhancedEditBookView: View {
                 } header: {
                     Text("Book Information")
                         .titleSmall()
-                        .foregroundColor(Theme.Color.PrimaryText)
+                        .foregroundColor(currentTheme.primaryText)
                 }
                 
                 // Format & Publication Section
@@ -101,10 +102,10 @@ struct EnhancedEditBookView: View {
                         HStack(spacing: Theme.Spacing.xs) {
                             Image(systemName: "doc.richtext")
                                 .labelMedium()
-                                .foregroundColor(Theme.Color.PrimaryAction)
+                                .foregroundColor(currentTheme.primary)
                             Text("Format")
                                 .labelLarge()
-                                .foregroundColor(Theme.Color.PrimaryText)
+                                .foregroundColor(currentTheme.primaryText)
                         }
                         
                         LazyVGrid(columns: [
@@ -119,19 +120,19 @@ struct EnhancedEditBookView: View {
                                     VStack(spacing: Theme.Spacing.xs) {
                                         Image(systemName: format.icon)
                                             .font(.system(size: 20))
-                                            .foregroundColor(selectedFormat == format ? .white : Theme.Color.PrimaryAction)
+                                            .foregroundColor(selectedFormat == format ? .white : currentTheme.primary)
                                         
                                         Text(format.rawValue)
                                             .labelSmall()
-                                            .foregroundColor(selectedFormat == format ? .white : Theme.Color.PrimaryText)
+                                            .foregroundColor(selectedFormat == format ? .white : currentTheme.primaryText)
                                     }
                                     .frame(height: 60)
                                     .frame(maxWidth: .infinity)
-                                    .background(selectedFormat == format ? Theme.Color.PrimaryAction : Theme.Color.CardBackground)
+                                    .background(selectedFormat == format ? currentTheme.primary : currentTheme.cardBackground)
                                     .cornerRadius(Theme.CornerRadius.medium)
                                     .overlay(
                                         RoundedRectangle(cornerRadius: Theme.CornerRadius.medium)
-                                            .stroke(selectedFormat == format ? Theme.Color.PrimaryAction : Theme.Color.Outline, lineWidth: 1)
+                                            .stroke(selectedFormat == format ? currentTheme.primary : currentTheme.outline, lineWidth: 1)
                                     )
                                 }
                                 .buttonStyle(.plain)
@@ -170,7 +171,7 @@ struct EnhancedEditBookView: View {
                 } header: {
                     Text("Format & Publication")
                         .titleSmall()
-                        .foregroundColor(Theme.Color.PrimaryText)
+                        .foregroundColor(currentTheme.primaryText)
                 }
                 
                 // Cultural & Language Section
@@ -205,11 +206,11 @@ struct EnhancedEditBookView: View {
                 } header: {
                     Text("Cultural & Language Details")
                         .titleSmall()
-                        .foregroundColor(Theme.Color.PrimaryText)
+                        .foregroundColor(currentTheme.primaryText)
                 } footer: {
                     Text("Help track the cultural diversity of your reading by adding author nationality and original language information.")
                         .labelSmall()
-                        .foregroundColor(Theme.Color.SecondaryText)
+                        .foregroundColor(currentTheme.secondaryText)
                 }
                 
                 // Categories Section
@@ -245,8 +246,8 @@ struct EnhancedEditBookView: View {
                                     }
                                     .padding(.horizontal, Theme.Spacing.sm)
                                     .padding(.vertical, Theme.Spacing.xs)
-                                    .background(Theme.Color.PrimaryAction.opacity(0.1))
-                                    .foregroundColor(Theme.Color.PrimaryAction)
+                                    .background(currentTheme.primary.opacity(0.1))
+                                    .foregroundColor(currentTheme.primary)
                                     .cornerRadius(8)
                                 }
                             }
@@ -255,7 +256,7 @@ struct EnhancedEditBookView: View {
                 } header: {
                     Text("Categories")
                         .titleSmall()
-                        .foregroundColor(Theme.Color.PrimaryText)
+                        .foregroundColor(currentTheme.primaryText)
                 }
                 
                 // Description Section
@@ -269,7 +270,7 @@ struct EnhancedEditBookView: View {
                 } header: {
                     Text("Description")
                         .titleSmall()
-                        .foregroundColor(Theme.Color.PrimaryText)
+                        .foregroundColor(currentTheme.primaryText)
                 }
                 
                 // Personal Notes Section
@@ -278,7 +279,7 @@ struct EnhancedEditBookView: View {
                         HStack {
                             Image(systemName: "note.text")
                                 .labelMedium()
-                                .foregroundColor(Theme.Color.PrimaryAction)
+                                .foregroundColor(currentTheme.primary)
                                 .frame(width: 20)
                             Text("Personal Notes")
                                 .labelLarge()
@@ -290,14 +291,14 @@ struct EnhancedEditBookView: View {
                 } header: {
                     Text("Personal Notes")
                         .titleSmall()
-                        .foregroundColor(Theme.Color.PrimaryText)
+                        .foregroundColor(currentTheme.primaryText)
                 } footer: {
                     Text("Personal notes are private and separate from the book's description.")
                         .labelSmall()
-                        .foregroundColor(Theme.Color.SecondaryText)
+                        .foregroundColor(currentTheme.secondaryText)
                 }
             }
-            .background(Theme.Color.Surface)
+            .background(currentTheme.surface)
             .scrollContentBackground(.hidden)
             .navigationTitle("Edit Book Details")
             .navigationBarTitleDisplayMode(.inline)
@@ -307,7 +308,7 @@ struct EnhancedEditBookView: View {
                         dismiss() 
                     }
                     .bodyMedium()
-                    .foregroundColor(Theme.Color.SecondaryText)
+                    .foregroundColor(currentTheme.secondaryText)
                 }
                 
                 ToolbarItem(placement: .confirmationAction) {
@@ -317,7 +318,7 @@ struct EnhancedEditBookView: View {
                     }
                     .disabled(title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                     .labelLarge()
-                    .foregroundColor(Theme.Color.PrimaryAction)
+                    .foregroundColor(currentTheme.primary)
                 }
             }
         }

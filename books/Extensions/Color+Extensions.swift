@@ -1,13 +1,7 @@
 import SwiftUI
 
 extension Color {
-    // This static variable is updated by ThemeManager when theme changes
-    static var theme = AppColorTheme(variant: .purpleBoho)
-    
-    // Alternative way to get current theme - always fresh
-    static var currentTheme: AppColorTheme {
-        AppColorTheme(variant: ThemeManager.shared.currentTheme)
-    }
+    // Legacy static references removed - use @Environment(\.appTheme) instead
 }
 
 // MARK: - Theme Environment Key
@@ -250,11 +244,10 @@ extension Color {
         #endif
         
         // Return higher contrast versions based on the color and mode
-        if self == Color.theme.primary {
-            return isDark ? 
-                Color(red: 0.85, green: 0.70, blue: 1.0) : // Lighter purple for dark mode
-                Color(red: 0.35, green: 0.15, blue: 0.65)   // Darker purple for light mode
-        }
+        // Note: Without theme context, we provide a generic high contrast version
+        return isDark ? 
+            Color(white: 0.9) : // Light color for dark mode
+            Color(white: 0.1)   // Dark color for light mode
         
         return self
     }
@@ -276,7 +269,7 @@ extension Color {
         let isDark = false
         #endif
         
-        // For purple themes, use white text on dark backgrounds, dark on light
+        // Simple approach: use white for dark mode, dark for light mode
         return isDark ? .white : .black
     }
 }

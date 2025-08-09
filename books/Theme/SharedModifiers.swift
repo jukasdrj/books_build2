@@ -171,6 +171,8 @@ struct ErrorView: View {
 // MARK: - Empty State View
 
 struct EmptyStateView: View {
+    @Environment(\.appTheme) private var currentTheme
+    
     let icon: String
     let title: String
     let message: String
@@ -201,8 +203,8 @@ struct EmptyStateView: View {
                         .fill(
                             LinearGradient(
                                 colors: [
-                                    Color.theme.primary.opacity(0.1),
-                                    Color.theme.secondary.opacity(0.05)
+                                    currentTheme.primary.opacity(0.1),
+                                    currentTheme.secondary.opacity(0.05)
                                 ],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
@@ -214,24 +216,24 @@ struct EmptyStateView: View {
                         .font(.system(size: 48, weight: .light))
                         .foregroundStyle(
                             LinearGradient(
-                                colors: [Color.theme.primary, Color.theme.secondary],
+                                colors: [currentTheme.primary, currentTheme.secondary],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             )
                         )
                 }
-                .shadow(color: Color.theme.primary.opacity(0.1), radius: 20, x: 0, y: 10)
+                .shadow(color: currentTheme.primary.opacity(0.1), radius: 20, x: 0, y: 10)
                 
                 VStack(spacing: Theme.Spacing.md) {
                     Text(title)
                         .font(.title2)
                         .fontWeight(.bold)
-                        .foregroundColor(Color.theme.primaryText)
+                        .foregroundColor(currentTheme.primaryText)
                         .multilineTextAlignment(.center)
                     
                     Text(message)
                         .font(.body)
-                        .foregroundColor(Color.theme.secondaryText)
+                        .foregroundColor(currentTheme.secondaryText)
                         .multilineTextAlignment(.center)
                         .lineLimit(3)
                         .padding(.horizontal, Theme.Spacing.lg)
@@ -241,7 +243,7 @@ struct EmptyStateView: View {
             if let actionTitle = actionTitle, let action = action {
                 Button(actionTitle, action: action)
                     .materialButton(style: .filled, size: .large)
-                    .shadow(color: Color.theme.primary.opacity(0.3), radius: 8, x: 0, y: 4)
+                    .shadow(color: currentTheme.primary.opacity(0.3), radius: 8, x: 0, y: 4)
             }
         }
         .frame(maxWidth: 350)
@@ -272,6 +274,8 @@ struct RefreshableScrollView<Content: View>: View {
 
 // MARK: - App Store Hero Section Component
 struct AppStoreHeroSection: View {
+    @Environment(\.appTheme) private var currentTheme
+    
     let title: String
     let subtitle: String
     let icon: String
@@ -284,16 +288,16 @@ struct AppStoreHeroSection: View {
                     .fill(
                         LinearGradient(
                             colors: [
-                                Color.theme.primary,
-                                Color.theme.secondary,
-                                Color.theme.tertiary
+                                currentTheme.primary,
+                                currentTheme.secondary,
+                                currentTheme.tertiary
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
                     )
                     .frame(width: 80, height: 80)
-                    .shadow(color: Color.theme.primary.opacity(0.4), radius: 16, x: 0, y: 8)
+                    .shadow(color: currentTheme.primary.opacity(0.4), radius: 16, x: 0, y: 8)
                 
                 Image(systemName: icon)
                     .font(.system(size: 36, weight: .medium))
@@ -304,12 +308,12 @@ struct AppStoreHeroSection: View {
                 Text(title)
                     .font(.largeTitle)
                     .fontWeight(.bold)
-                    .foregroundColor(Color.theme.primaryText)
+                    .foregroundColor(currentTheme.primaryText)
                     .multilineTextAlignment(.center)
                 
                 Text(subtitle)
                     .font(.title3)
-                    .foregroundColor(Color.theme.secondaryText)
+                    .foregroundColor(currentTheme.secondaryText)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, Theme.Spacing.md)
             }
@@ -320,6 +324,8 @@ struct AppStoreHeroSection: View {
 
 // MARK: - Feature Highlight Card
 struct FeatureHighlightCard: View {
+    @Environment(\.appTheme) private var currentTheme
+    
     let icon: String
     let title: String
     let description: String
@@ -342,11 +348,11 @@ struct FeatureHighlightCard: View {
                 Text(title)
                     .font(.headline)
                     .fontWeight(.semibold)
-                    .foregroundColor(Color.theme.primaryText)
+                    .foregroundColor(currentTheme.primaryText)
                 
                 Text(description)
                     .font(.subheadline)
-                    .foregroundColor(Color.theme.secondaryText)
+                    .foregroundColor(currentTheme.secondaryText)
                     .lineLimit(2)
             }
             

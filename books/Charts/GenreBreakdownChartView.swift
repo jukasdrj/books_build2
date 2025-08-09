@@ -2,6 +2,8 @@ import SwiftUI
 import Charts
 
 struct GenreBreakdownChartView: View {
+    @Environment(\.appTheme) private var currentTheme
+    
     let books: [UserBook]
     
     private var genreCounts: [GenreCount] {
@@ -54,13 +56,13 @@ struct GenreBreakdownChartView: View {
             HStack {
                 Text("Genre Breakdown")
                     .titleLarge()
-                    .foregroundColor(Theme.Color.PrimaryText)
+                    .foregroundColor(currentTheme.primaryText)
                 
                 Spacer()
                 
                 Text("\(totalBooks) books")
                     .labelMedium()
-                    .foregroundColor(Theme.Color.SecondaryText)
+                    .foregroundColor(currentTheme.secondaryText)
             }
             
             if genreCounts.isEmpty {
@@ -68,11 +70,11 @@ struct GenreBreakdownChartView: View {
                 VStack(spacing: Theme.Spacing.sm) {
                     Image(systemName: "books.vertical")
                         .font(.system(size: 32))
-                        .foregroundColor(Theme.Color.SecondaryText.opacity(0.6))
+                        .foregroundColor(currentTheme.secondaryText.opacity(0.6))
                     
                     Text("No genre data available")
                         .bodyMedium()
-                        .foregroundColor(Theme.Color.SecondaryText)
+                        .foregroundColor(currentTheme.secondaryText)
                 }
                 .frame(height: 200)
                 .frame(maxWidth: .infinity)
@@ -93,13 +95,13 @@ struct GenreBreakdownChartView: View {
                             VStack(spacing: Theme.Spacing.xs) {
                                 Text("Total")
                                     .labelSmall()
-                                    .foregroundColor(Theme.Color.SecondaryText)
+                                    .foregroundColor(currentTheme.secondaryText)
                                 Text("\(totalBooks)")
                                     .titleMedium()
-                                    .foregroundColor(Theme.Color.PrimaryText)
+                                    .foregroundColor(currentTheme.primaryText)
                                 Text("books")
                                     .labelSmall()
-                                    .foregroundColor(Theme.Color.SecondaryText)
+                                    .foregroundColor(currentTheme.secondaryText)
                             }
                             .position(x: frame.midX, y: frame.midY)
                         }
@@ -118,14 +120,14 @@ struct GenreBreakdownChartView: View {
                                 
                                 Text(item.name)
                                     .labelSmall()
-                                    .foregroundColor(Theme.Color.PrimaryText)
+                                    .foregroundColor(currentTheme.primaryText)
                                     .lineLimit(1)
                                 
                                 Spacer()
                                 
                                 Text("\(item.count)")
                                     .labelSmall()
-                                    .foregroundColor(Theme.Color.SecondaryText)
+                                    .foregroundColor(currentTheme.secondaryText)
                             }
                         }
                     }
@@ -180,5 +182,5 @@ struct GenreCount: Identifiable, Equatable {
     
     GenreBreakdownChartView(books: sampleBooks)
         .padding()
-        .background(Theme.Color.Surface)
+        .background(.regularMaterial)
 }

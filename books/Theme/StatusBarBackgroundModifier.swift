@@ -3,15 +3,14 @@ import SwiftUI
 /// A ViewModifier that extends the theme's background color behind the status bar
 /// This ensures consistent theming throughout the app including the status bar area
 struct StatusBarBackgroundModifier: ViewModifier {
-    @State private var themeManager = ThemeManager.shared
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.appTheme) private var currentTheme
     
     // Track theme changes
     @State private var currentThemeId = UUID()
     
     private var themeBackground: Color {
-        // Get the current theme's background color
-        AppColorTheme(variant: themeManager.currentTheme).background
+        currentTheme.background
     }
     
     func body(content: Content) -> some View {
@@ -35,10 +34,6 @@ struct StatusBarBackgroundModifier: ViewModifier {
             content
         }
         .background(themeBackground) // Ensure the entire view has the theme background
-        .onChange(of: themeManager.currentTheme) { _, _ in
-            // Force view refresh when theme changes
-            currentThemeId = UUID()
-        }
         .onChange(of: colorScheme) { _, _ in
             // Force view refresh when color scheme changes
             currentThemeId = UUID()
@@ -49,15 +44,15 @@ struct StatusBarBackgroundModifier: ViewModifier {
 
 /// A specialized version for navigation views that need proper status bar theming
 struct NavigationStatusBarBackgroundModifier: ViewModifier {
-    @State private var themeManager = ThemeManager.shared
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.appTheme) private var currentTheme
     
     private var themeBackground: Color {
-        AppColorTheme(variant: themeManager.currentTheme).background
+        currentTheme.background
     }
     
     private var themeSurface: Color {
-        AppColorTheme(variant: themeManager.currentTheme).surface
+        currentTheme.surface
     }
     
     func body(content: Content) -> some View {
@@ -88,7 +83,6 @@ extension View {
     func fullStatusBarTheming() -> some View {
         self
             .themedStatusBarBackground()
-            .statusBarStyleThemed() // Uses existing StatusBarStyleModifier
     }
 }
 
@@ -96,8 +90,8 @@ extension View {
 
 /// A container view that properly handles status bar theming for its content
 struct ThemedContainer<Content: View>: View {
-    @State private var themeManager = ThemeManager.shared
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.appTheme) private var currentTheme
     
     let content: Content
     let extendBehindStatusBar: Bool
@@ -108,7 +102,7 @@ struct ThemedContainer<Content: View>: View {
     }
     
     private var themeBackground: Color {
-        AppColorTheme(variant: themeManager.currentTheme).background
+        currentTheme.background
     }
     
     var body: some View {

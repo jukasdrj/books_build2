@@ -4,13 +4,12 @@ import SwiftData
 
 @main
 struct booksApp: App {
-    @State private var themeManager = ThemeManager.shared
     @Environment(\.colorScheme) private var colorScheme
     
     private var adaptiveBackground: Color {
         // Force dependency on colorScheme to ensure updates on light/dark mode changes
         let _ = colorScheme
-        return AppColorTheme(variant: themeManager.currentTheme).background
+        return AppColorTheme(variant: .purpleBoho).background
     }
     
     var sharedModelContainer: ModelContainer = {
@@ -82,7 +81,7 @@ struct booksApp: App {
         WindowGroup {
             ZStack {
                 // Status bar background color layer
-                Color.theme.background
+                AppColorTheme(variant: .purpleBoho).background
                     .ignoresSafeArea()
                 
                 Group {
@@ -95,18 +94,10 @@ struct booksApp: App {
                 }
             }
             // Integrate new EnvironmentKey-based theme provider
-            .environment(\.appTheme, AppColorTheme(variant: themeManager.currentTheme))
+            .environment(\.appTheme, AppColorTheme(variant: .purpleBoho))
             .onChange(of: colorScheme) { _, _ in
                 // Force refresh system UI when color scheme changes
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                    themeManager.refreshSystemUI()
-                }
-            }
-            .onChange(of: themeManager.currentTheme) { _, _ in
-                // Force refresh when theme changes
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                    themeManager.refreshSystemUI()
-                }
+                // No longer needed with new theming system
             }
             .statusBarHidden(false)
             .preferredColorScheme(ScreenshotMode.forceLightMode ? .light : nil)

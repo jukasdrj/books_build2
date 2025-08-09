@@ -9,8 +9,8 @@ extension View {
     func withTheme<Content: View>(
         @ViewBuilder content: @escaping (AppColorTheme) -> Content
     ) -> some View {
-        Group {
-            content(Color.theme) // Fallback to static theme for now
+        ThemedWrapper { theme in
+            content(theme)
         }
     }
     

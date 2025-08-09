@@ -7,9 +7,6 @@ struct ContentView: View {
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.appTheme) private var theme
     
-    // Theme manager for observing theme changes
-    @State private var themeManager = ThemeManager.shared
-    
     // Force refresh trigger for theme changes
     @State private var themeRefreshID = UUID()
     
@@ -34,24 +31,11 @@ struct ContentView: View {
         .preferredColorScheme(getPreferredColorScheme()) // Apply color scheme based on theme
         .onAppear {
             updateBadgeCounts()
-            // Ensure theme is properly applied to system UI when app launches
-            ThemeManager.shared.refreshSystemUI()
-            
-            // Update status bar style on appear
-            updateStatusBarStyle()
         }
         .onChange(of: selectedTab) { oldValue, newValue in
             // Haptic feedback on tab switch
             HapticFeedbackManager.shared.lightImpact()
             updateBadgeCounts()
-        }
-        .onChange(of: themeManager.currentTheme) { oldTheme, newTheme in
-            // Force complete refresh when theme changes
-            forceThemeRefresh()
-        }
-        .onChange(of: colorScheme) { oldScheme, newScheme in
-            // Handle system color scheme changes
-            updateStatusBarStyle()
         }
     }
     
@@ -64,39 +48,6 @@ struct ContentView: View {
         return nil
     }
     
-    private func forceThemeRefresh() {
-        Task { @MainActor in
-            // Update the theme refresh ID to force a complete view refresh
-            themeRefreshID = UUID()
-            
-            // Small delay to ensure theme propagation
-            try? await Task.sleep(nanoseconds: 100_000_000) // 100ms
-            
-            // Refresh system UI elements
-            themeManager.refreshSystemUI()
-            
-            // Update status bar style
-            updateStatusBarStyle()
-        }
-    }
-    
-    private func updateStatusBarStyle() {
-        #if os(iOS)
-        DispatchQueue.main.async {
-            // Update StatusBarStyleManager with current theme and color scheme
-            StatusBarStyleManager.shared.updateStyle(for: themeManager.currentTheme, colorScheme: colorScheme)
-            
-            // Force all windows to update their status bar appearance
-            for windowScene in UIApplication.shared.connectedScenes {
-                if let windowScene = windowScene as? UIWindowScene {
-                    for window in windowScene.windows {
-                        window.rootViewController?.setNeedsStatusBarAppearanceUpdate()
-                    }
-                }
-            }
-        }
-        #endif
-    }
     
     // MARK: - Badge Count Helpers
     

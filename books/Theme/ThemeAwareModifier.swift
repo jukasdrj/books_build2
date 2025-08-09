@@ -7,8 +7,8 @@ extension Notification.Name {
 
 /// A view modifier that ensures views update when the theme changes
 struct ThemeAwareModifier: ViewModifier {
-    @State private var themeManager = ThemeManager.shared
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.appTheme) private var currentTheme
     
     // Force views to update when theme changes
     @State private var themeUpdateTrigger = UUID()
@@ -16,10 +16,10 @@ struct ThemeAwareModifier: ViewModifier {
     func body(content: Content) -> some View {
         content
             .onChange(of: colorScheme) { _, _ in
-                // Refresh theme when system color scheme changes (light/dark mode)
-                themeManager.refreshThemeForAppearanceChange()
+                // Force update when color scheme changes
+                themeUpdateTrigger = UUID()
             }
-            .environment(\.appTheme, AppColorTheme(variant: themeManager.currentTheme))
+            .environment(\.appTheme, currentTheme)
             .id(themeUpdateTrigger) // Force view to fully rebuild on theme changes
             .onReceive(NotificationCenter.default.publisher(for: .themeDidChange)) { _ in
                 // Force update when theme changes
@@ -36,6 +36,6 @@ extension View {
     
     /// Simple theme refresh modifier - forces view to use current theme colors
     func withCurrentTheme() -> some View {
-        self.environment(\.appTheme, Color.currentTheme)
+        self.environment(\.appTheme, AppColorTheme(variant: .purpleBoho))
     }
 }

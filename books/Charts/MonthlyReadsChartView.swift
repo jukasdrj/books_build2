@@ -2,9 +2,11 @@ import SwiftUI
 import Charts
 
 struct MonthlyReadsChartView: View {
+    @Environment(\.appTheme) private var currentTheme
+    
     let books: [UserBook]
     
-    private var monthlyBookCounts: [BookCount] {
+    private var monthlyData: [BookCount] {
         let calendar = Calendar.current
         let currentYear = calendar.component(.year, from: Date())
         
@@ -43,35 +45,35 @@ struct MonthlyReadsChartView: View {
         VStack(alignment: .leading, spacing: Theme.Spacing.md) {
             Text("Books Read This Year")
                 .titleLarge()
-                .foregroundColor(Theme.Color.PrimaryText)
+                .foregroundColor(currentTheme.primaryText)
             
-            Chart(monthlyBookCounts) { item in
+            Chart(monthlyData) { item in
                 BarMark(
                     x: .value("Month", item.month),
                     y: .value("Books", item.count)
                 )
-                .foregroundStyle(Theme.Color.PrimaryAction)
+                .foregroundStyle(currentTheme.primary)
                 .cornerRadius(Theme.CornerRadius.small)
             }
             .chartYAxis {
                 AxisMarks(position: .leading) { value in
                     AxisGridLine()
-                        .foregroundStyle(Theme.Color.Outline)
+                        .foregroundStyle(currentTheme.outline)
                     AxisTick()
-                        .foregroundStyle(Theme.Color.SecondaryText)
+                        .foregroundStyle(currentTheme.secondaryText)
                     AxisValueLabel()
-                        .foregroundStyle(Theme.Color.SecondaryText)
+                        .foregroundStyle(currentTheme.secondaryText)
                         .font(Theme.Typography.labelSmall)
                 }
             }
             .chartXAxis {
                 AxisMarks { value in
                     AxisGridLine()
-                        .foregroundStyle(Theme.Color.Outline)
+                        .foregroundStyle(currentTheme.outline)
                     AxisTick()
-                        .foregroundStyle(Theme.Color.SecondaryText)
+                        .foregroundStyle(currentTheme.secondaryText)
                     AxisValueLabel()
-                        .foregroundStyle(Theme.Color.SecondaryText)
+                        .foregroundStyle(currentTheme.secondaryText)
                         .font(Theme.Typography.labelSmall)
                 }
             }
@@ -115,5 +117,5 @@ struct BookCount: Identifiable, Equatable {
     
     MonthlyReadsChartView(books: sampleBooks)
         .padding()
-        .background(Theme.Color.Surface)
+        .background(.regularMaterial)
 }

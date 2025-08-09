@@ -10,9 +10,6 @@ struct LibraryView: View {
     @State private var showingSettings = false
     @State private var libraryFilter = LibraryFilter.all
     
-    // @State private var themeObserver = 0
-    
-    private let themeManager = ThemeManager.shared
     
     @Query private var allBooks: [UserBook]
     
@@ -200,10 +197,6 @@ struct LibraryView: View {
         .onChange(of: libraryFilter) { _, _ in
             updateStableBooks()
         }
-        // .onChange(of: themeManager.currentTheme) { _, _ in
-        //     themeObserver += 1
-        // }
-        // .id(themeObserver)
     }
     
     private func updateStableBooks() {

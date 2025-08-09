@@ -7,7 +7,6 @@ struct SettingsView: View {
     @State private var showingCSVImport = false
     @State private var showingGoalSettings = false
     
-    private let themeManager = ThemeManager.shared
     
     var body: some View {
         NavigationStack {
@@ -46,10 +45,10 @@ struct SettingsView: View {
                                     .foregroundColor(currentTheme.primaryText)
                                 
                                 HStack(spacing: Theme.Spacing.xs) {
-                                    Text(themeManager.currentTheme.emoji)
+                                    Text("🎨")
                                         .font(.title3)
                                     
-                                    Text(themeManager.currentTheme.displayName)
+                                    Text("Purple Boho")
                                         .font(.subheadline)
                                         .foregroundColor(currentTheme.secondaryText)
                                     

@@ -5,10 +5,8 @@ struct ThemePickerView: View {
     @Environment(\.appTheme) private var theme
     @State private var selectedTheme: ThemeVariant
     
-    private let themeManager = ThemeManager.shared
-    
     init() {
-        _selectedTheme = State(initialValue: ThemeManager.shared.currentTheme)
+        _selectedTheme = State(initialValue: .purpleBoho)
     }
     
     var body: some View {
@@ -133,19 +131,13 @@ struct ThemePickerView: View {
     }
     
     private func selectTheme(_ theme: ThemeVariant) {
-        // Don't do anything if we're already using this theme
-        guard theme != themeManager.currentTheme else {
-            dismiss()
-            return
-        }
-        
         selectedTheme = theme
         
         // Enhanced haptic feedback for a delightful interaction
         HapticFeedbackManager.shared.mediumImpact()
         
-        // Update the theme manager
-        themeManager.switchTheme(to: theme, animated: true)
+        // Note: Theme switching functionality will need to be reimplemented
+        // with the new dynamic theming system
         
         // Automatically dismiss after a shorter delay to show the selection
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
