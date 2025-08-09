@@ -4,12 +4,13 @@ import SwiftData
 
 @main
 struct booksApp: App {
+    @State private var themeStore = ThemeStore()
     @Environment(\.colorScheme) private var colorScheme
     
     private var adaptiveBackground: Color {
         // Force dependency on colorScheme to ensure updates on light/dark mode changes
         let _ = colorScheme
-        return AppColorTheme(variant: .purpleBoho).background
+        return themeStore.appTheme.background
     }
     
     var sharedModelContainer: ModelContainer = {
@@ -81,7 +82,7 @@ struct booksApp: App {
         WindowGroup {
             ZStack {
                 // Status bar background color layer
-                AppColorTheme(variant: .purpleBoho).background
+                themeStore.appTheme.background
                     .ignoresSafeArea()
                 
                 Group {
@@ -93,8 +94,9 @@ struct booksApp: App {
                     }
                 }
             }
-            // Integrate new EnvironmentKey-based theme provider
-            .environment(\.appTheme, AppColorTheme(variant: .purpleBoho))
+            // Integrate environment-based theme system
+            .environment(themeStore)
+            .environment(\.appTheme, themeStore.appTheme)
             .onChange(of: colorScheme) { _, _ in
                 // Force refresh system UI when color scheme changes
                 // No longer needed with new theming system

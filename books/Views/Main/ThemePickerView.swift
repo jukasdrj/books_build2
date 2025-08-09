@@ -3,9 +3,11 @@ import SwiftUI
 struct ThemePickerView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.appTheme) private var theme
+    @Environment(\.themeStore) private var themeStore
     @State private var selectedTheme: ThemeVariant
     
     init() {
+        // Will be updated in onAppear to sync with store
         _selectedTheme = State(initialValue: .purpleBoho)
     }
     
@@ -84,7 +86,7 @@ struct ThemePickerView: View {
                     
                     // Theme cards with enhanced presentation
                     VStack(spacing: Theme.Spacing.lg) {
-                        ForEach(ThemeVariant.allCases) { theme in
+                        ForEach(ThemeStore.availableThemes) { theme in
                             ThemePreviewCard(
                                 theme: theme,
                                 isSelected: selectedTheme == theme,
@@ -128,16 +130,17 @@ struct ThemePickerView: View {
                 }
             }
         }
+        .onAppear {
+            // Sync selected theme with store on appear
+            selectedTheme = themeStore.currentTheme
+        }
     }
     
     private func selectTheme(_ theme: ThemeVariant) {
         selectedTheme = theme
         
-        // Enhanced haptic feedback for a delightful interaction
-        HapticFeedbackManager.shared.mediumImpact()
-        
-        // Note: Theme switching functionality will need to be reimplemented
-        // with the new dynamic theming system
+        // Update the theme store with the new selection
+        themeStore.setTheme(theme)
         
         // Automatically dismiss after a shorter delay to show the selection
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {

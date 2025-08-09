@@ -36,6 +36,6 @@ extension View {
     
     /// Simple theme refresh modifier - forces view to use current theme colors
     func withCurrentTheme() -> some View {
-        self.environment(\.appTheme, AppColorTheme(variant: .purpleBoho))
+        self.environment(\.appTheme, ThemeStore().appTheme)
     }
 }

@@ -3,6 +3,7 @@ import SwiftUI
 struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.appTheme) private var currentTheme
+    @Environment(\.themeStore) private var themeStore
     @State private var showingThemePicker = false
     @State private var showingCSVImport = false
     @State private var showingGoalSettings = false
@@ -45,10 +46,10 @@ struct SettingsView: View {
                                     .foregroundColor(currentTheme.primaryText)
                                 
                                 HStack(spacing: Theme.Spacing.xs) {
-                                    Text("🎨")
+                                    Text(themeStore.currentTheme.emoji)
                                         .font(.title3)
                                     
-                                    Text("Purple Boho")
+                                    Text(themeStore.currentTheme.displayName)
                                         .font(.subheadline)
                                         .foregroundColor(currentTheme.secondaryText)
                                     
