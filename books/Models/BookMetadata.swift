@@ -241,16 +241,16 @@ enum CulturalRegion: String, Codable, CaseIterable, Identifiable, Sendable {
     
     var id: Self { self }
     
-    var color: Color {
+    func color(theme: AppColorTheme) -> Color {
         switch self {
-        case .africa: return Color.theme.cultureAfrica
-        case .asia: return Color.theme.cultureAsia
-        case .europe: return Color.theme.cultureEurope
-        case .northAmerica, .southAmerica: return Color.theme.cultureAmericas
-        case .oceania: return Color.theme.cultureOceania
-        case .middleEast, .centralAsia: return Color.theme.cultureMiddleEast
-        case .caribbean: return Color.theme.cultureAmericas
-        case .indigenous: return Color.theme.cultureIndigenous
+        case .africa: return theme.cultureAfrica
+        case .asia: return theme.cultureAsia
+        case .europe: return theme.cultureEurope
+        case .northAmerica, .southAmerica: return theme.cultureAmericas
+        case .oceania: return theme.cultureOceania
+        case .middleEast, .centralAsia: return theme.cultureMiddleEast
+        case .caribbean: return theme.cultureAmericas
+        case .indigenous: return theme.cultureIndigenous
         }
     }
     
@@ -276,12 +276,12 @@ enum ReadingDifficulty: String, Codable, CaseIterable, Identifiable, Sendable {
     
     var id: Self { self }
     
-    var color: Color {
+    func color(theme: AppColorTheme) -> Color {
         switch self {
-        case .easy: return Color.theme.success
-        case .moderate: return Color.theme.warning
-        case .challenging: return Color.theme.error
-        case .advanced: return Color.theme.primary
+        case .easy: return theme.success
+        case .moderate: return theme.warning
+        case .challenging: return theme.error
+        case .advanced: return theme.primary
         }
     }
     

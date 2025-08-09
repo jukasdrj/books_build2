@@ -261,7 +261,7 @@ struct ReadingStatusFilterChip: View {
         Button(action: action) {
             HStack(spacing: Theme.Spacing.sm) {
                 Circle()
-                    .fill(status.textColor)
+                    .fill(status.textColor(theme: currentTheme))
                     .frame(width: 12, height: 12)
                 
                 Text(status.rawValue)

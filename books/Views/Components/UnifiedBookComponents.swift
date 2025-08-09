@@ -320,6 +320,7 @@ struct UnifiedRatingView: View {
 // MARK: - Unified Status Badge Component
 
 struct UnifiedStatusBadge: View {
+    @Environment(\.appTheme) private var currentTheme
     let status: ReadingStatus
     let style: BookDisplayStyle
     
@@ -327,12 +328,12 @@ struct UnifiedStatusBadge: View {
         Text(badgeText)
             .font(badgeFont)
             .fontWeight(.medium)
-            .foregroundColor(status.textColor)
+            .foregroundColor(status.textColor(theme: currentTheme))
             .padding(.horizontal, horizontalPadding)
             .padding(.vertical, verticalPadding)
             .background(
                 Capsule()
-                    .fill(status.containerColor)
+                    .fill(status.containerColor(theme: currentTheme))
             )
             .accessibilityLabel("Status: \(status.rawValue)")
             .accessibilityAddTraits(.isStaticText)

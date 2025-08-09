@@ -305,8 +305,8 @@ struct SearchActionButtonsSection: View {
                             .fontWeight(.medium)
                             .padding(.horizontal, Theme.Spacing.sm)
                             .padding(.vertical, Theme.Spacing.xs)
-                            .background(existing.readingStatus.containerColor)
-                            .foregroundColor(existing.readingStatus.textColor)
+                            .background(existing.readingStatus.containerColor(theme: currentTheme))
+                            .foregroundColor(existing.readingStatus.textColor(theme: currentTheme))
                             .cornerRadius(Theme.CornerRadius.small)
                     }
                     .padding(.horizontal, Theme.Spacing.md)

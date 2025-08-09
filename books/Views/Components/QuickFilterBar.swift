@@ -37,7 +37,7 @@ struct QuickFilterBar: View {
                     }) {
                         HStack(spacing: Theme.Spacing.xs) {
                             Circle()
-                                .fill(status.textColor)
+                                .fill(status.textColor(theme: theme))
                                 .frame(width: 8, height: 8)
                             
                             Text(status.rawValue)

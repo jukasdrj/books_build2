@@ -422,7 +422,7 @@ struct CulturalDiversitySection: View {
                 HStack(spacing: 1) {
                     ForEach(CulturalRegion.allCases, id: \.self) { region in
                         Rectangle()
-                            .fill(culturalStats[region] != nil ? region.color : Color.gray.opacity(0.3))
+                            .fill(culturalStats[region] != nil ? region.color(theme: currentTheme) : Color.gray.opacity(0.3))
                             .frame(height: 6)
                             .cornerRadius(3)
                     }
@@ -443,7 +443,7 @@ struct CulturalDiversitySection: View {
                 ForEach(culturalStats.sorted(by: { $0.value > $1.value }).prefix(3), id: \.key) { region, count in
                     HStack {
                         Image(systemName: region.icon)
-                            .foregroundColor(region.color)
+                            .foregroundColor(region.color(theme: currentTheme))
                             .frame(width: 16)
                         
                         Text(region.rawValue)

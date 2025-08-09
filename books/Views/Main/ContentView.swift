@@ -34,13 +34,8 @@ struct ContentView: View {
         .preferredColorScheme(getPreferredColorScheme()) // Apply color scheme based on theme
         .onAppear {
             updateBadgeCounts()
-            // Diagnose and fix any theme system issues
-            ThemeSystemHealthCheck.diagnose()
             // Ensure theme is properly applied to system UI when app launches
             ThemeManager.shared.refreshSystemUI()
-            
-            // Force initial theme application
-            ThemeSystemHealthCheck.forceGlobalThemeRefresh()
             
             // Update status bar style on appear
             updateStatusBarStyle()
@@ -82,9 +77,6 @@ struct ContentView: View {
             
             // Update status bar style
             updateStatusBarStyle()
-            
-            // Force theme system refresh
-            ThemeSystemHealthCheck.forceGlobalThemeRefresh()
         }
     }
     

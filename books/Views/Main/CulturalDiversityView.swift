@@ -256,7 +256,7 @@ struct CulturalDiversityView: View {
             RoundedRectangle(cornerRadius: 4)
                 .fill(hasBooks ? 
                       LinearGradient(
-                        colors: [region.color, region.color.opacity(0.7)],
+                        colors: [region.color(theme: currentTheme), region.color(theme: currentTheme).opacity(0.7)],
                         startPoint: .top,
                         endPoint: .bottom
                       ) : 
@@ -267,7 +267,7 @@ struct CulturalDiversityView: View {
                       )
                 )
                 .frame(height: barHeight)
-                .shadow(color: hasBooks ? region.color.opacity(0.3) : .clear, 
+                .shadow(color: hasBooks ? region.color(theme: currentTheme).opacity(0.3) : .clear, 
                        radius: 4, x: 0, y: 2)
             
             Text(flagEmoji(for: region))
@@ -313,14 +313,14 @@ struct CulturalDiversityView: View {
             HStack {
                 Image(systemName: region.icon)
                     .labelMedium()
-                    .foregroundColor(region.color)
+                    .foregroundColor(region.color(theme: currentTheme))
                     .frame(width: Theme.Size.iconMedium, height: Theme.Size.iconMedium)
                 
                 Spacer()
                 
                 Text("\(count)")
                     .readingStats()
-                    .foregroundColor(region.color)
+                    .foregroundColor(region.color(theme: currentTheme))
             }
             
             VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
@@ -338,7 +338,7 @@ struct CulturalDiversityView: View {
         .materialCard()
         .overlay(
             RoundedRectangle(cornerRadius: Theme.CornerRadius.card)
-                .stroke(region.color.opacity(0.3), lineWidth: 1)
+                .stroke(region.color(theme: currentTheme).opacity(0.3), lineWidth: 1)
         )
     }
     

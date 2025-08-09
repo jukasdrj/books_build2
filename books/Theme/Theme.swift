@@ -376,23 +376,23 @@ extension View {
     }
     
     // Cultural diversity indicator
-    func culturalIndicator(region: CulturalRegion) -> some View {
+    func culturalIndicator(region: CulturalRegion, theme: AppColorTheme) -> some View {
         self
             .padding(.horizontal, Theme.Spacing.sm)
             .padding(.vertical, Theme.Spacing.xs)
-            .background(region.color.opacity(0.12))
-            .foregroundColor(region.color)
+            .background(region.color(theme: theme).opacity(0.12))
+            .foregroundColor(region.color(theme: theme))
             .cornerRadius(Theme.CornerRadius.small)
             .font(Theme.Typography.culturalTag)
     }
     
     // Reading status indicator
-    func statusIndicator(status: ReadingStatus) -> some View {
+    func statusIndicator(status: ReadingStatus, theme: AppColorTheme) -> some View {
         self
             .padding(.horizontal, Theme.Spacing.sm)
             .padding(.vertical, Theme.Spacing.xs)
-            .background(status.containerColor)
-            .foregroundColor(status.textColor)
+            .background(status.containerColor(theme: theme))
+            .foregroundColor(status.textColor(theme: theme))
             .cornerRadius(Theme.CornerRadius.small)
             .font(Theme.Typography.labelSmall)
     }
