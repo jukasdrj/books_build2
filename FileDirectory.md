@@ -11,24 +11,30 @@ The Books Reading Tracker project is organized into several main directories wit
 ### **ProjectSummary.md**
 - **Purpose**: A consolidated summary of the project. It contains the project's core concept, architecture, key files, and development patterns. This is the primary source for quick context.
 
-### **Documentation.md, Roadmap.md, Accomplished.md**
-- **Purpose**: Complete project documentation, feature roadmap, and development history.
-- **Usage**: Comprehensive project information and planning.
+### **Documentation.md, Accomplished.md, CLAUDE.md**
+- **Purpose**: Complete project documentation, development history, and AI assistant context.
+- **Usage**: Comprehensive project information and AI assistant memory.
 
 ### **FileDirectory.md**
 - **Purpose**: This file - complete directory structure documentation.
 - **Contains**: Detailed description of each file's responsibility and architectural relationships.
 - **Usage**: Navigate codebase efficiently and understand file organization.
 
-### **TODO.md**
-- **Purpose**: Current development priorities and task tracking.
-- **Contains**: Active tasks, completed items, and immediate development focus areas.
-- **Usage**: Guide current development session priorities and track completion status.
+### **BUILD_SUCCESS.md**
+- **Purpose**: Build status and configuration documentation.
+- **Contains**: Build verification, success confirmation, and build environment notes.
+- **Usage**: Track build health and troubleshoot build issues.
 
 ### **alex.md**
 - **Purpose**: AI assistant memory and project-specific notes.
 - **Contains**: Learning notes, user preferences, and development patterns.
 - **Usage**: Maintain AI assistant context across sessions.
+
+### **Specialized Documentation**
+- **StatusBarBackgroundModifier_Documentation.md**: Technical documentation for status bar theming.
+- **ThemeAwareHostingController_Enhancement_Summary.md**: Theme system enhancement details.
+- **StatusBarStyleManager_Usage_Example.swift**: Code examples for status bar management.
+- **code-reviewer.md, ios-developer.md, ui-ux-designer.md**: Role-specific AI assistant instructions.
 
 ---
 
@@ -54,6 +60,11 @@ The Books Reading Tracker project is organized into several main directories wit
 - **Responsibility**: Store reading status, progress, ratings, notes, and personal metadata.
 - **Key Features**: Automatic date handling, reading session tracking, wishlist integration.
 
+#### **/books/Models/ImportModels.swift**
+- **Purpose**: Data models for CSV import functionality.
+- **Responsibility**: Define structures for import sessions, parsed books, column mappings, and import progress tracking.
+- **Key Features**: Comprehensive import state management, error handling models, progress tracking.
+
 ---
 
 ### **🎨 Theme and Design System (/books/Theme/ & /books/Extensions/)**
@@ -71,6 +82,22 @@ The Books Reading Tracker project is organized into several main directories wit
 #### **/books/Theme/SharedModifiers.swift**
 - **Purpose**: Reusable SwiftUI view modifiers for consistent styling.
 - **Responsibility**: Provide common styling patterns used across multiple views.
+
+#### **Extended Theme System Files**
+- **Theme+Variants.swift**: Individual theme implementations with unique color palettes and styling.
+- **ThemeAwareModifier.swift**: SwiftUI view modifier for automatic theme application.
+- **ThemeSystemFix.swift**: Legacy theme system compatibility and migration helpers.
+- **StatusBarBackgroundModifier.swift**: Status bar theming integration with app themes.
+
+#### **Additional Extensions (/books/Extensions/)**
+- **StatusBarStyleModifier.swift**: SwiftUI modifier for status bar style management.
+- **UIColor+Luminance.swift**: Color utilities for calculating luminance and contrast ratios.
+
+#### **Styling Support (/books/Styling/)**
+- **ThemeMigrationHelper.swift**: Utilities for migrating between theme system versions.
+
+#### **App Integration (/books/App/)**
+- **ThemeAwareHostingController.swift**: UIKit integration for theme-aware hosting controller with status bar management.
 
 ---
 
@@ -123,7 +150,7 @@ The Books Reading Tracker project is organized into several main directories wit
 - **ImageCache.swift**: Image caching and memory management for book covers.
 - **DataMigrationManager.swift**: Handle SwiftData schema migrations and data updates.
 - **HapticFeedbackManager.swift**: Centralized haptic feedback system for all interactions.
-- **CSVImportService.swift**: Enhanced CSV import service with smart fallback strategies.
+- **CSVImportService.swift**: **🚨 CRITICAL FIX** - Enhanced CSV import service with **SwiftData relationship management fix**. Resolves fatal "PersistentIdentifier remapped to temporary" error through proper BookMetadata/UserBook insertion order and duplicate handling.
 
 #### **Utilities (/books/Utilities/)**
 - **barcode_scanner.swift**: ISBN barcode scanning functionality.
@@ -135,6 +162,8 @@ The Books Reading Tracker project is organized into several main directories wit
 ### **🎯 Managers (/books/Managers/)**
 
 - **ThemeManager.swift**: Centralized theme management with persistence, switching logic, and real-time updates.
+- **ReadingGoalsManager.swift**: Reading goal tracking and progress management.
+- **StatusBarStyleManager.swift**: Manages status bar appearance across the app with theme integration.
 
 ---
 
@@ -171,6 +200,20 @@ The Books Reading Tracker project is organized into several main directories wit
 
 - **data_model_specification.txt**: SwiftData model specifications and relationships.
 - **use-swiftdata.txt**: SwiftData implementation guidelines and patterns.
+
+---
+
+## 🚀 Marketing and App Store Assets (/Marketing/)
+
+### **App Store Content**
+- **AppStoreDescription/app_store_copy.md**: Complete App Store listing copy with feature descriptions.
+- **AppStoreDescription/description.md**: Detailed app description for App Store submission.
+- **Screenshots/screenshot_guide.md**: Guidelines for generating App Store screenshots.
+- **submission_checklist.md**: Comprehensive App Store submission checklist.
+
+### **Privacy and Legal**
+- **PrivacyLabels/privacy_labels.md**: App Store privacy label definitions.
+- **PrivacyLabels/privacy_policy.md**: Privacy policy for App Store compliance.
 
 ---
 
@@ -246,3 +289,47 @@ The Books Reading Tracker project is organized into several main directories wit
 - **Column Mapping**: Smart detection and custom mapping for Goodreads CSV format
 - **Preview System**: ImportPreviewView for reviewing data before import
 - **Fallback Strategies**: Multiple fallback methods for book data retrieval
+
+---
+
+## 🚨 Critical SwiftData Fix: CSV Import Error Resolution
+
+### **Problem Resolved**
+**Fatal Error**: "PersistentIdentifier being remapped to a temporary identifier during save"
+
+### **Root Cause**
+SwiftData relationship management issue in CSV import where `BookMetadata` and `UserBook` entities were inserted separately while having relationships, causing identifier conflicts during save operations.
+
+### **Solution Implemented** 
+✅ **Proper Object Insertion Order**: Insert `BookMetadata` first to establish context identity  
+✅ **Duplicate Metadata Handling**: Check for existing `BookMetadata` with same `googleBooksID`  
+✅ **Relationship Management**: Use existing metadata when found, create new only when necessary  
+✅ **Fixed Predicate Syntax**: Corrected SwiftData `#Predicate` syntax for proper variable capture
+
+### **Technical Details**
+```swift
+// Before: Caused identifier conflicts
+modelContext.insert(bookMetadata)
+modelContext.insert(userBook)
+
+// After: Proper relationship management
+let existingMetadata = try? modelContext.fetch(existingMetadataQuery).first
+if let existing = existingMetadata {
+    finalMetadata = existing
+} else {
+    modelContext.insert(bookMetadata)
+    finalMetadata = bookMetadata
+}
+let userBook = UserBook(metadata: finalMetadata)
+modelContext.insert(userBook)
+```
+
+### **Impact**
+✅ CSV Import now works reliably without crashes  
+✅ Goodreads CSV files can be imported safely  
+✅ Build succeeds without SwiftData errors  
+✅ Data integrity maintained with proper relationships
+
+### **Commit**: `82ea4f9` - "Fix SwiftData identifier remapping error in CSV import"
+**Files Modified**: `CSVImportService.swift`
+**Status**: ✅ **RESOLVED** - CSV import fully functional
