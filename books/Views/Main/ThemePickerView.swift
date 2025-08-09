@@ -5,6 +5,7 @@ struct ThemePickerView: View {
     @State private var selectedTheme: ThemeVariant
     
     private let themeManager = ThemeManager.shared
+    private let enhancedObserver = EnhancedThemeObserver.shared
     
     init() {
         _selectedTheme = State(initialValue: ThemeManager.shared.currentTheme)
@@ -132,14 +133,28 @@ struct ThemePickerView: View {
     }
     
     private func selectTheme(_ theme: ThemeVariant) {
+        // Don't do anything if we're already using this theme
+        guard theme != themeManager.currentTheme else {
+            dismiss()
+            return
+        }
+        
         selectedTheme = theme
-        themeManager.switchTheme(to: theme, animated: true)
         
         // Enhanced haptic feedback for a delightful interaction
         HapticFeedbackManager.shared.mediumImpact()
         
-        // Automatically dismiss after a short delay to show the selection
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+        // Apply theme using the enhanced observer for reliable updates
+        enhancedObserver.switchTheme(to: theme)
+        
+        // Also update the main theme manager
+        themeManager.switchTheme(to: theme, animated: true)
+        
+        // Force global theme refresh to ensure all views update
+        ThemeSystemHealthCheck.forceGlobalThemeRefresh()
+        
+        // Automatically dismiss after a shorter delay to show the selection
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
             dismiss()
         }
     }

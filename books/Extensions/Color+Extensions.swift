@@ -1,7 +1,13 @@
 import SwiftUI
 
 extension Color {
+    // This static variable is updated by ThemeManager when theme changes
     static var theme = AppColorTheme(variant: .purpleBoho)
+    
+    // Alternative way to get current theme - always fresh
+    static var currentTheme: AppColorTheme {
+        AppColorTheme(variant: ThemeManager.shared.currentTheme)
+    }
 }
 
 // MARK: - Theme Environment Key

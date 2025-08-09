@@ -81,24 +81,33 @@ struct booksApp: App {
     var body: some Scene {
         WindowGroup {
             ZStack {
-                // Background that fills entire screen including status bar
-                // This will automatically update when either theme or color scheme changes
-                adaptiveBackground
-                    .ignoresSafeArea(.all)
-                    .onChange(of: colorScheme) { _, _ in
-                        // Force refresh system UI when color scheme changes
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                            themeManager.refreshSystemUI()
-                        }
-                    }
+                // Status bar background color layer
+                Color.theme.background
+                    .ignoresSafeArea()
                 
-                if ScreenshotMode.forceLightMode {
-                    ContentView()
-                        .environment(\.colorScheme, .light)
-                } else {
-                    ContentView()
+                Group {
+                    if ScreenshotMode.forceLightMode {
+                        ContentView()
+                            .environment(\.colorScheme, .light)
+                    } else {
+                        ContentView()
+                    }
                 }
             }
+            .onChange(of: colorScheme) { _, _ in
+                // Force refresh system UI when color scheme changes
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    themeManager.refreshSystemUI()
+                }
+            }
+            .onChange(of: themeManager.currentTheme) { _, _ in
+                // Force refresh when theme changes
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    themeManager.refreshSystemUI()
+                }
+            }
+            .statusBarHidden(false)
+            .preferredColorScheme(ScreenshotMode.forceLightMode ? .light : nil)
         }
         .modelContainer(sharedModelContainer)
     }

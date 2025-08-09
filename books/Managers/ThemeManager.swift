@@ -13,6 +13,9 @@ class ThemeManager {
         didSet {
             saveTheme()
             updateAppColorTheme()
+            
+            // Notify SwiftUI views to update (belt and suspenders approach)
+            NotificationCenter.default.post(name: .themeDidChange, object: nil)
         }
     }
     
@@ -31,12 +34,18 @@ class ThemeManager {
     }
     
     private func updateAppColorTheme() {
-        // Force update the static theme reference
+        // Immediately update the static theme reference
         Color.theme = AppColorTheme(variant: currentTheme)
         
         // Apply theme to system UI elements with a slight delay to ensure theme is updated
         #if os(iOS)
         DispatchQueue.main.async {
+            // Get the current color scheme from the system
+            let colorScheme = self.getCurrentColorScheme()
+            
+            // Notify StatusBarStyleManager about the theme change
+            StatusBarStyleManager.shared.updateStyle(for: self.currentTheme, colorScheme: colorScheme)
+            
             self.updateNavigationBarAppearance()
             self.updateTabBarAppearance()
             self.updateStatusBarStyle()
@@ -49,12 +58,27 @@ class ThemeManager {
     
     /// Public method to refresh theme when system appearance changes
     func refreshThemeForAppearanceChange() {
+        // Update the color theme and notify StatusBarStyleManager
         updateAppColorTheme()
+        
+        // Additionally ensure StatusBarStyleManager is updated with new color scheme
+        #if os(iOS)
+        DispatchQueue.main.async {
+            let colorScheme = self.getCurrentColorScheme()
+            StatusBarStyleManager.shared.updateStyle(for: self.currentTheme, colorScheme: colorScheme)
+        }
+        #endif
+        
+        // Notify observers when appearance changes (light/dark mode toggle)
+        NotificationCenter.default.post(name: .themeDidChange, object: nil)
     }
     
     func switchTheme(to theme: ThemeVariant, animated: Bool = true) {
+        // Don't do anything if we're already using this theme
+        guard theme != currentTheme else { return }
+        
         if animated {
-            withAnimation(.easeInOut(duration: 0.6)) {
+            withAnimation(.easeInOut(duration: 0.4)) {
                 currentTheme = theme
             }
         } else {
@@ -64,6 +88,10 @@ class ThemeManager {
         // Force refresh system UI elements after theme change
         #if os(iOS)
         DispatchQueue.main.asyncAfter(deadline: .now() + (animated ? 0.1 : 0.0)) {
+            // Update StatusBarStyleManager with the new theme
+            let colorScheme = self.getCurrentColorScheme()
+            StatusBarStyleManager.shared.updateStyle(for: theme, colorScheme: colorScheme)
+            
             self.refreshSystemUI()
         }
         #endif
@@ -239,15 +267,20 @@ class ThemeManager {
     
     private func updateStatusBarStyle() {
         Task { @MainActor in
-            // Update status bar style based on theme and color scheme
-            let colorScheme = UITraitCollection.current.userInterfaceStyle
+            // Update status bar style based on theme
             let theme = Color.theme
             
-            // Determine if we need light or dark content
-            // For most themes, we'll use dark content on light backgrounds and light content on dark backgrounds
-            let preferredStyle: UIStatusBarStyle = colorScheme == .dark ? .lightContent : .darkContent
+            // Use our UIColor luminance extension to determine status bar style
+            let backgroundColor = UIColor(theme.background)
             
-            // Update all windows' status bar style
+            // Use the recommendedStatusBarStyle property from our extension
+            // Note: .default is the dark content style for light backgrounds
+            let preferredStyle: UIStatusBarStyle = backgroundColor.isLight ? .darkContent : .lightContent
+            
+            // Store the preferred style globally (we'll use this in a custom hosting controller)
+            StatusBarStyleManager.shared.preferredStyle = preferredStyle
+            
+            // Update all windows' status bar appearance
             for windowScene in UIApplication.shared.connectedScenes {
                 if let windowScene = windowScene as? UIWindowScene {
                     for window in windowScene.windows {
@@ -322,6 +355,43 @@ class ThemeManager {
         if let presented = viewController.presentedViewController {
             updateViewControllerAppearance(presented)
         }
+        #endif
+    }
+    
+    private func updateViewControllerStatusBarStyle(_ viewController: UIViewController, style: UIStatusBarStyle) {
+        #if os(iOS)
+        // Check if this is a SwiftUI hosting controller
+        if viewController is UIHostingController<AnyView> {
+            // For SwiftUI hosting controllers, status bar style is handled by the ThemeAwareHostingController
+            // which overrides preferredStatusBarStyle
+        }
+        
+        // Recursively update child view controllers
+        for child in viewController.children {
+            updateViewControllerStatusBarStyle(child, style: style)
+        }
+        
+        // Handle presented view controllers
+        if let presented = viewController.presentedViewController {
+            updateViewControllerStatusBarStyle(presented, style: style)
+        }
+        #endif
+    }
+    
+    /// Helper method to determine the current color scheme from the system
+    private func getCurrentColorScheme() -> ColorScheme {
+        #if os(iOS)
+        // Check the first connected window scene for the current interface style
+        for windowScene in UIApplication.shared.connectedScenes {
+            if let windowScene = windowScene as? UIWindowScene,
+               let window = windowScene.windows.first {
+                return window.traitCollection.userInterfaceStyle == .dark ? .dark : .light
+            }
+        }
+        // Default to light if we can't determine
+        return .light
+        #else
+        return .light
         #endif
     }
     #endif
