@@ -10,31 +10,31 @@ final class UserBook: Identifiable {
     var dateCompleted: Date?
     var readingStatus: ReadingStatus {
         didSet {
-            print("UserBook: readingStatus didSet - oldValue: \(oldValue), newValue: \(readingStatus), dateStarted before: \(String(describing: dateStarted))")
+            // Auto-manage dates based on status changes
             // Auto-set dates based on status changes
             if readingStatus == .reading && oldValue != .reading && dateStarted == nil {
                 dateStarted = Date()
-                print("UserBook: dateStarted set to \(String(describing: dateStarted)) due to readingStatus change to .reading")
+                // dateStarted set when status changed to reading
             }
             
             if readingStatus == .read && oldValue != .read {
                 HapticFeedbackManager.shared.bookMarkedAsRead()
                 if dateCompleted == nil {
                     dateCompleted = Date()
-                    print("UserBook: dateCompleted set to \(String(describing: dateCompleted)) due to readingStatus change to .read")
+                    // dateCompleted set when status changed to read
                 }
                 if dateStarted == nil {
                     dateStarted = Date()
-                    print("UserBook: dateStarted set to \(String(describing: dateStarted)) due to readingStatus change to .read (was nil)")
+                    // dateStarted backfilled when status changed to read
                 }
                 
                 // ENHANCED: Complete the reading progress when marked as read
                 readingProgress = 1.0
                 if let pageCount = metadata?.pageCount, pageCount > 0 {
                     currentPage = pageCount
-                    print("UserBook: Reading progress completed (1.0) and currentPage set to \(pageCount) due to .read status")
+                    // Reading progress completed and currentPage updated
                 } else {
-                    print("UserBook: Reading progress set to 1.0, but no page count available for currentPage")
+                    // Reading progress set to 1.0, no page count available
                 }
             }
             
@@ -42,10 +42,10 @@ final class UserBook: Identifiable {
             if readingStatus != .read && oldValue == .read {
                 // If changing from read to another status, don't auto-reset progress
                 // User might want to keep their progress
-                print("UserBook: Status changed from .read to \(readingStatus) - keeping existing progress")
+                // Status changed from read - keeping existing progress
             }
             
-            print("UserBook: readingStatus didSet - dateStarted after: \(String(describing: dateStarted))")
+            // Status change processing complete
         }
     }
     var isFavorited: Bool
@@ -204,7 +204,7 @@ final class UserBook: Identifiable {
         // Set initial dates and progress based on status (non-auto since didSet won't trigger in init)
         if readingStatus == .reading {
             self.dateStarted = Date()
-            print("UserBook Init: Initial dateStarted set to \(String(describing: dateStarted)) for .reading")
+            // Initial dateStarted set for reading status
         } else if readingStatus == .read {
             self.dateStarted = Date()
             self.dateCompleted = Date()
@@ -213,14 +213,14 @@ final class UserBook: Identifiable {
             if let pageCount = metadata?.pageCount, pageCount > 0 {
                 self.currentPage = pageCount
             }
-            print("UserBook Init: Initial dateStarted, dateCompleted, and complete progress set for .read")
+            // Initial dates and complete progress set for read status
         }
         
         // Calculate initial progress (if not already set above)
         if readingStatus != .read {
             updateReadingProgress()
         }
-        print("UserBook Init: Completed. dateStarted: \(String(describing: dateStarted))")
+        // Initialization completed
     }
     
     // Enhanced progress tracking methods
@@ -369,6 +369,19 @@ enum ReadingStatus: String, Codable, CaseIterable, Identifiable, Sendable {
         case .read: return theme.success
         case .onHold: return theme.warning
         case .dnf: return theme.error
+        }
+    }
+    
+    // MARK: - Accessibility Support
+    
+    /// Human-readable accessibility label for screen readers
+    var accessibilityLabel: String {
+        switch self {
+        case .toRead: return "Want to read"
+        case .reading: return "Currently reading"  
+        case .read: return "Finished reading"
+        case .onHold: return "On hold"
+        case .dnf: return "Did not finish"
         }
     }
 }

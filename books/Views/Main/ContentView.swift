@@ -6,9 +6,7 @@ struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.appTheme) private var theme
-    
-    // Force refresh trigger for theme changes
-    @State private var themeRefreshID = UUID()
+    @Environment(\.themeStore) private var themeStore
     
     // For tracking badge counts
     @State private var libraryCount = 0
@@ -26,7 +24,6 @@ struct ContentView: View {
             }
             #endif
         }
-        .id(themeRefreshID) // Force complete view refresh on theme changes
         .fullStatusBarTheming() // Apply complete status bar theming (background + style)
         .preferredColorScheme(getPreferredColorScheme()) // Apply color scheme based on theme
         .onAppear {
@@ -212,19 +209,7 @@ struct ContentView: View {
                         LibraryView()
                     }
                 }
-                // Enhanced navigation destinations inside the NavigationStack
-                .navigationDestination(for: UserBook.self) { book in
-                    BookDetailsView(book: book)
-                }
-                .navigationDestination(for: BookMetadata.self) { bookMetadata in
-                    SearchResultDetailView(bookMetadata: bookMetadata)
-                }
-                .navigationDestination(for: String.self) { destination in
-                    destinationView(for: destination)
-                }
-                .navigationDestination(for: AuthorSearchRequest.self) { authorRequest in
-                    AuthorSearchResultsView(authorName: authorRequest.authorName)
-                }
+                .withNavigationDestinations()
             }
             .background(theme.background)
         }
@@ -236,117 +221,40 @@ struct ContentView: View {
     
     @ViewBuilder
     private var iPhoneLayout: some View {
-        ZStack(alignment: .bottom) {
-            // Main content
-            TabView(selection: $selectedTab) {
-                NavigationStack {
+        NavigationStack {
+            ZStack(alignment: .bottom) {
+                // Main content
+                TabView(selection: $selectedTab) {
                     LibraryView()
-                    // Enhanced navigation destinations inside each NavigationStack
-                        .navigationDestination(for: UserBook.self) { book in
-                            BookDetailsView(book: book)
-                        }
-                        .navigationDestination(for: BookMetadata.self) { bookMetadata in
-                            SearchResultDetailView(bookMetadata: bookMetadata)
-                        }
-                        .navigationDestination(for: String.self) { destination in
-                            destinationView(for: destination)
-                        }
-                        .navigationDestination(for: AuthorSearchRequest.self) { authorRequest in
-                            AuthorSearchResultsView(authorName: authorRequest.authorName)
-                        }
-                }
-                .tag(0)
-                
-                NavigationStack {
+                        .tag(0)
+                    
                     SearchView()
-                        .navigationDestination(for: UserBook.self) { book in
-                            BookDetailsView(book: book)
-                        }
-                        .navigationDestination(for: BookMetadata.self) { bookMetadata in
-                            SearchResultDetailView(bookMetadata: bookMetadata)
-                        }
-                        .navigationDestination(for: String.self) { destination in
-                            destinationView(for: destination)
-                        }
-                        .navigationDestination(for: AuthorSearchRequest.self) { authorRequest in
-                            AuthorSearchResultsView(authorName: authorRequest.authorName)
-                        }
-                }
-                .tag(1)
-                
-                NavigationStack {
+                        .tag(1)
+                    
                     StatsView()
-                        .navigationDestination(for: UserBook.self) { book in
-                            BookDetailsView(book: book)
-                        }
-                        .navigationDestination(for: BookMetadata.self) { bookMetadata in
-                            SearchResultDetailView(bookMetadata: bookMetadata)
-                        }
-                        .navigationDestination(for: String.self) { destination in
-                            destinationView(for: destination)
-                        }
-                        .navigationDestination(for: AuthorSearchRequest.self) { authorRequest in
-                            AuthorSearchResultsView(authorName: authorRequest.authorName)
-                        }
-                }
-                .tag(2)
-                
-                NavigationStack {
+                        .tag(2)
+                    
                     CulturalDiversityView()
-                        .navigationDestination(for: UserBook.self) { book in
-                            BookDetailsView(book: book)
-                        }
-                        .navigationDestination(for: BookMetadata.self) { bookMetadata in
-                            SearchResultDetailView(bookMetadata: bookMetadata)
-                        }
-                        .navigationDestination(for: String.self) { destination in
-                            destinationView(for: destination)
-                        }
-                        .navigationDestination(for: AuthorSearchRequest.self) { authorRequest in
-                            AuthorSearchResultsView(authorName: authorRequest.authorName)
-                        }
+                        .tag(3)
                 }
-                .tag(3)
+                .tabViewStyle(.page(indexDisplayMode: .never))
+                .ignoresSafeArea(.keyboard)
+                .padding(.bottom, 80) // Add padding to prevent custom tab bar from blocking content
+                
+                // Custom Enhanced Tab Bar
+                EnhancedTabBar(
+                    selectedTab: $selectedTab,
+                    libraryCount: libraryCount,
+                    wishlistCount: wishlistCount,
+                    completedBooksCount: completedBooksCount,
+                    currentlyReadingCount: currentlyReadingCount
+                )
             }
-            .tabViewStyle(.page(indexDisplayMode: .never))
-            .ignoresSafeArea(.keyboard)
-            .padding(.bottom, 80) // Add padding to prevent custom tab bar from blocking content
-            
-            // Custom Enhanced Tab Bar
-            EnhancedTabBar(
-                selectedTab: $selectedTab,
-                libraryCount: libraryCount,
-                wishlistCount: wishlistCount,
-                completedBooksCount: completedBooksCount,
-                currentlyReadingCount: currentlyReadingCount
-            )
+            .ignoresSafeArea(.keyboard, edges: .bottom)
         }
-        .ignoresSafeArea(.keyboard, edges: .bottom)
+        .withNavigationDestinations()
     }
     
-    // MARK: - Destination View
-    
-    @ViewBuilder
-    private func destinationView(for destination: String) -> some View {
-        switch destination {
-        case "Library":
-            LibraryView()
-        case "Search":
-            SearchView()
-        case "Stats":
-            StatsView()
-        case "Culture":
-            CulturalDiversityView()
-        default:
-            // Handle author names or other string destinations
-            if destination.starts(with: "author:") {
-                let authorName = String(destination.dropFirst(7)) // Remove "author:" prefix
-                AuthorSearchResultsView(authorName: authorName)
-            } else {
-                LibraryView()
-            }
-        }
-    }
 }
 
 // MARK: - Enhanced Navigation Item for iPad

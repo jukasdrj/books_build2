@@ -80,7 +80,7 @@ struct SearchResultDetailView: View {
                 NavigationStack {
                     EditBookView(userBook: book) { savedBook in
                         // Handle save completion
-                        print("Book details saved: \(savedBook.metadata?.title ?? "Unknown")")
+// print("Book details saved: \(savedBook.metadata?.title ?? "Unknown")")
                         showingEditView = false
                         dismiss() 
                     }
@@ -123,7 +123,7 @@ struct SearchResultDetailView: View {
                 existingBook = duplicate
             }
         } catch {
-            print("Error fetching user books for duplicate check: \(error)")
+// print("Error fetching user books for duplicate check: \(error)")
             // If we can't fetch, just continue without duplicate checking
         }
     }

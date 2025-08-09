@@ -406,7 +406,7 @@ struct EnhancedEditBookView: View {
         do {
             try modelContext.save()
         } catch {
-            print("Failed to save book changes: \(error)")
+// print("Failed to save book changes: \(error)")
         }
     }
 }
@@ -525,9 +525,9 @@ struct BookStatusSelector: View {
             // Set current page to total pages if available
             if let pageCount = book.metadata?.pageCount, pageCount > 0 {
                 book.currentPage = pageCount
-                print("✅ BookStatusSelector: Completed progress - currentPage set to \(pageCount), progress set to 1.0")
+// print("✅ BookStatusSelector: Completed progress - currentPage set to \(pageCount), progress set to 1.0")
             } else {
-                print("✅ BookStatusSelector: Completed progress - progress set to 1.0, no page count available")
+// print("✅ BookStatusSelector: Completed progress - progress set to 1.0, no page count available")
             }
             
             // Set completion date if not already set
@@ -562,9 +562,9 @@ struct BookStatusSelector: View {
         // Save the changes
         do {
             try modelContext.save()
-            print("✅ BookStatusSelector: Status updated to \(status.rawValue) and saved successfully")
+// print("✅ BookStatusSelector: Status updated to \(status.rawValue) and saved successfully")
         } catch {
-            print("❌ BookStatusSelector: Failed to update status: \(error)")
+// print("❌ BookStatusSelector: Failed to update status: \(error)")
         }
     }
 }

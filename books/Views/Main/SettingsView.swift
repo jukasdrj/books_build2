@@ -204,7 +204,7 @@ struct SettingsView: View {
                         subtitle: "Backup your reading library",
                         action: {
                             // TODO: Implement export functionality
-                            print("Export data tapped")
+// print("Export data tapped")
                             HapticFeedbackManager.shared.lightImpact()
                         }
                     )
@@ -223,7 +223,7 @@ struct SettingsView: View {
                         subtitle: "Version 1.0.0 • Made with 💜",
                         action: {
                             // TODO: Show more detailed about info
-                            print("About tapped")
+// print("About tapped")
                             HapticFeedbackManager.shared.lightImpact()
                         }
                     )

@@ -379,7 +379,7 @@ struct FeatureHighlightCard: View {
         LoadingView(message: "Loading books...")
         
         ErrorView(error: NSError(domain: "TestError", code: 1, userInfo: [NSLocalizedDescriptionKey: "Test error message"])) {
-            print("Retry tapped")
+// print("Retry tapped")
         }
         
         EmptyStateView(
@@ -388,7 +388,7 @@ struct FeatureHighlightCard: View {
             message: "Start building your library by adding your first book",
             actionTitle: "Add Book"
         ) {
-            print("Add book tapped")
+// print("Add book tapped")
         }
     }
     .padding()

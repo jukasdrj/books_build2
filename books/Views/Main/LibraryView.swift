@@ -16,6 +16,10 @@ struct LibraryView: View {
     @State private var stableFilteredBooks: [UserBook] = []
     @State private var bookCount: Int = 0
     
+    // Memoization for expensive filtering operations
+    @State private var memoizedFilteredBooks: [UserBook] = []
+    @State private var lastFilterHash: Int = 0
+    
     init(filter: LibraryFilter? = nil) {
         if let filter = filter {
             _libraryFilter = State(initialValue: filter)
@@ -35,45 +39,29 @@ struct LibraryView: View {
         }
     }
     
-    private var filteredBooks: [UserBook] {
-        var books = allBooks
-        
-        // Apply search filter first
-        if !searchText.isEmpty {
-            books = books.filter { book in
-                let title = book.metadata?.title ?? ""
-                let authors = book.metadata?.authors.joined(separator: " ") ?? ""
-                return title.localizedCaseInsensitiveContains(searchText) ||
-                       authors.localizedCaseInsensitiveContains(searchText)
+    /// Optimized filtering with lazy evaluation (without state modification during view update)
+    private func computeFilteredBooks() -> [UserBook] {
+        // Perform optimized filtering with single-pass approach
+        return allBooks.lazy
+            .filter { book in
+                // Combined filtering logic in single pass
+                let matchesSearch = searchText.isEmpty || {
+                    let title = book.metadata?.title ?? ""
+                    let authors = book.metadata?.authors.joined(separator: " ") ?? ""
+                    return title.localizedCaseInsensitiveContains(searchText) ||
+                           authors.localizedCaseInsensitiveContains(searchText)
+                }()
+                
+                let matchesStatus = libraryFilter.readingStatus.contains(book.readingStatus)
+                let matchesWishlist = !libraryFilter.showWishlistOnly || book.onWishlist
+                let matchesOwned = !libraryFilter.showOwnedOnly || book.owned
+                let matchesFavorites = !libraryFilter.showFavoritesOnly || book.isFavorited
+                
+                return matchesSearch && matchesStatus && matchesWishlist && matchesOwned && matchesFavorites
             }
-        }
-        
-        // Apply library filters
-        books = books.filter { book in
-            // Reading status filter
-            guard libraryFilter.readingStatus.contains(book.readingStatus) else {
-                return false
+            .reduce(into: [UserBook]()) { result, book in
+                result.append(book)
             }
-            
-            // Wishlist filter
-            if libraryFilter.showWishlistOnly && !book.onWishlist {
-                return false
-            }
-            
-            // Owned filter
-            if libraryFilter.showOwnedOnly && !book.owned {
-                return false
-            }
-            
-            // Favorites filter
-            if libraryFilter.showFavoritesOnly && !book.isFavorited {
-                return false
-            }
-            
-            return true
-        }
-        
-        return books
     }
     
     var body: some View {
@@ -152,6 +140,7 @@ struct LibraryView: View {
                 }
             }
         }
+        .withNavigationDestinations()
         .navigationTitle(libraryFilter.showWishlistOnly ? "Wishlist (\(bookCount))" : "Library (\(bookCount))")
         .navigationBarTitleDisplayMode(.large)
         .searchable(text: $searchText, prompt: "Search by title or author...")
@@ -185,7 +174,7 @@ struct LibraryView: View {
         .onAppear {
             updateStableBooks()
         }
-        .onChange(of: filteredBooks) { _, newBooks in
+        .onChange(of: allBooks) { _, _ in
             updateStableBooks()
         }
         .onChange(of: searchText) { _, _ in
@@ -199,8 +188,32 @@ struct LibraryView: View {
         }
     }
     
+    /// Hash function for memoization of filter criteria
+    private func hashOf(_ searchText: String, _ filter: LibraryFilter) -> Int {
+        var hasher = Hasher()
+        hasher.combine(searchText)
+        hasher.combine(filter.showWishlistOnly)
+        hasher.combine(filter.showOwnedOnly)
+        hasher.combine(filter.showFavoritesOnly)
+        hasher.combine(filter.readingStatus)
+        hasher.combine(allBooks.count) // Include data version
+        return hasher.finalize()
+    }
+    
     private func updateStableBooks() {
-        let newBooks = filteredBooks
+        let currentFilterHash = hashOf(searchText, libraryFilter)
+        
+        // Check if we can use memoized results
+        let newBooks: [UserBook]
+        if currentFilterHash == lastFilterHash && !memoizedFilteredBooks.isEmpty {
+            newBooks = memoizedFilteredBooks
+        } else {
+            // Compute new filtered books and update cache
+            newBooks = computeFilteredBooks()
+            memoizedFilteredBooks = newBooks
+            lastFilterHash = currentFilterHash
+        }
+        
         let newCount = newBooks.count
         
         // Only update if there's a significant change

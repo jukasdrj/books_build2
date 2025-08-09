@@ -52,26 +52,30 @@ struct BookCardView: View {
     // MARK: - Enhanced Accessibility
     
     private var accessibilityDescription: String {
-        var description = book.metadata?.title ?? "Unknown Title"
+        var components: [String] = []
+        
+        // Title and author
+        let title = book.metadata?.title ?? "Unknown Title"
+        components.append(title)
         
         if let authors = book.metadata?.authors, !authors.isEmpty {
-            description += " by \(authors.joined(separator: ", "))"
+            components.append("by \(authors.joined(separator: ", "))")
         }
         
+        // Status using accessibility label
+        components.append("Status: \(book.readingStatus.accessibilityLabel)")
+        
+        // Rating
         if let rating = book.rating {
-            description += ". Rated \(rating) out of 5 stars"
-        } else {
-            description += ". Not rated"
+            components.append("Rated \(rating) out of 5 stars")
         }
         
-        if book.readingStatus != .toRead {
-            description += ". Status: \(book.readingStatus.rawValue)"
-            
-            if book.readingStatus == .reading && book.readingProgress > 0 {
-                description += ". \(Int(book.readingProgress * 100))% complete"
-            }
+        // Progress
+        if book.readingStatus == .reading && book.readingProgress > 0 {
+            let percentage = Int(book.readingProgress * 100)
+            components.append("\(percentage) percent complete")
         }
         
-        return description
+        return components.joined(separator: ". ")
     }
 }

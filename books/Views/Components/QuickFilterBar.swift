@@ -56,6 +56,6 @@ struct QuickFilterBar: View {
 
 #Preview {
     QuickFilterBar(filter: .constant(LibraryFilter.all)) {
-        print("Show full filters")
+// print("Show full filters")
     }
 }

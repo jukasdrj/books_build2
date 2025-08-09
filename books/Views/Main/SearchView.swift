@@ -25,8 +25,7 @@ struct SearchView: View {
     }
 
     var body: some View {
-        NavigationStack(path: $navigationPath) {
-            VStack(spacing: 0) {
+        VStack(spacing: 0) {
                 // ScreenshotMode visual banner (purple gradient, visible only in ScreenshotMode)
                 if ScreenshotMode.isEnabled {
                     ZStack {
@@ -139,24 +138,6 @@ struct SearchView: View {
                     handleBarcodeScanned(scannedBarcode)
                 }
             }
-            .navigationDestination(for: BookMetadata.self) { bookMetadata in
-                SearchResultDetailView(
-                    bookMetadata: bookMetadata, 
-                    fromBarcodeScanner: true
-                ) {
-                    // onReturnToBarcode callback - goes back to scanner
-                    showingBarcodeScanner = true
-                }
-            }
-            // .navigationDestination(isPresented: $showingBarcodeSearchResult) {
-            //     if let bookMetadata = barcodeSearchResult {
-            //         SearchResultDetailView(bookMetadata: bookMetadata, fromBarcodeScanner: true) {
-            //             showingBarcodeSearchResult = false
-            //             showingBarcodeScanner = true
-            //         }
-            //     }
-            // }
-        }
     }
     
     // MARK: - Search Controls Bar

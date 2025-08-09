@@ -64,10 +64,10 @@ class BookSearchService: ObservableObject {
             return .success([]) // Return empty results for empty queries
         }
         
-        print("🔍 BookSearchService: Starting search for query: '\(trimmedQuery)' with sort: \(sortBy.displayName)")
+        // Starting search with optimized query
         
         guard var components = URLComponents(string: baseURL) else {
-            print("❌ BookSearchService: Invalid base URL")
+            // Invalid base URL
             return .failure(.invalidURL)
         }
         
@@ -97,11 +97,11 @@ class BookSearchService: ObservableObject {
         components.queryItems = queryItems
 
         guard let url = components.url else {
-            print("❌ BookSearchService: Failed to construct URL from components")
+            // Failed to construct URL from components
             return .failure(.invalidURL)
         }
         
-        print("🌐 BookSearchService: Making request to: \(url.absoluteString)")
+        // Making network request
 
         do {
             // Create URL session with better configuration
@@ -115,13 +115,13 @@ class BookSearchService: ObservableObject {
             
             // Check HTTP response
             if let httpResponse = response as? HTTPURLResponse {
-                print("📡 BookSearchService: HTTP Status: \(httpResponse.statusCode)")
+                // HTTP response received
                 guard 200...299 ~= httpResponse.statusCode else {
                     return .failure(.networkError("HTTP \(httpResponse.statusCode)"))
                 }
             }
             
-            print("📊 BookSearchService: Response data size: \(data.count) bytes")
+            // Processing response data
             
             let searchResponse = try JSONDecoder().decode(GoogleBooksResponse.self, from: data)
             
@@ -134,7 +134,7 @@ class BookSearchService: ObservableObject {
                 sortBy: sortBy
             )
             
-            print("📚 BookSearchService: Returning \(processedResults.count) processed results")
+            // Returning processed results
             return .success(processedResults)
             
         } catch let error as URLError {

@@ -286,7 +286,7 @@ class CameraPreviewView: UIView {
                 device.torchMode = isOn ? .on : .off
                 device.unlockForConfiguration()
             } catch {
-                print("❌ Failed to configure torch: \(error)")
+// print("❌ Failed to configure torch: \(error)")
             }
         }
     }
@@ -310,7 +310,7 @@ class CameraPreviewView: UIView {
                 
                 device.unlockForConfiguration()
             } catch {
-                print("❌ Failed to configure focus: \(error)")
+// print("❌ Failed to configure focus: \(error)")
             }
         }
     }
@@ -379,7 +379,7 @@ class CameraPreviewView: UIView {
             
             videoDevice.unlockForConfiguration()
         } catch {
-            print("❌ Failed to configure video device: \(error)")
+// print("❌ Failed to configure video device: \(error)")
         }
         
         // Add video data output for Vision framework
@@ -438,7 +438,7 @@ class CameraPreviewView: UIView {
                     device.torchMode = .off
                     device.unlockForConfiguration()
                 } catch {
-                    print("❌ Failed to turn off torch: \(error)")
+// print("❌ Failed to turn off torch: \(error)")
                 }
             }
             
@@ -474,7 +474,7 @@ class CameraPreviewView: UIView {
                     device.torchMode = .off
                     device.unlockForConfiguration()
                 } catch {
-                    print("❌ Failed to turn off torch: \(error)")
+// print("❌ Failed to turn off torch: \(error)")
                 }
             }
             
@@ -520,7 +520,7 @@ extension CameraPreviewView: AVCaptureVideoDataOutputSampleBufferDelegate {
         do {
             try handler.perform([request])
         } catch {
-            print("❌ Vision barcode detection failed: \(error)")
+// print("❌ Vision barcode detection failed: \(error)")
         }
     }
 }
@@ -646,6 +646,6 @@ struct ScanningOverlay: View {
 
 #Preview {
     BarcodeScannerView { barcode in
-        print("Scanned: \(barcode)")
+// print("Scanned: \(barcode)")
     }
 }

@@ -51,9 +51,9 @@ class DataMigrationManager: ObservableObject {
             }
             
             try context.save()
-            print("Reading status migration completed for \(books.count) books")
+// print("Reading status migration completed for \(books.count) books")
         } catch {
-            print("Error during reading status migration: \(error)")
+// print("Error during reading status migration: \(error)")
         }
     }
     

@@ -180,13 +180,13 @@ struct QuickRatingView: View {
                 isVisible: $isVisible,
                 onRatingComplete: { newRating in
                     rating = newRating
-                    print("Rating completed: \(newRating)")
+// print("Rating completed: \(newRating)")
                 },
                 onMarkAsRead: {
-                    print("Book marked as read")
+// print("Book marked as read")
                 },
                 onCancel: {
-                    print("Rating cancelled")
+// print("Rating cancelled")
                 }
             )
         }

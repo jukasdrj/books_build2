@@ -5,8 +5,15 @@ import Observation
 /// Provides persistence and reactive updates throughout the app
 @Observable
 class ThemeStore {
+    @ObservationIgnored private let userDefaults = UserDefaults.standard
+    
     /// Current selected theme variant
-    var currentTheme: ThemeVariant = .purpleBoho
+    var currentTheme: ThemeVariant = .purpleBoho {
+        didSet {
+            persistTheme()
+            // @Observable handles updates automatically - no NotificationCenter needed
+        }
+    }
     
     /// Computed property for the current AppColorTheme
     var appTheme: AppColorTheme {
@@ -17,17 +24,13 @@ class ThemeStore {
         loadPersistedTheme()
     }
     
-    /// Sets a new theme and persists the selection
+    /// Sets a new theme with animation and haptic feedback
     /// - Parameter theme: The theme variant to set
     @MainActor
     func setTheme(_ theme: ThemeVariant) {
-        currentTheme = theme
-        persistTheme()
-        
-        // Post notification for components that need to react to theme changes
-        NotificationCenter.default.post(name: .themeDidChange, object: nil)
-        
-        // Add haptic feedback for better UX
+        withAnimation(.easeInOut(duration: 0.3)) {
+            currentTheme = theme
+        }
         HapticFeedbackManager.shared.mediumImpact()
     }
     

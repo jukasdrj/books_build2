@@ -5,26 +5,18 @@ extension Notification.Name {
     static let themeDidChange = Notification.Name("ThemeDidChangeNotification")
 }
 
-/// A view modifier that ensures views update when the theme changes
+/// An optimized view modifier that ensures efficient theme updates without expensive view rebuilds
 struct ThemeAwareModifier: ViewModifier {
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.appTheme) private var currentTheme
-    
-    // Force views to update when theme changes
-    @State private var themeUpdateTrigger = UUID()
+    @Environment(\.themeStore) private var themeStore
     
     func body(content: Content) -> some View {
         content
-            .onChange(of: colorScheme) { _, _ in
-                // Force update when color scheme changes
-                themeUpdateTrigger = UUID()
-            }
-            .environment(\.appTheme, currentTheme)
-            .id(themeUpdateTrigger) // Force view to fully rebuild on theme changes
-            .onReceive(NotificationCenter.default.publisher(for: .themeDidChange)) { _ in
-                // Force update when theme changes
-                themeUpdateTrigger = UUID()
-            }
+            .environment(\.appTheme, themeStore.appTheme)
+            .animation(.easeInOut(duration: 0.3), value: themeStore.currentTheme)
+            .animation(.easeInOut(duration: 0.3), value: colorScheme)
+            // Removed .id() - let SwiftUI handle efficient updates naturally
     }
 }
 

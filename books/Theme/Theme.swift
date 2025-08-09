@@ -490,7 +490,7 @@ struct MaterialButtonModifier: ViewModifier {
     func body(content: Content) -> some View {
         content
             .padding(size.padding)
-            .frame(minHeight: max(size.height, Theme.Size.minTouchTarget)) // Use Theme constant
+            .frame(minHeight: max(size.height, Theme.Size.minTouchTarget))
             .background(backgroundColor)
             .foregroundColor(foregroundColor)
             .cornerRadius(Theme.CornerRadius.button)
@@ -500,11 +500,12 @@ struct MaterialButtonModifier: ViewModifier {
             )
             .opacity(isEnabled ? 1.0 : 0.38)
             .disabled(!isEnabled)
-            .animation(Theme.Animation.accessible, value: isEnabled) // Use accessibility-aware animation
-            // Enhanced accessibility - Fixed syntax
+            .animation(Theme.Animation.accessible ?? .none, value: isEnabled)
+            // Enhanced accessibility
             .accessibilityAddTraits(.isButton)
             .accessibilityRespondsToUserInteraction(isEnabled)
-            .dynamicTypeSize(.large...DynamicTypeSize.accessibility3) // Support larger text
+            .dynamicTypeSize(...DynamicTypeSize.accessibility5) // Support all accessibility sizes
+            .minimumScaleFactor(0.8) // Allow text shrinking if needed
     }
     
     private var backgroundColor: SwiftUI.Color {

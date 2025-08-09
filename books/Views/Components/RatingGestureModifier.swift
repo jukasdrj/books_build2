@@ -166,10 +166,10 @@ struct RatingGestureModifierPreview: View {
                 .ratingGestures(
                     for: userBook,
                     onQuickRate: {
-                        print("Quick 5-star rating applied!")
+// print("Quick 5-star rating applied!")
                     },
                     onLongPressRate: {
-                        print("Long press - show rating picker")
+// print("Long press - show rating picker")
                     }
                 )
             

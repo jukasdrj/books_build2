@@ -7,7 +7,7 @@
 	<key>CFBundleDisplayName</key>
 	<string>oooePaperTracks</string>
 	<key>CFBundleIdentifier</key>
-	<string>oooePaperTracksv2</string>
+	<string>com.books.readingtracker</string>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>CFBundleShortVersionString</key>
@@ -37,20 +37,20 @@
 			<key>books.googleapis.com</key>
 			<dict>
 				<key>NSExceptionRequiresForwardSecrecy</key>
-				<false/>
+				<true/>
 				<key>NSExceptionMinimumTLSVersion</key>
 				<string>TLSv1.2</string>
 				<key>NSThirdPartyExceptionRequiresForwardSecrecy</key>
-				<false/>
+				<true/>
 			</dict>
 			<key>googleapis.com</key>
 			<dict>
 				<key>NSExceptionRequiresForwardSecrecy</key>
-				<false/>
+				<true/>
 				<key>NSExceptionMinimumTLSVersion</key>
 				<string>TLSv1.2</string>
 				<key>NSThirdPartyExceptionRequiresForwardSecrecy</key>
-				<false/>
+				<true/>
 			</dict>
 		</dict>
 	</dict>

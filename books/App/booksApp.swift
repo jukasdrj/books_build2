@@ -36,7 +36,7 @@ struct booksApp: App {
                     }
                 }
 
-                print("[ScreenshotMode] Loaded demo data for screenshots.")
+                // Demo data loaded for screenshots
                 return container
             } catch {
                 fatalError("ScreenshotMode: Failed to create in-memory ModelContainer: \(error)")
@@ -44,9 +44,13 @@ struct booksApp: App {
         }
         // --- End Screenshot Mode block ---
 
-        // Clean migration for ReadingStatus changes
+        // Configure model container with version-based naming
+        let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
+        let schemaVersion = "v6" // Update this when schema changes
+        let databaseName = "BooksModel_\(schemaVersion)_\(appVersion.replacingOccurrences(of: ".", with: "_"))"
+        
         let modelConfiguration = ModelConfiguration(
-            "BooksModel_v5_StatusLabels", // New version forces migration
+            databaseName,
             schema: schema,
             isStoredInMemoryOnly: false,
             allowsSave: true
@@ -54,12 +58,10 @@ struct booksApp: App {
 
         do {
             let container = try ModelContainer(for: schema, configurations: [modelConfiguration])
-            print("Successfully created ModelContainer with new status labels")
+            // Successfully created ModelContainer
             return container
         } catch {
-            print("Could not create ModelContainer: \(error)")
-            // For development, we can reset to a clean state
-            print("Attempting fallback migration...")
+            // Could not create ModelContainer, attempting fallback migration
 
             // Try with a completely new database name
             let fallbackConfig = ModelConfiguration(
@@ -72,8 +74,12 @@ struct booksApp: App {
             do {
                 return try ModelContainer(for: schema, configurations: [fallbackConfig])
             } catch {
-                print("Fallback failed, using in-memory storage: \(error)")
-                return try! ModelContainer(for: schema, configurations: [ModelConfiguration(isStoredInMemoryOnly: true)])
+                // Fallback failed, using in-memory storage as last resort
+                do {
+                    return try ModelContainer(for: schema, configurations: [ModelConfiguration(isStoredInMemoryOnly: true)])
+                } catch {
+                    fatalError("Critical: Unable to create even in-memory ModelContainer: \(error)")
+                }
             }
         }
     }()

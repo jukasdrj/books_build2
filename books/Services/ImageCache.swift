@@ -105,7 +105,7 @@ class ImageCache {
         keysQueue.async(flags: .barrier) { [weak self] in
             self?.cacheKeys.removeAll()
         }
-        print("🧹 ImageCache: Cleared all cached images due to memory warning")
+        // Cleared all cached images due to memory warning
     }
     
     /// Get cache statistics
