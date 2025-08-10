@@ -153,6 +153,7 @@ class BookSearchService: ObservableObject {
         if trimmed.hasPrefix("isbn:") {
             // Already formatted, ensure clean ISBN after prefix
             let isbnPart = String(trimmed.dropFirst(5))
+                .replacingOccurrences(of: "=", with: "")
                 .replacingOccurrences(of: "-", with: "")
                 .replacingOccurrences(of: " ", with: "")
             return "isbn:\(isbnPart)"
@@ -160,7 +161,7 @@ class BookSearchService: ObservableObject {
         
         // Handle ISBN searches
         if isISBN(trimmed) {
-            return "isbn:\(trimmed.replacingOccurrences(of: "-", with: ""))"
+            return "isbn:\(trimmed.replacingOccurrences(of: "=", with: "").replacingOccurrences(of: "-", with: ""))"
         }
         
         // Handle author-specific searches (when coming from AuthorSearchResultsView)
@@ -193,7 +194,7 @@ class BookSearchService: ObservableObject {
     }
     
     private func isISBN(_ string: String) -> Bool {
-        let cleaned = string.replacingOccurrences(of: "-", with: "")
+        let cleaned = string.replacingOccurrences(of: "=", with: "").replacingOccurrences(of: "-", with: "")
         return cleaned.count == 10 || cleaned.count == 13 && cleaned.allSatisfy { $0.isNumber }
     }
     

@@ -85,4 +85,38 @@ class HapticFeedbackManager {
     func error() {
         notification.notificationOccurred(.error)
     }
+    
+    // MARK: - Async Wrappers for SwiftUI
+    
+    /// Async wrapper for impact feedback
+    func impact() async {
+        impactLight.impactOccurred()
+    }
+    
+    /// Async wrapper for heavy impact feedback
+    func impactHeavy() async {
+        impactHeavy.impactOccurred()
+    }
+    
+    /// Async wrapper for destructive action feedback
+    func destructiveAction() async {
+        impactHeavy.impactOccurred()
+        try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 second
+        notification.notificationOccurred(.warning)
+    }
+    
+    /// Async wrapper for success feedback
+    func success() async {
+        notification.notificationOccurred(.success)
+    }
+    
+    /// Async wrapper for warning feedback
+    func warning() async {
+        notification.notificationOccurred(.warning)
+    }
+    
+    /// Async wrapper for error feedback
+    func error() async {
+        notification.notificationOccurred(.error)
+    }
 }

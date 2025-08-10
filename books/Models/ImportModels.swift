@@ -207,6 +207,15 @@ struct ImportProgress {
     var message: String = ""  // Detailed progress message
     var estimatedTimeRemaining: TimeInterval = 0  // Estimated time to completion
     
+    // Phase 2: Smart Retry Logic Statistics
+    var retryAttempts: Int = 0  // Total retry attempts made
+    var successfulRetries: Int = 0  // Retries that succeeded
+    var failedRetries: Int = 0  // Retries that failed permanently
+    var pendingRetries: Int = 0  // Current retry queue size
+    var circuitBreakerTriggered: Bool = false  // Whether circuit breaker has been triggered
+    var maxRetryAttempts: Int = 0  // Maximum retry attempts for any single request
+    var finalFailureReasons: [String: Int] = [:]  // Categorized failure reasons
+    
     var progress: Double {
         guard totalBooks > 0 else { return 0 }
         return Double(processedBooks) / Double(totalBooks)
@@ -220,6 +229,35 @@ struct ImportProgress {
         guard let startTime = startTime else { return nil }
         let endTime = self.endTime ?? Date()
         return endTime.timeIntervalSince(startTime)
+    }
+    
+    /// Get retry success rate as percentage
+    var retrySuccessRate: Double {
+        guard retryAttempts > 0 else { return 0 }
+        return Double(successfulRetries) / Double(retryAttempts) * 100.0
+    }
+    
+    /// Get a detailed status message that includes retry information
+    var detailedStatusMessage: String {
+        var components: [String] = []
+        
+        if successfulImports > 0 {
+            components.append("\(successfulImports) imported")
+        }
+        
+        if duplicatesSkipped > 0 {
+            components.append("\(duplicatesSkipped) duplicates skipped")
+        }
+        
+        if retryAttempts > 0 {
+            components.append("\(retryAttempts) retried (\(successfulRetries) succeeded)")
+        }
+        
+        if failedImports > 0 {
+            components.append("\(failedImports) failed")
+        }
+        
+        return components.joined(separator: ", ")
     }
 }
 
@@ -274,9 +312,47 @@ struct ImportResult {
     let errors: [ImportError]
     let importedBookIds: [UUID]
     
+    // Phase 2: Smart Retry Logic Results
+    let retryAttempts: Int
+    let successfulRetries: Int
+    let failedRetries: Int
+    let maxRetryAttempts: Int
+    let circuitBreakerTriggered: Bool
+    let finalFailureReasons: [String: Int]
+    
+    init(sessionId: UUID, totalBooks: Int, successfulImports: Int, failedImports: Int, 
+         duplicatesSkipped: Int, duplicatesISBN: Int, duplicatesGoogleID: Int, 
+         duplicatesTitleAuthor: Int, duration: TimeInterval, errors: [ImportError], 
+         importedBookIds: [UUID], retryAttempts: Int = 0, successfulRetries: Int = 0, 
+         failedRetries: Int = 0, maxRetryAttempts: Int = 0, circuitBreakerTriggered: Bool = false, 
+         finalFailureReasons: [String: Int] = [:]) {
+        self.sessionId = sessionId
+        self.totalBooks = totalBooks
+        self.successfulImports = successfulImports
+        self.failedImports = failedImports
+        self.duplicatesSkipped = duplicatesSkipped
+        self.duplicatesISBN = duplicatesISBN
+        self.duplicatesGoogleID = duplicatesGoogleID
+        self.duplicatesTitleAuthor = duplicatesTitleAuthor
+        self.duration = duration
+        self.errors = errors
+        self.importedBookIds = importedBookIds
+        self.retryAttempts = retryAttempts
+        self.successfulRetries = successfulRetries
+        self.failedRetries = failedRetries
+        self.maxRetryAttempts = maxRetryAttempts
+        self.circuitBreakerTriggered = circuitBreakerTriggered
+        self.finalFailureReasons = finalFailureReasons
+    }
+    
     var successRate: Double {
         guard totalBooks > 0 else { return 0 }
         return Double(successfulImports) / Double(totalBooks)
+    }
+    
+    var retrySuccessRate: Double {
+        guard retryAttempts > 0 else { return 0 }
+        return Double(successfulRetries) / Double(retryAttempts) * 100.0
     }
     
     var hasErrors: Bool {
@@ -314,11 +390,35 @@ struct ImportResult {
             }
         }
         
+        // Phase 2: Add retry information to summary
+        if retryAttempts > 0 {
+            components.append("\(retryAttempts) retries (\(successfulRetries) successful)")
+        }
+        
         if failedImports > 0 {
             components.append("\(failedImports) failed")
         }
         
         return components.joined(separator: ", ")
+    }
+    
+    var detailedSummary: String {
+        var details: [String] = [summary]
+        
+        if retryAttempts > 0 {
+            details.append("Retry success rate: \(Int(retrySuccessRate))%")
+        }
+        
+        if circuitBreakerTriggered {
+            details.append("Circuit breaker protected API health")
+        }
+        
+        if !finalFailureReasons.isEmpty {
+            let reasonSummary = finalFailureReasons.map { "\($0.key): \($0.value)" }.joined(separator: ", ")
+            details.append("Failure reasons: \(reasonSummary)")
+        }
+        
+        return details.joined(separator: "\n")
     }
 }
 

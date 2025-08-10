@@ -109,3 +109,4 @@ This app has a strong focus on tracking cultural diversity in reading:
 - **BUILD STATUS**: ✅ Successfully builds for iPhone 16 simulator (arm64-apple-ios18.0-simulator)
 - **THEME SYSTEM**: All SwiftUI previews fixed with proper AppColorTheme environment injection
 - **MATERIAL DESIGN**: All materialCard modifiers corrected with proper parameter usage
+- **CSV IMPORT**: ✅ ISBN cleaning logic fixed - removes leading `=` characters from Goodreads exports

@@ -4,9 +4,11 @@ struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.appTheme) private var currentTheme
     @Environment(\.themeStore) private var themeStore
+    @Environment(\.modelContext) private var modelContext
     @State private var showingThemePicker = false
     @State private var showingCSVImport = false
     @State private var showingGoalSettings = false
+    @State private var showingLibraryReset = false
     
     
     var body: some View {
@@ -208,6 +210,43 @@ struct SettingsView: View {
                             HapticFeedbackManager.shared.lightImpact()
                         }
                     )
+                    
+                    // Reset Library - Destructive action with proper iOS styling
+                    Button {
+                        showingLibraryReset = true
+                        HapticFeedbackManager.shared.warning()
+                    } label: {
+                        HStack(spacing: Theme.Spacing.md) {
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(Color.red.opacity(0.15))
+                                    .frame(width: 36, height: 36)
+                                
+                                Image(systemName: "trash.fill")
+                                    .foregroundColor(.red)
+                                    .font(.system(size: 18, weight: .medium))
+                            }
+                            
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Reset Library")
+                                    .font(.body)
+                                    .foregroundColor(.red)
+                                
+                                Text("Delete all books and data")
+                                    .font(.caption)
+                                    .foregroundColor(currentTheme.secondaryText)
+                            }
+                            
+                            Spacer()
+                            
+                            Image(systemName: "chevron.right")
+                                .foregroundColor(.red.opacity(0.6))
+                                .font(.footnote)
+                                .fontWeight(.semibold)
+                        }
+                        .padding(.vertical, Theme.Spacing.xs)
+                    }
+                    .buttonStyle(PlainButtonStyle())
                 } header: {
                     Text("Your Library")
                         .font(.subheadline)
@@ -255,6 +294,9 @@ struct SettingsView: View {
         }
         .sheet(isPresented: $showingGoalSettings) {
             GoalSettingsView()
+        }
+        .sheet(isPresented: $showingLibraryReset) {
+            LibraryResetConfirmationView(modelContext: modelContext)
         }
     }
     

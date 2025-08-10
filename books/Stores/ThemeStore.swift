@@ -1,17 +1,14 @@
 import SwiftUI
-import Observation
 
 /// Observable theme store that manages the current app theme
 /// Provides persistence and reactive updates throughout the app
-@Observable
-class ThemeStore {
-    @ObservationIgnored private let userDefaults = UserDefaults.standard
+class ThemeStore: ObservableObject {
+    private let userDefaults = UserDefaults.standard
     
     /// Current selected theme variant
-    var currentTheme: ThemeVariant = .purpleBoho {
+    @Published var currentTheme: ThemeVariant = .purpleBoho {
         didSet {
             persistTheme()
-            // @Observable handles updates automatically - no NotificationCenter needed
         }
     }
     

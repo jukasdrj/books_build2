@@ -99,6 +99,9 @@ struct CSVImportTests {
             successfulImports: 85,
             failedImports: 10,
             duplicatesSkipped: 5,
+            duplicatesISBN: 3,
+            duplicatesGoogleID: 1,
+            duplicatesTitleAuthor: 1,
             duration: 120.0,
             errors: [],
             importedBookIds: []
