@@ -1,11 +1,13 @@
 // books-buildout/books/booksApp.swift
 import SwiftUI
 import SwiftData
+import UIKit
 
 @main
 struct booksApp: App {
     @State private var themeStore = ThemeStore()
     @Environment(\.colorScheme) private var colorScheme
+    @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     
     private var adaptiveBackground: Color {
         // Force dependency on colorScheme to ensure updates on light/dark mode changes
@@ -121,5 +123,39 @@ struct ThemedRootView: View {
         }
         .statusBarHidden(false)
         .preferredColorScheme(ScreenshotMode.forceLightMode ? .light : nil)
+        .onAppear {
+            // Set up import state manager with model context
+            Task { @MainActor in
+                // We'll set up the model context in the ContentView where it has access to the environment
+            }
+        }
+    }
+}
+
+// MARK: - App Delegate for Background Task Management
+
+class AppDelegate: NSObject, UIApplicationDelegate {
+    
+    func application(
+        _ application: UIApplication,
+        didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
+    ) -> Bool {
+        // Register background tasks
+        BackgroundTaskManager.shared.registerBackgroundTasks()
+        
+        print("[AppDelegate] App launched - background tasks registered")
+        return true
+    }
+    
+    func applicationDidEnterBackground(_ application: UIApplication) {
+        BackgroundTaskManager.shared.handleAppDidEnterBackground()
+    }
+    
+    func applicationDidBecomeActive(_ application: UIApplication) {
+        BackgroundTaskManager.shared.handleAppDidBecomeActive()
+    }
+    
+    func applicationWillTerminate(_ application: UIApplication) {
+        BackgroundTaskManager.shared.handleAppWillTerminate()
     }
 }

@@ -19,7 +19,8 @@ This summary provides a high-level overview of the project for efficient context
 -   **Navigation**: Robust 4-tab `TabView` in `ContentView.swift` (Library, Search, Stats, Culture) with programmatic tab switching and **optimized navigation architecture**
 -   **API Integration**: `BookSearchService.swift` handles Google Books API calls with async/await pattern
 -   **Theming**: A comprehensive **multi-theme Material Design 3** theme system in `Theme.swift` and `Color+Extensions.swift` with full `.materialCard()`, `.materialButton()`, and `.materialInteractive()` component support
--   **Import System**: **Fully Integrated CSV Import** with smart fallback strategies, beautiful UI, and comprehensive error handling accessible from main interface
+-   **Import System**: **Background-Capable CSV Import** with smart fallback strategies, state persistence, and resume functionality
+-   **Background Processing**: Full iOS background task support with 30+ seconds runtime and automatic state recovery
 -   **Asynchronous Operations**: Uses `async/await` for network requests and image loading
 -   **Caching**: `ImageCache.swift` provides an in-memory cache for book cover images
 -   **Navigation Architecture**: **Optimized NavigationStack** with consolidated destination handling, eliminated warnings, and stable performance

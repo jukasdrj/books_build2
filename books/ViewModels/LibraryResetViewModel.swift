@@ -274,10 +274,12 @@ class LibraryResetViewModel: ObservableObject {
             holdTimer = nil
             isHoldingButton = false
             
-            Task {
+            Task { @MainActor in
                 await hapticManager.success()
                 // Show export options
                 showingExportOptions = true
+                // Move to the exporting step
+                currentStep = .exporting
             }
         }
     }

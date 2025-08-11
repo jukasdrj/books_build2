@@ -150,7 +150,13 @@ The Books Reading Tracker project is organized into several main directories wit
 - **ImageCache.swift**: Image caching and memory management for book covers.
 - **DataMigrationManager.swift**: Handle SwiftData schema migrations and data updates.
 - **HapticFeedbackManager.swift**: Centralized haptic feedback system for all interactions.
-- **CSVImportService.swift**: **🚨 CRITICAL FIX** - Enhanced CSV import service with **SwiftData relationship management fix**. Resolves fatal "PersistentIdentifier remapped to temporary" error through proper BookMetadata/UserBook insertion order and duplicate handling.
+- **CSVImportService.swift**: **Background-capable CSV import** with state persistence and resume functionality.
+- **BackgroundTaskManager.swift**: **NEW** - iOS background task lifecycle management with 30+ seconds runtime.
+- **ImportStateManager.swift**: **NEW** - Complete import state persistence across app lifecycle with recovery.
+- **LiveActivityManager.swift**: **NEW** - Live Activities foundation for Dynamic Island support (Phase 2).
+- **PerformanceMonitor.swift**: Performance monitoring with adaptive concurrency and rate limiting.
+- **ConcurrentISBNLookupService.swift**: High-performance concurrent ISBN lookup with retry logic.
+- **LibraryResetService.swift**: Safe library reset with export and confirmation flow.
 
 #### **Utilities (/books/Utilities/)**
 - **barcode_scanner.swift**: ISBN barcode scanning functionality.

@@ -57,7 +57,7 @@ actor ISBNLookupQueue {
     
     // MARK: - Performance Monitoring (Phase 3)
     
-    private var performanceMonitor: PerformanceMonitor?
+    private weak var performanceMonitor: PerformanceMonitor?
     private var adaptiveRateLimiter: AdaptiveRateLimiter?
     
     // MARK: - Initialization
@@ -754,6 +754,7 @@ class ConcurrentISBNLookupService: ObservableObject {
     
     private let lookupQueue: ISBNLookupQueue
     private let retryQueue: RetryQueue
+    private var initTask: Task<Void, Never>?
     
     // MARK: - Performance Monitoring (Phase 3)
     
@@ -771,9 +772,15 @@ class ConcurrentISBNLookupService: ObservableObject {
         self.performanceMonitor = PerformanceMonitor()
         
         // Connect performance monitor to lookup queue
-        Task {
+        initTask = Task { [weak performanceMonitor] in
+            guard let performanceMonitor = performanceMonitor else { return }
             await lookupQueue.setPerformanceMonitor(performanceMonitor)
         }
+    }
+    
+    deinit {
+        initTask?.cancel()
+        initTask = nil
     }
     
     // MARK: - Public Interface
@@ -804,7 +811,7 @@ class ConcurrentISBNLookupService: ObservableObject {
             // Periodically update concurrency based on performance
             if completed % 10 == 0 {
                 Task {
-                    let recommendedConcurrency = await self.performanceMonitor.getRecommendedConcurrency()
+                    let recommendedConcurrency = self.performanceMonitor.getRecommendedConcurrency()
                     await self.lookupQueue.updateConcurrency(recommendedConcurrency)
                 }
             }

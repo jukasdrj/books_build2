@@ -23,6 +23,8 @@ struct CSVImportView: View {
     @State private var columnMappings: [String: BookField] = [:]
     @State private var showingError = false
     @State private var errorMessage = ""
+    @State private var showingResumeDialog = false
+    @State private var resumableImportInfo: ResumableImportInfo?
     
     enum ImportStep {
         case selectFile
@@ -153,6 +155,24 @@ struct CSVImportView: View {
             if importService == nil {
                 importService = CSVImportService(modelContext: modelContext)
             }
+            
+            // Check for resumable imports
+            checkForResumableImport()
+        }
+        .alert("Resume Import", isPresented: $showingResumeDialog) {
+            Button("Resume") {
+                resumeImport()
+            }
+            Button("Start New Import") {
+                clearResumableImport()
+            }
+            Button("Cancel", role: .cancel) {
+                dismiss()
+            }
+        } message: {
+            if let info = resumableImportInfo {
+                Text("You have an unfinished import from \(info.fileName). Would you like to resume where you left off?")
+            }
         }
     }
     
@@ -253,6 +273,34 @@ struct CSVImportView: View {
         errorMessage = message
         showingError = true
     }
+    
+    // MARK: - Background Import Support
+    
+    private func checkForResumableImport() {
+        guard let service = importService else { return }
+        
+        if service.canResumeImport(),
+           let info = service.getResumableImportInfo() {
+            resumableImportInfo = info
+            showingResumeDialog = true
+        }
+    }
+    
+    private func resumeImport() {
+        guard let service = importService else { return }
+        
+        if service.resumeImportIfAvailable() {
+            currentStep = .importing
+            resumableImportInfo = nil
+        } else {
+            showError("Unable to resume import. Please try importing again.")
+        }
+    }
+    
+    private func clearResumableImport() {
+        ImportStateManager.shared.clearImportState()
+        resumableImportInfo = nil
+    }
 }
 
 // MARK: - Import Progress View
@@ -260,6 +308,7 @@ struct CSVImportView: View {
 struct ImportProgressView: View {
     @Environment(\.appTheme) private var currentTheme
     @ObservedObject var importService: CSVImportService
+    @ObservedObject var backgroundTaskManager = BackgroundTaskManager.shared
     let onCancel: () -> Void
     
     var body: some View {
@@ -268,6 +317,11 @@ struct ImportProgressView: View {
             
             // Progress Animation and Details
             progressContent
+            
+            // Background Status
+            if backgroundTaskManager.isBackgroundTaskActive {
+                backgroundStatusView
+            }
             
             Spacer()
             
@@ -390,6 +444,36 @@ struct ImportProgressView: View {
             onCancel()
         }
         .materialButton(style: .outlined, size: .large)
+        .padding(.horizontal, Theme.Spacing.lg)
+    }
+    
+    @ViewBuilder
+    private var backgroundStatusView: some View {
+        VStack(spacing: Theme.Spacing.sm) {
+            HStack(spacing: Theme.Spacing.xs) {
+                Image(systemName: "moon.fill")
+                    .font(.caption)
+                    .foregroundColor(currentTheme.primaryAction)
+                
+                Text("Background Processing Active")
+                    .labelMedium()
+                    .foregroundColor(currentTheme.primaryText)
+            }
+            
+            if backgroundTaskManager.backgroundTimeRemaining > 0 {
+                Text("Time remaining: \(formatTime(backgroundTaskManager.backgroundTimeRemaining))")
+                    .labelSmall()
+                    .foregroundColor(currentTheme.secondaryText)
+            }
+            
+            Text("Import will continue even if you close the app")
+                .labelSmall()
+                .foregroundColor(currentTheme.secondaryText)
+                .multilineTextAlignment(.center)
+        }
+        .padding(Theme.Spacing.md)
+        .background(currentTheme.primaryAction.opacity(0.1))
+        .materialCard()
         .padding(.horizontal, Theme.Spacing.lg)
     }
     

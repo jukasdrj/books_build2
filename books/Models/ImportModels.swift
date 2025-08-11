@@ -10,7 +10,7 @@ import Foundation
 // MARK: - CSV Import Data Models
 
 /// Represents a raw CSV import session
-struct CSVImportSession {
+struct CSVImportSession: Codable {
     let id: UUID = UUID()
     let fileName: String
     let fileSize: Int
@@ -31,7 +31,7 @@ struct CSVImportSession {
 }
 
 /// Represents a column in the CSV file
-struct CSVColumn: Identifiable, Equatable {
+struct CSVColumn: Identifiable, Equatable, Codable {
     let id = UUID()
     let originalName: String        // Column name from CSV header
     let index: Int                  // Column position (0-based)
@@ -48,7 +48,7 @@ struct CSVColumn: Identifiable, Equatable {
 }
 
 /// Fields in our app that can be mapped from CSV
-enum BookField: String, CaseIterable, Identifiable {
+enum BookField: String, CaseIterable, Identifiable, Codable {
     case title = "title"
     case author = "author"
     case isbn = "isbn"
@@ -122,7 +122,7 @@ enum BookField: String, CaseIterable, Identifiable {
     }
 }
 
-enum FieldType {
+enum FieldType: Codable {
     case text
     case number
     case date
@@ -419,6 +419,65 @@ struct ImportResult {
         }
         
         return details.joined(separator: "\n")
+    }
+}
+
+// MARK: - Test Compatibility Types
+
+/// Result wrapper for book search operations (test compatibility)
+struct BookSearchResult: Identifiable, Sendable {
+    let id = UUID()
+    let metadata: BookMetadata
+    let relevanceScore: Double
+    
+    init(metadata: BookMetadata, relevanceScore: Double = 1.0) {
+        self.metadata = metadata
+        self.relevanceScore = relevanceScore
+    }
+}
+
+/// Result for CSV preview operations (test compatibility)
+struct CSVPreviewResult: Sendable {
+    let books: [ParsedBook]
+    let mappedColumns: [String: Int]
+    let totalRows: Int
+    let estimatedImportTime: TimeInterval
+    
+    var hasValidData: Bool {
+        !books.isEmpty && books.allSatisfy { $0.isValid }
+    }
+}
+
+/// Result for CSV import operations (test compatibility)
+struct CSVImportResult: Sendable {
+    let successCount: Int
+    let skippedBooks: [ParsedBook]
+    let errors: [ImportError]
+    let importDuration: TimeInterval
+    
+    var totalProcessed: Int {
+        successCount + skippedBooks.count
+    }
+    
+    var hasErrors: Bool {
+        !errors.isEmpty
+    }
+}
+
+/// Additional result type for test compatibility
+struct TestISBNLookupResult: Sendable {
+    let isbn: String
+    let metadata: BookMetadata?
+    let success: Bool
+    let error: Error?
+    let responseTime: TimeInterval
+    
+    init(isbn: String, metadata: BookMetadata?, success: Bool, error: Error? = nil, responseTime: TimeInterval = 0) {
+        self.isbn = isbn
+        self.metadata = metadata
+        self.success = success
+        self.error = error
+        self.responseTime = responseTime
     }
 }
 

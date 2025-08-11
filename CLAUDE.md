@@ -127,6 +127,36 @@ This app has a strong focus on tracking cultural diversity in reading:
 - **MATERIAL DESIGN 3**: ✅ Comprehensive MD3 system restored with full button styles and interactions
 - **CSV IMPORT**: ✅ ISBN cleaning logic fixed - removes leading `=` characters from Goodreads exports
 
+## Background Processing (Phase 1 - Implemented)
+
+### CSV Import Background Capabilities
+- **BackgroundTaskManager**: Manages iOS background task lifecycle with 30+ seconds runtime
+- **ImportStateManager**: Persists import state across app lifecycle, handles resume/recovery
+- **Background-aware Import**: CSV import continues when app is backgrounded
+- **State Persistence**: Complete import state saved to UserDefaults with automatic cleanup
+- **Resume Dialogs**: Users prompted to resume interrupted imports on app launch
+- **Info.plist**: Background processing and fetch capabilities enabled
+
+### Live Activities Foundation (Phase 2 - Prepared)
+- **LiveActivityManager**: Complete architecture for Dynamic Island integration
+- Ready for Widget Extension and Live Activity implementation
+
+## Recent Fixes (2024)
+
+### Library Reset Issues
+- **Fixed**: ThemeStore environment object properly passed using `@Environment(\.themeStore)`
+- **Fixed**: Hold-to-confirm button progression with proper state advancement
+- **Fixed**: SF Symbol `chart.line.downtrend` replaced with `chart.line.downtrend.xyaxis`
+
+### Memory Management
+- **Fixed**: PerformanceMonitor retain cycles with weak references in actors
+- **Fixed**: Timer property made `nonisolated(unsafe)` for safe deallocation
+- **Fixed**: All Task blocks use `[weak self]` capture lists
+
+### Build Issues
+- **Fixed**: Unnecessary `await` on synchronous `getRecommendedConcurrency()` call
+- **Fixed**: Main actor isolation errors in deinit methods
+
 # important-instruction-reminders
 Do what has been asked; nothing more, nothing less.
 NEVER create files unless they're absolutely necessary for achieving your goal.

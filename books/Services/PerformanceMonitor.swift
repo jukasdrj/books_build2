@@ -73,7 +73,7 @@ class PerformanceMonitor: ObservableObject {
     
     @Published private(set) var metrics = PerformanceMetrics()
     private let configuration = Configuration()
-    private var adjustmentTimer: Timer?
+    nonisolated(unsafe) private var adjustmentTimer: Timer?
     private let metricsQueue = DispatchQueue(label: "com.books.performance.metrics", attributes: .concurrent)
     
     // MARK: - Initialization
@@ -83,9 +83,8 @@ class PerformanceMonitor: ObservableObject {
     }
     
     deinit {
-        Task { @MainActor in
-            self.stopMonitoring()
-        }
+        adjustmentTimer?.invalidate()
+        adjustmentTimer = nil
     }
     
     // MARK: - Public Interface
@@ -95,7 +94,8 @@ class PerformanceMonitor: ObservableObject {
         metricsQueue.async(flags: .barrier) { [weak self] in
             guard let self = self else { return }
             
-            Task { @MainActor in
+            Task { @MainActor [weak self] in
+                guard let self = self else { return }
                 self.metrics.totalRequests += 1
                 self.metrics.successfulRequests += 1
                 
@@ -122,7 +122,8 @@ class PerformanceMonitor: ObservableObject {
         metricsQueue.async(flags: .barrier) { [weak self] in
             guard let self = self else { return }
             
-            Task { @MainActor in
+            Task { @MainActor [weak self] in
+                guard let self = self else { return }
                 self.metrics.totalRequests += 1
                 self.metrics.failedRequests += 1
                 
@@ -157,10 +158,11 @@ class PerformanceMonitor: ObservableObject {
     
     /// Update queue depth for monitoring
     func updateQueueDepth(_ depth: Int) {
-        Task { @MainActor in
-            let currentAverage = metrics.averageQueueDepth
-            let sampleCount = Double(metrics.totalRequests)
-            metrics.averageQueueDepth = (currentAverage * sampleCount + Double(depth)) / (sampleCount + 1)
+        Task { @MainActor [weak self] in
+            guard let self = self else { return }
+            let currentAverage = self.metrics.averageQueueDepth
+            let sampleCount = Double(self.metrics.totalRequests)
+            self.metrics.averageQueueDepth = (currentAverage * sampleCount + Double(depth)) / (sampleCount + 1)
         }
     }
     
@@ -181,8 +183,8 @@ class PerformanceMonitor: ObservableObject {
     
     /// Reset all metrics
     func resetMetrics() {
-        Task { @MainActor in
-            metrics.reset()
+        Task { @MainActor [weak self] in
+            self?.metrics.reset()
         }
     }
     
@@ -190,7 +192,7 @@ class PerformanceMonitor: ObservableObject {
     
     private func startMonitoring() {
         adjustmentTimer = Timer.scheduledTimer(withTimeInterval: configuration.adjustmentInterval, repeats: true) { [weak self] _ in
-            Task { @MainActor in
+            Task { @MainActor [weak self] in
                 self?.adjustConcurrency()
             }
         }
@@ -279,7 +281,7 @@ actor AdaptiveRateLimiter {
     private var currentRate: Double
     private var tokens: Double
     private var lastRefillTime: Date
-    private var performanceMonitor: PerformanceMonitor?
+    private weak var performanceMonitor: PerformanceMonitor?
     
     // MARK: - Initialization
     

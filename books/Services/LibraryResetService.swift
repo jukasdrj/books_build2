@@ -24,6 +24,14 @@ class LibraryResetService: ObservableObject {
         case json
     }
     
+    // MARK: - Test Compatibility Typealiases
+    
+    /// Test compatibility typealias
+    typealias LibraryResetState = ResetState
+    
+    /// Test compatibility typealias
+    typealias LibraryExportFormat = ExportFormat
+    
     // MARK: - Properties
     
     @Published private(set) var resetState: ResetState = .idle

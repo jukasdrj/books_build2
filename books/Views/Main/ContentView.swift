@@ -28,6 +28,10 @@ struct ContentView: View {
         .preferredColorScheme(getPreferredColorScheme()) // Apply color scheme based on theme
         .onAppear {
             updateBadgeCounts()
+            // Set up import state manager with model context
+            Task { @MainActor in
+                ImportStateManager.shared.setModelContext(modelContext)
+            }
         }
         .onChange(of: selectedTab) { oldValue, newValue in
             // Haptic feedback on tab switch

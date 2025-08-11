@@ -17,7 +17,7 @@ final class LibraryResetTests: XCTestCase {
             for: UserBook.self, BookMetadata.self,
             configurations: config
         )
-        modelContext = modelContainer.mainContext
+        modelContext = await modelContainer.mainContext
         
         await MainActor.run {
             resetService = LibraryResetService(modelContext: modelContext)
@@ -90,8 +90,10 @@ final class LibraryResetTests: XCTestCase {
     func testCountItemsToDelete() async {
         await resetService.countItemsToDelete()
         
-        XCTAssertEqual(resetService.booksToDelete, 2)
-        XCTAssertEqual(resetService.metadataToDelete, 2)
+        await MainActor.run {
+            XCTAssertEqual(resetService.booksToDelete, 2)
+            XCTAssertEqual(resetService.metadataToDelete, 2)
+        }
     }
     
     func testExportToCSV() async throws {
@@ -286,12 +288,16 @@ final class LibraryResetTests: XCTestCase {
     func testHoldToConfirmMechanism() async {
         // Start hold
         await resetViewModel.startHoldToConfirm()
-        XCTAssertTrue(resetViewModel.isHoldingButton)
-        XCTAssertEqual(resetViewModel.holdProgress, 0.0)
+        await MainActor.run {
+            XCTAssertTrue(resetViewModel.isHoldingButton)
+            XCTAssertEqual(resetViewModel.holdProgress, 0.0)
+        }
         
         // Stop hold before completion
-        resetViewModel.stopHoldToConfirm()
-        XCTAssertFalse(resetViewModel.isHoldingButton)
+        await resetViewModel.stopHoldToConfirm()
+        await MainActor.run {
+            XCTAssertFalse(resetViewModel.isHoldingButton)
+        }
         
         // Progress should reset if not completed
         let expectation = XCTestExpectation(description: "Hold progress reset")

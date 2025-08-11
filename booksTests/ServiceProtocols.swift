@@ -1,4 +1,6 @@
 import Foundation
+import SwiftData
+import SwiftUI
 @testable import books
 
 // MARK: - Service Protocols for Testing
@@ -19,8 +21,8 @@ protocol CSVImportServiceProtocol {
 
 /// Protocol for concurrent ISBN lookup functionality
 protocol ConcurrentISBNLookupServiceProtocol {
-    func lookupMultipleISBNs(_ isbns: [String]) async -> [ISBNLookupResult]
-    func lookupSingleISBN(_ isbn: String) async -> ISBNLookupResult
+    func lookupMultipleISBNs(_ isbns: [String]) async -> [TestISBNLookupResult]
+    func lookupSingleISBN(_ isbn: String) async -> TestISBNLookupResult
 }
 
 /// Protocol for image caching functionality
@@ -34,11 +36,11 @@ protocol ImageCacheProtocol {
 /// Protocol for library reset functionality
 protocol LibraryResetServiceProtocol {
     func countItemsToDelete() async
-    func exportLibraryData(format: LibraryExportFormat) async throws -> URL
+    func exportLibraryData(format: LibraryResetService.ExportFormat) async throws -> URL
     func resetLibrary() async throws
     var booksToDelete: Int { get }
     var metadataToDelete: Int { get }
-    var resetState: LibraryResetState { get }
+    var resetState: LibraryResetService.ResetState { get }
     var exportProgress: Double { get }
 }
 
@@ -137,18 +139,18 @@ class MockCSVImportService: CSVImportServiceProtocol {
 
 /// Mock implementation of ConcurrentISBNLookupService for testing
 class MockConcurrentISBNLookupService: ConcurrentISBNLookupServiceProtocol {
-    var lookupResults: [ISBNLookupResult] = []
-    var singleLookupResult: ISBNLookupResult?
+    var lookupResults: [TestISBNLookupResult] = []
+    var singleLookupResult: TestISBNLookupResult?
     var shouldThrowError = false
     var lookupCallCount = 0
     
-    func lookupMultipleISBNs(_ isbns: [String]) async -> [ISBNLookupResult] {
+    func lookupMultipleISBNs(_ isbns: [String]) async -> [TestISBNLookupResult] {
         lookupCallCount += 1
         
         if lookupResults.isEmpty {
             // Generate default results
             return isbns.map { isbn in
-                ISBNLookupResult(
+                TestISBNLookupResult(
                     isbn: isbn,
                     metadata: BookMetadata(
                         googleBooksID: "test-\(isbn)",
@@ -166,8 +168,8 @@ class MockConcurrentISBNLookupService: ConcurrentISBNLookupServiceProtocol {
         return lookupResults
     }
     
-    func lookupSingleISBN(_ isbn: String) async -> ISBNLookupResult {
-        return singleLookupResult ?? ISBNLookupResult(
+    func lookupSingleISBN(_ isbn: String) async -> TestISBNLookupResult {
+        return singleLookupResult ?? TestISBNLookupResult(
             isbn: isbn,
             metadata: BookMetadata(
                 googleBooksID: "test-\(isbn)",
@@ -209,7 +211,7 @@ class MockImageCache: ImageCacheProtocol {
 class MockLibraryResetService: LibraryResetServiceProtocol {
     var booksToDelete: Int = 0
     var metadataToDelete: Int = 0
-    var resetState: LibraryResetState = .idle
+    var resetState: LibraryResetService.ResetState = .idle
     var exportProgress: Double = 0.0
     var shouldThrowError = false
     var exportURL: URL?
@@ -218,7 +220,7 @@ class MockLibraryResetService: LibraryResetServiceProtocol {
         // Mock implementation - would normally count from context
     }
     
-    func exportLibraryData(format: LibraryExportFormat) async throws -> URL {
+    func exportLibraryData(format: LibraryResetService.ExportFormat) async throws -> URL {
         if shouldThrowError {
             throw MockError.exportFailed
         }

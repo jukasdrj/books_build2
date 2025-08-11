@@ -6,7 +6,7 @@ struct LibraryResetConfirmationView: View {
     @StateObject private var viewModel: LibraryResetViewModel
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
-    @EnvironmentObject private var themeStore: ThemeStore
+    @Environment(\.themeStore) private var themeStore
     
     init(modelContext: ModelContext) {
         _viewModel = StateObject(wrappedValue: LibraryResetViewModel(modelContext: modelContext))
@@ -113,16 +113,35 @@ struct LibraryResetConfirmationView: View {
             }
             
             // Next/Action button
-            Button(action: {
-                Task {
-                    await viewModel.proceedToNextStep()
-                }
-            }) {
+            if viewModel.currentStep == .holdToConfirm {
+                // Special handling for hold-to-confirm step
                 Label(actionButtonTitle, systemImage: actionButtonIcon)
                     .frame(maxWidth: .infinity)
+                    .materialButton(style: actionButtonStyle)
+                    .onLongPressGesture(
+                        minimumDuration: .infinity,
+                        maximumDistance: .infinity,
+                        pressing: { isPressing in
+                            if isPressing {
+                                viewModel.startHoldToConfirm()
+                            } else {
+                                viewModel.stopHoldToConfirm()
+                            }
+                        },
+                        perform: {}
+                    )
+            } else {
+                Button(action: {
+                    Task {
+                        await viewModel.proceedToNextStep()
+                    }
+                }) {
+                    Label(actionButtonTitle, systemImage: actionButtonIcon)
+                        .frame(maxWidth: .infinity)
+                }
+                .materialButton(style: actionButtonStyle)
+                .disabled(!canProceed)
             }
-            .materialButton(style: actionButtonStyle)
-            .disabled(!canProceed)
         }
         .padding()
         .background(Color(.systemBackground))
@@ -191,7 +210,7 @@ struct LibraryResetConfirmationView: View {
 
 struct ProgressIndicatorView: View {
     let step: LibraryResetViewModel.ConfirmationStep
-    @EnvironmentObject private var themeStore: ThemeStore
+    @Environment(\.themeStore) private var themeStore
     
     private var stepNumber: Int {
         switch step {
@@ -224,7 +243,7 @@ struct ProgressIndicatorView: View {
 
 struct InitialWarningView: View {
     let itemsDescription: String
-    @EnvironmentObject private var themeStore: ThemeStore
+    @Environment(\.themeStore) private var themeStore
     
     var body: some View {
         VStack(spacing: Theme.Spacing.xl) {
@@ -243,7 +262,7 @@ struct InitialWarningView: View {
             
             VStack(alignment: .leading, spacing: Theme.Spacing.md) {
                 Label("All your books will be deleted", systemImage: "book.closed")
-                Label("Reading progress will be lost", systemImage: "chart.line.downtrend")
+                Label("Reading progress will be lost", systemImage: "chart.line.downtrend.xyaxis")
                 Label("Notes and ratings will be removed", systemImage: "note.text")
                 Label("This action cannot be undone", systemImage: "arrow.uturn.backward.circle.badge.ellipsis")
             }
@@ -305,7 +324,7 @@ struct DetailRow: View {
     let icon: String
     let title: String
     let description: String
-    @EnvironmentObject private var themeStore: ThemeStore
+    @Environment(\.themeStore) private var themeStore
     
     var body: some View {
         HStack(alignment: .top, spacing: Theme.Spacing.md) {
@@ -331,7 +350,7 @@ struct TypeToConfirmView: View {
     @Binding var confirmationText: String
     let requiredText: String
     @FocusState private var isFocused: Bool
-    @EnvironmentObject private var themeStore: ThemeStore
+    @Environment(\.themeStore) private var themeStore
     
     var body: some View {
         VStack(spacing: Theme.Spacing.xl) {
@@ -376,7 +395,7 @@ struct HoldToConfirmView: View {
     let holdProgress: Double
     let onStart: () -> Void
     let onStop: () -> Void
-    @EnvironmentObject private var themeStore: ThemeStore
+    @Environment(\.themeStore) private var themeStore
     
     var body: some View {
         VStack(spacing: Theme.Spacing.xl) {
@@ -451,7 +470,7 @@ struct ExportOptionsView: View {
     let onExportJSON: () async -> Void
     let onSkip: () async -> Void
     let exportCompleted: Bool
-    @EnvironmentObject private var themeStore: ThemeStore
+    @Environment(\.themeStore) private var themeStore
     
     var body: some View {
         VStack(spacing: Theme.Spacing.xl) {
