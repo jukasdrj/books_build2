@@ -14,6 +14,9 @@ struct ContentView: View {
     @State private var completedBooksCount = 0
     @State private var currentlyReadingCount = 0
     
+    // Search state for SearchView
+    @State private var searchQuery = ""
+    
     var body: some View {
         Group {
             #if os(iOS)
@@ -60,6 +63,21 @@ struct ContentView: View {
             wishlistCount = books?.filter { $0.onWishlist }.count ?? 0
             completedBooksCount = books?.filter { $0.readingStatus == .read }.count ?? 0
             currentlyReadingCount = books?.filter { $0.readingStatus == .reading }.count ?? 0
+        }
+    }
+    
+    private func tabTitle(for tabIndex: Int) -> String {
+        switch tabIndex {
+        case 0:
+            return "Library"
+        case 1:
+            return "Search Books"
+        case 2:
+            return "Stats"
+        case 3:
+            return "Culture"
+        default:
+            return "PaperTracks"
         }
     }
     
@@ -204,7 +222,7 @@ struct ContentView: View {
                     case 0:
                         LibraryView()
                     case 1:
-                        SearchView()
+                        SearchView(searchQuery: $searchQuery)
                     case 2:
                         StatsView()
                     case 3:
@@ -228,22 +246,30 @@ struct ContentView: View {
         NavigationStack {
             ZStack(alignment: .bottom) {
                 // Main content
-                TabView(selection: $selectedTab) {
-                    LibraryView()
-                        .tag(0)
-                    
-                    SearchView()
-                        .tag(1)
-                    
-                    StatsView()
-                        .tag(2)
-                    
-                    CulturalDiversityView()
-                        .tag(3)
+                Group {
+                    switch selectedTab {
+                    case 0:
+                        LibraryView()
+                    case 1:
+                        SearchView(searchQuery: $searchQuery)
+                    case 2:
+                        StatsView()
+                    case 3:
+                        CulturalDiversityView()
+                    default:
+                        LibraryView()
+                    }
                 }
-                .tabViewStyle(.page(indexDisplayMode: .never))
                 .ignoresSafeArea(.keyboard)
-                .padding(.bottom, 80) // Add padding to prevent custom tab bar from blocking content
+                .padding(.bottom, 72) // Add padding to prevent custom tab bar from blocking content
+                .animation(.easeInOut(duration: 0.3), value: selectedTab)
+                // Add navigation title based on selected tab
+                .navigationTitle(tabTitle(for: selectedTab))
+                .navigationBarTitleDisplayMode(selectedTab == 1 ? .large : .inline)
+                // Add searchable modifier only for search tab
+                .if(selectedTab == 1) { view in
+                    view.searchable(text: $searchQuery, prompt: "Search by title, author, or ISBN")
+                }
                 
                 // Custom Enhanced Tab Bar
                 EnhancedTabBar(
@@ -368,7 +394,7 @@ struct EnhancedTabBar: View {
                 }
             }
             .padding(.horizontal, Theme.Spacing.md)
-            .padding(.vertical, Theme.Spacing.sm)
+            .padding(.vertical, 8)
             .background(
                 .regularMaterial,
                 in: RoundedRectangle(cornerRadius: 0)
@@ -412,16 +438,16 @@ struct EnhancedTabBarButton: View {
                 ZStack {
                     // Background circle for selected state
                     Circle()
-                        .fill(theme.primaryContainer.opacity(0.3))
-                        .frame(width: 32, height: 32)
+                        .fill(theme.primaryContainer.opacity(0.2))
+                        .frame(width: 28, height: 28)
                         .scaleEffect(isSelected ? 1.0 : 0.0)
                         .animation(.spring(response: 0.3, dampingFraction: 0.8), value: isSelected)
                     
                     // Icon
                     Image(systemName: isSelected ? item.selectedIcon : item.icon)
-                        .font(.system(size: 20, weight: .medium))
+                        .font(.system(size: 18, weight: .medium))
                         .foregroundColor(isSelected ? theme.primary : theme.onSurfaceVariant)
-                        .scaleEffect(isSelected ? 1.1 : 1.0)
+                        .scaleEffect(isSelected ? 1.05 : 1.0)
                         .animation(.spring(response: 0.3, dampingFraction: 0.8), value: isSelected)
                     
                     // Badge
@@ -437,8 +463,8 @@ struct EnhancedTabBarButton: View {
                                     .fill(theme.error)
                                     .shadow(color: theme.error.opacity(0.3), radius: 2, x: 0, y: 1)
                             )
-                            .offset(x: 12, y: -12)
-                            .scaleEffect(isSelected ? 1.1 : 1.0)
+                            .offset(x: 10, y: -10)
+                            .scaleEffect(isSelected ? 1.05 : 1.0)
                             .animation(.spring(response: 0.3, dampingFraction: 0.8), value: isSelected)
                     }
                 }
@@ -446,7 +472,7 @@ struct EnhancedTabBarButton: View {
                 // Title with dynamic badge count
                 Text(badgeTitle)
                     .font(.caption2)
-                    .fontWeight(isSelected ? .semibold : .medium)
+                    .fontWeight(isSelected ? .semibold : .regular)
                     .foregroundColor(isSelected ? theme.primary : theme.onSurfaceVariant)
                     .lineLimit(1)
                     .animation(.easeInOut(duration: 0.2), value: isSelected)
@@ -472,6 +498,18 @@ struct AuthorSearchRequest: Hashable, Identifiable {
     
     init(authorName: String) {
         self.authorName = authorName
+    }
+}
+
+// MARK: - Conditional Modifier Extension
+extension View {
+    @ViewBuilder
+    func `if`<Transform: View>(_ condition: Bool, transform: (Self) -> Transform) -> some View {
+        if condition {
+            transform(self)
+        } else {
+            self
+        }
     }
 }
 
