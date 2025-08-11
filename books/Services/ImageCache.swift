@@ -100,6 +100,14 @@ class ImageCache {
     }
     
     /// Clear all cached images
+    /// Manually clear all cached images
+    func clear() {
+        cache.removeAllObjects()
+        keysQueue.async(flags: .barrier) { [weak self] in
+            self?.cacheKeys.removeAll()
+        }
+    }
+    
     @objc private func clearCache() {
         cache.removeAllObjects()
         keysQueue.async(flags: .barrier) { [weak self] in

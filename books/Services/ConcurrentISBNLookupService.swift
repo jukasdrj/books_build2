@@ -272,7 +272,7 @@ actor ISBNLookupQueue {
 // MARK: - Result Types
 
 /// Result of an ISBN lookup operation
-enum ISBNLookupResult: Sendable {
+enum ISBNLookupResult {
     case success(BookMetadata, fromCache: Bool)
     case notFound(String) // ISBN
     case failure(String, Error) // ISBN, Error

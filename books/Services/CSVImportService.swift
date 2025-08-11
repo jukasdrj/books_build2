@@ -35,7 +35,7 @@ class CSVImportService: ObservableObject {
     init(modelContext: ModelContext) {
         self.modelContext = modelContext
         self.csvParser = CSVParser()
-        self.concurrentLookupService = ConcurrentISBNLookupService()
+        self.concurrentLookupService = ConcurrentISBNLookupService(metadataCache: [:])
     }
     
     // MARK: - Public Interface
@@ -91,7 +91,7 @@ class CSVImportService: ObservableObject {
         cachedMetadata.removeAll()
         duplicateCheckCache.removeAllObjects()
         // Reset concurrent service
-        concurrentLookupService = ConcurrentISBNLookupService()
+        concurrentLookupService = ConcurrentISBNLookupService(metadataCache: [:])
     }
     
     // MARK: - Private Implementation
@@ -359,10 +359,11 @@ class CSVImportService: ObservableObject {
             print("[CSV Import] Using cached metadata for ISBN: \(cleanISBN)")
         } else {
             // Fetch from Google Books API
-            do {
-                // Use BookSearchService directly instead of removed fetchMetadataFromISBN method
-                let searchResult = await BookSearchService.shared.search(query: isbn)
-                if case .success(let books) = searchResult, let apiMetadata = books.first {
+            // Use BookSearchService directly instead of removed fetchMetadataFromISBN method
+            let searchResult = await BookSearchService.shared.search(query: isbn)
+            switch searchResult {
+            case .success(let books):
+                if let apiMetadata = books.first {
                     // Success! Use API metadata exclusively
                     bookMetadata = apiMetadata
                     fromAPI = true
@@ -383,7 +384,7 @@ class CSVImportService: ObservableObject {
                         suggestions: ["Verify ISBN is correct", "Book may not be in Google Books database"]
                     ))
                 }
-            } catch {
+            case .failure(let error):
                 // API error
                 print("[CSV Import] API error for ISBN \(cleanISBN): \(error.localizedDescription)")
                 return .failure(ImportError(
@@ -487,8 +488,8 @@ class CSVImportService: ObservableObject {
             return false
         }
         
-        // Update concurrent service cache with our current cache
-        await concurrentLookupService.updateCache(cachedMetadata)
+        // Initialize concurrent service with our current cache
+        concurrentLookupService = ConcurrentISBNLookupService(metadataCache: cachedMetadata)
         
         // Phase 1: Process books with ISBNs concurrently
         if !booksWithISBN.isEmpty {

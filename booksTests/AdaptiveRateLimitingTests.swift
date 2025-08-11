@@ -57,66 +57,60 @@ final class AdaptiveRateLimitingTests: XCTestCase {
     }
     
     func testConcurrencyAdjustmentOnGoodPerformance() async {
-        await MainActor.run {
-            // Simulate excellent performance
-            for _ in 0..<15 {
-                performanceMonitor.recordSuccess(responseTime: 0.3)
-            }
-            
-            // Wait for adjustment interval
-            let expectation = XCTestExpectation(description: "Concurrency adjustment")
-            DispatchQueue.main.asyncAfter(deadline: .now() + 5.5) {
-                expectation.fulfill()
-            }
-            
-            await fulfillment(of: [expectation], timeout: 6.0)
-            
-            // Should recommend higher concurrency
-            let recommended = performanceMonitor.getRecommendedConcurrency()
-            XCTAssertGreaterThan(recommended, 5) // Default is 5
+        // Simulate excellent performance
+        for _ in 0..<15 {
+            await performanceMonitor.recordSuccess(responseTime: 0.3)
         }
+        
+        // Wait for adjustment interval
+        let expectation = XCTestExpectation(description: "Concurrency adjustment")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 5.5) {
+            expectation.fulfill()
+        }
+        
+        await fulfillment(of: [expectation], timeout: 6.0)
+        
+        // Should recommend higher concurrency
+        let recommended = await performanceMonitor.getRecommendedConcurrency()
+        XCTAssertGreaterThan(recommended, 5) // Default is 5
     }
     
     func testConcurrencyAdjustmentOnPoorPerformance() async {
-        await MainActor.run {
-            // Simulate poor performance
-            for _ in 0..<10 {
-                performanceMonitor.recordFailure(responseTime: 2.0, isThrottled: false)
-            }
-            
-            // Wait for adjustment interval
-            let expectation = XCTestExpectation(description: "Concurrency adjustment")
-            DispatchQueue.main.asyncAfter(deadline: .now() + 5.5) {
-                expectation.fulfill()
-            }
-            
-            await fulfillment(of: [expectation], timeout: 6.0)
-            
-            // Should recommend lower concurrency
-            let recommended = performanceMonitor.getRecommendedConcurrency()
-            XCTAssertLessThanOrEqual(recommended, 5) // Should be 5 or less
+        // Simulate poor performance
+        for _ in 0..<10 {
+            await performanceMonitor.recordFailure(responseTime: 2.0, isThrottled: false)
         }
+        
+        // Wait for adjustment interval
+        let expectation = XCTestExpectation(description: "Concurrency adjustment")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 5.5) {
+            expectation.fulfill()
+        }
+        
+        await fulfillment(of: [expectation], timeout: 6.0)
+        
+        // Should recommend lower concurrency
+        let recommended = await performanceMonitor.getRecommendedConcurrency()
+        XCTAssertLessThanOrEqual(recommended, 5) // Should be 5 or less
     }
     
     func testThrottlingPenalty() async {
-        await MainActor.run {
-            // Simulate throttling
-            for _ in 0..<5 {
-                performanceMonitor.recordFailure(responseTime: 0.5, isThrottled: true)
-            }
-            
-            // Wait for adjustment
-            let expectation = XCTestExpectation(description: "Throttling penalty")
-            DispatchQueue.main.asyncAfter(deadline: .now() + 5.5) {
-                expectation.fulfill()
-            }
-            
-            await fulfillment(of: [expectation], timeout: 6.0)
-            
-            // Should significantly reduce concurrency
-            let recommended = performanceMonitor.getRecommendedConcurrency()
-            XCTAssertLessThanOrEqual(recommended, 3) // Minimum is 3
+        // Simulate throttling
+        for _ in 0..<5 {
+            await performanceMonitor.recordFailure(responseTime: 0.5, isThrottled: true)
         }
+        
+        // Wait for adjustment
+        let expectation = XCTestExpectation(description: "Throttling penalty")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 5.5) {
+            expectation.fulfill()
+        }
+        
+        await fulfillment(of: [expectation], timeout: 6.0)
+        
+        // Should significantly reduce concurrency
+        let recommended = await performanceMonitor.getRecommendedConcurrency()
+        XCTAssertLessThanOrEqual(recommended, 3) // Minimum is 3
     }
     
     func testPerformanceReport() async {

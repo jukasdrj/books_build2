@@ -16,7 +16,7 @@ final class ConcurrentISBNRetryTests: XCTestCase {
     
     override func setUpWithError() throws {
         try super.setUpWithError()
-        concurrentLookupService = ConcurrentISBNLookupService()
+        concurrentLookupService = ConcurrentISBNLookupService(metadataCache: [:])
     }
     
     override func tearDownWithError() throws {
@@ -423,7 +423,7 @@ final class ConcurrentISBNRetryTests: XCTestCase {
         }
         
         // Circuit breaker should eventually open and prevent new retries
-        let readyRequests = await retryQueue.getReadyRetryRequests()
+        _ = await retryQueue.getReadyRetryRequests()
         // The circuit breaker logic will determine if requests are allowed
         
         let stats = await retryQueue.getRetryStats()

@@ -74,7 +74,7 @@ class LibraryResetService: ObservableObject {
         do {
             // Fetch all user books
             let descriptor = FetchDescriptor<UserBook>(
-                sortBy: [SortDescriptor(\.title)]
+                sortBy: [SortDescriptor<UserBook>(\.dateAdded, order: .forward)]
             )
             let userBooks = try modelContext.fetch(descriptor)
             
@@ -125,7 +125,7 @@ class LibraryResetService: ObservableObject {
             try modelContext.save()
             
             // 4. Clear image cache
-            imageCache.clearCache()
+            imageCache.clear()
             
             // 5. Clear UserDefaults for app preferences (except theme)
             clearUserDefaults()
@@ -174,24 +174,36 @@ class LibraryResetService: ObservableObject {
             // Update progress
             exportProgress = Double(index) / Double(totalBooks)
             
-            // Build CSV row
+            // Build CSV row - break down complex expressions
+            let title = book.metadata?.title.csvEscaped ?? ""
+            let author = book.metadata?.authors.first?.csvEscaped ?? ""
+            let isbn = book.metadata?.isbn?.csvEscaped ?? ""
+            let status = book.readingStatus.rawValue
+            let rating = book.rating != nil ? "\(book.rating!)" : ""
+            let progress = "\(book.readingProgress)"
+            let startDate = book.dateStarted?.ISO8601Format() ?? ""
+            let finishDate = book.dateCompleted?.ISO8601Format() ?? ""
+            let notes = book.notes?.csvEscaped ?? ""
+            let tags = book.tags.joined(separator: ";").csvEscaped
+            let genre = book.metadata?.genre.first?.csvEscaped ?? ""
+            
             let row = [
-                book.title.csvEscaped,
-                book.author.csvEscaped,
-                book.isbn?.csvEscaped ?? "",
-                book.status.rawValue,
-                "\(book.rating)",
-                "\(book.progress)",
-                book.startDate?.ISO8601Format() ?? "",
-                book.finishDate?.ISO8601Format() ?? "",
-                book.notes?.csvEscaped ?? "",
-                book.tags.joined(separator: ";").csvEscaped,
-                book.genre?.csvEscaped ?? "",
-                book.publisher?.csvEscaped ?? "",
-                book.publishedDate?.ISO8601Format() ?? "",
-                book.pageCount.map { "\($0)" } ?? "",
-                book.authorNationality?.csvEscaped ?? "",
-                book.originalLanguage?.csvEscaped ?? ""
+                title,
+                author,
+                isbn,
+                status,
+                rating,
+                progress,
+                startDate,
+                finishDate,
+                notes,
+                tags,
+                genre,
+                book.metadata?.publisher?.csvEscaped ?? "",
+                book.metadata?.publishedDate?.csvEscaped ?? "",
+                book.metadata?.pageCount != nil ? "\(book.metadata!.pageCount!)" : "",
+                book.metadata?.authorNationality?.csvEscaped ?? "",
+                book.metadata?.originalLanguage?.csvEscaped ?? ""
             ].joined(separator: ",")
             
             csvContent += row + "\n"
@@ -212,27 +224,48 @@ class LibraryResetService: ObservableObject {
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
         encoder.dateEncodingStrategy = .iso8601
         
-        // Create export data structure
-        let exportData = userBooks.map { book in
-            [
-                "title": book.title,
-                "author": book.author,
-                "isbn": book.isbn ?? "",
-                "status": book.status.rawValue,
-                "rating": "\(book.rating)",
-                "progress": "\(book.progress)",
-                "startDate": book.startDate?.ISO8601Format() ?? "",
-                "finishDate": book.finishDate?.ISO8601Format() ?? "",
-                "notes": book.notes ?? "",
-                "tags": book.tags.joined(separator: ","),
-                "genre": book.genre ?? "",
-                "publisher": book.publisher ?? "",
-                "publishedDate": book.publishedDate?.ISO8601Format() ?? "",
-                "pageCount": book.pageCount.map { "\($0)" } ?? "",
-                "authorNationality": book.authorNationality ?? "",
-                "originalLanguage": book.originalLanguage ?? "",
-                "coverImageURL": book.coverImageURL ?? "",
-                "googleBooksID": book.googleBooksID ?? ""
+        // Create export data structure - break down complex expressions
+        let exportData = userBooks.map { book -> [String: String] in
+            // Extract all values first
+            let title = book.metadata?.title ?? ""
+            let author = book.metadata?.authors.first ?? ""
+            let isbn = book.metadata?.isbn ?? ""
+            let status = book.readingStatus.rawValue
+            let rating = book.rating != nil ? "\(book.rating!)" : ""
+            let progress = "\(book.readingProgress)"
+            let startDate = book.dateStarted?.ISO8601Format() ?? ""
+            let finishDate = book.dateCompleted?.ISO8601Format() ?? ""
+            let notes = book.notes ?? ""
+            let tags = book.tags.joined(separator: ",")
+            let genre = book.metadata?.genre.first ?? ""
+            let publisher = book.metadata?.publisher ?? ""
+            let publishedDate = book.metadata?.publishedDate ?? ""
+            let pageCount = book.metadata?.pageCount != nil ? "\(book.metadata!.pageCount!)" : ""
+            let authorNationality = book.metadata?.authorNationality ?? ""
+            let originalLanguage = book.metadata?.originalLanguage ?? ""
+            let coverImageURL = book.metadata?.imageURL?.absoluteString ?? ""
+            let googleBooksID = book.metadata?.googleBooksID ?? ""
+            
+            // Build dictionary
+            return [
+                "title": title,
+                "author": author,
+                "isbn": isbn,
+                "status": status,
+                "rating": rating,
+                "progress": progress,
+                "startDate": startDate,
+                "finishDate": finishDate,
+                "notes": notes,
+                "tags": tags,
+                "genre": genre,
+                "publisher": publisher,
+                "publishedDate": publishedDate,
+                "pageCount": pageCount,
+                "authorNationality": authorNationality,
+                "originalLanguage": originalLanguage,
+                "coverImageURL": coverImageURL,
+                "googleBooksID": googleBooksID
             ]
         }
         

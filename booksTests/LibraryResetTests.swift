@@ -39,51 +39,43 @@ final class LibraryResetTests: XCTestCase {
     
     private func addTestData() async throws {
         let metadata1 = BookMetadata(
+            googleBooksID: "test-id-1",
             title: "Test Book 1",
             authors: ["Author 1"],
             publishedDate: "2023",
-            description: "Test description",
             pageCount: 300,
-            categories: ["Fiction"],
-            imageLinks: nil,
+            bookDescription: "Test description",
             language: "en",
-            publisher: "Test Publisher"
+            publisher: "Test Publisher",
+            isbn: "1234567890",
+            genre: ["Fiction"]
         )
-        metadata1.googleBooksID = "test-id-1"
         
         let metadata2 = BookMetadata(
+            googleBooksID: "test-id-2",
             title: "Test Book 2",
             authors: ["Author 2"],
             publishedDate: "2024",
-            description: "Another test",
             pageCount: 250,
-            categories: ["Non-fiction"],
-            imageLinks: nil,
+            bookDescription: "Another test",
             language: "en",
-            publisher: "Another Publisher"
+            publisher: "Another Publisher",
+            isbn: "0987654321",
+            genre: ["Non-fiction"]
         )
-        metadata2.googleBooksID = "test-id-2"
         
         let book1 = UserBook(
-            title: "Test Book 1",
-            author: "Author 1",
-            isbn: "1234567890",
-            status: .reading,
-            coverImageURL: nil
+            readingStatus: .reading,
+            rating: 4,
+            notes: "Great book!",
+            tags: ["favorite", "2024"],
+            metadata: metadata1
         )
-        book1.googleBooksID = "test-id-1"
-        book1.rating = 4
-        book1.notes = "Great book!"
-        book1.tags = ["favorite", "2024"]
         
         let book2 = UserBook(
-            title: "Test Book 2",
-            author: "Author 2",
-            isbn: "0987654321",
-            status: .wantToRead,
-            coverImageURL: nil
+            readingStatus: .toRead,
+            metadata: metadata2
         )
-        book2.googleBooksID = "test-id-2"
         
         modelContext.insert(metadata1)
         modelContext.insert(metadata2)
@@ -96,19 +88,15 @@ final class LibraryResetTests: XCTestCase {
     // MARK: - Reset Service Tests
     
     func testCountItemsToDelete() async {
-        await MainActor.run {
-            Task {
-                await resetService.countItemsToDelete()
-                
-                XCTAssertEqual(resetService.booksToDelete, 2)
-                XCTAssertEqual(resetService.metadataToDelete, 2)
-            }
-        }
+        await resetService.countItemsToDelete()
+        
+        XCTAssertEqual(resetService.booksToDelete, 2)
+        XCTAssertEqual(resetService.metadataToDelete, 2)
     }
     
     func testExportToCSV() async throws {
         await MainActor.run {
-            Task {
+            _ = Task {
                 do {
                     let exportURL = try await resetService.exportLibraryData(format: .csv)
                     
@@ -116,7 +104,7 @@ final class LibraryResetTests: XCTestCase {
                     XCTAssertTrue(FileManager.default.fileExists(atPath: exportURL.path))
                     
                     // Read and verify content
-                    let csvContent = try String(contentsOf: exportURL)
+                    let csvContent = try String(contentsOf: exportURL, encoding: .utf8)
                     XCTAssertTrue(csvContent.contains("Test Book 1"))
                     XCTAssertTrue(csvContent.contains("Test Book 2"))
                     XCTAssertTrue(csvContent.contains("Author 1"))
@@ -134,7 +122,7 @@ final class LibraryResetTests: XCTestCase {
     
     func testExportToJSON() async throws {
         await MainActor.run {
-            Task {
+            _ = Task {
                 do {
                     let exportURL = try await resetService.exportLibraryData(format: .json)
                     
@@ -160,7 +148,7 @@ final class LibraryResetTests: XCTestCase {
     
     func testResetLibrary() async throws {
         await MainActor.run {
-            Task {
+            _ = Task {
                 // Count before reset
                 await resetService.countItemsToDelete()
                 let initialBooks = resetService.booksToDelete
@@ -197,7 +185,7 @@ final class LibraryResetTests: XCTestCase {
     
     func testExportProgress() async {
         await MainActor.run {
-            Task {
+            _ = Task {
                 // Start export
                 _ = try? await resetService.exportLibraryData(format: .csv)
                 
@@ -215,7 +203,7 @@ final class LibraryResetTests: XCTestCase {
             XCTAssertEqual(resetViewModel.currentStep, .initial)
             
             // Progress through steps
-            Task {
+            _ = Task {
                 await resetViewModel.proceedToNextStep()
                 XCTAssertEqual(resetViewModel.currentStep, .warning)
                 
@@ -259,7 +247,7 @@ final class LibraryResetTests: XCTestCase {
         await MainActor.run {
             resetViewModel.currentStep = .finalConfirmation
             
-            Task {
+            _ = Task {
                 await resetViewModel.goBackToPreviousStep()
                 XCTAssertEqual(resetViewModel.currentStep, .holdToConfirm)
                 
@@ -296,30 +284,28 @@ final class LibraryResetTests: XCTestCase {
     }
     
     func testHoldToConfirmMechanism() async {
-        await MainActor.run {
-            // Start hold
-            resetViewModel.startHoldToConfirm()
-            XCTAssertTrue(resetViewModel.isHoldingButton)
-            XCTAssertEqual(resetViewModel.holdProgress, 0.0)
-            
-            // Stop hold before completion
-            resetViewModel.stopHoldToConfirm()
-            XCTAssertFalse(resetViewModel.isHoldingButton)
-            
-            // Progress should reset if not completed
-            let expectation = XCTestExpectation(description: "Hold progress reset")
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                XCTAssertEqual(self.resetViewModel.holdProgress, 0.0)
-                expectation.fulfill()
-            }
-            
-            await fulfillment(of: [expectation], timeout: 1.0)
+        // Start hold
+        await resetViewModel.startHoldToConfirm()
+        XCTAssertTrue(resetViewModel.isHoldingButton)
+        XCTAssertEqual(resetViewModel.holdProgress, 0.0)
+        
+        // Stop hold before completion
+        resetViewModel.stopHoldToConfirm()
+        XCTAssertFalse(resetViewModel.isHoldingButton)
+        
+        // Progress should reset if not completed
+        let expectation = XCTestExpectation(description: "Hold progress reset")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            XCTAssertEqual(self.resetViewModel.holdProgress, 0.0)
+            expectation.fulfill()
         }
+        
+        await fulfillment(of: [expectation], timeout: 1.0)
     }
     
     func testItemsToDeleteDescription() async {
         await MainActor.run {
-            Task {
+            _ = Task {
                 await resetService.countItemsToDelete()
                 
                 let description = resetViewModel.itemsToDeleteDescription
@@ -350,7 +336,7 @@ final class LibraryResetTests: XCTestCase {
             let emptyResetService = LibraryResetService(modelContext: modelContext)
             let emptyViewModel = LibraryResetViewModel(modelContext: modelContext)
             
-            Task {
+            _ = Task {
                 await emptyResetService.countItemsToDelete()
                 
                 let description = emptyViewModel.itemsToDeleteDescription
@@ -363,7 +349,7 @@ final class LibraryResetTests: XCTestCase {
     
     func testResetDuringExport() async {
         await MainActor.run {
-            Task {
+            _ = Task {
                 // Start export
                 let exportTask = Task {
                     try await resetService.exportLibraryData(format: .csv)
@@ -391,22 +377,27 @@ final class LibraryResetTests: XCTestCase {
     
     func testCSVEscaping() async {
         // Add book with special characters
-        let specialBook = UserBook(
+        let specialMetadata = BookMetadata(
+            googleBooksID: "special-id",
             title: "Book with, comma",
-            author: "Author \"Quoted\"",
-            isbn: nil,
-            status: .reading,
-            coverImageURL: nil
+            authors: ["Author \"Quoted\""],
+            bookDescription: "Special test book"
         )
-        specialBook.notes = "Notes with\nnewline"
+        
+        let specialBook = UserBook(
+            readingStatus: .reading,
+            notes: "Notes with\nnewline",
+            metadata: specialMetadata
+        )
+        modelContext.insert(specialMetadata)
         modelContext.insert(specialBook)
         try! modelContext.save()
         
         await MainActor.run {
-            Task {
+            _ = Task {
                 do {
                     let exportURL = try await resetService.exportLibraryData(format: .csv)
-                    let csvContent = try String(contentsOf: exportURL)
+                    let csvContent = try String(contentsOf: exportURL, encoding: .utf8)
                     
                     // Verify proper escaping
                     XCTAssertTrue(csvContent.contains("\"Book with, comma\""))

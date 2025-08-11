@@ -110,3 +110,9 @@ This app has a strong focus on tracking cultural diversity in reading:
 - **THEME SYSTEM**: All SwiftUI previews fixed with proper AppColorTheme environment injection
 - **MATERIAL DESIGN**: All materialCard modifiers corrected with proper parameter usage
 - **CSV IMPORT**: ✅ ISBN cleaning logic fixed - removes leading `=` characters from Goodreads exports
+
+# important-instruction-reminders
+Do what has been asked; nothing more, nothing less.
+NEVER create files unless they're absolutely necessary for achieving your goal.
+ALWAYS prefer editing an existing file to creating a new one.
+NEVER proactively create documentation files (*.md) or README files. Only create documentation files if explicitly requested by the User.

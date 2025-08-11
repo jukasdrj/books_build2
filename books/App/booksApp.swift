@@ -94,7 +94,7 @@ struct booksApp: App {
 
 /// Wrapper view that observes ThemeStore and provides reactive theme environment
 struct ThemedRootView: View {
-    @Bindable var themeStore: ThemeStore
+    @ObservedObject var themeStore: ThemeStore
     @Environment(\.colorScheme) private var colorScheme
     
     var body: some View {

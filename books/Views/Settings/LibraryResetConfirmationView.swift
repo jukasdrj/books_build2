@@ -22,7 +22,7 @@ struct LibraryResetConfirmationView: View {
                 
                 // Content based on current step
                 ScrollView {
-                    VStack(spacing: Theme.Spacing.xxlarge) {
+                    VStack(spacing: Theme.Spacing.xxl) {
                         switch viewModel.currentStep {
                         case .initial:
                             InitialWarningView(itemsDescription: viewModel.itemsToDeleteDescription)
@@ -68,7 +68,7 @@ struct LibraryResetConfirmationView: View {
                         viewModel.cancel()
                         dismiss()
                     }
-                    .foregroundColor(themeStore.currentTheme.accentColor)
+                    .foregroundColor(themeStore.appTheme.primary)
                 }
             }
             .sheet(isPresented: $viewModel.showingShareSheet) {
@@ -98,7 +98,7 @@ struct LibraryResetConfirmationView: View {
     
     @ViewBuilder
     private var actionButtons: some View {
-        HStack(spacing: Theme.Spacing.medium) {
+        HStack(spacing: Theme.Spacing.md) {
             // Back button (except on initial step)
             if viewModel.currentStep != .initial {
                 Button(action: {
@@ -109,7 +109,7 @@ struct LibraryResetConfirmationView: View {
                     Label("Back", systemImage: "chevron.left")
                         .frame(maxWidth: .infinity)
                 }
-                .materialButton(style: .secondary)
+                .materialButton(style: .tonal)
             }
             
             // Next/Action button
@@ -125,7 +125,7 @@ struct LibraryResetConfirmationView: View {
             .disabled(!canProceed)
         }
         .padding()
-        .background(Color.systemBackground)
+        .background(Color(.systemBackground))
     }
     
     private var actionButtonTitle: String {
@@ -167,9 +167,9 @@ struct LibraryResetConfirmationView: View {
         case .finalConfirmation:
             return .destructive
         case .exporting where !viewModel.exportCompleted:
-            return .secondary
+            return .tonal
         default:
-            return .primary
+            return .filled
         }
     }
     
@@ -205,15 +205,15 @@ struct ProgressIndicatorView: View {
     }
     
     var body: some View {
-        HStack(spacing: Theme.Spacing.small) {
+        HStack(spacing: Theme.Spacing.sm) {
             ForEach(1...6, id: \.self) { num in
                 Circle()
-                    .fill(num <= stepNumber ? themeStore.currentTheme.accentColor : Color.systemGray4)
+                    .fill(num <= stepNumber ? themeStore.appTheme.primary : Color(.systemGray4))
                     .frame(width: 8, height: 8)
                 
                 if num < 6 {
                     Rectangle()
-                        .fill(num < stepNumber ? themeStore.currentTheme.accentColor : Color.systemGray4)
+                        .fill(num < stepNumber ? themeStore.appTheme.primary : Color(.systemGray4))
                         .frame(height: 2)
                 }
             }
@@ -227,10 +227,10 @@ struct InitialWarningView: View {
     @EnvironmentObject private var themeStore: ThemeStore
     
     var body: some View {
-        VStack(spacing: Theme.Spacing.xlarge) {
+        VStack(spacing: Theme.Spacing.xl) {
             Image(systemName: "exclamationmark.triangle.fill")
                 .font(.system(size: 64))
-                .foregroundColor(.systemOrange)
+                .foregroundColor(Color(.systemOrange))
             
             Text("Reset Library")
                 .font(.largeTitle)
@@ -239,9 +239,9 @@ struct InitialWarningView: View {
             Text(itemsDescription)
                 .font(.headline)
                 .multilineTextAlignment(.center)
-                .foregroundColor(.secondaryLabel)
+                .foregroundColor(Color(.secondaryLabel))
             
-            VStack(alignment: .leading, spacing: Theme.Spacing.medium) {
+            VStack(alignment: .leading, spacing: Theme.Spacing.md) {
                 Label("All your books will be deleted", systemImage: "book.closed")
                 Label("Reading progress will be lost", systemImage: "chart.line.downtrend")
                 Label("Notes and ratings will be removed", systemImage: "note.text")
@@ -256,16 +256,16 @@ struct InitialWarningView: View {
 
 struct DetailedWarningView: View {
     var body: some View {
-        VStack(spacing: Theme.Spacing.xlarge) {
+        VStack(spacing: Theme.Spacing.xl) {
             Image(systemName: "trash.fill")
                 .font(.system(size: 64))
-                .foregroundColor(.systemRed)
+                .foregroundColor(Color(.systemRed))
             
             Text("This Will Delete Everything")
                 .font(.title)
                 .fontWeight(.bold)
             
-            VStack(alignment: .leading, spacing: Theme.Spacing.large) {
+            VStack(alignment: .leading, spacing: Theme.Spacing.lg) {
                 DetailRow(
                     icon: "books.vertical.fill",
                     title: "Library Data",
@@ -295,7 +295,7 @@ struct DetailedWarningView: View {
             
             Text("Consider exporting your library before proceeding")
                 .font(.footnote)
-                .foregroundColor(.secondaryLabel)
+                .foregroundColor(Color(.secondaryLabel))
                 .multilineTextAlignment(.center)
         }
     }
@@ -308,10 +308,10 @@ struct DetailRow: View {
     @EnvironmentObject private var themeStore: ThemeStore
     
     var body: some View {
-        HStack(alignment: .top, spacing: Theme.Spacing.medium) {
+        HStack(alignment: .top, spacing: Theme.Spacing.md) {
             Image(systemName: icon)
                 .font(.title3)
-                .foregroundColor(themeStore.currentTheme.accentColor)
+                .foregroundColor(themeStore.appTheme.primary)
                 .frame(width: 30)
             
             VStack(alignment: .leading, spacing: 4) {
@@ -319,7 +319,7 @@ struct DetailRow: View {
                     .font(.headline)
                 Text(description)
                     .font(.caption)
-                    .foregroundColor(.secondaryLabel)
+                    .foregroundColor(Color(.secondaryLabel))
             }
             
             Spacer()
@@ -334,10 +334,10 @@ struct TypeToConfirmView: View {
     @EnvironmentObject private var themeStore: ThemeStore
     
     var body: some View {
-        VStack(spacing: Theme.Spacing.xlarge) {
+        VStack(spacing: Theme.Spacing.xl) {
             Image(systemName: "keyboard")
                 .font(.system(size: 64))
-                .foregroundColor(themeStore.currentTheme.accentColor)
+                .foregroundColor(themeStore.appTheme.primary)
             
             Text("Type to Confirm")
                 .font(.title)
@@ -347,7 +347,7 @@ struct TypeToConfirmView: View {
                 .font(.body)
                 .multilineTextAlignment(.center)
             
-            VStack(spacing: Theme.Spacing.small) {
+            VStack(spacing: Theme.Spacing.sm) {
                 TextField("Type \(requiredText)", text: $confirmationText)
                     .textFieldStyle(.roundedBorder)
                     .autocapitalization(.allCharacters)
@@ -359,7 +359,7 @@ struct TypeToConfirmView: View {
                 if !confirmationText.isEmpty && confirmationText.uppercased() != requiredText {
                     Label("Type \(requiredText) to continue", systemImage: "exclamationmark.circle")
                         .font(.caption)
-                        .foregroundColor(.systemRed)
+                        .foregroundColor(Color(.systemRed))
                 }
             }
             .padding()
@@ -379,10 +379,10 @@ struct HoldToConfirmView: View {
     @EnvironmentObject private var themeStore: ThemeStore
     
     var body: some View {
-        VStack(spacing: Theme.Spacing.xlarge) {
+        VStack(spacing: Theme.Spacing.xl) {
             Image(systemName: "hand.raised.fill")
                 .font(.system(size: 64))
-                .foregroundColor(isHolding ? .systemRed : themeStore.currentTheme.accentColor)
+                .foregroundColor(isHolding ? Color(.systemRed) : themeStore.appTheme.primary)
                 .scaleEffect(isHolding ? 1.1 : 1.0)
                 .animation(.easeInOut(duration: 0.2), value: isHolding)
             
@@ -396,14 +396,14 @@ struct HoldToConfirmView: View {
             
             ZStack {
                 Circle()
-                    .stroke(Color.systemGray4, lineWidth: 8)
+                    .stroke(Color(.systemGray4), lineWidth: 8)
                     .frame(width: 150, height: 150)
                 
                 Circle()
                     .trim(from: 0, to: holdProgress)
                     .stroke(
                         LinearGradient(
-                            colors: [.systemOrange, .systemRed],
+                            colors: [Color(.systemOrange), Color(.systemRed)],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         ),
@@ -415,7 +415,7 @@ struct HoldToConfirmView: View {
                 VStack {
                     Image(systemName: isHolding ? "hand.raised.fill" : "hand.raised")
                         .font(.largeTitle)
-                        .foregroundColor(isHolding ? .systemRed : .secondaryLabel)
+                        .foregroundColor(isHolding ? Color(.systemRed) : Color(.secondaryLabel))
                     
                     if holdProgress > 0 {
                         Text("\(Int(holdProgress * 100))%")
@@ -440,7 +440,7 @@ struct HoldToConfirmView: View {
             
             Text("Release to cancel")
                 .font(.caption)
-                .foregroundColor(.secondaryLabel)
+                .foregroundColor(Color(.secondaryLabel))
                 .opacity(isHolding ? 1 : 0)
         }
     }
@@ -454,10 +454,10 @@ struct ExportOptionsView: View {
     @EnvironmentObject private var themeStore: ThemeStore
     
     var body: some View {
-        VStack(spacing: Theme.Spacing.xlarge) {
+        VStack(spacing: Theme.Spacing.xl) {
             Image(systemName: exportCompleted ? "checkmark.circle.fill" : "square.and.arrow.up")
                 .font(.system(size: 64))
-                .foregroundColor(exportCompleted ? .systemGreen : themeStore.currentTheme.accentColor)
+                .foregroundColor(exportCompleted ? Color(.systemGreen) : themeStore.appTheme.primary)
             
             Text(exportCompleted ? "Export Complete" : "Export Your Library")
                 .font(.title)
@@ -472,7 +472,7 @@ struct ExportOptionsView: View {
                     .font(.body)
                     .multilineTextAlignment(.center)
                 
-                VStack(spacing: Theme.Spacing.medium) {
+                VStack(spacing: Theme.Spacing.md) {
                     Button(action: {
                         Task { await onExportCSV() }
                     }) {
@@ -482,7 +482,7 @@ struct ExportOptionsView: View {
                             Spacer()
                             Text("Goodreads compatible")
                                 .font(.caption)
-                                .foregroundColor(.secondaryLabel)
+                                .foregroundColor(Color(.secondaryLabel))
                         }
                         .padding()
                     }
@@ -497,7 +497,7 @@ struct ExportOptionsView: View {
                             Spacer()
                             Text("Complete data")
                                 .font(.caption)
-                                .foregroundColor(.secondaryLabel)
+                                .foregroundColor(Color(.secondaryLabel))
                         }
                         .padding()
                     }
@@ -513,10 +513,10 @@ struct FinalConfirmationView: View {
     let isResetting: Bool
     
     var body: some View {
-        VStack(spacing: Theme.Spacing.xlarge) {
+        VStack(spacing: Theme.Spacing.xl) {
             Image(systemName: isResetting ? "arrow.triangle.2.circlepath" : "trash.fill")
                 .font(.system(size: 64))
-                .foregroundColor(.systemRed)
+                .foregroundColor(Color(.systemRed))
                 .rotationEffect(.degrees(isResetting ? 360 : 0))
                 .animation(isResetting ? .linear(duration: 1).repeatForever(autoreverses: false) : .default, value: isResetting)
             
@@ -534,23 +534,23 @@ struct FinalConfirmationView: View {
                     .font(.body)
                     .multilineTextAlignment(.center)
             } else {
-                VStack(spacing: Theme.Spacing.medium) {
+                VStack(spacing: Theme.Spacing.md) {
                     if didExport {
                         Label("Backup created", systemImage: "checkmark.circle.fill")
-                            .foregroundColor(.systemGreen)
+                            .foregroundColor(Color(.systemGreen))
                     } else {
                         Label("No backup created", systemImage: "exclamationmark.triangle.fill")
-                            .foregroundColor(.systemOrange)
+                            .foregroundColor(Color(.systemOrange))
                     }
                     
                     Text("This is your last chance to cancel")
                         .font(.headline)
-                        .foregroundColor(.systemRed)
+                        .foregroundColor(Color(.systemRed))
                     
                     Text("Pressing 'Reset Library' will immediately delete all your data")
                         .font(.caption)
                         .multilineTextAlignment(.center)
-                        .foregroundColor(.secondaryLabel)
+                        .foregroundColor(Color(.secondaryLabel))
                 }
                 .padding()
                 .materialCard()
