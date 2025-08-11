@@ -45,10 +45,23 @@ This is a SwiftUI iOS book reading tracker app with cultural diversity tracking 
 
 ## Development Patterns
 
-### Theme System Usage
-- All UI uses Material Design 3 modifiers: `.materialCard()`, `.materialButton()`, `.materialInteractive()`
-- Spacing follows `Theme.Spacing` constants (8pt grid system)
-- Theme switching triggers automatic view refresh via `@StateObject ThemeManager`
+### Swift 6 Concurrency Architecture
+- **Data Models**: Use `@unchecked Sendable` for SwiftData models (thread safety handled by SwiftData)
+- **UI Classes**: `@MainActor` isolation for ObservableObject types (ThemeStore)
+- **Service Layer**: Proper async/await patterns with structured concurrency
+- **Error Handling**: Comprehensive error propagation with typed error enums
+- **Background Tasks**: Safe Task.detached usage to avoid actor isolation issues
+
+### Material Design 3 Theme System
+- **Comprehensive MD3 Implementation**: Full Material Design 3 component system with proper elevation, typography, and interaction patterns
+- **Button Styles**: `.materialButton(style: .filled/.tonal/.outlined/.text/.destructive/.success, size: .small/.medium/.large)`
+- **Card System**: `.materialCard(elevation: CGFloat)` with proper shadows and theming
+- **Interactive Feedback**: `.materialInteractive(pressedScale: CGFloat, pressedOpacity: Double)` for tactile responses
+- **Spacing System**: 8pt grid (xs=4, sm=8, md=16, lg=24, xl=32, xxl=48, xxxl=64)
+- **Typography Scale**: Complete Material Design 3 typography with `.displayLarge()`, `.headlineMedium()`, `.bodyLarge()`, etc.
+- **Theme Variants**: 5 complete themes (Purple Boho, Forest Sage, Ocean Blues, Sunset Warmth, Monochrome)
+- **Accessibility**: Full VoiceOver support, reduce motion compliance, and dynamic type scaling
+- **Visual Consistency**: Unified corner radius, elevation, and animation systems across all components
 
 ### SwiftData Best Practices
 - Navigation destination views use `modelContext.fetch()` instead of `@Query` to prevent update conflicts
@@ -107,8 +120,11 @@ This app has a strong focus on tracking cultural diversity in reading:
 - Consolidated navigation architecture to eliminate warnings
 - Multi-theme system with instant switching and persistence
 - **BUILD STATUS**: ✅ Successfully builds for iPhone 16 simulator (arm64-apple-ios18.0-simulator)
+- **SWIFT 6 COMPLIANCE**: ✅ Full Swift 6 concurrency model with Sendable conformance
+- **THREAD SAFETY**: All data models properly isolated with `@unchecked Sendable`
+- **CONCURRENCY**: Modern async/await patterns throughout with proper actor isolation
 - **THEME SYSTEM**: All SwiftUI previews fixed with proper AppColorTheme environment injection
-- **MATERIAL DESIGN**: All materialCard modifiers corrected with proper parameter usage
+- **MATERIAL DESIGN 3**: ✅ Comprehensive MD3 system restored with full button styles and interactions
 - **CSV IMPORT**: ✅ ISBN cleaning logic fixed - removes leading `=` characters from Goodreads exports
 
 # important-instruction-reminders
