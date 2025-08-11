@@ -14,8 +14,6 @@ struct ContentView: View {
     @State private var completedBooksCount = 0
     @State private var currentlyReadingCount = 0
     
-    // Search state for SearchView
-    @State private var searchQuery = ""
     
     var body: some View {
         Group {
@@ -222,7 +220,7 @@ struct ContentView: View {
                     case 0:
                         LibraryView()
                     case 1:
-                        SearchView(searchQuery: $searchQuery)
+                        SearchView()
                     case 2:
                         StatsView()
                     case 3:
@@ -251,7 +249,7 @@ struct ContentView: View {
                     case 0:
                         LibraryView()
                     case 1:
-                        SearchView(searchQuery: $searchQuery)
+                        SearchView()
                     case 2:
                         StatsView()
                     case 3:
@@ -266,10 +264,6 @@ struct ContentView: View {
                 // Add navigation title based on selected tab
                 .navigationTitle(tabTitle(for: selectedTab))
                 .navigationBarTitleDisplayMode(selectedTab == 1 ? .large : .inline)
-                // Add searchable modifier only for search tab
-                .if(selectedTab == 1) { view in
-                    view.searchable(text: $searchQuery, prompt: "Search by title, author, or ISBN")
-                }
                 
                 // Custom Enhanced Tab Bar
                 EnhancedTabBar(

@@ -6,7 +6,7 @@ struct SearchView: View {
     @Environment(\.appTheme) private var currentTheme
     
     @State private var searchService = BookSearchService.shared
-    @Binding var searchQuery: String
+    @State private var searchQuery = ""
     @State private var searchState: SearchState = .idle
     @State private var sortOption: BookSearchService.SortOption = .relevance
     @State private var showingSortOptions = false
@@ -25,114 +25,125 @@ struct SearchView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // ScreenshotMode visual banner (purple gradient, visible only in ScreenshotMode)
-            if ScreenshotMode.isEnabled {
-                ZStack {
-                    LinearGradient(
-                        colors: [Color.purple.opacity(0.85), Color.purple.opacity(0.65)],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    )
-                    HStack {
-                        Image(systemName: "camera.aperture")
-                            .font(.headline)
-                            .foregroundColor(.white)
-                        Text("Screenshot Mode")
-                            .font(.headline)
-                            .fontWeight(.bold)
-                            .foregroundColor(.white)
-                        Spacer()
-                    }
-                    .padding(.horizontal)
-                }
-                .frame(height: 32)
-                .cornerRadius(0)
-                .shadow(color: Color.purple.opacity(0.15), radius: 7, x: 0, y: 4)
-            }
-
-            // Search Controls
-            if case .results(let books) = searchState, !books.isEmpty {
-                searchControlsBar
-            }
-
-            // Content Area with enhanced empty state
-            Group {
-                switch searchState {
-                case .idle:
-                    enhancedEmptyState
-                    
-                case .searching:
-                    EnhancedLoadingView(message: "Searching millions of books")
-                    
-                case .results(let books):
-                    if books.isEmpty {
-                        noResultsState
-                    } else {
-                        searchResultsList(books: books)
-                    }
-                    
-                case .error(let message):
-                    EnhancedErrorView(
-                        title: "Search Error",
-                        message: message,
-                        retryAction: performSearch
-                    )
-            }
-            .background(
-                LinearGradient(
-                    colors: [
-                        currentTheme.background,
-                        currentTheme.surface.opacity(0.5)
-                    ],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-            )
-            .animation(Theme.Animation.accessible, value: searchState)
-        }
-        .background(currentTheme.background)
-        .accessibilityLabel("Search for books")
-        .accessibilityHint("Enter a book title, author name, or ISBN to search for books in the online database")
-        .onSubmit(of: .search) {
-            performSearch()
-        }
-        .onChange(of: searchQuery) { oldValue, newValue in
-            // Clear results when search query is cleared
-            if newValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !oldValue.isEmpty {
-                clearSearchResults()
-            }
-        }
-        .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
-                HStack(spacing: 8) {
-                    if !searchQuery.isEmpty {
-                        Button("Clear") {
-                            clearSearch()
+                // ScreenshotMode visual banner (purple gradient, visible only in ScreenshotMode)
+                if ScreenshotMode.isEnabled {
+                    ZStack {
+                        LinearGradient(
+                            colors: [Color.purple.opacity(0.85), Color.purple.opacity(0.65)],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                        HStack {
+                            Image(systemName: "camera.aperture")
+                                .font(.headline)
+                                .foregroundColor(.white)
+                            Text("Screenshot Mode")
+                                .font(.headline)
+                                .fontWeight(.bold)
+                                .foregroundColor(.white)
+                            Spacer()
                         }
-                        .accessibilityLabel("Clear search")
-                        .accessibilityHint("Clear the search field and results")
+                        .padding(.horizontal)
+                    }
+                    .frame(height: 32)
+                    .cornerRadius(0)
+                    .shadow(color: Color.purple.opacity(0.15), radius: 7, x: 0, y: 4)
+                }
+
+                // Search Controls
+                if case .results(let books) = searchState, !books.isEmpty {
+                    searchControlsBar
+                }
+
+                // Content Area with enhanced empty state
+                Group {
+                    switch searchState {
+                    case .idle:
+                        enhancedEmptyState
+                        
+                    case .searching:
+                        EnhancedLoadingView(message: "Searching millions of books")
+                        
+                    case .results(let books):
+                        if books.isEmpty {
+                            noResultsState
+                        } else {
+                            searchResultsList(books: books)
+                        }
+                        
+                    case .error(let message):
+                        EnhancedErrorView(
+                            title: "Search Error",
+                            message: message,
+                            retryAction: performSearch
+                        )
+                    }
+                }
+                .background(
+                    LinearGradient(
+                        colors: [
+                            currentTheme.background,
+                            currentTheme.surface.opacity(0.5)
+                        ],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
+                .animation(Theme.Animation.accessible, value: searchState)
+            }
+            .navigationTitle("Search Books")
+            .navigationBarTitleDisplayMode(.large)
+            .background(currentTheme.background)
+            .searchable(text: $searchQuery, prompt: "Search by title, author, or ISBN")
+            .searchSuggestions {
+                if searchQuery.isEmpty {
+                    Text("\"The Great Gatsby\"").searchCompletion("The Great Gatsby")
+                    Text("\"Maya Angelou\"").searchCompletion("Maya Angelou")
+                    Text("\"9780451524935\"").searchCompletion("9780451524935")
+                }
+            }
+            .accessibilityLabel("Search for books")
+            .accessibilityHint("Enter a book title, author name, or ISBN to search for books in the online database")
+            .onSubmit(of: .search) {
+                performSearch()
+            }
+            .onChange(of: searchQuery) { oldValue, newValue in
+                // Clear results when search query is cleared
+                if newValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !oldValue.isEmpty {
+                    clearSearchResults()
+                }
+            }
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    HStack(spacing: 8) {
+                        if !searchQuery.isEmpty {
+                            Button("Clear") {
+                                clearSearch()
+                            }
+                            .accessibilityLabel("Clear search")
+                            .accessibilityHint("Clear the search field and results")
+                            .foregroundColor(currentTheme.primaryAction)
+                        }
+                        
+                        Button {
+                            showingBarcodeScanner = true
+                        } label: {
+                            Label("Scan Barcode", systemImage: "barcode.viewfinder")
+                        }
+                        .accessibilityLabel("Scan book barcode")
+                        .accessibilityHint("Opens the camera to scan a book's ISBN barcode")
                         .foregroundColor(currentTheme.primaryAction)
                     }
-                    
-                    Button {
-                        showingBarcodeScanner = true
-                    } label: {
-                        Label("Scan Barcode", systemImage: "barcode.viewfinder")
-                    }
-                    .accessibilityLabel("Scan book barcode")
-                    .accessibilityHint("Opens the camera to scan a book's ISBN barcode")
-                    .foregroundColor(currentTheme.primaryAction)
                 }
             }
-        }
-        .sheet(isPresented: $showingSortOptions) {
-            sortOptionsSheet
-        }
-        .sheet(isPresented: $showingBarcodeScanner) {
-            BarcodeScannerView { scannedBarcode in
-                handleBarcodeScanned(scannedBarcode)
+            .sheet(isPresented: $showingSortOptions) {
+                sortOptionsSheet
             }
-        }
+            .sheet(isPresented: $showingBarcodeScanner) {
+                BarcodeScannerView { scannedBarcode in
+                    handleBarcodeScanned(scannedBarcode)
+                }
+            }
     }
     
     // MARK: - Search Controls Bar
@@ -855,7 +866,7 @@ struct ShimmerModifier: ViewModifier {
 }
 
 #Preview {
-    SearchView(searchQuery: .constant(""))
+    SearchView()
         .modelContainer(for: [UserBook.self, BookMetadata.self], inMemory: true)
         .preferredColorScheme(.dark)
 }
