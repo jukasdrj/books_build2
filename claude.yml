@@ -32,9 +32,9 @@ jobs:
       - name: Run Claude PR Action
         uses: anthropics/claude-code-action@beta
         with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          #anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           # Or use OAuth token instead:
-          # claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          claude_code_oauth_token: ${{ secrets.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 }}
           timeout_minutes: "60"
           # mode: tag  # Default: responds to @claude mentions
           # Optional: Restrict network access to specific domains only
