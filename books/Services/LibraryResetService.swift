@@ -115,6 +115,9 @@ class LibraryResetService: ObservableObject {
             // Haptic feedback for destructive action
             await hapticManager.destructiveAction()
             
+            // 0. Cancel and clean up any active imports
+            await cleanupActiveImports()
+            
             // 1. Delete all UserBooks
             let userBookDescriptor = FetchDescriptor<UserBook>()
             let userBooks = try modelContext.fetch(userBookDescriptor)
@@ -172,6 +175,19 @@ class LibraryResetService: ObservableObject {
     }
     
     // MARK: - Private Implementation
+    
+    /// Clean up any active or paused imports
+    private func cleanupActiveImports() async {
+        // 1. Cancel any active background import
+        if let coordinator = BackgroundImportCoordinator.shared {
+            await coordinator.cancelImport()
+        }
+        
+        // 2. Clear any persisted import state
+        ImportStateManager.shared.clearImportState()
+        
+        print("[LibraryResetService] Cleaned up active imports and import state")
+    }
     
     /// Export books to CSV format
     private func exportToCSV(userBooks: [UserBook]) async throws -> URL {

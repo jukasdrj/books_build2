@@ -23,8 +23,8 @@ struct ImportPreviewView: View {
                     // Detection results
                     DetectionResultsCard(session: session)
                     
-                    // Phase 3: Data Quality Analysis
-                    DataQualityIndicator(session: session)
+                    // Simplified validation summary
+                    ValidationSummaryCard(session: session)
                     
                     // Sample data preview
                     SampleDataPreview(session: session)
@@ -295,6 +295,131 @@ struct SampleDataPreview: View {
         }
         .padding(Theme.Spacing.md)
         .materialCard()
+    }
+}
+
+// MARK: - Simplified Validation Summary
+
+struct ValidationSummaryCard: View {
+    @Environment(\.appTheme) private var currentTheme
+    let session: CSVImportSession
+    
+    private var validationSummary: (withISBN: Int, withoutISBN: Int, missingRequired: Int) {
+        var withISBN = 0
+        var withoutISBN = 0
+        var missingRequired = 0
+        
+        // Parse first few rows to get sample statistics
+        let sampleBooks = Array(session.sampleData.dropFirst().prefix(10)) // Skip header, sample 10 rows
+        
+        for row in sampleBooks {
+            // Check for required fields (title/author in typical positions 0,1)
+            let hasTitle = row.count > 0 && !row[0].trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            let hasAuthor = row.count > 1 && !row[1].trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            
+            if !hasTitle || !hasAuthor {
+                missingRequired += 1
+                continue
+            }
+            
+            // Check for ISBN (usually position 2 or similar)
+            let hasISBN = row.count > 2 && !row[2].trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            
+            if hasISBN {
+                withISBN += 1
+            } else {
+                withoutISBN += 1
+            }
+        }
+        
+        return (withISBN, withoutISBN, missingRequired)
+    }
+    
+    var body: some View {
+        let summary = validationSummary
+        
+        VStack(alignment: .leading, spacing: Theme.Spacing.md) {
+            HStack(spacing: Theme.Spacing.sm) {
+                Image(systemName: "checkmark.seal")
+                    .foregroundColor(currentTheme.primary)
+                Text("Import Readiness")
+                    .titleSmall()
+                    .foregroundColor(currentTheme.primaryText)
+            }
+            
+            LazyVGrid(columns: [
+                GridItem(.flexible()),
+                GridItem(.flexible()),
+                GridItem(.flexible())
+            ], spacing: Theme.Spacing.sm) {
+                
+                ValidationMetricCard(
+                    title: "With ISBN",
+                    value: "\(summary.withISBN)",
+                    subtitle: "Fast import",
+                    color: currentTheme.success,
+                    icon: "number.circle.fill"
+                )
+                
+                ValidationMetricCard(
+                    title: "Without ISBN", 
+                    value: "\(summary.withoutISBN)",
+                    subtitle: "Title/author search",
+                    color: currentTheme.primary,
+                    icon: "magnifyingglass.circle.fill"
+                )
+                
+                ValidationMetricCard(
+                    title: "Need Review",
+                    value: "\(summary.missingRequired)",
+                    subtitle: "Missing title/author",
+                    color: summary.missingRequired > 0 ? currentTheme.error : currentTheme.success,
+                    icon: "exclamationmark.triangle.fill"
+                )
+            }
+            
+            Text("Books will be processed in order of priority: ISBN lookup first, then title/author search. Any failures will be queued for manual review.")
+                .labelSmall()
+                .foregroundColor(currentTheme.secondaryText)
+                .multilineTextAlignment(.leading)
+        }
+        .padding(Theme.Spacing.md)
+        .materialCard()
+    }
+}
+
+struct ValidationMetricCard: View {
+    @Environment(\.appTheme) private var currentTheme
+    let title: String
+    let value: String
+    let subtitle: String
+    let color: Color
+    let icon: String
+    
+    var body: some View {
+        VStack(spacing: Theme.Spacing.xs) {
+            Image(systemName: icon)
+                .font(.title2)
+                .foregroundColor(color)
+            
+            Text(value)
+                .titleMedium()
+                .fontWeight(.bold)
+                .foregroundColor(color)
+            
+            Text(title)
+                .labelSmall()
+                .foregroundColor(currentTheme.primaryText)
+                .fontWeight(.medium)
+            
+            Text(subtitle)
+                .labelSmall()
+                .foregroundColor(currentTheme.secondaryText)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(Theme.Spacing.sm)
+        .background(color.opacity(0.1))
+        .cornerRadius(Theme.CornerRadius.small)
     }
 }
 

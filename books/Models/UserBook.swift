@@ -4,11 +4,11 @@ import SwiftUI
 
 @Model
 final class UserBook: Identifiable {
-    var id: UUID
-    var dateAdded: Date
+    var id: UUID = UUID()
+    var dateAdded: Date = Date()
     var dateStarted: Date?
     var dateCompleted: Date?
-    var readingStatus: ReadingStatus {
+    var readingStatus: ReadingStatus = ReadingStatus.toRead {
         didSet {
             // Auto-manage dates based on status changes
             // Auto-set dates based on status changes
@@ -48,9 +48,9 @@ final class UserBook: Identifiable {
             // Status change processing complete
         }
     }
-    var isFavorited: Bool
-    var owned: Bool
-    var onWishlist: Bool
+    var isFavorited: Bool = false
+    var owned: Bool = true
+    var onWishlist: Bool = false
     var rating: Int? {
         didSet {
             // Validate rating range

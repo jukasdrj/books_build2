@@ -556,6 +556,7 @@ class CSVImportService: ObservableObject {
             duplicatesTitleAuthor: &duplicatesTitleAuthor,
             failCount: &failCount,
             apiSuccessCount: &apiSuccessCount,
+            apiFallbackCount: &apiFallbackCount,
             importedBookIds: &importedBookIds
         )
         
@@ -583,6 +584,7 @@ class CSVImportService: ObservableObject {
         duplicatesTitleAuthor: inout Int,
         failCount: inout Int,
         apiSuccessCount: inout Int,
+        apiFallbackCount: inout Int,
         importedBookIds: inout [UUID]
     ) async {
         
@@ -672,16 +674,45 @@ class CSVImportService: ObservableObject {
                     }
                     
                 case .failure(let lookupError):
-                    let error = ImportError(
-                        rowIndex: parsedBook.rowIndex,
-                        bookTitle: parsedBook.title,
-                        errorType: .networkError,
-                        message: "Failed to lookup ISBN \(isbn): \(lookupError.localizedDescription)",
-                        suggestions: ["Check internet connection", "Verify ISBN is correct", "Try again later"]
-                    )
-                    errors.append(error)
-                    failCount += 1
-                    progress.primaryQueueProcessed += 1
+                    // Network failed - create book from CSV data as fallback
+                    print("[CSVImportService] ISBN lookup failed for \(isbn), creating from CSV data: \(lookupError.localizedDescription)")
+                    let fallbackResult = createBookFromCSVData(parsedBook)
+                    switch fallbackResult {
+                    case .success(let bookData):
+                        booksToInsert.append(bookData.userBook)
+                        if bookData.isNewMetadata {
+                            metadataToInsert.append(bookData.metadata)
+                        }
+                        importedBookIds.append(bookData.userBook.id)
+                        processedBookIds.insert(parsedBook.id)
+                        successCount += 1
+                        apiFallbackCount += 1
+                        print("[CSVImportService] Successfully created book from CSV data: \(parsedBook.title ?? "Unknown")")
+                        progress.primaryQueueProcessed += 1
+                    case .failure(let csvError):
+                        let error = ImportError(
+                            rowIndex: parsedBook.rowIndex,
+                            bookTitle: parsedBook.title,
+                            errorType: .networkError,
+                            message: "Network lookup failed and CSV fallback failed: \(csvError.localizedDescription)",
+                            suggestions: ["Check internet connection", "Verify book data in CSV", "Try again later"]
+                        )
+                        errors.append(error)
+                        failCount += 1
+                        progress.primaryQueueProcessed += 1
+                    case .duplicate(let method):
+                        duplicateCount += 1
+                        processedBookIds.insert(parsedBook.id)
+                        switch method {
+                        case .isbn:
+                            duplicatesISBN += 1
+                        case .googleBooksID:
+                            duplicatesGoogleID += 1
+                        case .titleAuthor:
+                            duplicatesTitleAuthor += 1
+                        }
+                        progress.primaryQueueProcessed += 1
+                    }
                 }
                 
             } catch {
@@ -971,13 +1002,9 @@ class CSVImportService: ObservableObject {
             return try await createUserBookFromMetadata(metadata, parsedBook: parsedBook, fromAPI: true)
             
         case .failure(let error):
-            return .failure(ImportError(
-                rowIndex: parsedBook.rowIndex,
-                bookTitle: parsedBook.title,
-                errorType: .networkError,
-                message: "Failed to lookup ISBN \(cleanISBN): \(error.localizedDescription)",
-                suggestions: ["Check internet connection", "Verify ISBN is correct", "Try again later"]
-            ))
+            // Network failed - try creating from CSV data as fallback
+            print("[CSVImportService] ISBN lookup failed for \(cleanISBN), trying CSV fallback: \(error.localizedDescription)")
+            return createBookFromCSVData(parsedBook)
         }
     }
     
@@ -1019,23 +1046,15 @@ class CSVImportService: ObservableObject {
             if let firstBook = books.first {
                 return try await createUserBookFromMetadata(firstBook, parsedBook: parsedBook, fromAPI: true)
             } else {
-                return .failure(ImportError(
-                    rowIndex: parsedBook.rowIndex,
-                    bookTitle: parsedBook.title,
-                    errorType: .networkError,
-                    message: "No results found for \"\(title)\" by \(author)",
-                    suggestions: ["Check spelling of title and author", "Book may not be in Google Books database", "Add ISBN if available"]
-                ))
+                // No search results - create from CSV data as fallback
+                print("[CSVImportService] No search results for \"\(title)\" by \(author), creating from CSV data")
+                return createBookFromCSVData(parsedBook)
             }
             
         case .failure(let error):
-            return .failure(ImportError(
-                rowIndex: parsedBook.rowIndex,
-                bookTitle: parsedBook.title,
-                errorType: .networkError,
-                message: "Failed to search for \"\(title)\" by \(author): \(error.localizedDescription)",
-                suggestions: ["Check internet connection", "Try again later"]
-            ))
+            // Network failed - create from CSV data as fallback
+            print("[CSVImportService] Search failed for \"\(title)\" by \(author), creating from CSV data: \(error.localizedDescription)")
+            return createBookFromCSVData(parsedBook)
         }
     }
     
@@ -1295,6 +1314,61 @@ class CSVImportService: ObservableObject {
     }
     
     // REMOVED: createTempMetadataForDuplicateCheck - Not needed since we only process books with ISBN
+    
+    /// Create a book from CSV data only when network/API calls fail
+    private func createBookFromCSVData(_ parsedBook: ParsedBook) -> OptimizedImportResult {
+        // Create basic metadata from CSV data
+        let metadata = BookMetadata(
+            googleBooksID: "csv_\(UUID().uuidString)", // Unique ID for CSV-only books
+            title: parsedBook.title?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "Unknown Title",
+            authors: [parsedBook.author?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "Unknown Author"],
+            publishedDate: parsedBook.publishedDate,
+            pageCount: parsedBook.pageCount,
+            bookDescription: nil,
+            imageURL: nil,
+            language: nil,
+            previewLink: nil,
+            infoLink: nil,
+            publisher: parsedBook.publisher,
+            isbn: parsedBook.isbn?.trimmingCharacters(in: .whitespacesAndNewlines),
+            genre: []
+        )
+        
+        // Create UserBook from CSV data
+        let userBook = UserBook(
+            dateAdded: parsedBook.dateAdded ?? Date(),
+            readingStatus: .toRead, // Start with toRead to avoid triggering setter logic during init
+            rating: parsedBook.rating,
+            metadata: metadata
+        )
+        
+        // Set reading status and progress after initialization
+        if let statusString = parsedBook.readingStatus {
+            userBook.readingStatus = GoodreadsColumnMappings.mapReadingStatus(statusString)
+        }
+        
+        // Set reading progress and dates based on status and CSV data
+        if let readProgress = parsedBook.readingProgress, readProgress > 0.0 {
+            userBook.readingProgress = min(readProgress, 1.0)
+        }
+        
+        if let dateStarted = parsedBook.dateStarted {
+            userBook.dateStarted = dateStarted
+        }
+        
+        if let dateCompleted = parsedBook.dateRead {
+            userBook.dateCompleted = dateCompleted
+        }
+        
+        let bookData = ImportBookData(
+            userBook: userBook,
+            metadata: metadata,
+            isNewMetadata: true,
+            fromAPI: false
+        )
+        
+        return .success(bookData)
+    }
     
     // MARK: - Background Processing Support
     

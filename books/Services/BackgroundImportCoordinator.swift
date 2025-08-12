@@ -100,11 +100,14 @@ class BackgroundImportCoordinator {
         // The CSVImportService will insert books into modelContext as they're processed
         // This automatically triggers @Query updates in LibraryView for seamless integration
         
-        // Start monitoring before beginning import
-        monitorImportProgress()
-        
-        // Begin import process
+        // Begin import process first
         csvImportService.importBooks(from: session, columnMappings: mappings)
+        
+        // Wait a moment for import to initialize then start monitoring
+        Task {
+            try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
+            monitorImportProgress()
+        }
     }
     
     /// Handle completion - check for review needs
@@ -237,6 +240,7 @@ class BackgroundImportCoordinator {
             while isImporting && isMonitoring {
                 // Wait for import to actually start
                 if let progress = csvImportService.importProgress {
+                    print("[BackgroundImportCoordinator] Progress update: \(progress.processedBooks)/\(progress.totalBooks), step: \(progress.currentStep)")
                     currentImport?.progress = progress
                     
                     // Update Live Activity with current progress
@@ -247,6 +251,8 @@ class BackgroundImportCoordinator {
                         await handleImportCompletion()
                         break
                     }
+                } else {
+                    print("[BackgroundImportCoordinator] Waiting for import to start... (isImporting: \(csvImportService.isImporting))")
                 }
                 
                 // Check every 2 seconds

@@ -12,32 +12,7 @@ struct StatsView: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            // ScreenshotMode visual banner (purple gradient, visible only in ScreenshotMode)
-            if ScreenshotMode.isEnabled {
-                ZStack {
-                    LinearGradient(
-                        colors: [Color.purple.opacity(0.85), Color.purple.opacity(0.65)],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    )
-                    HStack {
-                        Image(systemName: "camera.aperture")
-                            .font(.headline)
-                            .foregroundColor(.white)
-                        Text("Screenshot Mode")
-                            .font(.headline)
-                            .fontWeight(.bold)
-                            .foregroundColor(.white)
-                        Spacer()
-                    }
-                    .padding(.horizontal)
-                }
-                .frame(height: 32)
-                .cornerRadius(0)
-                .shadow(color: Color.purple.opacity(0.15), radius: 7, x: 0, y: 4)
-            }
-        }
-        ScrollView {
+            ScrollView {
             LazyVStack(spacing: Theme.Spacing.xl) {
                 // Enhanced hero stats section
                 heroStatsSection
@@ -68,6 +43,7 @@ struct StatsView: View {
             }
             .padding(.horizontal, Theme.Spacing.md)
             .padding(.bottom, Theme.Spacing.xl)
+            }
         }
         .background(
             LinearGradient(
@@ -366,11 +342,11 @@ struct CulturalDiversitySection: View {
     }
     
     private var indigenousAuthorsCount: Int {
-        books.filter { $0.metadata?.indigenousAuthor == true }.count
+        books.filter { $0.metadata?.hasIndigenousVoice() == true }.count
     }
     
     private var marginizedVoicesCount: Int {
-        books.filter { $0.metadata?.marginalizedVoice == true }.count
+        books.filter { $0.metadata?.hasMarginalizedVoice() == true }.count
     }
     
     private var translatedWorksCount: Int {

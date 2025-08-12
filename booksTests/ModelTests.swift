@@ -32,13 +32,12 @@ struct ModelTests {
         metadata.culturalThemes = ["Theme A", " Theme B "]
         #expect(metadata.culturalThemes == ["Theme A", "Theme B"])
         
-        // Test content warnings
-        metadata.contentWarnings = ["Warning 1", "Warning 2"]
-        #expect(metadata.contentWarnings == ["Warning 1", "Warning 2"])
-        
-        // Test awards
-        metadata.awards = ["Award 1 ", " Award 2"]
-        #expect(metadata.awards == ["Award 1", "Award 2"])
+        // Test enhanced recognition method
+        let recognitionMetadata = BookMetadata(
+            googleBooksID: "recognition-test",
+            title: "Hugo Award Winner: Test Book"
+        )
+        #expect(recognitionMetadata.hasNotableRecognition() == true)
     }
 
     @Test("BookMetadata Initializer - Should set properties correctly")
@@ -49,16 +48,16 @@ struct ModelTests {
             authors: ["  Author Name  "],
             genre: ["  Genre  "],
             culturalThemes: ["  Culture  "],
-            contentWarnings: ["  Warning  "],
-            awards: ["  Award  "]
+            authorEthnicity: "Test Ethnicity",
+            culturalRegion: .africa
         )
 
         #expect(metadata.title == "Initializer Test")
         #expect(metadata.authors == ["Author Name"])
         #expect(metadata.genre == ["Genre"])
         #expect(metadata.culturalThemes == ["Culture"])
-        #expect(metadata.contentWarnings == ["Warning"])
-        #expect(metadata.awards == ["Award"])
+        #expect(metadata.authorEthnicity == "Test Ethnicity")
+        #expect(metadata.culturalRegion == .africa)
     }
     
     @Test("BookMetadata Hashable and Equatable - Should conform correctly")

@@ -66,30 +66,6 @@ struct LibraryView: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            // ScreenshotMode visual banner (purple gradient, visible only in ScreenshotMode)
-            if ScreenshotMode.isEnabled {
-                ZStack {
-                    LinearGradient(
-                        colors: [Color.purple.opacity(0.85), Color.purple.opacity(0.65)],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    )
-                    HStack {
-                        Image(systemName: "camera.aperture")
-                            .font(.headline)
-                            .foregroundColor(.white)
-                        Text("Screenshot Mode")
-                            .font(.headline)
-                            .fontWeight(.bold)
-                            .foregroundColor(.white)
-                        Spacer()
-                    }
-                    .padding(.horizontal)
-                }
-                .frame(height: 32)
-                .cornerRadius(0)
-                .shadow(color: Color.purple.opacity(0.15), radius: 7, x: 0, y: 4)
-            }
 
             // Quick filter bar
             QuickFilterBar(filter: $libraryFilter) { }
@@ -239,27 +215,6 @@ struct LibraryView: View {
         }
     }
     
-    #if DEBUG
-    private func addSampleDataIfNeeded() {
-        // Only add sample data if library is empty and not in screenshot mode
-        guard allBooks.isEmpty && !ScreenshotMode.isEnabled else { return }
-        
-        let sampleBooks = ScreenshotMode.demoBooks()
-        for book in sampleBooks {
-            modelContext.insert(book)
-            if let metadata = book.metadata {
-                modelContext.insert(metadata)
-            }
-        }
-        
-        do {
-            try modelContext.save()
-            print("Added \(sampleBooks.count) sample books for development")
-        } catch {
-            print("Failed to save sample books: \(error)")
-        }
-    }
-    #endif
 }
 
 // MARK: - Layout Views (updated - iPad-optimized)

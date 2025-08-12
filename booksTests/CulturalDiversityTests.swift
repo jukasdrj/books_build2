@@ -185,13 +185,12 @@ final class CulturalDiversityTests: BookTrackerTestSuite {
             authors: ["Tommy Orange"],
             culturalRegion: .northAmerica
         )
-        indigenousBook.indigenousAuthor = true
         indigenousBook.authorEthnicity = "Cheyenne and Arapaho"
         
         try saveContext()
         
         let allMetadata = try fetchAllBookMetadata()
-        let indigenousBooks = allMetadata.filter { $0.indigenousAuthor }
+        let indigenousBooks = allMetadata.filter { $0.hasIndigenousVoice() }
         
         XCTAssertEqual(indigenousBooks.count, 1)
         XCTAssertEqual(indigenousBooks.first?.authorEthnicity, "Cheyenne and Arapaho")
@@ -200,14 +199,15 @@ final class CulturalDiversityTests: BookTrackerTestSuite {
     func testMarginalizedVoiceTracking() async throws {
         let marginalizedVoiceBook = createTestBookMetadata(
             title: "The Water Will Come",
-            authors: ["Jeff Goodell"]
+            authors: ["Jeff Goodell"],
+            culturalRegion: .africa
         )
-        marginalizedVoiceBook.marginalizedVoice = true
+        marginalizedVoiceBook.authorGender = .female
         
         try saveContext()
         
         let allMetadata = try fetchAllBookMetadata()
-        let marginalizedVoiceBooks = allMetadata.filter { $0.marginalizedVoice }
+        let marginalizedVoiceBooks = allMetadata.filter { $0.hasMarginalizedVoice() }
         
         XCTAssertEqual(marginalizedVoiceBooks.count, 1)
     }
@@ -269,52 +269,46 @@ final class CulturalDiversityTests: BookTrackerTestSuite {
         XCTAssertEqual(goalProgress, 0.5, accuracy: 0.01)
     }
     
-    // MARK: - Content Warning Tests
+    // MARK: - Enhanced Recognition Tests
     
-    func testContentWarnings() async throws {
-        let bookWithWarnings = createTestBookMetadata(
-            title: "Sensitive Content Book",
-            authors: ["Author Name"]
-        )
-        bookWithWarnings.contentWarnings = ["Violence", "Sexual Content", "Drug Use"]
-        
-        try saveContext()
-        
-        let allMetadata = try fetchAllBookMetadata()
-        let booksWithWarnings = allMetadata.filter { !$0.contentWarnings.isEmpty }
-        
-        XCTAssertEqual(booksWithWarnings.count, 1)
-        XCTAssertEqual(booksWithWarnings.first?.contentWarnings.count, 3)
-        XCTAssertTrue(booksWithWarnings.first?.contentWarnings.contains("Violence") == true)
-    }
-    
-    // MARK: - Award Recognition Tests
-    
-    func testAwardTracking() async throws {
-        let awardWinningBook = createTestBookMetadata(
-            title: "Award Winner",
+    func testNotableRecognitionDetection() async throws {
+        // Test recognition detection from title and description
+        let awardWinnerByTitle = createTestBookMetadata(
+            title: "Pulitzer Prize Winner: Great Novel",
             authors: ["Celebrated Author"]
         )
-        awardWinningBook.awards = ["Pulitzer Prize", "National Book Award", "Hugo Award"]
+        
+        let awardWinnerByDescription = createTestBookMetadata(
+            title: "Another Great Novel",
+            authors: ["Another Author"],
+            bookDescription: "This Hugo Award finalist explores..."
+        )
+        
+        let regularBook = createTestBookMetadata(
+            title: "Regular Novel",
+            authors: ["Regular Author"],
+            bookDescription: "A simple story about everyday life."
+        )
         
         try saveContext()
         
         let allMetadata = try fetchAllBookMetadata()
-        let awardWinningBooks = allMetadata.filter { !$0.awards.isEmpty }
+        let recognizedBooks = allMetadata.filter { $0.hasNotableRecognition() }
         
-        XCTAssertEqual(awardWinningBooks.count, 1)
-        XCTAssertEqual(awardWinningBooks.first?.awards.count, 3)
-        XCTAssertTrue(awardWinningBooks.first?.awards.contains("Pulitzer Prize") == true)
+        XCTAssertEqual(recognizedBooks.count, 2, "Should detect 2 books with notable recognition")
+        XCTAssertTrue(awardWinnerByTitle.hasNotableRecognition(), "Should detect award in title")
+        XCTAssertTrue(awardWinnerByDescription.hasNotableRecognition(), "Should detect award in description") 
+        XCTAssertFalse(regularBook.hasNotableRecognition(), "Should not detect recognition in regular book")
     }
     
     // MARK: - Reading Difficulty and Accessibility Tests
     
     func testReadingDifficultyTracking() async throws {
-        let beginnerBook = createTestBookMetadata(title: "Easy Read")
-        beginnerBook.readingDifficulty = .beginner
+        let easyBook = createTestBookMetadata(title: "Easy Read")
+        easyBook.readingDifficulty = .easy
         
-        let intermediateBook = createTestBookMetadata(title: "Medium Read")
-        intermediateBook.readingDifficulty = .intermediate
+        let moderateBook = createTestBookMetadata(title: "Medium Read")
+        moderateBook.readingDifficulty = .moderate
         
         let advancedBook = createTestBookMetadata(title: "Complex Read")
         advancedBook.readingDifficulty = .advanced
@@ -322,12 +316,12 @@ final class CulturalDiversityTests: BookTrackerTestSuite {
         try saveContext()
         
         let allMetadata = try fetchAllBookMetadata()
-        let beginnerBooks = allMetadata.filter { $0.readingDifficulty == .beginner }
-        let intermediateBooks = allMetadata.filter { $0.readingDifficulty == .intermediate }
+        let easyBooks = allMetadata.filter { $0.readingDifficulty == .easy }
+        let moderateBooks = allMetadata.filter { $0.readingDifficulty == .moderate }
         let advancedBooks = allMetadata.filter { $0.readingDifficulty == .advanced }
         
-        XCTAssertEqual(beginnerBooks.count, 1)
-        XCTAssertEqual(intermediateBooks.count, 1)
+        XCTAssertEqual(easyBooks.count, 1)
+        XCTAssertEqual(moderateBooks.count, 1)
         XCTAssertEqual(advancedBooks.count, 1)
     }
     

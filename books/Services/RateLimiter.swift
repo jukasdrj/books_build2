@@ -244,7 +244,7 @@ extension RateLimiter {
         } catch {
             // Check if this is a rate limit error
             if isRateLimitError(error) {
-                await reportRateLimitError()
+                reportRateLimitError()
             }
             throw error
         }

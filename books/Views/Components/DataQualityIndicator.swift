@@ -247,19 +247,27 @@ private func analyzeDataQuality(_ session: CSVImportSession) -> DataQualityAnaly
         if let isbn = book.isbn {
             let result = DataValidationService.validateISBN(isbn)
             isbnScores.append(result.confidence)
-            allIssues.append(contentsOf: result.issues.map { $0.description })
+            if result.confidence < 0.5 {
+                allIssues.append("ISBN validation confidence low: \(String(format: "%.0f%%", result.confidence * 100))")
+            }
         }
         
-        if let title = book.title {
-            let result = DataValidationService.validateTitle(title)
-            titleScores.append(result.confidence)
-            allIssues.append(contentsOf: result.issues.map { $0.description })
+        if let title = book.title, !title.isEmpty {
+            // Simple title validation - just check if present and reasonable length
+            let confidence = title.count >= 1 && title.count <= 200 ? 1.0 : 0.8
+            titleScores.append(confidence)
+            if title.count > 200 {
+                allIssues.append("Title unusually long")
+            }
         }
         
-        if let author = book.author {
-            let result = DataValidationService.validateAuthor(author)
-            authorScores.append(result.confidence)
-            allIssues.append(contentsOf: result.issues.map { $0.description })
+        if let author = book.author, !author.isEmpty {
+            // Simple author validation - just check if present and reasonable format
+            let confidence = author.count >= 2 && author.count <= 100 ? 1.0 : 0.8
+            authorScores.append(confidence)
+            if author.count > 100 {
+                allIssues.append("Author name unusually long")
+            }
         }
         
         // Calculate completeness (fields present)

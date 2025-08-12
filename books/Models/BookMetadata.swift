@@ -4,8 +4,8 @@ import SwiftUI
 
 @Model
 final class BookMetadata: Identifiable, Hashable, @unchecked Sendable {
-    @Attribute(.unique) var googleBooksID: String
-    var title: String
+    var googleBooksID: String = ""
+    var title: String = ""
     
     // Store authors as a comma-separated string for SwiftData compatibility
     private var authorsString: String = ""
@@ -37,25 +37,14 @@ final class BookMetadata: Identifiable, Hashable, @unchecked Sendable {
     // Store cultural themes as a comma-separated string for SwiftData compatibility
     private var culturalThemesString: String = ""
     
-    var indigenousAuthor: Bool = false
-    var marginalizedVoice: Bool = false
-    
     // NEW: Enhanced reading experience tracking
     var readingDifficulty: ReadingDifficulty?
     var timeToRead: Int? // estimated minutes
     
-    // Store content warnings as a comma-separated string for SwiftData compatibility
-    private var contentWarningsString: String = ""
-    
-    // Store awards as a comma-separated string for SwiftData compatibility
-    private var awardsString: String = ""
-    
-    var series: String?
-    var seriesNumber: Int?
 
     // One-to-many relationship: BookMetadata can have multiple UserBooks
     @Relationship(inverse: \UserBook.metadata)
-    var userBooks: [UserBook] = []
+    var userBooks: [UserBook]? = []
     
     @Transient
     var id: String { googleBooksID }
@@ -93,29 +82,8 @@ final class BookMetadata: Identifiable, Hashable, @unchecked Sendable {
         }
     }
     
-    // Computed property for content warnings array
-    var contentWarnings: [String] {
-        get {
-            guard !contentWarningsString.isEmpty else { return [] }
-            return contentWarningsString.components(separatedBy: "|||").map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }.filter { !$0.isEmpty }
-        }
-        set {
-            contentWarningsString = newValue.map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }.filter { !$0.isEmpty }.joined(separator: "|||")
-        }
-    }
-    
-    // Computed property for awards array
-    var awards: [String] {
-        get {
-            guard !awardsString.isEmpty else { return [] }
-            return awardsString.components(separatedBy: "|||").map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }.filter { !$0.isEmpty }
-        }
-        set {
-            awardsString = newValue.map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }.filter { !$0.isEmpty }.joined(separator: "|||")
-        }
-    }
 
-    init(googleBooksID: String, title: String, authors: [String] = [], publishedDate: String? = nil, pageCount: Int? = nil, bookDescription: String? = nil, imageURL: URL? = nil, language: String? = nil, previewLink: URL? = nil, infoLink: URL? = nil, publisher: String? = nil, isbn: String? = nil, genre: [String] = [], originalLanguage: String? = nil, authorNationality: String? = nil, format: BookFormat? = nil, authorGender: AuthorGender? = nil, authorEthnicity: String? = nil, culturalRegion: CulturalRegion? = nil, originalPublicationCountry: String? = nil, translatorNationality: String? = nil, culturalThemes: [String] = [], indigenousAuthor: Bool = false, marginalizedVoice: Bool = false, readingDifficulty: ReadingDifficulty? = nil, timeToRead: Int? = nil, contentWarnings: [String] = [], awards: [String] = [], series: String? = nil, seriesNumber: Int? = nil) {
+    init(googleBooksID: String, title: String, authors: [String] = [], publishedDate: String? = nil, pageCount: Int? = nil, bookDescription: String? = nil, imageURL: URL? = nil, language: String? = nil, previewLink: URL? = nil, infoLink: URL? = nil, publisher: String? = nil, isbn: String? = nil, genre: [String] = [], originalLanguage: String? = nil, authorNationality: String? = nil, format: BookFormat? = nil, authorGender: AuthorGender? = nil, authorEthnicity: String? = nil, culturalRegion: CulturalRegion? = nil, originalPublicationCountry: String? = nil, translatorNationality: String? = nil, culturalThemes: [String] = [], readingDifficulty: ReadingDifficulty? = nil, timeToRead: Int? = nil) {
         self.googleBooksID = googleBooksID
         self.title = title.trimmingCharacters(in: .whitespacesAndNewlines)
         self.publishedDate = publishedDate
@@ -135,19 +103,13 @@ final class BookMetadata: Identifiable, Hashable, @unchecked Sendable {
         self.culturalRegion = culturalRegion
         self.originalPublicationCountry = originalPublicationCountry
         self.translatorNationality = translatorNationality
-        self.indigenousAuthor = indigenousAuthor
-        self.marginalizedVoice = marginalizedVoice
         self.readingDifficulty = readingDifficulty
         self.timeToRead = timeToRead
-        self.series = series
-        self.seriesNumber = seriesNumber
         
         // Set the computed properties which will update the private strings
         self.authors = authors
         self.genre = genre
         self.culturalThemes = culturalThemes
-        self.contentWarnings = contentWarnings
-        self.awards = awards
     }
     
     // MARK: - Hashable Conformance
@@ -183,6 +145,94 @@ final class BookMetadata: Identifiable, Hashable, @unchecked Sendable {
     
     func validateGenres() -> Bool {
         return genre.count <= 10 && genre.allSatisfy({ $0.count <= 50 })
+    }
+    
+    // MARK: - Replacement Methods for Deprecated Fields
+    
+    /// Returns true if this work represents an indigenous voice
+    /// Uses enhanced cultural tracking instead of deprecated indigenousAuthor field
+    func hasIndigenousVoice() -> Bool {
+        // Check if the cultural region indicates indigenous authorship
+        if culturalRegion == .indigenous {
+            return true
+        }
+        
+        // Check author ethnicity for indigenous indicators
+        if let ethnicity = authorEthnicity?.lowercased() {
+            let indigenousKeywords = ["indigenous", "native", "aboriginal", "first nations", "inuit", "maori", "aboriginal"]
+            return indigenousKeywords.contains { ethnicity.contains($0) }
+        }
+        
+        return false
+    }
+    
+    /// Returns true if this work represents a marginalized voice
+    /// Uses enhanced cultural tracking instead of deprecated marginalizedVoice field
+    func hasMarginalizedVoice() -> Bool {
+        // Check various indicators of marginalized voices
+        if hasIndigenousVoice() {
+            return true
+        }
+        
+        // Check for underrepresented cultural regions
+        let marginalizedRegions: [CulturalRegion] = [.africa, .indigenous, .middleEast]
+        if let region = culturalRegion, marginalizedRegions.contains(region) {
+            return true
+        }
+        
+        // Check author gender diversity
+        if let gender = authorGender, gender != .male && gender != .unknown {
+            return true
+        }
+        
+        // Check if work is translated (often underrepresented)
+        if originalLanguage != nil && originalLanguage?.lowercased() != "english" {
+            return true
+        }
+        
+        return false
+    }
+    
+    /// Returns true if this book has notable achievements
+    /// Provides functionality previously handled by awards field
+    func hasNotableRecognition() -> Bool {
+        // Check for recognition indicators in title or description
+        let title = self.title.lowercased()
+        let description = self.bookDescription?.lowercased() ?? ""
+        
+        let recognitionKeywords = ["winner", "award", "prize", "bestseller", "nominated", "finalist", "pulitzer", "nobel", "hugo", "nebula", "booker"]
+        
+        return recognitionKeywords.contains { keyword in
+            title.contains(keyword) || description.contains(keyword)
+        }
+    }
+    
+    /// Returns series information as a formatted string
+    /// Provides functionality previously handled by separate series fields
+    func getSeriesInfo() -> String? {
+        // Try to extract series information from title
+        let title = self.title
+        
+        // Look for patterns like "Book Name (Series #3)" or "Book Name: Series Book 3"
+        let seriesPatterns = [
+            #"\(([^)]+)\s*#?(\d+)\)"#,  // (Series Name #3)
+            #":\s*([^:]+)\s+Book\s+(\d+)"#,  // : Series Book 3
+            #":\s*([^:]+)\s+(\d+)"#,  // : Series 3
+            #"-\s*([^-]+)\s+(\d+)$"#   // - Series 3
+        ]
+        
+        for pattern in seriesPatterns {
+            if let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]),
+               let match = regex.firstMatch(in: title, range: NSRange(title.startIndex..., in: title)),
+               let seriesRange = Range(match.range(at: 1), in: title),
+               let numberRange = Range(match.range(at: 2), in: title) {
+                let seriesName = String(title[seriesRange]).trimmingCharacters(in: .whitespacesAndNewlines)
+                let number = String(title[numberRange])
+                return "\(seriesName) #\(number)"
+            }
+        }
+        
+        return nil
     }
 }
 

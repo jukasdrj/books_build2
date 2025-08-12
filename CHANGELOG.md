@@ -2,6 +2,51 @@
 
 All notable changes to the Books Reading Tracker project are documented in this file. The project follows semantic versioning principles with major phases corresponding to significant feature releases.
 
+## [3.2.0] - December 2024 Feature Updates - 2024-12-08
+
+### 🎉 Major Features Added
+
+**Author Gender Selection**
+- ✨ **Inclusive Gender Selection**: Added author gender options (Female, Male, Non-binary, Other, Not specified) in EditBookView
+- 🎨 **Cohesive UI Integration**: Gender picker matches existing cultural selection patterns with modal interface
+- 📊 **Cultural Analytics**: Author gender data flows to culture tab for diversity tracking
+- ♿ **Accessibility**: Full VoiceOver support and respectful, inclusive language throughout
+
+**Enhanced EditBookView**
+- 🗑️ **Delete Book Functionality**: Added delete button at bottom of EditBookView with confirmation dialog
+- ⚠️ **Smart Confirmations**: Delete alert shows book title and provides clear warnings about permanence
+- 🎯 **Haptic Feedback**: Proper success feedback using HapticFeedbackManager integration
+
+### 🐛 Critical Bug Fixes
+
+**CSV Import System**
+- ✅ **Progress Indicators Fixed**: CSV import now properly displays progress indicators during operations
+- ⏱️ **Timing Issues Resolved**: Fixed BackgroundImportCoordinator initialization to ensure progress monitoring works
+- 🔍 **Debug Logging Added**: Comprehensive logging for import progress tracking and troubleshooting
+- 📊 **Real-time Updates**: Progress shows in LibraryView toolbar with book count and spinner
+
+**Library Reset Enhancements**
+- 🧹 **Complete Import Cleanup**: Library reset now cancels active imports and clears all import state
+- 🔄 **Orphaned Import Prevention**: Prevents lingering progress indicators or import artifacts after reset
+- 💾 **State Management**: Proper cleanup of ImportStateManager and BackgroundImportCoordinator state
+- ✨ **Fresh Start Guarantee**: Reset truly returns app to pristine state
+
+### 🧹 Code Cleanup
+
+**Screenshot Mode Removal**
+- ✂️ **Complete Removal**: Eliminated screenshot mode functionality and demo data generation
+- 🎨 **UI Cleanup**: Removed purple screenshot mode banners from all main views
+- ⚡ **App Startup**: Simplified initialization without screenshot mode detection or forced themes
+- 📱 **Production Ready**: Cleaner codebase without development-only screenshot features
+
+### 🔧 Technical Improvements
+
+**Architecture Enhancements**
+- 🏗️ **Import Coordination**: Enhanced BackgroundImportCoordinator with better initialization timing
+- 📝 **Data Models**: Added AuthorGender enum integration with BookMetadata
+- 🎯 **UI Consistency**: Gender selection component follows established Material Design 3 patterns
+- 🔐 **Error Handling**: Improved error handling in delete operations and import cleanup
+
 ## [3.1.0] - Phase 3A: Smart Data Validation & Critical Fixes - 2024-08-12
 
 ### 🎉 Major Features Added

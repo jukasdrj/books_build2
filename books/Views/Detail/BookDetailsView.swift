@@ -46,9 +46,10 @@ struct BookDetailsView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
-                ShareLink(item: book.shareableText) {
-                    Image(systemName: "square.and.arrow.up")
+                Button("Edit") {
+                    isEditing = true
                 }
+                .foregroundColor(currentTheme.primaryAction)
             }
         }
         .alert("Delete Book?", isPresented: $showingDeleteAlert, actions: {
@@ -516,6 +517,13 @@ struct CulturalDetailsView: View {
                 label: "Author Nationality",
                 value: book.metadata?.authorNationality ?? "Not specified",
                 isPlaceholder: book.metadata?.authorNationality == nil
+            )
+            
+            // Always show Author Gender for cultural tracking
+            DetailRowView(
+                label: "Author Gender",
+                value: book.metadata?.authorGender?.rawValue ?? "Not specified",
+                isPlaceholder: book.metadata?.authorGender == nil
             )
             
         }

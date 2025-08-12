@@ -309,9 +309,22 @@ struct CSVParser {
             books.append(book)
         }
         
-        // Calculate data quality scores for all parsed books
+        // Calculate simple data quality scores for all parsed books
         for (index, book) in books.enumerated() {
-            let qualityScore = DataValidationService.calculateDataQualityScore(for: book)
+            // Simple quality score based on field completeness
+            var filledFields = 0
+            var totalFields = 10 // Count of important fields
+            
+            if book.title != nil && !book.title!.isEmpty { filledFields += 2 } // Title is more important
+            if book.author != nil && !book.author!.isEmpty { filledFields += 2 } // Author is more important
+            if book.isbn != nil && !book.isbn!.isEmpty { filledFields += 1 }
+            if book.publisher != nil && !book.publisher!.isEmpty { filledFields += 1 }
+            if book.publishedDate != nil && !book.publishedDate!.isEmpty { filledFields += 1 }
+            if book.pageCount != nil { filledFields += 1 }
+            if book.rating != nil { filledFields += 1 }
+            if !book.genre.isEmpty { filledFields += 1 }
+            
+            let qualityScore = Double(filledFields) / Double(totalFields)
             books[index].dataQualityScore = qualityScore
             
             // Log quality issues for development
@@ -338,22 +351,18 @@ struct CSVParser {
             
             switch field {
             case .title:
-                let titleResult = DataValidationService.validateTitle(value)
-                book.title = titleResult.correctedValue
-                if !titleResult.issues.isEmpty {
-                    book.validationIssues.append(contentsOf: titleResult.issues.map { "Title: \($0.description)" })
-                }
+                // Simple validation - just ensure non-empty
+                let trimmedValue = value.trimmingCharacters(in: .whitespacesAndNewlines)
+                book.title = trimmedValue.isEmpty ? nil : trimmedValue
             case .author:
-                let authorResult = DataValidationService.validateAuthor(value)
-                book.author = authorResult.correctedValue
-                if !authorResult.issues.isEmpty {
-                    book.validationIssues.append(contentsOf: authorResult.issues.map { "Author: \($0.description)" })
-                }
+                // Simple validation - just ensure non-empty
+                let trimmedValue = value.trimmingCharacters(in: .whitespacesAndNewlines)
+                book.author = trimmedValue.isEmpty ? nil : trimmedValue
             case .isbn:
                 let isbnResult = DataValidationService.validateISBN(value)
                 book.isbn = isbnResult.correctedValue
-                if !isbnResult.issues.isEmpty {
-                    book.validationIssues.append(contentsOf: isbnResult.issues.map { "ISBN: \($0.description)" })
+                if !isbnResult.isValid && isbnResult.confidence < 0.5 {
+                    book.validationIssues.append("ISBN: Low confidence (\(String(format: "%.0f%%", isbnResult.confidence * 100)))")
                 }
             case .publisher:
                 book.publisher = value.isEmpty ? nil : value
@@ -372,26 +381,11 @@ struct CSVParser {
             case .genre:
                 book.genre = parseList(value)
             case .dateRead:
-                let dateResult = DataValidationService.validateDate(value)
-                if dateResult.isValid, let correctedValue = dateResult.correctedValue {
-                    book.dateRead = parseDate(correctedValue)
-                } else {
-                    book.dateRead = parseDate(value) // Fallback to original parsing
-                }
+                book.dateRead = parseDate(value)
             case .dateStarted:
-                let dateResult = DataValidationService.validateDate(value)
-                if dateResult.isValid, let correctedValue = dateResult.correctedValue {
-                    book.dateStarted = parseDate(correctedValue)
-                } else {
-                    book.dateStarted = parseDate(value) // Fallback to original parsing
-                }
+                book.dateStarted = parseDate(value)
             case .dateAdded:
-                let dateResult = DataValidationService.validateDate(value)
-                if dateResult.isValid, let correctedValue = dateResult.correctedValue {
-                    book.dateAdded = parseDate(correctedValue)
-                } else {
-                    book.dateAdded = parseDate(value) // Fallback to original parsing
-                }
+                book.dateAdded = parseDate(value)
             case .rating:
                 book.rating = Int(value)
             case .readingStatus:

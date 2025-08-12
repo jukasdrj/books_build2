@@ -355,6 +355,38 @@ This app has a strong focus on tracking cultural diversity in reading:
 - **Fixed**: Main actor isolation errors in deinit methods
 - **Fixed**: Switch statement exhaustiveness for new BookField cases
 
+## December 2024 Updates
+
+### Author Gender Selection Feature
+- **Added**: Author gender selection in EditBookView with inclusive options (Female, Male, Non-binary, Other, Not specified)
+- **Integrated**: Gender picker with existing CulturalSelectionSection for cohesive UI
+- **Enhanced**: BookDetailsView displays author gender alongside other cultural metadata
+- **Updated**: AuthorGenderSelectionPicker with modal selection matching existing cultural selection patterns
+
+### Screenshot Mode Removal
+- **Removed**: Complete screenshot mode functionality and demo data generation system
+- **Cleaned**: ScreenshotMode.swift file and all related UI banners from main views
+- **Fixed**: App initialization no longer includes screenshot mode detection or forced light mode
+- **Simplified**: Removed sample data generation that was tied to screenshot mode
+
+### CSV Import Progress Indicators Fixed
+- **Fixed**: CSV import progress indicators now properly display during import operations
+- **Enhanced**: BackgroundImportCoordinator monitoring with improved initialization timing
+- **Added**: Debug logging for import progress tracking and troubleshooting
+- **Resolved**: Timing issue where progress monitoring started before import initialization
+
+### EditBookView Delete Button
+- **Added**: Delete button at bottom of EditBookView with confirmation alert
+- **Integrated**: Proper delete functionality that removes both UserBook and BookMetadata
+- **Enhanced**: Delete confirmation shows book title and provides appropriate warnings
+- **Fixed**: Haptic feedback integration using correct HapticFeedbackManager methods
+
+### Library Reset Import Cleanup
+- **Enhanced**: Library reset now properly cancels and cleans up any active or paused imports
+- **Added**: Import state cleanup in LibraryResetService to prevent orphaned import operations
+- **Fixed**: Complete reset functionality that handles background import coordination
+- **Improved**: Reset process ensures no lingering progress indicators or import artifacts
+
 # important-instruction-reminders
 Do what has been asked; nothing more, nothing less.
 NEVER create files unless they're absolutely necessary for achieving your goal.

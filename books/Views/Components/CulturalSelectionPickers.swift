@@ -319,16 +319,129 @@ struct CulturalBackgroundPickerModal: View {
     }
 }
 
+// MARK: - Author Gender Selection Picker
+
+struct AuthorGenderSelectionPicker: View {
+    @Binding var selectedGender: AuthorGender?
+    @Environment(\.appTheme) private var theme
+    @State private var showingPicker = false
+    
+    var body: some View {
+        Button {
+            showingPicker = true
+        } label: {
+            HStack {
+                VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+                    Text("Author Gender")
+                        .labelMedium()
+                        .foregroundColor(theme.secondaryText)
+                    
+                    if let gender = selectedGender {
+                        Text(gender.rawValue)
+                            .bodyMedium()
+                            .foregroundColor(theme.primaryText)
+                    } else {
+                        Text("Select gender...")
+                            .bodyMedium()
+                            .foregroundColor(theme.secondaryText)
+                    }
+                }
+                
+                Spacer()
+                
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundColor(theme.secondaryText)
+            }
+            .padding(Theme.Spacing.md)
+            .materialCard()
+        }
+        .buttonStyle(.plain)
+        .sheet(isPresented: $showingPicker) {
+            AuthorGenderPickerModal(selectedGender: $selectedGender)
+        }
+    }
+}
+
+struct AuthorGenderPickerModal: View {
+    @Binding var selectedGender: AuthorGender?
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.appTheme) private var theme
+    
+    var body: some View {
+        NavigationStack {
+            List {
+                // Clear selection option
+                Button {
+                    selectedGender = nil
+                    dismiss()
+                } label: {
+                    HStack {
+                        Image(systemName: "xmark.circle")
+                            .foregroundColor(theme.error)
+                        Text("Not specified")
+                            .bodyMedium()
+                            .foregroundColor(theme.error)
+                        Spacer()
+                        if selectedGender == nil {
+                            Image(systemName: "checkmark")
+                                .foregroundColor(theme.primary)
+                        }
+                    }
+                }
+                .listRowBackground(theme.surface)
+                
+                ForEach(AuthorGender.allCases.filter { $0 != .unknown }, id: \.self) { gender in
+                    Button {
+                        selectedGender = gender
+                        dismiss()
+                    } label: {
+                        HStack {
+                            Image(systemName: gender.icon)
+                                .foregroundColor(theme.primaryAction)
+                                .frame(width: 20)
+                            
+                            Text(gender.rawValue)
+                                .bodyMedium()
+                                .foregroundColor(theme.primaryText)
+                            
+                            Spacer()
+                            
+                            if selectedGender == gender {
+                                Image(systemName: "checkmark")
+                                    .foregroundColor(theme.primary)
+                            }
+                        }
+                    }
+                    .listRowBackground(theme.surface)
+                }
+            }
+            .listStyle(.plain)
+            .navigationTitle("Author Gender")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                }
+            }
+        }
+    }
+}
+
 // MARK: - Combined Cultural Section
 
 struct CulturalSelectionSection: View {
     @Binding var originalLanguage: String?
     @Binding var authorNationality: String?
+    @Binding var authorGender: AuthorGender?
     
     var body: some View {
         VStack(spacing: Theme.Spacing.md) {
             LanguageSelectionPicker(selectedLanguage: $originalLanguage)
             CulturalBackgroundSelectionPicker(selectedBackground: $authorNationality)
+            AuthorGenderSelectionPicker(selectedGender: $authorGender)
         }
     }
 }
@@ -336,10 +449,12 @@ struct CulturalSelectionSection: View {
 #Preview {
     @Previewable @State var language: String? = "en"
     @Previewable @State var background: String? = "us"
+    @Previewable @State var gender: AuthorGender? = .female
     
     return VStack(spacing: 20) {
         LanguageSelectionPicker(selectedLanguage: $language)
         CulturalBackgroundSelectionPicker(selectedBackground: $background)
+        AuthorGenderSelectionPicker(selectedGender: $gender)
     }
     .padding()
     .preferredColorScheme(.dark)

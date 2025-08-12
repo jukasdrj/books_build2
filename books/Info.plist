@@ -2,93 +2,53 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>CFBundleName</key>
-	<string>oooePaperTracks</string>
-	<key>CFBundleDisplayName</key>
-	<string>oooePaperTracks</string>
-	<key>CFBundleIdentifier</key>
-	<string>com.books.readingtracker</string>
-	<key>CFBundleVersion</key>
-	<string>$(CURRENT_PROJECT_VERSION)</string>
-	<key>CFBundleShortVersionString</key>
-	<string>1.0</string>
-	<key>CFBundlePackageType</key>
-	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
-	<key>UIRequiredDeviceCapabilities</key>
-	<array>
-		<string>arm64</string>
-	</array>
-	<key>LSApplicationCategoryType</key>
-	<string>public.app-category.books</string>
-	<key>LSRequiresIPhoneOS</key>
-	<true/>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsArbitraryLoads</key>
 		<false/>
 		<key>NSAllowsArbitraryLoadsForMedia</key>
-		<false/>
+		<true/>
 		<key>NSAllowsArbitraryLoadsInWebContent</key>
 		<false/>
 		<key>NSAllowsLocalNetworking</key>
-		<false/>
+		<true/>
 		<key>NSExceptionDomains</key>
 		<dict>
-			<key>books.googleapis.com</key>
+			<key>www.googleapis.com</key>
 			<dict>
-				<key>NSExceptionRequiresForwardSecrecy</key>
-				<true/>
+				<key>NSExceptionAllowsInsecureHTTPLoads</key>
+				<false/>
 				<key>NSExceptionMinimumTLSVersion</key>
 				<string>TLSv1.2</string>
-				<key>NSThirdPartyExceptionRequiresForwardSecrecy</key>
+				<key>NSExceptionRequiresForwardSecrecy</key>
+				<true/>
+				<key>NSIncludesSubdomains</key>
 				<true/>
 			</dict>
 			<key>googleapis.com</key>
 			<dict>
-				<key>NSExceptionRequiresForwardSecrecy</key>
-				<true/>
+				<key>NSExceptionAllowsInsecureHTTPLoads</key>
+				<false/>
 				<key>NSExceptionMinimumTLSVersion</key>
 				<string>TLSv1.2</string>
-				<key>NSThirdPartyExceptionRequiresForwardSecrecy</key>
+				<key>NSExceptionRequiresForwardSecrecy</key>
+				<true/>
+				<key>NSIncludesSubdomains</key>
 				<true/>
 			</dict>
 		</dict>
 	</dict>
-	<key>NSLocalNetworkUsageDescription</key>
-	<string>We do not use your local network.</string>
-	<key>NSCameraUsageDescription</key>
-	<string>This app uses the camera to scan book barcodes for quick book lookup.</string>
-	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>This app may save book cover images to your photo library for offline access and personal organization.</string>
 	<key>UIApplicationSupportsMultipleScenes</key>
-	<true/>
-	<key>UILaunchScreen</key>
-	<dict/>
-	<key>UISupportedInterfaceOrientations</key>
-	<array>
-		<string>UIInterfaceOrientationPortrait</string>
-		<string>UIInterfaceOrientationLandscapeLeft</string>
-		<string>UIInterfaceOrientationLandscapeRight</string>
-	</array>
-	<key>UISupportedInterfaceOrientations~ipad</key>
-	<array>
-		<string>UIInterfaceOrientationPortrait</string>
-		<string>UIInterfaceOrientationPortraitUpsideDown</string>
-		<string>UIInterfaceOrientationLandscapeLeft</string>
-		<string>UIInterfaceOrientationLandscapeRight</string>
-	</array>
-	<key>UISupportsDocumentBrowser</key>
-	<false/>
-	<key>UIApplicationSupportsIndirectInputEvents</key>
-	<true/>
-	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>background-processing</string>
 		<string>background-fetch</string>
+		<string>processing</string>
 	</array>
-	<key>NSSupportsLiveActivities</key>
+	<key>UILaunchScreen</key>
+	<dict/>
+	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
 </dict>
 </plist>

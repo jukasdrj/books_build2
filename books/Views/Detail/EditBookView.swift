@@ -20,8 +20,10 @@ struct EditBookView: View {
     @State private var publishedDate: String
     @State private var originalLanguage: String?
     @State private var authorNationality: String?
+    @State private var selectedAuthorGender: AuthorGender?
     @State private var selectedFormat: BookFormat?
     @State private var tags: String
+    @State private var showingDeleteAlert = false
 
     init(userBook: UserBook, onSave: @escaping (UserBook) -> Void) {
         self.userBook = userBook
@@ -38,6 +40,7 @@ struct EditBookView: View {
         _publishedDate = State(initialValue: userBook.metadata?.publishedDate ?? "")
         _originalLanguage = State(initialValue: userBook.metadata?.originalLanguage)
         _authorNationality = State(initialValue: userBook.metadata?.authorNationality)
+        _selectedAuthorGender = State(initialValue: userBook.metadata?.authorGender)
         _selectedFormat = State(initialValue: userBook.metadata?.format)
         _tags = State(initialValue: userBook.tags.joined(separator: ", "))
     }
@@ -204,7 +207,8 @@ struct EditBookView: View {
                     // Use new structured cultural selection pickers
                     CulturalSelectionSection(
                         originalLanguage: $originalLanguage,
-                        authorNationality: $authorNationality
+                        authorNationality: $authorNationality,
+                        authorGender: $selectedAuthorGender
                     )
                 } header: {
                     Text("Cultural & Language Details")
@@ -259,6 +263,27 @@ struct EditBookView: View {
                         .titleSmall()
                         .foregroundColor(currentTheme.primaryText)
                 }
+                
+                // Delete Section
+                Section {
+                    Button(action: {
+                        showingDeleteAlert = true
+                    }) {
+                        HStack {
+                            Image(systemName: "trash")
+                                .foregroundColor(.red)
+                            Text("Delete Book")
+                                .foregroundColor(.red)
+                            Spacer()
+                        }
+                        .padding(.vertical, Theme.Spacing.xs)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                } footer: {
+                    Text("This will permanently remove the book from your library. This action cannot be undone.")
+                        .labelSmall()
+                        .foregroundColor(currentTheme.secondaryText)
+                }
             }
             .background(currentTheme.surface)
             .scrollContentBackground(.hidden)
@@ -279,6 +304,14 @@ struct EditBookView: View {
                     .foregroundColor(currentTheme.primaryAction)
                 }
             }
+            .alert("Delete Book?", isPresented: $showingDeleteAlert) {
+                Button("Delete", role: .destructive) {
+                    deleteBook()
+                }
+                Button("Cancel", role: .cancel) { }
+            } message: {
+                Text("This will permanently remove \"\(userBook.metadata?.title ?? "this book")\" from your library. This action cannot be undone.")
+            }
         }
     }
     
@@ -294,6 +327,7 @@ struct EditBookView: View {
         // Update user-editable metadata with structured selections
         metadata.originalLanguage = originalLanguage
         metadata.authorNationality = authorNationality
+        metadata.authorGender = selectedAuthorGender
         metadata.format = selectedFormat
         
         // Update user-specific data
@@ -308,6 +342,25 @@ struct EditBookView: View {
         
         onSave(userBook)
         HapticFeedbackManager.shared.lightImpact()
+        dismiss()
+    }
+    
+    private func deleteBook() {
+        // Get the model context from the environment
+        let context = userBook.modelContext
+        
+        // Delete the metadata if it exists
+        if let metadata = userBook.metadata {
+            context?.delete(metadata)
+        }
+        
+        // Delete the user book
+        context?.delete(userBook)
+        
+        // Save changes
+        try? context?.save()
+        
+        HapticFeedbackManager.shared.success()
         dismiss()
     }
 }

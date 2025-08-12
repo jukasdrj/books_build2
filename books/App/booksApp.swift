@@ -21,30 +21,6 @@ struct booksApp: App {
             BookMetadata.self,
         ])
 
-        // --- Screenshot Mode block ---
-        if ScreenshotMode.isEnabled {
-            // Always use in-memory storage for screenshots
-            let config = ModelConfiguration(isStoredInMemoryOnly: true)
-            do {
-                let container = try ModelContainer(for: schema, configurations: [config])
-
-                // Wipe and seed demo data
-                let context = ModelContext(container)
-                let books = ScreenshotMode.demoBooks()
-                for book in books {
-                    context.insert(book)
-                    if let metadata = book.metadata {
-                        context.insert(metadata)
-                    }
-                }
-
-                // Demo data loaded for screenshots
-                return container
-            } catch {
-                fatalError("ScreenshotMode: Failed to create in-memory ModelContainer: \(error)")
-            }
-        }
-        // --- End Screenshot Mode block ---
 
         // Configure model container with version-based naming
         let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
@@ -105,14 +81,7 @@ struct ThemedRootView: View {
             themeStore.appTheme.background
                 .ignoresSafeArea()
             
-            Group {
-                if ScreenshotMode.forceLightMode {
-                    ContentView()
-                        .environment(\.colorScheme, .light)
-                } else {
-                    ContentView()
-                }
-            }
+            ContentView()
         }
         // Integrate environment-based theme system with reactive updates
         .environment(\.themeStore, themeStore)
@@ -122,7 +91,7 @@ struct ThemedRootView: View {
             // No longer needed with new theming system
         }
         .statusBarHidden(false)
-        .preferredColorScheme(ScreenshotMode.forceLightMode ? .light : nil)
+        .preferredColorScheme(nil)
         .onAppear {
             // Set up import state manager with model context
             Task { @MainActor in
