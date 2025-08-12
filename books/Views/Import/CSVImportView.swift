@@ -210,7 +210,7 @@ struct CSVImportView: View {
     // MARK: - Navigation
     
     private func proceedToMapping() {
-        guard let session = importSession, let service = importService else { return }
+        guard let session = importSession, let _ = importService else { return }
         
         // Check if we have essential columns for automated import
         if canProceedDirectlyToImport() {

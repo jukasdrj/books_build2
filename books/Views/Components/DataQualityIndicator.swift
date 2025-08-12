@@ -238,7 +238,7 @@ private func analyzeDataQuality(_ session: CSVImportSession) -> DataQualityAnaly
     var isbnScores: [Double] = []
     var titleScores: [Double] = []
     var authorScores: [Double] = []
-    var dateScores: [Double] = []
+    var _: [Double] = []
     var completenessScores: [Double] = []
     var allIssues: [String] = []
     

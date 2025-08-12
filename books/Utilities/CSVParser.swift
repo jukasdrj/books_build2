@@ -313,7 +313,7 @@ struct CSVParser {
         for (index, book) in books.enumerated() {
             // Simple quality score based on field completeness
             var filledFields = 0
-            var totalFields = 10 // Count of important fields
+            let totalFields = 10 // Count of important fields
             
             if book.title != nil && !book.title!.isEmpty { filledFields += 2 } // Title is more important
             if book.author != nil && !book.author!.isEmpty { filledFields += 2 } // Author is more important
