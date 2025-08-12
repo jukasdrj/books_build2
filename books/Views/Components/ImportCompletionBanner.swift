@@ -82,7 +82,7 @@ struct ImportCompletionBanner: View {
         }
         .onAppear {
             if backgroundCoordinator == nil {
-                backgroundCoordinator = BackgroundImportCoordinator(modelContext: modelContext)
+                backgroundCoordinator = BackgroundImportCoordinator.initialize(with: modelContext)
             }
         }
         .onChange(of: backgroundCoordinator?.shouldShowReviewModal) { _, shouldShow in

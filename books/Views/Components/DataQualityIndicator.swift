@@ -195,7 +195,7 @@ struct QualityScoreBadge: View {
     let score: Double
     
     var body: some View {
-        Text("\\(Int(score * 100))%")
+        Text("\(Int(score * 100))%")
             .labelLarge()
             .fontWeight(.bold)
             .foregroundColor(.white)

@@ -378,6 +378,13 @@ struct CSVParser {
                 } else {
                     book.dateRead = parseDate(value) // Fallback to original parsing
                 }
+            case .dateStarted:
+                let dateResult = DataValidationService.validateDate(value)
+                if dateResult.isValid, let correctedValue = dateResult.correctedValue {
+                    book.dateStarted = parseDate(correctedValue)
+                } else {
+                    book.dateStarted = parseDate(value) // Fallback to original parsing
+                }
             case .dateAdded:
                 let dateResult = DataValidationService.validateDate(value)
                 if dateResult.isValid, let correctedValue = dateResult.correctedValue {
@@ -389,6 +396,9 @@ struct CSVParser {
                 book.rating = Int(value)
             case .readingStatus:
                 book.readingStatus = value.isEmpty ? nil : value
+            case .readingProgress:
+                // Parse reading progress - could be percentage (0-100, 0.0-1.0) or page number
+                book.readingProgress = parseReadingProgress(value)
             case .personalNotes:
                 book.personalNotes = value.isEmpty ? nil : value
             case .tags:
@@ -411,6 +421,34 @@ struct CSVParser {
         return value.components(separatedBy: separator)
             .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
             .filter { !$0.isEmpty }
+    }
+    
+    /// Parse reading progress from various formats
+    private func parseReadingProgress(_ value: String) -> Double? {
+        if value.isEmpty { return nil }
+        
+        let trimmedValue = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        // Remove common percentage symbols
+        let cleanedValue = trimmedValue
+            .replacingOccurrences(of: "%", with: "")
+            .replacingOccurrences(of: " ", with: "")
+        
+        guard let doubleValue = Double(cleanedValue) else { return nil }
+        
+        // Handle different formats:
+        // 0.0-1.0 = progress percentage
+        // 0-100 = percentage that needs to be converted to 0.0-1.0
+        // >100 = assume it's a page number
+        if doubleValue >= 0 && doubleValue <= 1.0 {
+            return doubleValue // Already in 0.0-1.0 format
+        } else if doubleValue > 1.0 && doubleValue <= 100 {
+            return doubleValue / 100.0 // Convert percentage to 0.0-1.0
+        } else if doubleValue > 100 {
+            return doubleValue // Assume it's a page number, will be handled in import logic
+        }
+        
+        return nil
     }
     
     /// Parse various date formats

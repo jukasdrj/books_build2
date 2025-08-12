@@ -14,6 +14,8 @@ A comprehensive SwiftUI application for tracking your personal book library with
 ### Advanced CSV Import System
 - **Background Processing**: Import large libraries without blocking the UI
 - **Live Activities**: Real-time progress in Dynamic Island and Lock Screen (iOS 16.1+)
+- **Smart Data Validation**: ISBN checksum verification, advanced date parsing, and data quality scoring
+- **Intelligent Reading Progress**: Automatically sets reading progress and page counts based on import status
 - **Smart Book Matching**: ISBN lookup with fallback to title/author search
 - **Concurrent Processing**: 5x faster imports with parallel API calls
 - **State Persistence**: Resume interrupted imports after app crashes or termination

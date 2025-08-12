@@ -155,13 +155,6 @@ struct LibraryView: View {
                     // Background import progress indicator (subtle)
                     BackgroundImportProgressIndicator()
                     
-                    Button { 
-                        updateStableBooks()
-                        HapticFeedbackManager.shared.lightImpact()
-                    } label: {
-                        Image(systemName: "arrow.clockwise")
-                    }
-                    
                     Button { showingFilters.toggle() } label: {
                         Image(systemName: libraryFilter.isActive ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle")
                             .foregroundColor(libraryFilter.isActive ? currentTheme.primary : Color.primary)
@@ -177,7 +170,7 @@ struct LibraryView: View {
             updateStableBooks()
             // Add sample data for development/testing if library is empty
             #if DEBUG
-            addSampleDataIfNeeded()
+            // addSampleDataIfNeeded() // Commented out for production readiness
             #endif
         }
         .onChange(of: allBooks) { _, _ in

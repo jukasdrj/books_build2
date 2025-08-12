@@ -144,9 +144,11 @@ enum BookField: String, CaseIterable, Identifiable, Codable, Sendable {
     // translator field removed for streamlined cultural tracking
     case genre = "genre"
     case dateRead = "dateRead"
+    case dateStarted = "dateStarted"
     case dateAdded = "dateAdded"
     case rating = "rating"
     case readingStatus = "readingStatus"
+    case readingProgress = "readingProgress"
     case personalNotes = "personalNotes"
     case tags = "tags"
     case authorGender = "authorGender"
@@ -168,9 +170,11 @@ enum BookField: String, CaseIterable, Identifiable, Codable, Sendable {
         case .authorNationality: return "Author Nationality"
         case .genre: return "Genre"
         case .dateRead: return "Date Read"
+        case .dateStarted: return "Date Started"
         case .dateAdded: return "Date Added"
         case .rating: return "Rating"
         case .readingStatus: return "Reading Status"
+        case .readingProgress: return "Reading Progress"
         case .personalNotes: return "Personal Notes"
         case .tags: return "Tags"
         case .authorGender: return "Author Gender"
@@ -189,9 +193,9 @@ enum BookField: String, CaseIterable, Identifiable, Codable, Sendable {
         switch self {
         case .title, .author, .isbn, .publisher, .description, .language, .originalLanguage, .authorNationality, .personalNotes:
             return .text
-        case .publishedDate, .dateRead, .dateAdded:
+        case .publishedDate, .dateRead, .dateStarted, .dateAdded:
             return .date
-        case .pageCount, .rating:
+        case .pageCount, .rating, .readingProgress:
             return .number
         case .readingStatus:
             return .enumeration(["Read", "Currently Reading", "Want to Read", "Did Not Finish"])
@@ -227,9 +231,11 @@ struct ParsedBook: Identifiable, Codable, Sendable {
     var authorNationality: String?
     var genre: [String]
     var dateRead: Date?
+    var dateStarted: Date?
     var dateAdded: Date?
     var rating: Int?
     var readingStatus: String?
+    var readingProgress: Double? // 0.0-1.0 for percentage, or page number if > 1.0
     var personalNotes: String?
     var tags: [String]
     var authorGender: AuthorGender?
@@ -239,7 +245,7 @@ struct ParsedBook: Identifiable, Codable, Sendable {
     var dataQualityScore: Double = 1.0
     var validationIssues: [String] = []
     
-    init(rowIndex: Int, title: String? = nil, author: String? = nil, isbn: String? = nil, publisher: String? = nil, publishedDate: String? = nil, pageCount: Int? = nil, description: String? = nil, language: String? = nil, originalLanguage: String? = nil, authorNationality: String? = nil, genre: [String] = [], dateRead: Date? = nil, dateAdded: Date? = nil, rating: Int? = nil, readingStatus: String? = nil, personalNotes: String? = nil, tags: [String] = [], authorGender: AuthorGender? = nil, culturalThemes: [String] = []) {
+    init(rowIndex: Int, title: String? = nil, author: String? = nil, isbn: String? = nil, publisher: String? = nil, publishedDate: String? = nil, pageCount: Int? = nil, description: String? = nil, language: String? = nil, originalLanguage: String? = nil, authorNationality: String? = nil, genre: [String] = [], dateRead: Date? = nil, dateStarted: Date? = nil, dateAdded: Date? = nil, rating: Int? = nil, readingStatus: String? = nil, readingProgress: Double? = nil, personalNotes: String? = nil, tags: [String] = [], authorGender: AuthorGender? = nil, culturalThemes: [String] = []) {
         self.id = UUID()
         self.rowIndex = rowIndex
         self.title = title
@@ -254,9 +260,11 @@ struct ParsedBook: Identifiable, Codable, Sendable {
         self.authorNationality = authorNationality
         self.genre = genre
         self.dateRead = dateRead
+        self.dateStarted = dateStarted
         self.dateAdded = dateAdded
         self.rating = rating
         self.readingStatus = readingStatus
+        self.readingProgress = readingProgress
         self.personalNotes = personalNotes
         self.tags = tags
         self.authorGender = authorGender
@@ -641,8 +649,12 @@ struct GoodreadsColumnMappings {
         "my rating": .rating,
         "average rating": .rating,
         "date read": .dateRead,
+        "date started": .dateStarted,
+        "start date": .dateStarted,
         "date added": .dateAdded,
         "exclusive shelf": .readingStatus,
+        "reading progress": .readingProgress,
+        "progress": .readingProgress,
         "my tags": .tags,
         "bookshelves": .tags,
         "genres": .genre,

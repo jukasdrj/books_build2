@@ -251,7 +251,7 @@ struct CSVImportView: View {
         Task {
             // Initialize background coordinator if needed
             if backgroundCoordinator == nil {
-                backgroundCoordinator = BackgroundImportCoordinator(modelContext: modelContext)
+                backgroundCoordinator = BackgroundImportCoordinator.initialize(with: modelContext)
             }
             
             // Start background import
@@ -294,7 +294,7 @@ struct CSVImportView: View {
         if service.resumeImportIfAvailable() {
             // For Phase 1: Resume will happen in background
             if backgroundCoordinator == nil {
-                backgroundCoordinator = BackgroundImportCoordinator(modelContext: modelContext)
+                backgroundCoordinator = BackgroundImportCoordinator.initialize(with: modelContext)
             }
             resumableImportInfo = nil
             selectedTab = 0 // Navigate to library

@@ -15,6 +15,20 @@ import SwiftData
 @Observable
 class BackgroundImportCoordinator {
     
+    // MARK: - Singleton
+    
+    static var shared: BackgroundImportCoordinator?
+    
+    static func initialize(with modelContext: ModelContext) -> BackgroundImportCoordinator {
+        if let existing = shared {
+            return existing
+        }
+        
+        let coordinator = BackgroundImportCoordinator(modelContext: modelContext)
+        shared = coordinator
+        return coordinator
+    }
+    
     // MARK: - Import State
     
     private(set) var currentImport: BackgroundImportSession?
@@ -25,6 +39,10 @@ class BackgroundImportCoordinator {
     private let csvImportService: CSVImportService
     private let modelContext: ModelContext
     private let liveActivityManager = UnifiedLiveActivityManager.shared
+    
+    // MARK: - Monitoring State
+    
+    private var isMonitoring: Bool = false
     
     // MARK: - Computed Properties
     
@@ -42,7 +60,7 @@ class BackgroundImportCoordinator {
     
     // MARK: - Initialization
     
-    init(modelContext: ModelContext) {
+    private init(modelContext: ModelContext) {
         self.modelContext = modelContext
         self.csvImportService = CSVImportService(modelContext: modelContext)
         
@@ -86,7 +104,7 @@ class BackgroundImportCoordinator {
         monitorImportProgress()
         
         // Begin import process
-        await csvImportService.importBooks(from: session, columnMappings: mappings)
+        csvImportService.importBooks(from: session, columnMappings: mappings)
     }
     
     /// Handle completion - check for review needs
@@ -120,7 +138,8 @@ class BackgroundImportCoordinator {
             await liveActivityManager.endCurrentActivity()
         }
         
-        // Clear current import
+        // Stop monitoring and clear current import
+        isMonitoring = false
         currentImport = nil
         
         // Show completion notification
@@ -145,6 +164,8 @@ class BackgroundImportCoordinator {
         // End the Live Activity
         await liveActivityManager.endCurrentActivity()
         
+        // Stop monitoring
+        isMonitoring = false
         currentImport = nil
         needsUserReview.removeAll()
         
@@ -196,9 +217,25 @@ class BackgroundImportCoordinator {
     }
     
     private func monitorImportProgress() {
+        // Prevent multiple monitoring tasks from running
+        guard !isMonitoring else {
+            print("[BackgroundImportCoordinator] Monitoring already in progress, skipping")
+            return
+        }
+        
+        // Only start monitoring if there's actually an import session
+        guard currentImport != nil else {
+            print("[BackgroundImportCoordinator] No active import session, skipping monitoring")
+            return
+        }
+        
+        isMonitoring = true
+        print("[BackgroundImportCoordinator] Starting import progress monitoring")
+        
         // Monitor the CSVImportService progress
         Task {
-            while isImporting {
+            while isImporting && isMonitoring {
+                // Wait for import to actually start
                 if let progress = csvImportService.importProgress {
                     currentImport?.progress = progress
                     
@@ -215,6 +252,9 @@ class BackgroundImportCoordinator {
                 // Check every 2 seconds
                 try? await Task.sleep(nanoseconds: 2_000_000_000)
             }
+            
+            isMonitoring = false
+            print("[BackgroundImportCoordinator] Stopped import progress monitoring")
         }
     }
     

@@ -1134,16 +1134,50 @@ class CSVImportService: ObservableObject {
         // Create UserBook with user data from CSV and metadata from API
         let userBook = UserBook(
             dateAdded: parsedBook.dateAdded ?? Date(),
-            readingStatus: readingStatus,
+            readingStatus: .toRead, // Start with toRead to avoid triggering setter logic during init
             rating: parsedBook.rating,
             notes: parsedBook.personalNotes,
             tags: parsedBook.tags,
             metadata: finalMetadata
         )
         
-        // Set date completed if book is read
+        // Set additional book details from CSV if available
+        if let dateStarted = parsedBook.dateStarted {
+            userBook.dateStarted = dateStarted
+        }
+        
+        // Now set the actual reading status - this will trigger the UserBook's automatic logic
+        userBook.readingStatus = readingStatus
+        
+        // For completed books, set specific completion details
         if readingStatus == .read {
+            // Use date from CSV if available, otherwise use current date
             userBook.dateCompleted = parsedBook.dateRead ?? Date()
+            
+            // Ensure reading progress is set to 100%
+            userBook.readingProgress = 1.0
+            
+            // If we have page count from API metadata, set current page to full
+            if let pageCount = finalMetadata.pageCount, pageCount > 0 {
+                userBook.currentPage = pageCount
+            }
+        }
+        
+        // For books currently being read, set progress if available
+        else if readingStatus == .reading {
+            // If we have page count from metadata and reading progress data from CSV
+            if let pageCount = finalMetadata.pageCount, 
+               let progressData = parsedBook.readingProgress {
+                // Try to calculate current page from progress percentage
+                if progressData > 0 && progressData <= 1.0 {
+                    userBook.readingProgress = progressData
+                    userBook.currentPage = Int(Double(pageCount) * progressData)
+                } else if progressData > 1.0 && progressData <= Double(pageCount) {
+                    // Assume progressData is actual page number
+                    userBook.currentPage = Int(progressData)
+                    userBook.readingProgress = progressData / Double(pageCount)
+                }
+            }
         }
         
         return .success(ImportBookData(

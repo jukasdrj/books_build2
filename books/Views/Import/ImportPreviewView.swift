@@ -28,9 +28,6 @@ struct ImportPreviewView: View {
                     
                     // Sample data preview
                     SampleDataPreview(session: session)
-                    
-                    // Column detection
-                    ColumnDetectionCard(session: session)
                 }
                 .padding(Theme.Spacing.md)
                 .padding(.bottom, Theme.Spacing.xl)
@@ -301,81 +298,6 @@ struct SampleDataPreview: View {
     }
 }
 
-// MARK: - Column Detection Card
-
-struct ColumnDetectionCard: View {
-    @Environment(\.appTheme) private var currentTheme
-    let session: CSVImportSession
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.md) {
-            HStack(spacing: Theme.Spacing.sm) {
-                Image(systemName: "tablecells")
-                    .foregroundColor(currentTheme.primaryAction)
-                Text("Column Detection")
-                    .titleSmall()
-                    .foregroundColor(currentTheme.primaryText)
-            }
-            
-            LazyVStack(spacing: Theme.Spacing.sm) {
-                ForEach(session.detectedColumns) { column in
-                    ColumnDetectionRow(column: column)
-                }
-            }
-        }
-        .padding(Theme.Spacing.md)
-        .materialCard()
-    }
-}
-
-struct ColumnDetectionRow: View {
-    @Environment(\.appTheme) private var currentTheme
-    let column: CSVColumn
-    
-    var body: some View {
-        HStack(spacing: Theme.Spacing.md) {
-            // Status indicator
-            Circle()
-                .fill(column.mappedField != nil ? currentTheme.success : currentTheme.outline)
-                .frame(width: 8, height: 8)
-            
-            // Column info
-            VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
-                Text(column.originalName)
-                    .bodyMedium()
-                    .foregroundColor(currentTheme.primaryText)
-                
-                if let mappedField = column.mappedField {
-                    Text("→ \(mappedField.displayName)")
-                        .labelSmall()
-                        .foregroundColor(currentTheme.success)
-                } else {
-                    Text("Not mapped")
-                        .labelSmall()
-                        .foregroundColor(currentTheme.secondaryText)
-                }
-            }
-            
-            Spacer()
-            
-            // Sample data
-            if column.hasSampleData {
-                VStack(alignment: .trailing, spacing: Theme.Spacing.xs) {
-                    Text("Sample:")
-                        .labelSmall()
-                        .foregroundColor(currentTheme.secondaryText)
-                    
-                    Text(column.sampleValues.first ?? "")
-                        .labelSmall()
-                        .foregroundColor(currentTheme.primaryText)
-                        .lineLimit(1)
-                        .frame(maxWidth: 100, alignment: .trailing)
-                }
-            }
-        }
-        .padding(.vertical, Theme.Spacing.xs)
-    }
-}
 
 #Preview {
     ImportPreviewView(

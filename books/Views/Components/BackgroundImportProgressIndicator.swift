@@ -43,7 +43,7 @@ struct BackgroundImportProgressIndicator: View {
         }
         .onAppear {
             if backgroundCoordinator == nil {
-                backgroundCoordinator = BackgroundImportCoordinator(modelContext: modelContext)
+                backgroundCoordinator = BackgroundImportCoordinator.initialize(with: modelContext)
             }
         }
         .animation(.easeInOut(duration: 0.3), value: backgroundCoordinator?.isImporting)
