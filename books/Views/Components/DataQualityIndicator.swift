@@ -166,7 +166,7 @@ struct QualityMetricCard: View {
                 .multilineTextAlignment(.center)
                 .lineLimit(2)
             
-            Text("\\(Int(score * 100))%")
+            Text("\(Int(score * 100))%")
                 .labelMedium()
                 .fontWeight(.semibold)
                 .foregroundColor(scoreColor)

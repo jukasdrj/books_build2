@@ -239,7 +239,7 @@ extension RateLimiter {
         
         do {
             let result = try await operation()
-            await reportSuccess()
+            reportSuccess()
             return result
         } catch {
             // Check if this is a rate limit error

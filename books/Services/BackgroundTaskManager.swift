@@ -139,7 +139,9 @@ class BackgroundTaskManager: NSObject, ObservableObject {
     
     private func startBackgroundTimeMonitoring() {
         backgroundTaskExpirationTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
-            self?.updateBackgroundTimeRemaining()
+            Task { @MainActor in
+                self?.updateBackgroundTimeRemaining()
+            }
         }
     }
     

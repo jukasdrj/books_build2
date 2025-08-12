@@ -29,9 +29,16 @@ class LiveActivityManager: ObservableObject {
     // MARK: - Initialization
     
     private init() {
+        // Check both authorization and device support
         isLiveActivitySupported = ActivityAuthorizationInfo().areActivitiesEnabled
         
         print("[LiveActivityManager] Live Activities supported: \(isLiveActivitySupported)")
+        
+        // Additional debug info for troubleshooting
+        #if targetEnvironment(simulator)
+        print("[LiveActivityManager] Running on simulator - Live Activities may not work properly")
+        isLiveActivitySupported = false // Force disable on simulator
+        #endif
     }
     
     // MARK: - Public Interface

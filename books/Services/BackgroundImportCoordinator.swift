@@ -65,30 +65,35 @@ class BackgroundImportCoordinator {
         currentImport = backgroundSession
         
         // Start Live Activity for this import
+        let sessionId = UUID() // Generate session ID for Live Activity tracking
         let activityStarted = await liveActivityManager.startImportActivity(
             fileName: session.fileName,
             totalBooks: session.totalRows,
-            sessionId: session.id
+            sessionId: sessionId
         )
         
         if activityStarted {
-            print("[BackgroundImportCoordinator] Live Activity started for import session: \(session.id)")
+            print("[BackgroundImportCoordinator] Live Activity started for import session: \(sessionId)")
+        } else {
+            print("[BackgroundImportCoordinator] Live Activity failed to start, continuing without Live Activity support")
         }
         
         // Start the import in background using existing service
         // The CSVImportService will insert books into modelContext as they're processed
         // This automatically triggers @Query updates in LibraryView for seamless integration
-        await csvImportService.importBooks(from: session, columnMappings: mappings)
         
-        // Monitor for completion
+        // Start monitoring before beginning import
         monitorImportProgress()
+        
+        // Begin import process
+        await csvImportService.importBooks(from: session, columnMappings: mappings)
     }
     
     /// Handle completion - check for review needs
     func handleImportCompletion() async {
         guard let session = currentImport else { return }
         
-        print("[BackgroundImportCoordinator] Import completed for session: \(session.csvSession.id)")
+        print("[BackgroundImportCoordinator] Import completed for session: \(session.csvSession.fileName)")
         
         // Check if any books need user review (ambiguous matches, no matches, etc.)
         await checkForReviewNeeds()
