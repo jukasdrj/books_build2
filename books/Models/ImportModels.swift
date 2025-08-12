@@ -235,6 +235,10 @@ struct ParsedBook: Identifiable, Codable, Sendable {
     var authorGender: AuthorGender?
     var culturalThemes: [String]
     
+    // Phase 3: Data Quality Tracking
+    var dataQualityScore: Double = 1.0
+    var validationIssues: [String] = []
+    
     init(rowIndex: Int, title: String? = nil, author: String? = nil, isbn: String? = nil, publisher: String? = nil, publishedDate: String? = nil, pageCount: Int? = nil, description: String? = nil, language: String? = nil, originalLanguage: String? = nil, authorNationality: String? = nil, genre: [String] = [], dateRead: Date? = nil, dateAdded: Date? = nil, rating: Int? = nil, readingStatus: String? = nil, personalNotes: String? = nil, tags: [String] = [], authorGender: AuthorGender? = nil, culturalThemes: [String] = []) {
         self.id = UUID()
         self.rowIndex = rowIndex

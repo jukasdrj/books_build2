@@ -309,10 +309,24 @@ struct CSVParser {
             books.append(book)
         }
         
+        // Calculate data quality scores for all parsed books
+        for (index, book) in books.enumerated() {
+            let qualityScore = DataValidationService.calculateDataQualityScore(for: book)
+            books[index].dataQualityScore = qualityScore
+            
+            // Log quality issues for development
+            if qualityScore < 0.5 {
+                books[index].validationIssues.append("Low data quality score: \(String(format: "%.2f", qualityScore))")
+                print("⚠️ Low quality data detected for book at row \(book.rowIndex): \(qualityScore)")
+            } else if qualityScore < 0.8 {
+                books[index].validationIssues.append("Medium data quality score: \(String(format: "%.2f", qualityScore))")
+            }
+        }
+        
         return books
     }
     
-    /// Parse a single row into a ParsedBook
+    /// Parse a single row into a ParsedBook with enhanced data validation
     private func parseBook(from row: [String], columns: [CSVColumn], mappings: [String: BookField], rowIndex: Int) -> ParsedBook {
         var book = ParsedBook(rowIndex: rowIndex)
         
@@ -324,11 +338,23 @@ struct CSVParser {
             
             switch field {
             case .title:
-                book.title = value.isEmpty ? nil : value
+                let titleResult = DataValidationService.validateTitle(value)
+                book.title = titleResult.correctedValue
+                if !titleResult.issues.isEmpty {
+                    book.validationIssues.append(contentsOf: titleResult.issues.map { "Title: \($0.description)" })
+                }
             case .author:
-                book.author = value.isEmpty ? nil : value
+                let authorResult = DataValidationService.validateAuthor(value)
+                book.author = authorResult.correctedValue
+                if !authorResult.issues.isEmpty {
+                    book.validationIssues.append(contentsOf: authorResult.issues.map { "Author: \($0.description)" })
+                }
             case .isbn:
-                book.isbn = value.isEmpty ? nil : value
+                let isbnResult = DataValidationService.validateISBN(value)
+                book.isbn = isbnResult.correctedValue
+                if !isbnResult.issues.isEmpty {
+                    book.validationIssues.append(contentsOf: isbnResult.issues.map { "ISBN: \($0.description)" })
+                }
             case .publisher:
                 book.publisher = value.isEmpty ? nil : value
             case .publishedDate:
@@ -346,9 +372,19 @@ struct CSVParser {
             case .genre:
                 book.genre = parseList(value)
             case .dateRead:
-                book.dateRead = parseDate(value)
+                let dateResult = DataValidationService.validateDate(value)
+                if dateResult.isValid, let correctedValue = dateResult.correctedValue {
+                    book.dateRead = parseDate(correctedValue)
+                } else {
+                    book.dateRead = parseDate(value) // Fallback to original parsing
+                }
             case .dateAdded:
-                book.dateAdded = parseDate(value)
+                let dateResult = DataValidationService.validateDate(value)
+                if dateResult.isValid, let correctedValue = dateResult.correctedValue {
+                    book.dateAdded = parseDate(correctedValue)
+                } else {
+                    book.dateAdded = parseDate(value) // Fallback to original parsing
+                }
             case .rating:
                 book.rating = Int(value)
             case .readingStatus:

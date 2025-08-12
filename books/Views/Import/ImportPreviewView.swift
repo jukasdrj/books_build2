@@ -23,6 +23,9 @@ struct ImportPreviewView: View {
                     // Detection results
                     DetectionResultsCard(session: session)
                     
+                    // Phase 3: Data Quality Analysis
+                    DataQualityIndicator(session: session)
+                    
                     // Sample data preview
                     SampleDataPreview(session: session)
                     
