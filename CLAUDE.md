@@ -319,6 +319,14 @@ This app has a strong focus on tracking cultural diversity in reading:
 - Smart import suggestions based on user reading patterns
 - Cloud sync capabilities
 
+### Phase 4: Import System Enhancements (📋 Planned)
+**Detailed roadmap**: See [IMPORT_ROADMAP.md](IMPORT_ROADMAP.md) for comprehensive enhancement plan
+- Enhanced error management with detailed logging and retry functionality
+- Persistent import history and session management
+- Manual book editor for problematic imports
+- Advanced import features and user experience improvements
+- Community collaboration features
+
 ## Recent Fixes (2024)
 
 ### Phase 3A Implementation & Critical Bug Fixes

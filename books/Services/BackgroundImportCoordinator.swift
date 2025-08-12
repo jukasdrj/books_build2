@@ -33,6 +33,7 @@ class BackgroundImportCoordinator {
     
     private(set) var currentImport: BackgroundImportSession?
     private(set) var needsUserReview: [ReviewItem] = []
+    private(set) var currentProgress: ImportProgress?
     
     // MARK: - Services
     
@@ -51,7 +52,7 @@ class BackgroundImportCoordinator {
     }
     
     var progress: ImportProgress? { 
-        currentImport?.progress 
+        currentProgress
     }
     
     var shouldShowReviewModal: Bool {
@@ -100,13 +101,30 @@ class BackgroundImportCoordinator {
         // The CSVImportService will insert books into modelContext as they're processed
         // This automatically triggers @Query updates in LibraryView for seamless integration
         
-        // Begin import process first
+        // Begin import process and wait for it to initialize
         csvImportService.importBooks(from: session, columnMappings: mappings)
         
-        // Wait a moment for import to initialize then start monitoring
+        // Wait for import service to actually create progress before monitoring
         Task {
-            try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
-            monitorImportProgress()
+            // Wait up to 5 seconds for import to initialize
+            let maxWaitTime = 5.0
+            let checkInterval = 0.1
+            var elapsed = 0.0
+            
+            while elapsed < maxWaitTime && csvImportService.importProgress == nil {
+                try? await Task.sleep(nanoseconds: UInt64(checkInterval * 1_000_000_000))
+                elapsed += checkInterval
+            }
+            
+            if csvImportService.importProgress != nil {
+                print("[BackgroundImportCoordinator] Import initialized, starting monitoring")
+                monitorImportProgress()
+            } else {
+                print("[BackgroundImportCoordinator] Warning: Import failed to initialize within \(maxWaitTime) seconds")
+                // Reset state on initialization failure
+                currentImport = nil
+                currentProgress = nil
+            }
         }
     }
     
@@ -144,6 +162,7 @@ class BackgroundImportCoordinator {
         // Stop monitoring and clear current import
         isMonitoring = false
         currentImport = nil
+        currentProgress = nil
         
         // Show completion notification
         await showCompletionNotification()
@@ -170,6 +189,7 @@ class BackgroundImportCoordinator {
         // Stop monitoring
         isMonitoring = false
         currentImport = nil
+        currentProgress = nil
         needsUserReview.removeAll()
         
         print("[BackgroundImportCoordinator] Background import cancelled")
@@ -241,6 +261,7 @@ class BackgroundImportCoordinator {
                 // Wait for import to actually start
                 if let progress = csvImportService.importProgress {
                     print("[BackgroundImportCoordinator] Progress update: \(progress.processedBooks)/\(progress.totalBooks), step: \(progress.currentStep)")
+                    currentProgress = progress
                     currentImport?.progress = progress
                     
                     // Update Live Activity with current progress

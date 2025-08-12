@@ -13,6 +13,7 @@ struct ColumnMappingView: View {
     @Binding var columnMappings: [String: BookField]
     let onNext: () -> Void
     let onBack: () -> Void
+    let isStartingImport: Bool
     
     @State private var searchText = ""
     
@@ -74,12 +75,23 @@ struct ColumnMappingView: View {
                 .materialButton(style: .outlined, size: .large)
                 .frame(maxWidth: .infinity)
                 
-                Button("Start Import") {
+                Button {
                     onNext()
+                } label: {
+                    if isStartingImport {
+                        HStack(spacing: Theme.Spacing.sm) {
+                            ProgressView()
+                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                .scaleEffect(0.8)
+                            Text("Starting Import...")
+                        }
+                    } else {
+                        Text("Start Import")
+                    }
                 }
                 .materialButton(style: .filled, size: .large)
                 .frame(maxWidth: .infinity)
-                .disabled(!requiredMappingsComplete)
+                .disabled(!requiredMappingsComplete || isStartingImport)
             }
             .padding(Theme.Spacing.md)
             .background(currentTheme.surface)
@@ -308,6 +320,7 @@ struct ColumnMappingRow: View {
             "My Rating": .rating
         ]),
         onNext: {},
-        onBack: {}
+        onBack: {},
+        isStartingImport: false
     )
 }

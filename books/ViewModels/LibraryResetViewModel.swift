@@ -50,14 +50,19 @@ class LibraryResetViewModel: ObservableObject {
         let books = resetService.booksToDelete
         let metadata = resetService.metadataToDelete
         
-        if books == 0 {
-            return "Your library is already empty"
+        if books == 0 && metadata == 0 {
+            return "Your library contains no books or metadata to delete"
+        } else if books == 0 {
+            let metadataText = metadata == 1 ? "1 metadata entry" : "\(metadata) metadata entries"
+            return "This will permanently delete \(metadataText) (no user books found)"
+        } else if metadata == 0 {
+            let bookText = books == 1 ? "1 book" : "\(books) books"
+            return "This will permanently delete \(bookText) (no metadata entries found)"
+        } else {
+            let bookText = books == 1 ? "1 book" : "\(books) books"
+            let metadataText = metadata == 1 ? "1 metadata entry" : "\(metadata) metadata entries"
+            return "This will permanently delete \(bookText) and \(metadataText)"
         }
-        
-        let bookText = books == 1 ? "1 book" : "\(books) books"
-        let metadataText = metadata == 1 ? "1 metadata entry" : "\(metadata) metadata entries"
-        
-        return "This will permanently delete \(bookText) and \(metadataText)"
     }
     
     var exportedFileURL: URL? {

@@ -17,7 +17,9 @@ struct BackgroundImportProgressIndicator: View {
     
     var body: some View {
         Group {
-            if let coordinator = backgroundCoordinator, coordinator.isImporting {
+            if let coordinator = backgroundCoordinator, 
+               coordinator.isImporting, 
+               coordinator.progress != nil {
                 Button(action: { showingDetails = true }) {
                     HStack(spacing: Theme.Spacing.xs) {
                         // Animated progress indicator
@@ -46,7 +48,7 @@ struct BackgroundImportProgressIndicator: View {
                 backgroundCoordinator = BackgroundImportCoordinator.initialize(with: modelContext)
             }
         }
-        .animation(.easeInOut(duration: 0.3), value: backgroundCoordinator?.isImporting)
+        .animation(.easeInOut(duration: 0.3), value: (backgroundCoordinator?.isImporting ?? false) && (backgroundCoordinator?.progress != nil))
     }
 }
 

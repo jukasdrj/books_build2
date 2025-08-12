@@ -26,6 +26,7 @@ struct CSVImportView: View {
     @State private var errorMessage = ""
     @State private var showingResumeDialog = false
     @State private var resumableImportInfo: ResumableImportInfo?
+    @State private var isStartingImport = false
     
     enum ImportStep {
         case selectFile
@@ -63,7 +64,8 @@ struct CSVImportView: View {
                                     session: session,
                                     columnMappings: $columnMappings,
                                     onNext: startImport,
-                                    onBack: { currentStep = .preview }
+                                    onBack: { currentStep = .preview },
+                                    isStartingImport: isStartingImport
                                 )
                             }
                         case .completed:
@@ -247,7 +249,9 @@ struct CSVImportView: View {
     private func startImport() {
         guard let session = importSession else { return }
         
-        // Phase 1: Start background import immediately
+        // Show immediate feedback to user
+        isStartingImport = true
+        
         Task {
             // Initialize background coordinator if needed
             if backgroundCoordinator == nil {
@@ -257,9 +261,16 @@ struct CSVImportView: View {
             // Start background import
             await backgroundCoordinator?.startBackgroundImport(session: session, mappings: columnMappings)
             
-            // Navigate to library immediately so user can browse while importing
-            selectedTab = 0 // Library tab
-            dismiss() // Close import modal
+            // Wait for import initialization to complete before navigating
+            // This ensures progress indicator will have data when user reaches Library
+            try? await Task.sleep(nanoseconds: 1_500_000_000) // 1.5 seconds
+            
+            // Hide loading state and navigate
+            await MainActor.run {
+                isStartingImport = false
+                selectedTab = 0 // Library tab
+                dismiss() // Close import modal
+            }
         }
     }
     
