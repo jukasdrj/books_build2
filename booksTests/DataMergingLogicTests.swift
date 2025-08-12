@@ -928,12 +928,7 @@ struct ValidationReport {
     let validationRulesApplied: [String]
 }
 
-// Extension for MockBookSearchService to support title/author searches
-extension MockBookSearchService {
-    func searchByTitleAuthor(_ title: String, author: String) async -> BookMetadata? {
-        return titleAuthorResponses[(title, author)]
-    }
-}
+// MockBookSearchService title/author search functionality moved to ServiceProtocols.swift
 
 // String padding extension for test data generation
 extension String {

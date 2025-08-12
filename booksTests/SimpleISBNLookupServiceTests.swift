@@ -464,71 +464,8 @@ enum SimpleISBNLookupError: Error, Equatable {
 }
 
 // Enhanced Mock BookSearchService for testing
-extension MockBookSearchService {
-    var batchResponses: [String: BookMetadata] {
-        get { _batchResponses }
-        set { _batchResponses = newValue }
-    }
-    var batchFailures: [String: Error] {
-        get { _batchFailures }
-        set { _batchFailures = newValue }
-    }
-    var batchNotFound: Set<String> {
-        get { _batchNotFound }
-        set { _batchNotFound = newValue }
-    }
-    var artificialDelay: TimeInterval = 0
-    var trackConcurrency = false
-    var maxConcurrentCalls = 0
-    var callCount = 0
-    var failurePattern: [Bool] = []
-    var errorToThrow: Error?
-    
-    private var _batchResponses: [String: BookMetadata] = [:]
-    private var _batchFailures: [String: Error] = [:]
-    private var _batchNotFound: Set<String> = []
-    private var _currentConcurrentCalls = 0
-    
-    @MainActor
-    func searchByISBN(_ isbn: String) async throws -> BookMetadata? {
-        callCount += 1
-        
-        if trackConcurrency {
-            _currentConcurrentCalls += 1
-            maxConcurrentCalls = max(maxConcurrentCalls, _currentConcurrentCalls)
-        }
-        
-        if artificialDelay > 0 {
-            try await Task.sleep(nanoseconds: UInt64(artificialDelay * 1_000_000_000))
-        }
-        
-        if trackConcurrency {
-            _currentConcurrentCalls -= 1
-        }
-        
-        // Handle failure pattern for retry testing
-        if !failurePattern.isEmpty {
-            let shouldFail = failurePattern[min(callCount - 1, failurePattern.count - 1)]
-            if shouldFail {
-                throw errorToThrow ?? MockError.isbnSearchFailed
-            }
-        }
-        
-        if shouldThrowError {
-            throw errorToThrow ?? MockError.isbnSearchFailed
-        }
-        
-        if let failure = batchFailures[isbn] {
-            throw failure
-        }
-        
-        if batchNotFound.contains(isbn) {
-            return nil
-        }
-        
-        return batchResponses[isbn] ?? searchByISBNResult
-    }
-}
+// Note: All properties and methods moved to MockBookSearchService class in ServiceProtocols.swift
+// to avoid duplicate declarations
 
 // Configuration struct for SimpleISBNLookupService
 struct SimpleISBNLookupConfiguration {

@@ -140,7 +140,7 @@ struct PerformanceTestingStrategy {
         )
         
         #expect(result.concurrencyAdjustmentCount > 0, "Should make concurrency adjustments")
-        #expect(result.averageConcurrencyLevel < configuration.maxConcurrentRequests, "Should reduce concurrency when failures increase")
+        #expect(result.averageConcurrencyLevel < Double(configuration.maxConcurrentRequests), "Should reduce concurrency when failures increase")
         #expect(result.successRate >= 0.8, "Should maintain reasonable success rate despite failures")
         
         // Verify adaptive behavior improved performance compared to fixed high concurrency
@@ -477,7 +477,7 @@ class PerformanceTestRunner {
     private func createTestCSVSession(bookCount: Int) -> CSVImportSession {
         var csvData = [["Title", "Author", "ISBN"]]
         for i in 1...bookCount {
-            csvData.append(["Book \(i)", "Author \(i)", "978\(String(i).padded(toLength: 10, withPad: "0", startingAt: 0))"])
+            csvData.append(["Book \(i)", "Author \(i)", "978\(String(format: "%010d", i))"])
         }
         
         return CSVImportSession(
@@ -509,7 +509,7 @@ class PerformanceTestRunner {
         
         // Setup responses
         for i in 1...bookCount {
-            let isbn = "978\(String(i).padded(toLength: 10, withPad: "0", startingAt: 0))"
+            let isbn = "978\(String(format: "%010d", i))"
             
             // Simulate failures based on failure configuration
             let shouldFail = failures.shouldFailForIndex(i, totalCount: bookCount)
@@ -843,7 +843,7 @@ class MockImportService {
         
         // Simulate processing with the configured performance characteristics
         for i in 1...session.totalRows {
-            let isbn = "978\(String(i).padded(toLength: 10, withPad: "0", startingAt: 0))"
+            let isbn = "978\(String(format: "%010d", i))"
             
             if configuration.artificialDelay > 0 {
                 try? await Task.sleep(nanoseconds: UInt64(configuration.artificialDelay * 1_000_000_000))
@@ -873,37 +873,7 @@ class MockImportService {
 }
 
 // Enhanced MockBookSearchService for performance testing
-extension MockBookSearchService {
-    var trackPerformance: Bool {
-        get { _trackPerformance }
-        set { _trackPerformance = newValue }
-    }
-    
-    var concurrencyEfficiency: Double {
-        guard trackPerformance else { return 0.8 }
-        return Double.random(in: 0.7...0.95)
-    }
-    
-    var concurrencyAdjustments: Int {
-        guard trackPerformance else { return 0 }
-        return Int.random(in: 0...5)
-    }
-    
-    var averageConcurrencyLevel: Double {
-        guard trackPerformance else { return Double(maxConcurrentCalls) }
-        return Double(maxConcurrentCalls) * Double.random(in: 0.7...1.0)
-    }
-    
-    private var _trackPerformance: Bool = false
-}
+// Note: Moved performance tracking properties to MockBookSearchService class definition
+// Extensions cannot contain stored properties
 
-// String padding extension
-extension String {
-    func padded(toLength length: Int, withPad padString: String, startingAt startIndex: Int) -> String {
-        let padLength = length - self.count
-        guard padLength > 0 else { return self }
-        
-        let padding = String(repeating: padString, count: padLength / padString.count + 1)
-        return self + String(padding.prefix(padLength))
-    }
-}
+// Note: String padding extension moved to DataMergingLogicTests.swift to avoid duplication

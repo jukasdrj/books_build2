@@ -141,7 +141,7 @@ enum BookField: String, CaseIterable, Identifiable, Codable, Sendable {
     case language = "language"
     case originalLanguage = "originalLanguage"
     case authorNationality = "authorNationality"
-    case translator = "translator"
+    // translator field removed for streamlined cultural tracking
     case genre = "genre"
     case dateRead = "dateRead"
     case dateAdded = "dateAdded"
@@ -166,7 +166,7 @@ enum BookField: String, CaseIterable, Identifiable, Codable, Sendable {
         case .language: return "Language"
         case .originalLanguage: return "Original Language"
         case .authorNationality: return "Author Nationality"
-        case .translator: return "Translator"
+        // translator case removed
         case .genre: return "Genre"
         case .dateRead: return "Date Read"
         case .dateAdded: return "Date Added"
@@ -188,7 +188,7 @@ enum BookField: String, CaseIterable, Identifiable, Codable, Sendable {
     
     var expectedType: FieldType {
         switch self {
-        case .title, .author, .isbn, .publisher, .description, .language, .originalLanguage, .authorNationality, .translator, .personalNotes:
+        case .title, .author, .isbn, .publisher, .description, .language, .originalLanguage, .authorNationality, .personalNotes:
             return .text
         case .publishedDate, .dateRead, .dateAdded:
             return .date
@@ -226,7 +226,7 @@ struct ParsedBook: Identifiable, Codable, Sendable {
     var language: String?
     var originalLanguage: String?
     var authorNationality: String?
-    var translator: String?
+    // translator field removed for streamlined cultural tracking
     var genre: [String]
     var dateRead: Date?
     var dateAdded: Date?
@@ -237,7 +237,7 @@ struct ParsedBook: Identifiable, Codable, Sendable {
     var authorGender: AuthorGender?
     var culturalThemes: [String]
     
-    init(rowIndex: Int, title: String? = nil, author: String? = nil, isbn: String? = nil, publisher: String? = nil, publishedDate: String? = nil, pageCount: Int? = nil, description: String? = nil, language: String? = nil, originalLanguage: String? = nil, authorNationality: String? = nil, translator: String? = nil, genre: [String] = [], dateRead: Date? = nil, dateAdded: Date? = nil, rating: Int? = nil, readingStatus: String? = nil, personalNotes: String? = nil, tags: [String] = [], authorGender: AuthorGender? = nil, culturalThemes: [String] = []) {
+    init(rowIndex: Int, title: String? = nil, author: String? = nil, isbn: String? = nil, publisher: String? = nil, publishedDate: String? = nil, pageCount: Int? = nil, description: String? = nil, language: String? = nil, originalLanguage: String? = nil, authorNationality: String? = nil, genre: [String] = [], dateRead: Date? = nil, dateAdded: Date? = nil, rating: Int? = nil, readingStatus: String? = nil, personalNotes: String? = nil, tags: [String] = [], authorGender: AuthorGender? = nil, culturalThemes: [String] = []) {
         self.id = UUID()
         self.rowIndex = rowIndex
         self.title = title
@@ -250,7 +250,7 @@ struct ParsedBook: Identifiable, Codable, Sendable {
         self.language = language
         self.originalLanguage = originalLanguage
         self.authorNationality = authorNationality
-        self.translator = translator
+        // translator field removed
         self.genre = genre
         self.dateRead = dateRead
         self.dateAdded = dateAdded
@@ -408,7 +408,7 @@ enum ImportStep: String, CaseIterable, Sendable {
 }
 
 /// Detailed error information for import failures
-struct ImportError: Identifiable, Equatable, Sendable {
+struct ImportError: Identifiable, Equatable, Sendable, Error {
     let id = UUID()
     let rowIndex: Int?
     let bookTitle: String?
@@ -421,7 +421,7 @@ struct ImportError: Identifiable, Equatable, Sendable {
     }
 }
 
-enum ImportErrorType: Sendable {
+enum ImportErrorType: Sendable, CaseIterable, Equatable, Hashable {
     case fileError          // File couldn't be read
     case parseError         // CSV format issues
     case validationError    // Invalid book data

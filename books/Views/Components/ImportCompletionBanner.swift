@@ -64,7 +64,7 @@ struct ImportCompletionBanner: View {
                 }
                 .padding(Theme.Spacing.md)
                 .background(theme.successContainer)
-                .materialCard(elevation: 4)
+                .materialCard()
                 .padding(.horizontal, Theme.Spacing.md)
                 .offset(y: bannerOffset)
                 .transition(.move(edge: .top).combined(with: .opacity))
@@ -112,7 +112,7 @@ struct ImportCompletionBanner: View {
         
         // Clear review items after dismissing
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            backgroundCoordinator?.needsUserReview.removeAll()
+            backgroundCoordinator?.clearReviewItems()
         }
     }
 }
@@ -158,7 +158,7 @@ struct ImportReviewModal: View {
                     
                     Button("Skip These Books") {
                         // Clear review items
-                        coordinator.needsUserReview.removeAll()
+                        coordinator.clearReviewItems()
                         dismiss()
                     }
                     .materialButton(style: .outlined, size: .medium)
@@ -212,7 +212,7 @@ struct ReviewItemRow: View {
                 .foregroundColor(theme.error)
                 .padding(.vertical, Theme.Spacing.xs)
                 .padding(.horizontal, Theme.Spacing.sm)
-                .background(theme.errorContainer)
+                .background(theme.error.opacity(0.1))
                 .cornerRadius(8)
             
             // Suggestions if available

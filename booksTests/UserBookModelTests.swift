@@ -246,7 +246,7 @@ final class UserBookModelTests: BookTrackerTestSuite {
         XCTAssertEqual(userBook.metadata?.title, "Related Book")
         
         // Test that metadata can be shared between user books
-        let userBook2 = UserBook(metadata: metadata, readingStatus: .read)
+        let userBook2 = UserBook(readingStatus: .read, metadata: metadata)
         modelContext.insert(userBook2)
         try saveContext()
         

@@ -834,13 +834,4 @@ struct BackgroundImportResumeResult {
     let resumedFromBook: Int
 }
 
-// String padding extension for test data generation
-extension String {
-    func padded(toLength length: Int, withPad padString: String, startingAt startIndex: Int) -> String {
-        let padLength = length - self.count
-        guard padLength > 0 else { return self }
-        
-        let padding = String(repeating: padString, count: padLength / padString.count + 1)
-        return self + String(padding.prefix(padLength))
-    }
-}
+// String padding extension moved to DataMergingLogicTests.swift to avoid duplication

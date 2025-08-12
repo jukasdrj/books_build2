@@ -124,14 +124,4 @@ struct BookSearchServiceTests {
     }
 }
 
-struct TestingError: Error, CustomStringConvertible {
-    let message: String
-    
-    init(_ message: String) {
-        self.message = message
-    }
-    
-    var description: String {
-        return message
-    }
-}
+// TestingError moved to ErrorHandlingAndRetryLogicTests.swift to avoid duplication

@@ -671,72 +671,8 @@ struct QueueProgress {
     let totalCount: Int
 }
 
-// Enhanced MockBookSearchService for priority queue testing
-extension MockBookSearchService {
-    var titleAuthorResponses: [(String, String): BookMetadata] {
-        get { _titleAuthorResponses }
-        set { _titleAuthorResponses = newValue }
-    }
+// Enhanced MockBookSearchService for priority queue testing moved to ServiceProtocols.swift
     
-    var trackProcessingOrder: Bool = false
-    var processingOrder: [ProcessingRecord] = []
-    var trackBatchSizes: Bool = false
-    var batchSizeHistory: [Int] = []
-    
-    private var _titleAuthorResponses: [(String, String): BookMetadata] = [:]
-    
-    struct ProcessingRecord {
-        enum Method {
-            case isbn
-            case titleAuthor
-        }
-        
-        let method: Method
-        let orderIndex: Int
-        let startTime: Date
-        let completionTime: Date
-    }
-    
-    func searchByTitleAuthor(_ title: String, author: String) async throws -> BookMetadata? {
-        if trackProcessingOrder {
-            let record = ProcessingRecord(
-                method: .titleAuthor,
-                orderIndex: processingOrder.count,
-                startTime: Date(),
-                completionTime: Date().addingTimeInterval(artificialDelay)
-            )
-            processingOrder.append(record)
-        }
-        
-        if artificialDelay > 0 {
-            try await Task.sleep(nanoseconds: UInt64(artificialDelay * 1_000_000_000))
-        }
-        
-        return titleAuthorResponses[(title, author)]
-    }
-    
-    func batchLookupISBNs(_ isbns: [String]) async -> [String: BookMetadata] {
-        if trackBatchSizes {
-            batchSizeHistory.append(isbns.count)
-        }
-        
-        var results: [String: BookMetadata] = [:]
-        for isbn in isbns {
-            if let metadata = batchResponses[isbn] {
-                results[isbn] = metadata
-            }
-        }
-        return results
-    }
-}
+// All functionality moved to main MockBookSearchService class in ServiceProtocols.swift
 
-// String padding extension for test data generation
-extension String {
-    func padded(toLength length: Int, withPad padString: String, startingAt startIndex: Int) -> String {
-        let padLength = length - self.count
-        guard padLength > 0 else { return self }
-        
-        let padding = String(repeating: padString, count: padLength / padString.count + 1)
-        return self + String(padding.prefix(padLength))
-    }
-}
+// String padding extension moved to DataMergingLogicTests.swift to avoid duplication

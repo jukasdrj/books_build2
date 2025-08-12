@@ -8,6 +8,7 @@
 
 import Testing
 import Foundation
+import SwiftData
 @testable import books
 
 @Suite("Error Handling and Retry Logic Tests")

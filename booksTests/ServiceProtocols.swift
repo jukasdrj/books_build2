@@ -59,6 +59,52 @@ class MockBookSearchService: BookSearchServiceProtocol {
     var searchQuery: String?
     var searchCallCount = 0
     
+    // Properties moved from extensions to avoid "extensions cannot contain stored properties" error
+    var artificialDelay: TimeInterval = 0
+    var trackConcurrency = false
+    var maxConcurrentCalls = 0
+    var callCount = 0
+    var failurePattern: [Bool] = []
+    var errorToThrow: Error?
+    
+    // Performance tracking properties
+    var trackPerformance: Bool = false
+    
+    // Batch operation support
+    private var _batchResponses: [String: BookMetadata] = [:]
+    private var _batchFailures: [String: Error] = [:]
+    private var _batchNotFound: Set<String> = []
+    private var _currentConcurrentCalls = 0
+    
+    var batchResponses: [String: BookMetadata] {
+        get { _batchResponses }
+        set { _batchResponses = newValue }
+    }
+    var batchFailures: [String: Error] {
+        get { _batchFailures }
+        set { _batchFailures = newValue }
+    }
+    var batchNotFound: Set<String> {
+        get { _batchNotFound }
+        set { _batchNotFound = newValue }
+    }
+    
+    // Performance metrics
+    var concurrencyEfficiency: Double {
+        guard trackPerformance else { return 0.8 }
+        return Double.random(in: 0.7...0.95)
+    }
+    
+    var concurrencyAdjustments: Int {
+        guard trackPerformance else { return 0 }
+        return Int.random(in: 0...5)
+    }
+    
+    var averageConcurrencyLevel: Double {
+        guard trackPerformance else { return Double(maxConcurrentCalls) }
+        return Double(maxConcurrentCalls) * Double.random(in: 0.7...1.0)
+    }
+    
     func searchBooks(query: String) async throws -> [BookSearchResult] {
         searchQuery = query
         searchCallCount += 1
@@ -78,12 +124,44 @@ class MockBookSearchService: BookSearchServiceProtocol {
         return getBookDetailsResult
     }
     
+    @MainActor
     func searchByISBN(_ isbn: String) async throws -> BookMetadata? {
-        if shouldThrowError {
-            throw MockError.isbnSearchFailed
+        callCount += 1
+        
+        if trackConcurrency {
+            _currentConcurrentCalls += 1
+            maxConcurrentCalls = max(maxConcurrentCalls, _currentConcurrentCalls)
         }
         
-        return searchByISBNResult
+        if artificialDelay > 0 {
+            try await Task.sleep(nanoseconds: UInt64(artificialDelay * 1_000_000_000))
+        }
+        
+        if trackConcurrency {
+            _currentConcurrentCalls -= 1
+        }
+        
+        // Handle failure pattern for retry testing
+        if !failurePattern.isEmpty {
+            let shouldFail = failurePattern[min(callCount - 1, failurePattern.count - 1)]
+            if shouldFail {
+                throw errorToThrow ?? MockError.isbnSearchFailed
+            }
+        }
+        
+        if shouldThrowError {
+            throw errorToThrow ?? MockError.isbnSearchFailed
+        }
+        
+        if let failure = batchFailures[isbn] {
+            throw failure
+        }
+        
+        if batchNotFound.contains(isbn) {
+            return nil
+        }
+        
+        return batchResponses[isbn] ?? searchByISBNResult
     }
 }
 

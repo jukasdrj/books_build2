@@ -80,7 +80,7 @@ struct BackgroundImportDetailView: View {
                 if let progress = coordinator.progress {
                     VStack(spacing: Theme.Spacing.md) {
                         // Progress bar
-                        ProgressView(value: progress.progressPercentage)
+                        ProgressView(value: progress.progress)
                             .progressViewStyle(LinearProgressViewStyle(tint: theme.primary))
                             .frame(height: 8)
                             .cornerRadius(4)

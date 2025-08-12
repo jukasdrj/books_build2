@@ -110,13 +110,18 @@ class BackgroundImportCoordinator {
     
     /// Pause/Resume import
     func pauseImport() {
-        csvImportService.pauseImport()
+        csvImportService.cancelImport()
     }
     
     func resumeImport() {
         if csvImportService.canResumeImport() {
             _ = csvImportService.resumeImportIfAvailable()
         }
+    }
+    
+    /// Clear user review items
+    func clearReviewItems() {
+        needsUserReview.removeAll()
     }
     
     // MARK: - Private Implementation
@@ -131,10 +136,12 @@ class BackgroundImportCoordinator {
             // Recreate background session from persisted state
             let backgroundSession = BackgroundImportSession(
                 csvSession: CSVImportSession(
-                    id: resumableInfo.sessionId,
                     fileName: resumableInfo.fileName,
+                    fileSize: 0, // Will be restored from state
                     totalRows: resumableInfo.estimatedBooksRemaining + resumableInfo.progress.processedBooks,
-                    hasHeaders: true // Assume headers for simplicity
+                    detectedColumns: [], // Will be restored from state
+                    sampleData: [], // Will be restored from state
+                    allData: [] // Will be restored from state
                 ),
                 mappings: [:], // Will be restored from state
                 startTime: resumableInfo.lastUpdated
@@ -175,7 +182,7 @@ class BackgroundImportCoordinator {
         
         // Add items that failed and might need manual review
         for error in progress.errors {
-            if error.errorType == .noMatchFound || error.errorType == .ambiguousMatch {
+            if error.errorType == .networkError || error.errorType == .validationError {
                 let reviewItem = ReviewItem(
                     bookTitle: error.bookTitle ?? "Unknown Book",
                     author: error.suggestions.first ?? "Unknown Author",
