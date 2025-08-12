@@ -3,7 +3,7 @@ import SwiftData
 import SwiftUI
 
 @Model
-final class BookMetadata: Identifiable, Hashable {
+final class BookMetadata: Identifiable, Hashable, @unchecked Sendable {
     @Attribute(.unique) var googleBooksID: String
     var title: String
     

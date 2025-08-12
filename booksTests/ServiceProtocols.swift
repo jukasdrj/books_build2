@@ -19,11 +19,6 @@ protocol CSVImportServiceProtocol {
     func validateCSVFormat(_ fileURL: URL) async throws -> Bool
 }
 
-/// Protocol for concurrent ISBN lookup functionality
-protocol ConcurrentISBNLookupServiceProtocol {
-    func lookupMultipleISBNs(_ isbns: [String]) async -> [TestISBNLookupResult]
-    func lookupSingleISBN(_ isbn: String) async -> TestISBNLookupResult
-}
 
 /// Protocol for image caching functionality
 protocol ImageCacheProtocol {
@@ -137,52 +132,6 @@ class MockCSVImportService: CSVImportServiceProtocol {
     }
 }
 
-/// Mock implementation of ConcurrentISBNLookupService for testing
-class MockConcurrentISBNLookupService: ConcurrentISBNLookupServiceProtocol {
-    var lookupResults: [TestISBNLookupResult] = []
-    var singleLookupResult: TestISBNLookupResult?
-    var shouldThrowError = false
-    var lookupCallCount = 0
-    
-    func lookupMultipleISBNs(_ isbns: [String]) async -> [TestISBNLookupResult] {
-        lookupCallCount += 1
-        
-        if lookupResults.isEmpty {
-            // Generate default results
-            return isbns.map { isbn in
-                TestISBNLookupResult(
-                    isbn: isbn,
-                    metadata: BookMetadata(
-                        googleBooksID: "test-\(isbn)",
-                        title: "Test Book for \(isbn)",
-                        authors: ["Test Author"],
-                        publishedDate: "2024"
-                    ),
-                    success: true,
-                    error: nil,
-                    responseTime: 0.1
-                )
-            }
-        }
-        
-        return lookupResults
-    }
-    
-    func lookupSingleISBN(_ isbn: String) async -> TestISBNLookupResult {
-        return singleLookupResult ?? TestISBNLookupResult(
-            isbn: isbn,
-            metadata: BookMetadata(
-                googleBooksID: "test-\(isbn)",
-                title: "Test Single Book",
-                authors: ["Test Author"],
-                publishedDate: "2024"
-            ),
-            success: true,
-            error: nil,
-            responseTime: 0.1
-        )
-    }
-}
 
 /// Mock implementation of ImageCache for testing
 class MockImageCache: ImageCacheProtocol {

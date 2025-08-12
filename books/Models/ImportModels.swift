@@ -6,19 +6,93 @@
 //
 
 import Foundation
+import SwiftUI
 
 // MARK: - CSV Import Data Models
 
+/// Import queue type for prioritized processing
+enum ImportQueue: String, CaseIterable, Codable {
+    case primary = "primary"     // Books with valid ISBNs (fast processing)
+    case fallback = "fallback"   // Books without ISBNs (title/author search)
+    
+    var displayName: String {
+        switch self {
+        case .primary:
+            return "Primary Queue (ISBN)"
+        case .fallback:
+            return "Fallback Queue (Title/Author)"
+        }
+    }
+    
+    var priority: Int {
+        switch self {
+        case .primary:
+            return 1  // Higher priority
+        case .fallback:
+            return 2  // Lower priority
+        }
+    }
+}
+
+/// Represents a book in the import queue with retry tracking
+struct QueuedBook: Identifiable, Codable, Sendable {
+    let id: UUID
+    let parsedBook: ParsedBook
+    let queueType: ImportQueue
+    var retryCount: Int
+    let queuedAt: Date
+    
+    init(parsedBook: ParsedBook, queueType: ImportQueue, retryCount: Int = 0) {
+        self.id = UUID()
+        self.parsedBook = parsedBook
+        self.queueType = queueType
+        self.retryCount = retryCount
+        self.queuedAt = Date()
+    }
+    
+    /// Maximum number of retries allowed for this book
+    var maxRetries: Int {
+        switch queueType {
+        case .primary:
+            return 3  // More retries for ISBN lookups (usually network issues)
+        case .fallback:
+            return 2  // Fewer retries for title/author searches (often data quality issues)
+        }
+    }
+    
+    /// Whether this book can be retried
+    var canRetry: Bool {
+        return retryCount < maxRetries
+    }
+    
+    /// Increment retry count and return whether retry is still allowed
+    mutating func incrementRetry() -> Bool {
+        retryCount += 1
+        return canRetry
+    }
+}
+
 /// Represents a raw CSV import session
-struct CSVImportSession: Codable {
-    let id: UUID = UUID()
+struct CSVImportSession: Codable, Sendable {
+    let id: UUID
     let fileName: String
     let fileSize: Int
     let totalRows: Int
     let detectedColumns: [CSVColumn]
     let sampleData: [[String]] // First 5-10 rows for preview
     let allData: [[String]] // All rows including header
-    let createdAt: Date = Date()
+    let createdAt: Date
+    
+    init(fileName: String, fileSize: Int, totalRows: Int, detectedColumns: [CSVColumn], sampleData: [[String]], allData: [[String]]) {
+        self.id = UUID()
+        self.fileName = fileName
+        self.fileSize = fileSize
+        self.totalRows = totalRows
+        self.detectedColumns = detectedColumns
+        self.sampleData = sampleData
+        self.allData = allData
+        self.createdAt = Date()
+    }
     
     var isValidGoodreadsFormat: Bool {
         // Check if this looks like a Goodreads export
@@ -31,12 +105,20 @@ struct CSVImportSession: Codable {
 }
 
 /// Represents a column in the CSV file
-struct CSVColumn: Identifiable, Equatable, Codable {
-    let id = UUID()
+struct CSVColumn: Identifiable, Equatable, Codable, Sendable {
+    let id: UUID
     let originalName: String        // Column name from CSV header
     let index: Int                  // Column position (0-based)
     var mappedField: BookField?     // What field this maps to in our app
     let sampleValues: [String]      // Sample values for user to see
+    
+    init(originalName: String, index: Int, mappedField: BookField? = nil, sampleValues: [String]) {
+        self.id = UUID()
+        self.originalName = originalName
+        self.index = index
+        self.mappedField = mappedField
+        self.sampleValues = sampleValues
+    }
     
     var isRequired: Bool {
         mappedField?.isRequired ?? false
@@ -48,7 +130,7 @@ struct CSVColumn: Identifiable, Equatable, Codable {
 }
 
 /// Fields in our app that can be mapped from CSV
-enum BookField: String, CaseIterable, Identifiable, Codable {
+enum BookField: String, CaseIterable, Identifiable, Codable, Sendable {
     case title = "title"
     case author = "author"
     case isbn = "isbn"
@@ -122,7 +204,7 @@ enum BookField: String, CaseIterable, Identifiable, Codable {
     }
 }
 
-enum FieldType: Codable {
+enum FieldType: Codable, Sendable {
     case text
     case number
     case date
@@ -131,8 +213,8 @@ enum FieldType: Codable {
 }
 
 /// Represents a parsed book from CSV before import
-struct ParsedBook {
-    let id = UUID()
+struct ParsedBook: Identifiable, Codable, Sendable {
+    let id: UUID
     let rowIndex: Int
     var title: String?
     var author: String?
@@ -145,15 +227,40 @@ struct ParsedBook {
     var originalLanguage: String?
     var authorNationality: String?
     var translator: String?
-    var genre: [String] = []
+    var genre: [String]
     var dateRead: Date?
     var dateAdded: Date?
     var rating: Int?
     var readingStatus: String?
     var personalNotes: String?
-    var tags: [String] = []
+    var tags: [String]
     var authorGender: AuthorGender?
-    var culturalThemes: [String] = []
+    var culturalThemes: [String]
+    
+    init(rowIndex: Int, title: String? = nil, author: String? = nil, isbn: String? = nil, publisher: String? = nil, publishedDate: String? = nil, pageCount: Int? = nil, description: String? = nil, language: String? = nil, originalLanguage: String? = nil, authorNationality: String? = nil, translator: String? = nil, genre: [String] = [], dateRead: Date? = nil, dateAdded: Date? = nil, rating: Int? = nil, readingStatus: String? = nil, personalNotes: String? = nil, tags: [String] = [], authorGender: AuthorGender? = nil, culturalThemes: [String] = []) {
+        self.id = UUID()
+        self.rowIndex = rowIndex
+        self.title = title
+        self.author = author
+        self.isbn = isbn
+        self.publisher = publisher
+        self.publishedDate = publishedDate
+        self.pageCount = pageCount
+        self.description = description
+        self.language = language
+        self.originalLanguage = originalLanguage
+        self.authorNationality = authorNationality
+        self.translator = translator
+        self.genre = genre
+        self.dateRead = dateRead
+        self.dateAdded = dateAdded
+        self.rating = rating
+        self.readingStatus = readingStatus
+        self.personalNotes = personalNotes
+        self.tags = tags
+        self.authorGender = authorGender
+        self.culturalThemes = culturalThemes
+    }
     
     var isValid: Bool {
         guard let title = title?.trimmingCharacters(in: .whitespacesAndNewlines),
@@ -189,7 +296,7 @@ struct ParsedBook {
 }
 
 /// Progress tracking for import operation
-struct ImportProgress {
+struct ImportProgress: Sendable {
     let sessionId: UUID
     var currentStep: ImportStep = .preparing
     var totalBooks: Int = 0
@@ -206,6 +313,13 @@ struct ImportProgress {
     var errors: [ImportError] = []
     var message: String = ""  // Detailed progress message
     var estimatedTimeRemaining: TimeInterval = 0  // Estimated time to completion
+    
+    // Priority Queue Statistics
+    var currentQueueType: ImportQueue? = nil  // Which queue is currently being processed
+    var primaryQueueSize: Int = 0  // Number of books in primary queue
+    var fallbackQueueSize: Int = 0  // Number of books in fallback queue
+    var primaryQueueProcessed: Int = 0  // Books processed from primary queue
+    var fallbackQueueProcessed: Int = 0  // Books processed from fallback queue
     
     // Phase 2: Smart Retry Logic Statistics
     var retryAttempts: Int = 0  // Total retry attempts made
@@ -259,9 +373,30 @@ struct ImportProgress {
         
         return components.joined(separator: ", ")
     }
+    
+    /// Get queue-specific progress information
+    var queueProgressSummary: String {
+        var summary = ""
+        
+        if primaryQueueSize > 0 {
+            summary += "Primary: \(primaryQueueProcessed)/\(primaryQueueSize)"
+        }
+        
+        if fallbackQueueSize > 0 {
+            if !summary.isEmpty { summary += " | " }
+            summary += "Fallback: \(fallbackQueueProcessed)/\(fallbackQueueSize)"
+        }
+        
+        if let currentQueue = currentQueueType {
+            if !summary.isEmpty { summary += " | " }
+            summary += "Processing: \(currentQueue.displayName)"
+        }
+        
+        return summary
+    }
 }
 
-enum ImportStep: String, CaseIterable {
+enum ImportStep: String, CaseIterable, Sendable {
     case preparing = "Preparing import..."
     case parsing = "Parsing CSV file..."
     case validating = "Validating book data..."
@@ -273,7 +408,7 @@ enum ImportStep: String, CaseIterable {
 }
 
 /// Detailed error information for import failures
-struct ImportError: Identifiable, Equatable {
+struct ImportError: Identifiable, Equatable, Sendable {
     let id = UUID()
     let rowIndex: Int?
     let bookTitle: String?
@@ -286,7 +421,7 @@ struct ImportError: Identifiable, Equatable {
     }
 }
 
-enum ImportErrorType {
+enum ImportErrorType: Sendable {
     case fileError          // File couldn't be read
     case parseError         // CSV format issues
     case validationError    // Invalid book data
@@ -299,7 +434,7 @@ enum ImportErrorType {
 }
 
 /// Result of the entire import operation
-struct ImportResult {
+struct ImportResult: Sendable {
     let sessionId: UUID
     let totalBooks: Int
     let successfulImports: Int

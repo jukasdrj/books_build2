@@ -50,14 +50,22 @@ class ImportStateManager: ObservableObject {
     func saveImportState(
         progress: ImportProgress,
         session: CSVImportSession,
-        columnMappings: [String: BookField]
+        columnMappings: [String: BookField],
+        primaryQueue: [QueuedBook]? = nil,
+        fallbackQueue: [QueuedBook]? = nil,
+        processedBookIds: Set<UUID>? = nil,
+        currentQueuePhase: ImportQueue? = nil
     ) {
         let state = PersistedImportState(
             id: progress.sessionId,
             progress: progress,
             session: session,
             columnMappings: columnMappings,
-            lastUpdated: Date()
+            lastUpdated: Date(),
+            primaryQueue: primaryQueue,
+            fallbackQueue: fallbackQueue,
+            processedBookIds: processedBookIds,
+            currentQueuePhase: currentQueuePhase
         )
         
         do {
@@ -115,7 +123,7 @@ class ImportStateManager: ObservableObject {
     }
     
     /// Update progress for current import
-    func updateProgress(_ progress: ImportProgress) {
+    func updateProgress(_ progress: ImportProgress, primaryQueue: [QueuedBook]? = nil, fallbackQueue: [QueuedBook]? = nil, processedBookIds: Set<UUID>? = nil, currentQueuePhase: ImportQueue? = nil) {
         persistedProgress = progress
         
         // Update the stored state with new progress
@@ -123,7 +131,11 @@ class ImportStateManager: ObservableObject {
             saveImportState(
                 progress: progress,
                 session: state.session,
-                columnMappings: state.columnMappings
+                columnMappings: state.columnMappings,
+                primaryQueue: primaryQueue ?? state.primaryQueue,
+                fallbackQueue: fallbackQueue ?? state.fallbackQueue,
+                processedBookIds: processedBookIds ?? state.processedBookIds,
+                currentQueuePhase: currentQueuePhase ?? state.currentQueuePhase
             )
         }
     }
@@ -160,7 +172,9 @@ class ImportStateManager: ObservableObject {
         saveImportState(
             progress: updatedProgress,
             session: state.session,
-            columnMappings: state.columnMappings
+            columnMappings: state.columnMappings,
+            primaryQueue: state.primaryQueue,
+            fallbackQueue: state.fallbackQueue
         )
         
         print("[ImportStateManager] Saved state for app termination")
@@ -178,7 +192,9 @@ class ImportStateManager: ObservableObject {
         saveImportState(
             progress: updatedProgress,
             session: state.session,
-            columnMappings: state.columnMappings
+            columnMappings: state.columnMappings,
+            primaryQueue: state.primaryQueue,
+            fallbackQueue: state.fallbackQueue
         )
         
         print("[ImportStateManager] Handled background task expiration")
@@ -247,6 +263,34 @@ struct PersistedImportState: Codable {
     let session: CSVImportSession
     let columnMappings: [String: BookField]
     let lastUpdated: Date
+    
+    // Queue state - optional for backward compatibility
+    let primaryQueue: [QueuedBook]?
+    let fallbackQueue: [QueuedBook]?
+    let processedBookIds: Set<UUID>? // Track books that were already processed
+    let currentQueuePhase: ImportQueue? // Track which queue was being processed
+    
+    init(
+        id: UUID,
+        progress: ImportProgress,
+        session: CSVImportSession,
+        columnMappings: [String: BookField],
+        lastUpdated: Date,
+        primaryQueue: [QueuedBook]? = nil,
+        fallbackQueue: [QueuedBook]? = nil,
+        processedBookIds: Set<UUID>? = nil,
+        currentQueuePhase: ImportQueue? = nil
+    ) {
+        self.id = id
+        self.progress = progress
+        self.session = session
+        self.columnMappings = columnMappings
+        self.lastUpdated = lastUpdated
+        self.primaryQueue = primaryQueue
+        self.fallbackQueue = fallbackQueue
+        self.processedBookIds = processedBookIds
+        self.currentQueuePhase = currentQueuePhase
+    }
 }
 
 /// Information about a resumable import for UI display
@@ -279,6 +323,8 @@ extension ImportProgress: Codable {
         case errors, estimatedTimeRemaining, startTime, endTime
         case isCancelled, retryAttempts, successfulRetries, failedRetries
         case maxRetryAttempts, circuitBreakerTriggered, finalFailureReasons
+        case currentQueueType, primaryQueueSize, fallbackQueueSize
+        case primaryQueueProcessed, fallbackQueueProcessed
     }
     
     func encode(to encoder: Encoder) throws {
@@ -304,6 +350,11 @@ extension ImportProgress: Codable {
         try container.encode(maxRetryAttempts, forKey: .maxRetryAttempts)
         try container.encode(circuitBreakerTriggered, forKey: .circuitBreakerTriggered)
         try container.encode(finalFailureReasons, forKey: .finalFailureReasons)
+        try container.encode(currentQueueType, forKey: .currentQueueType)
+        try container.encode(primaryQueueSize, forKey: .primaryQueueSize)
+        try container.encode(fallbackQueueSize, forKey: .fallbackQueueSize)
+        try container.encode(primaryQueueProcessed, forKey: .primaryQueueProcessed)
+        try container.encode(fallbackQueueProcessed, forKey: .fallbackQueueProcessed)
     }
     
     init(from decoder: Decoder) throws {
@@ -333,5 +384,10 @@ extension ImportProgress: Codable {
         self.maxRetryAttempts = try container.decode(Int.self, forKey: .maxRetryAttempts)
         self.circuitBreakerTriggered = try container.decode(Bool.self, forKey: .circuitBreakerTriggered)
         self.finalFailureReasons = try container.decode([String: Int].self, forKey: .finalFailureReasons)
+        self.currentQueueType = try container.decodeIfPresent(ImportQueue.self, forKey: .currentQueueType)
+        self.primaryQueueSize = try container.decodeIfPresent(Int.self, forKey: .primaryQueueSize) ?? 0
+        self.fallbackQueueSize = try container.decodeIfPresent(Int.self, forKey: .fallbackQueueSize) ?? 0
+        self.primaryQueueProcessed = try container.decodeIfPresent(Int.self, forKey: .primaryQueueProcessed) ?? 0
+        self.fallbackQueueProcessed = try container.decodeIfPresent(Int.self, forKey: .fallbackQueueProcessed) ?? 0
     }
 }

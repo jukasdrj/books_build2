@@ -29,21 +29,30 @@ class CSVImportService: ObservableObject {
     // MARK: - Performance Optimization Properties
     private var cachedUserBooks: [UserBook]? = nil
     private var cachedMetadata: [String: BookMetadata] = [:] // Cache by googleBooksID
-    private let batchSize = 50 // Process and save in batches
+    private var batchSize: Int { ConcurrentImportConfig.current.databaseBatchSize } // Dynamic batch size
     private let duplicateCheckCache = NSCache<NSString, NSNumber>() // Fast duplicate checking
     
-    // MARK: - Concurrent Processing (Phase 1)
-    private var concurrentLookupService: ConcurrentISBNLookupService
+    // MARK: - ISBN Lookup Service
+    private let simpleISBNLookupService: SimpleISBNLookupService
+    
+    // MARK: - Priority Queue System
+    private var primaryQueue: [QueuedBook] = []      // Books with ISBNs - process first
+    private var fallbackQueue: [QueuedBook] = []     // Books without ISBNs - process second
+    private var processedBookIds: Set<UUID> = []     // Track books that were already processed
+    private var currentQueuePhase: ImportQueue? = nil // Track which queue is being processed
     
     // MARK: - Background Processing
     private var currentSession: CSVImportSession?
     private var currentColumnMappings: [String: BookField] = [:]
     
     // MARK: - Initialization
-    init(modelContext: ModelContext) {
+    init(modelContext: ModelContext, config: ConcurrentImportConfig = ConcurrentImportConfig.current) {
         self.modelContext = modelContext
         self.csvParser = CSVParser()
-        self.concurrentLookupService = ConcurrentISBNLookupService(metadataCache: [:])
+        self.simpleISBNLookupService = SimpleISBNLookupService(
+            maxConcurrentLookups: config.maxConcurrentLookups,
+            batchSize: config.concurrentBatchSize
+        )
         
         // Set up background task monitoring
         setupBackgroundTaskObservers()
@@ -85,11 +94,15 @@ class CSVImportService: ObservableObject {
             print("[CSVImportService] Warning: Could not start background task")
         }
         
-        // Save initial import state
+        // Save initial import state (with empty queues initially)
         ImportStateManager.shared.saveImportState(
             progress: progress,
             session: session,
-            columnMappings: columnMappings
+            columnMappings: columnMappings,
+            primaryQueue: [],
+            fallbackQueue: [],
+            processedBookIds: processedBookIds,
+            currentQueuePhase: currentQueuePhase
         )
         
         // Start import task
@@ -127,8 +140,12 @@ class CSVImportService: ObservableObject {
         cachedMetadata.removeAll()
         duplicateCheckCache.removeAllObjects()
         
-        // Reset concurrent service
-        concurrentLookupService = ConcurrentISBNLookupService(metadataCache: [:])
+        // Clear queues
+        primaryQueue.removeAll()
+        fallbackQueue.removeAll()
+        
+        // Reset lookup service statistics
+        simpleISBNLookupService.resetStats()
         
         // Clear persisted state
         ImportStateManager.shared.clearImportState()
@@ -150,6 +167,20 @@ class CSVImportService: ObservableObject {
         // Restore session and mappings
         currentSession = state.session
         currentColumnMappings = state.columnMappings
+        
+        // Restore processed books tracking
+        processedBookIds = state.processedBookIds ?? []
+        currentQueuePhase = state.currentQueuePhase
+        
+        // Restore queues with processed books filtered out
+        if let savedPrimaryQueue = state.primaryQueue {
+            primaryQueue = savedPrimaryQueue.filter { !processedBookIds.contains($0.parsedBook.id) }
+            print("[CSVImportService] Restored primary queue: \(primaryQueue.count) remaining")
+        }
+        if let savedFallbackQueue = state.fallbackQueue {
+            fallbackQueue = savedFallbackQueue.filter { !processedBookIds.contains($0.parsedBook.id) }
+            print("[CSVImportService] Restored fallback queue: \(fallbackQueue.count) remaining")
+        }
         
         // Restore progress
         importProgress = state.progress
@@ -182,17 +213,36 @@ class CSVImportService: ObservableObject {
         var apiFallbackCount = 0
         
         do {
-            // Step 1: Parse CSV into books
-            progress.currentStep = .parsing
-            progress.message = "Parsing CSV file (\(session.totalRows) rows)..."
-            importProgress = progress
-            
-            let parsedBooks = csvParser.parseBooks(from: session, columnMappings: columnMappings)
-            progress.totalBooks = parsedBooks.count
-            importProgress = progress
-            
-            // Small delay to show parsing step
-            try await Task.sleep(nanoseconds: 200_000_000) // 0.2 seconds
+            // Step 1: Parse CSV into books and populate queues
+            if !resume || (primaryQueue.isEmpty && fallbackQueue.isEmpty) {
+                progress.currentStep = .parsing
+                progress.message = "Parsing CSV file (\(session.totalRows) rows) and organizing into priority queues..."
+                importProgress = progress
+                
+                let parsedBooks = csvParser.parseBooks(from: session, columnMappings: columnMappings)
+                progress.totalBooks = parsedBooks.count
+                
+                // Split books into priority queues
+                await populateQueues(from: parsedBooks, errors: &errors, failCount: &failCount)
+                
+                // Update progress with queue information
+                progress.primaryQueueSize = primaryQueue.count
+                progress.fallbackQueueSize = fallbackQueue.count
+                progress.message = "Organized books: \(primaryQueue.count) with ISBN (primary), \(fallbackQueue.count) without ISBN (fallback)"
+                importProgress = progress
+                
+                // Save queue state for resume capability
+                ImportStateManager.shared.updateProgress(
+                    progress,
+                    primaryQueue: primaryQueue,
+                    fallbackQueue: fallbackQueue,
+                    processedBookIds: processedBookIds,
+                    currentQueuePhase: currentQueuePhase
+                )
+                
+                // Small delay to show parsing step
+                try await Task.sleep(nanoseconds: 200_000_000) // 0.2 seconds
+            }
             
             // Check if cancelled
             if Task.isCancelled {
@@ -204,9 +254,9 @@ class CSVImportService: ObservableObject {
                 return
             }
             
-            // Step 2: Validate books and prepare caches
+            // Step 2: Validate and prepare caches
             progress.currentStep = .validating
-            progress.message = "Validating book data and loading existing library..."
+            progress.message = "Loading existing library for duplicate checking..."
             importProgress = progress
             
             // Pre-fetch all existing UserBooks for efficient duplicate checking
@@ -214,22 +264,6 @@ class CSVImportService: ObservableObject {
                 cachedUserBooks = try await fetchAllUserBooks()
                 progress.message = "Loaded \(cachedUserBooks?.count ?? 0) existing books for duplicate checking"
                 importProgress = progress
-            }
-            
-            let validBooks = parsedBooks.filter { book in
-                let isValid = book.isValid
-                if !isValid {
-                    let error = ImportError(
-                        rowIndex: book.rowIndex,
-                        bookTitle: book.title,
-                        errorType: .validationError,
-                        message: "Invalid book data: \(book.validationErrors.joined(separator: ", "))",
-                        suggestions: ["Check that title and author are not empty", "Verify data format matches expected values"]
-                    )
-                    errors.append(error)
-                    failCount += 1
-                }
-                return isValid
             }
             
             try await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
@@ -244,36 +278,68 @@ class CSVImportService: ObservableObject {
                 return
             }
             
-            // Step 3: Import books with CONCURRENT PROCESSING (Phase 1)
+            // Step 3: Process priority queues
             progress.currentStep = .importing
-            progress.message = "Importing \(validBooks.count) books with concurrent processing..."
             importProgress = progress
             
             let batchStartTime = Date()
             var booksToInsert: [UserBook] = []
             var metadataToInsert: [BookMetadata] = []
             
-            // PHASE 1 IMPROVEMENT: Process books with concurrent ISBN lookups
-            await processBooksWithConcurrentLookups(
-                validBooks,
-                progress: &progress,
-                errors: &errors,
-                booksToInsert: &booksToInsert,
-                metadataToInsert: &metadataToInsert,
-                successCount: &successCount,
-                duplicateCount: &duplicateCount,
-                duplicatesISBN: &duplicatesISBN,
-                duplicatesGoogleID: &duplicatesGoogleID,
-                duplicatesTitleAuthor: &duplicatesTitleAuthor,
-                failCount: &failCount,
-                apiSuccessCount: &apiSuccessCount,
-                apiFallbackCount: &apiFallbackCount,
-                importedBookIds: &importedBookIds,
-                batchStartTime: batchStartTime
-            )
+            // Process primary queue first (books with ISBNs)
+            if !primaryQueue.isEmpty {
+                currentQueuePhase = .primary // Track current phase for resume
+                progress.currentQueueType = .primary
+                progress.message = "Processing primary queue: \(primaryQueue.count) books with ISBNs (fast lookups)..."
+                importProgress = progress
+                
+                await processPrimaryQueue(
+                    progress: &progress,
+                    errors: &errors,
+                    booksToInsert: &booksToInsert,
+                    metadataToInsert: &metadataToInsert,
+                    successCount: &successCount,
+                    duplicateCount: &duplicateCount,
+                    duplicatesISBN: &duplicatesISBN,
+                    duplicatesGoogleID: &duplicatesGoogleID,
+                    duplicatesTitleAuthor: &duplicatesTitleAuthor,
+                    failCount: &failCount,
+                    apiSuccessCount: &apiSuccessCount,
+                    apiFallbackCount: &apiFallbackCount,
+                    importedBookIds: &importedBookIds,
+                    batchStartTime: batchStartTime
+                )
+            }
+            
+            // Process fallback queue second (books without ISBNs)
+            if !fallbackQueue.isEmpty {
+                currentQueuePhase = .fallback // Track current phase for resume
+                progress.currentQueueType = .fallback
+                progress.message = "Processing fallback queue: \(fallbackQueue.count) books without ISBNs (title/author search)..."
+                importProgress = progress
+                
+                await processFallbackQueue(
+                    progress: &progress,
+                    errors: &errors,
+                    booksToInsert: &booksToInsert,
+                    metadataToInsert: &metadataToInsert,
+                    successCount: &successCount,
+                    duplicateCount: &duplicateCount,
+                    duplicatesISBN: &duplicatesISBN,
+                    duplicatesGoogleID: &duplicatesGoogleID,
+                    duplicatesTitleAuthor: &duplicatesTitleAuthor,
+                    failCount: &failCount,
+                    apiSuccessCount: &apiSuccessCount,
+                    apiFallbackCount: &apiFallbackCount,
+                    importedBookIds: &importedBookIds,
+                    batchStartTime: batchStartTime
+                )
+            }
             
             // Step 4: Complete
             progress.currentStep = .completing
+            progress.currentQueueType = nil
+            progress.message = "Finalizing import..."
             importProgress = progress
             
             try await Task.sleep(nanoseconds: 300_000_000) // 0.3 seconds
@@ -322,25 +388,14 @@ class CSVImportService: ObservableObject {
         if let endTime = progress.endTime, let startTime = progress.startTime {
             let duration = endTime.timeIntervalSince(startTime)
             
-            // Create enhanced summary that mentions ISBN strategy
-            var enhancedSummary = ""
-            if successCount > 0 {
-                enhancedSummary += "\(successCount) imported"
-                if apiSuccessCount > 0 {
-                    enhancedSummary += " (\(apiSuccessCount) with fresh metadata)"
-                }
-            }
-            if duplicateCount > 0 {
-                if !enhancedSummary.isEmpty { enhancedSummary += ", " }
-                enhancedSummary += "\(duplicateCount) duplicates skipped"
-            }
-            if failCount > 0 {
-                if !enhancedSummary.isEmpty { enhancedSummary += ", " }
-                enhancedSummary += "\(failCount) failed"
-            }
+            // Get service statistics
+            let lookupService = simpleISBNLookupService
+            let performanceStats = await lookupService.getPerformanceStats()
             
-            // Get final retry statistics for import result
-            let finalServiceStats = concurrentLookupService.performanceStats
+            // Update final progress message with performance summary
+            let perfStats = performanceStats
+            let booksPerSecond = duration > 0 ? Double(successCount) / duration : 0
+            progress.message = "Import completed! \(Int(booksPerSecond * 60)) books/min, \(Int(perfStats.successRate * 100))% API success rate, \(Int(perfStats.rateLimitRate * 100))% rate limited"
             
             importResult = ImportResult(
                 sessionId: session.id,
@@ -354,17 +409,52 @@ class CSVImportService: ObservableObject {
                 duration: duration,
                 errors: errors,
                 importedBookIds: importedBookIds,
-                retryAttempts: finalServiceStats.retryStats.totalRetryAttempts,
-                successfulRetries: finalServiceStats.retryStats.retriesSucceeded,
-                failedRetries: finalServiceStats.retryStats.retriesFailed,
-                maxRetryAttempts: finalServiceStats.retryStats.maxRetryAttempts,
-                circuitBreakerTriggered: finalServiceStats.retryStats.circuitBreakerTriggered > 0,
-                finalFailureReasons: finalServiceStats.finalFailureReasons
+                retryAttempts: lookupService.totalLookups,
+                successfulRetries: lookupService.successfulLookups,
+                failedRetries: lookupService.failedLookups,
+                maxRetryAttempts: 3, // Our max retry attempts per book
+                circuitBreakerTriggered: false,
+                finalFailureReasons: [:]
             )
         }
         
         isImporting = false
     }
+    
+    // MARK: - Queue Management
+    
+    /// Populate priority queues from parsed books
+    private func populateQueues(from parsedBooks: [ParsedBook], errors: inout [ImportError], failCount: inout Int) async {
+        primaryQueue.removeAll()
+        fallbackQueue.removeAll()
+        
+        for parsedBook in parsedBooks {
+            // Validate book first
+            guard parsedBook.isValid else {
+                let error = ImportError(
+                    rowIndex: parsedBook.rowIndex,
+                    bookTitle: parsedBook.title,
+                    errorType: .validationError,
+                    message: "Invalid book data: \(parsedBook.validationErrors.joined(separator: ", "))",
+                    suggestions: ["Check that title and author are not empty", "Verify data format matches expected values"]
+                )
+                errors.append(error)
+                failCount += 1
+                continue
+            }
+            
+            // Check if book has ISBN for primary queue
+            if let isbn = parsedBook.isbn, !isbn.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                let queuedBook = QueuedBook(parsedBook: parsedBook, queueType: .primary)
+                primaryQueue.append(queuedBook)
+            } else {
+                let queuedBook = QueuedBook(parsedBook: parsedBook, queueType: .fallback)
+                fallbackQueue.append(queuedBook)
+            }
+        }
+    }
+    
+    // MARK: - Result Types
     
     private enum ImportBookResult {
         case success(UUID)
@@ -385,154 +475,10 @@ class CSVImportService: ObservableObject {
         case failure(ImportError)
     }
     
-    /// Optimized version of importSingleBook that returns more data for batch processing
-    private func importSingleBookOptimized(_ parsedBook: ParsedBook) async throws -> OptimizedImportResult {
-        // ONLY process books with valid ISBNs
-        guard let isbn = parsedBook.isbn, !isbn.isEmpty else {
-            print("[CSV Import] Skipping book without ISBN: \(parsedBook.title ?? "Unknown")")
-            return .failure(ImportError(
-                rowIndex: parsedBook.rowIndex,
-                bookTitle: parsedBook.title,
-                errorType: .validationError,
-                message: "No ISBN found - cannot verify book identity",
-                suggestions: ["Add ISBN to CSV", "Manually add this book through search"]
-            ))
-        }
-        
-        let cleanISBN = isbn.replacingOccurrences(of: "=", with: "")
-                            .replacingOccurrences(of: "-", with: "")
-                            .replacingOccurrences(of: " ", with: "")
-                            .trimmingCharacters(in: .whitespacesAndNewlines)
-        
-        // Check for duplicates using ISBN
-        let existingBooks = cachedUserBooks ?? []
-        for existingBook in existingBooks {
-            if let existingISBN = existingBook.metadata?.isbn?.replacingOccurrences(of: "-", with: "").replacingOccurrences(of: " ", with: ""),
-               existingISBN == cleanISBN {
-                print("[CSV Import] Duplicate detected by ISBN: \(cleanISBN)")
-                return .duplicate(.isbn)
-            }
-        }
-        
-        // Update progress message
-        if var progress = importProgress {
-            progress.message = "Looking up ISBN: \(cleanISBN)..."
-            importProgress = progress
-        }
-        
-        // Fetch metadata from API using ISBN
-        var bookMetadata: BookMetadata
-        var fromAPI = false
-        
-        // Check metadata cache first
-        if let cached = cachedMetadata["isbn:\(cleanISBN)"] {
-            bookMetadata = cached
-            fromAPI = true
-            print("[CSV Import] Using cached metadata for ISBN: \(cleanISBN)")
-        } else {
-            // Fetch from Google Books API
-            // Use BookSearchService directly instead of removed fetchMetadataFromISBN method
-            let searchResult = await BookSearchService.shared.search(query: isbn)
-            switch searchResult {
-            case .success(let books):
-                if let apiMetadata = books.first {
-                    // Success! Use API metadata exclusively
-                    bookMetadata = apiMetadata
-                    fromAPI = true
-                    
-                    // Cache the metadata
-                    cachedMetadata[apiMetadata.googleBooksID] = apiMetadata
-                    cachedMetadata["isbn:\(cleanISBN)"] = apiMetadata
-                    
-                    print("[CSV Import] Successfully fetched metadata for ISBN: \(cleanISBN)")
-                } else {
-                    // ISBN not found in Google Books
-                    print("[CSV Import] ISBN not found in Google Books: \(cleanISBN)")
-                    return .failure(ImportError(
-                        rowIndex: parsedBook.rowIndex,
-                        bookTitle: parsedBook.title,
-                        errorType: .networkError,
-                        message: "ISBN \(cleanISBN) not found in Google Books",
-                        suggestions: ["Verify ISBN is correct", "Book may not be in Google Books database"]
-                    ))
-                }
-            case .failure(let error):
-                // API error
-                print("[CSV Import] API error for ISBN \(cleanISBN): \(error.localizedDescription)")
-                return .failure(ImportError(
-                    rowIndex: parsedBook.rowIndex,
-                    bookTitle: parsedBook.title,
-                    errorType: .networkError,
-                    message: "Failed to fetch book data: \(error.localizedDescription)",
-                    suggestions: ["Check internet connection", "Try again later"]
-                ))
-            }
-        }
-        
-        // Determine reading status from CSV (user data we trust)
-        let readingStatus: ReadingStatus
-        if let statusString = parsedBook.readingStatus {
-            readingStatus = GoodreadsColumnMappings.mapReadingStatus(statusString)
-        } else {
-            readingStatus = .toRead
-        }
-        
-        // Check if metadata with this googleBooksID already exists in cache or context
-        let googleBooksIDToFind = bookMetadata.googleBooksID
-        var finalMetadata: BookMetadata
-        var isNewMetadata = false
-        
-        // Check cached metadata first
-        if let cached = cachedMetadata[googleBooksIDToFind] {
-            finalMetadata = cached
-        } else {
-            // Check in context
-            let existingMetadataQuery = FetchDescriptor<BookMetadata>(
-                predicate: #Predicate<BookMetadata> { metadata in
-                    metadata.googleBooksID == googleBooksIDToFind
-                }
-            )
-            
-            if let existing = try? modelContext.fetch(existingMetadataQuery).first {
-                finalMetadata = existing
-                // Cache it
-                cachedMetadata[googleBooksIDToFind] = existing
-            } else {
-                // New metadata - will be inserted in batch
-                finalMetadata = bookMetadata
-                isNewMetadata = true
-                // Cache it
-                cachedMetadata[googleBooksIDToFind] = bookMetadata
-            }
-        }
-        
-        // Create UserBook with user data from CSV and metadata from API
-        let userBook = UserBook(
-            dateAdded: parsedBook.dateAdded ?? Date(),
-            readingStatus: readingStatus,
-            rating: parsedBook.rating,
-            notes: parsedBook.personalNotes,
-            tags: parsedBook.tags,
-            metadata: finalMetadata
-        )
-        
-        // Set date completed if book is read (user data from CSV)
-        if readingStatus == .read {
-            userBook.dateCompleted = parsedBook.dateRead ?? Date()
-        }
-        
-        return .success(ImportBookData(
-            userBook: userBook,
-            metadata: finalMetadata,
-            isNewMetadata: isNewMetadata,
-            fromAPI: fromAPI
-        ))
-    }
-    // MARK: - Phase 1: Concurrent Processing Implementation
+    // MARK: - Primary Queue Processing (ISBN-based)
     
-    /// Process books with concurrent ISBN lookups (Phase 1 implementation)
-    private func processBooksWithConcurrentLookups(
-        _ validBooks: [ParsedBook],
+    /// Process primary queue (books with ISBNs) using concurrent SimpleISBNLookupService
+    private func processPrimaryQueue(
         progress: inout ImportProgress,
         errors: inout [ImportError],
         booksToInsert: inout [UserBook],
@@ -549,24 +495,16 @@ class CSVImportService: ObservableObject {
         batchStartTime: Date
     ) async {
         
-        // Filter books that have ISBNs for concurrent processing
-        let booksWithISBN = validBooks.filter { book in
-            guard let isbn = book.isbn, !isbn.isEmpty else { return false }
-            return true
-        }
+        guard !primaryQueue.isEmpty else { return }
         
-        let booksWithoutISBN = validBooks.filter { book in
-            guard let isbn = book.isbn, !isbn.isEmpty else { return true }
-            return false
-        }
+        // Extract ISBNs for concurrent processing
+        let isbnsToLookup = primaryQueue.compactMap { queuedBook in
+            queuedBook.parsedBook.isbn?.trimmingCharacters(in: .whitespacesAndNewlines)
+        }.filter { !$0.isEmpty }
         
-        // Initialize concurrent service with our current cache
-        concurrentLookupService = ConcurrentISBNLookupService(metadataCache: cachedMetadata)
-        
-        // Phase 1: Process books with ISBNs concurrently
-        if !booksWithISBN.isEmpty {
-            await processBooksWithISBNsConcurrently(
-                booksWithISBN,
+        if isbnsToLookup.isEmpty {
+            // No valid ISBNs, process individually
+            await processPrimaryQueueSequentially(
                 progress: &progress,
                 errors: &errors,
                 booksToInsert: &booksToInsert,
@@ -582,26 +520,192 @@ class CSVImportService: ObservableObject {
                 importedBookIds: &importedBookIds,
                 batchStartTime: batchStartTime
             )
+            return
         }
         
-        // Phase 2: Process books without ISBNs (fail them since we require ISBN)
-        for parsedBook in booksWithoutISBN {
-            let error = ImportError(
-                rowIndex: parsedBook.rowIndex,
-                bookTitle: parsedBook.title,
-                errorType: .validationError,
-                message: "No ISBN found - cannot verify book identity",
-                suggestions: ["Add ISBN to CSV", "Manually add this book through search"]
-            )
-            errors.append(error)
-            failCount += 1
-            apiFallbackCount += 1
+        // Update progress message for concurrent processing
+        let config = ConcurrentImportConfig.current
+        let concurrencyInfo = "up to \(config.maxConcurrentLookups) concurrent"
+        let rateLimitInfo = config.useRateLimiting ? "rate-limited @\(config.apiRequestsPerSecond)/s" : "unlimited"
+        progress.message = "Primary queue: Processing \(isbnsToLookup.count) ISBNs concurrently (\(concurrencyInfo), \(rateLimitInfo))..."
+        importProgress = progress
+        
+        // Process ISBNs concurrently using the enhanced lookup service
+        let lookupResults = await simpleISBNLookupService.lookupISBNs(isbnsToLookup) { [self] completed, total in
+            // Update progress during concurrent lookup with performance info
+            let partialProgress = Double(completed) / Double(total)
+            let successRate = simpleISBNLookupService.successRate
+            let rateLimitRate = simpleISBNLookupService.rateLimitRate
+            var currentProgress = importProgress ?? ImportProgress(sessionId: UUID())
+            currentProgress.message = "Primary queue: \(completed)/\(total) ISBNs (\(Int(partialProgress * 100))%) | Success: \(Int(successRate * 100))% | Rate limited: \(Int(rateLimitRate * 100))%"
+            importProgress = currentProgress
+        }
+        
+        // Process results and match them back to original books
+        await processConcurrentLookupResults(
+            lookupResults: lookupResults,
+            originalQueue: primaryQueue,
+            progress: &progress,
+            errors: &errors,
+            booksToInsert: &booksToInsert,
+            metadataToInsert: &metadataToInsert,
+            successCount: &successCount,
+            duplicateCount: &duplicateCount,
+            duplicatesISBN: &duplicatesISBN,
+            duplicatesGoogleID: &duplicatesGoogleID,
+            duplicatesTitleAuthor: &duplicatesTitleAuthor,
+            failCount: &failCount,
+            apiSuccessCount: &apiSuccessCount,
+            importedBookIds: &importedBookIds
+        )
+        
+        // Save any remaining books
+        if !booksToInsert.isEmpty {
+            await saveBatch(&booksToInsert, &metadataToInsert, &errors, &failCount, &successCount)
+        }
+        
+        // Clear processed books from primary queue
+        primaryQueue.removeAll()
+    }
+    
+    /// Process concurrent lookup results and match them to original books
+    private func processConcurrentLookupResults(
+        lookupResults: [Result<BookMetadata, BookSearchService.BookError>],
+        originalQueue: [QueuedBook],
+        progress: inout ImportProgress,
+        errors: inout [ImportError],
+        booksToInsert: inout [UserBook],
+        metadataToInsert: inout [BookMetadata],
+        successCount: inout Int,
+        duplicateCount: inout Int,
+        duplicatesISBN: inout Int,
+        duplicatesGoogleID: inout Int,
+        duplicatesTitleAuthor: inout Int,
+        failCount: inout Int,
+        apiSuccessCount: inout Int,
+        importedBookIds: inout [UUID]
+    ) async {
+        
+        // Match results back to original queued books
+        var resultIndex = 0
+        
+        for queuedBook in originalQueue {
+            // Check for cancellation
+            if Task.isCancelled {
+                progress.isCancelled = true
+                progress.currentStep = .cancelled
+                progress.endTime = Date()
+                importProgress = progress
+                isImporting = false
+                return
+            }
+            
+            let parsedBook = queuedBook.parsedBook
+            
+            // Skip books without ISBN (shouldn't happen in primary queue but safety check)
+            guard let isbn = parsedBook.isbn?.trimmingCharacters(in: .whitespacesAndNewlines),
+                  !isbn.isEmpty else {
+                let error = ImportError(
+                    rowIndex: parsedBook.rowIndex,
+                    bookTitle: parsedBook.title,
+                    errorType: .validationError,
+                    message: "Book in primary queue missing ISBN",
+                    suggestions: ["Verify CSV data integrity"]
+                )
+                errors.append(error)
+                failCount += 1
+                continue
+            }
+            
+            // Get the corresponding lookup result
+            guard resultIndex < lookupResults.count else {
+                let error = ImportError(
+                    rowIndex: parsedBook.rowIndex,
+                    bookTitle: parsedBook.title,
+                    errorType: .storageError,
+                    message: "Missing lookup result for book",
+                    suggestions: ["Try importing again"]
+                )
+                errors.append(error)
+                failCount += 1
+                continue
+            }
+            
+            let lookupResult = lookupResults[resultIndex]
+            resultIndex += 1
+            
+            do {
+                switch lookupResult {
+                case .success(let metadata):
+                    let result = try await createUserBookFromMetadata(metadata, parsedBook: parsedBook, fromAPI: true)
+                    
+                    switch result {
+                    case .success(let bookData):
+                        booksToInsert.append(bookData.userBook)
+                        if bookData.isNewMetadata {
+                            metadataToInsert.append(bookData.metadata)
+                        }
+                        importedBookIds.append(bookData.userBook.id)
+                        processedBookIds.insert(parsedBook.id) // Track processed book for resume
+                        successCount += 1
+                        apiSuccessCount += 1
+                        progress.primaryQueueProcessed += 1
+                        
+                    case .duplicate(let method):
+                        duplicateCount += 1
+                        processedBookIds.insert(parsedBook.id) // Track processed book for resume
+                        switch method {
+                        case .isbn:
+                            duplicatesISBN += 1
+                        case .googleBooksID:
+                            duplicatesGoogleID += 1
+                        case .titleAuthor:
+                            duplicatesTitleAuthor += 1
+                        }
+                        progress.primaryQueueProcessed += 1
+                        
+                    case .failure(let error):
+                        errors.append(error)
+                        failCount += 1
+                        processedBookIds.insert(parsedBook.id) // Track processed book for resume
+                        progress.primaryQueueProcessed += 1
+                    }
+                    
+                case .failure(let lookupError):
+                    let error = ImportError(
+                        rowIndex: parsedBook.rowIndex,
+                        bookTitle: parsedBook.title,
+                        errorType: .networkError,
+                        message: "Failed to lookup ISBN \(isbn): \(lookupError.localizedDescription)",
+                        suggestions: ["Check internet connection", "Verify ISBN is correct", "Try again later"]
+                    )
+                    errors.append(error)
+                    failCount += 1
+                    progress.primaryQueueProcessed += 1
+                }
+                
+            } catch {
+                let importError = ImportError(
+                    rowIndex: parsedBook.rowIndex,
+                    bookTitle: parsedBook.title,
+                    errorType: .storageError,
+                    message: "Failed to process book: \(error.localizedDescription)",
+                    suggestions: ["Try importing again", "Check device storage space", "Ensure stable internet connection"]
+                )
+                errors.append(importError)
+                failCount += 1
+                progress.primaryQueueProcessed += 1
+            }
+            
+            // Batch processing: Save every batchSize books
+            if booksToInsert.count >= batchSize {
+                await saveBatch(&booksToInsert, &metadataToInsert, &errors, &failCount, &successCount)
+            }
         }
     }
     
-    /// Process books with ISBNs using concurrent lookup service
-    private func processBooksWithISBNsConcurrently(
-        _ booksWithISBN: [ParsedBook],
+    /// Fallback sequential processing for primary queue (used when concurrent processing isn't suitable)
+    private func processPrimaryQueueSequentially(
         progress: inout ImportProgress,
         errors: inout [ImportError],
         booksToInsert: inout [UserBook],
@@ -618,63 +722,10 @@ class CSVImportService: ObservableObject {
         batchStartTime: Date
     ) async {
         
-        // Extract and clean ISBNs for concurrent processing
-        let cleanISBNs = booksWithISBN.compactMap { book -> (ParsedBook, String)? in
-            guard let isbn = book.isbn else { return nil }
-            
-            let cleanISBN = isbn.replacingOccurrences(of: "=", with: "")
-                                .replacingOccurrences(of: "-", with: "")
-                                .replacingOccurrences(of: " ", with: "")
-                                .trimmingCharacters(in: .whitespacesAndNewlines)
-            
-            return (book, cleanISBN)
-        }
+        var retryQueue: [QueuedBook] = []
         
-        // Create ISBN list for concurrent processing
-        let isbnList = cleanISBNs.map { $0.1 }
-        
-        // Phase 2: Process ISBNs concurrently with smart retry logic
-        let lookupResults = await concurrentLookupService.processISBNsForImport(isbnList) { [weak self] completed, total in
-            // Enhanced progress tracking with retry information
-            Task { @MainActor in
-                guard let self = self else { return }
-                
-                let serviceStats = self.concurrentLookupService.performanceStats
-                let progressPercent = Double(completed) / Double(total) * 100.0
-                
-                // Create detailed progress message with retry information
-                var message = "Processing ISBNs: \(completed)/\(total) (\(Int(progressPercent))%)"
-                
-                if serviceStats.retryStats.totalRetryAttempts > 0 {
-                    message += " - Retrying failed requests (\(serviceStats.retryStats.totalRetryAttempts) attempts)"
-                }
-                
-                if serviceStats.retryStats.circuitBreakerTriggered > 0 {
-                    message += " - API health monitoring active"
-                }
-                
-                message += " - 5x faster with smart retry!"
-                
-                // Update progress with enhanced retry statistics
-                if var currentProgress = self.importProgress {
-                    currentProgress.message = message
-                    currentProgress.retryAttempts = serviceStats.retryStats.totalRetryAttempts
-                    currentProgress.successfulRetries = serviceStats.retryStats.retriesSucceeded
-                    currentProgress.failedRetries = serviceStats.retryStats.retriesFailed
-                    currentProgress.maxRetryAttempts = serviceStats.retryStats.maxRetryAttempts
-                    currentProgress.circuitBreakerTriggered = serviceStats.retryStats.circuitBreakerTriggered > 0
-                    currentProgress.finalFailureReasons = serviceStats.finalFailureReasons
-                    self.importProgress = currentProgress
-                }
-            }
-        }
-        
-        // Process results and create UserBooks
-        for (index, lookupResult) in lookupResults.enumerated() {
-            let parsedBook = cleanISBNs[index].0
-            let isbn = cleanISBNs[index].1
-            
-            // Check for cancellation periodically
+        for (index, var queuedBook) in primaryQueue.enumerated() {
+            // Check for cancellation
             if Task.isCancelled {
                 progress.isCancelled = true
                 progress.currentStep = .cancelled
@@ -684,8 +735,10 @@ class CSVImportService: ObservableObject {
                 return
             }
             
+            let parsedBook = queuedBook.parsedBook
+            
             do {
-                let result = try await processLookupResult(lookupResult, parsedBook: parsedBook, isbn: isbn)
+                let result = try await processBookWithISBN(parsedBook)
                 
                 switch result {
                 case .success(let bookData):
@@ -694,17 +747,14 @@ class CSVImportService: ObservableObject {
                         metadataToInsert.append(bookData.metadata)
                     }
                     importedBookIds.append(bookData.userBook.id)
+                    processedBookIds.insert(parsedBook.id) // Track processed book for resume
                     successCount += 1
-                    
-                    // Track API vs fallback usage
-                    if bookData.fromAPI {
-                        apiSuccessCount += 1
-                    } else {
-                        apiFallbackCount += 1
-                    }
+                    apiSuccessCount += 1
+                    progress.primaryQueueProcessed += 1
                     
                 case .duplicate(let method):
                     duplicateCount += 1
+                    processedBookIds.insert(parsedBook.id) // Track processed book for resume
                     switch method {
                     case .isbn:
                         duplicatesISBN += 1
@@ -713,9 +763,19 @@ class CSVImportService: ObservableObject {
                     case .titleAuthor:
                         duplicatesTitleAuthor += 1
                     }
+                    progress.primaryQueueProcessed += 1
+                    
                 case .failure(let error):
-                    errors.append(error)
-                    failCount += 1
+                    // Check if we can retry this book
+                    if queuedBook.incrementRetry() {
+                        // Add to retry queue for later processing
+                        retryQueue.append(queuedBook)
+                    } else {
+                        // Max retries reached
+                        errors.append(error)
+                        failCount += 1
+                        progress.primaryQueueProcessed += 1
+                    }
                 }
                 
             } catch {
@@ -724,209 +784,459 @@ class CSVImportService: ObservableObject {
                     bookTitle: parsedBook.title,
                     errorType: .storageError,
                     message: "Failed to process book: \(error.localizedDescription)",
-                    suggestions: ["Try importing again", "Check device storage space", "Ensure stable internet connection for ISBN lookups"]
+                    suggestions: ["Try importing again", "Check device storage space", "Ensure stable internet connection"]
                 )
                 errors.append(importError)
                 failCount += 1
-                apiFallbackCount += 1
+                progress.primaryQueueProcessed += 1
             }
             
-            // Batch processing: Save every batchSize books or at the end
-            if booksToInsert.count >= batchSize || index == lookupResults.count - 1 {
-                // Insert metadata first
-                for metadata in metadataToInsert {
-                    modelContext.insert(metadata)
-                }
+            // Batch processing: Save every batchSize books
+            if booksToInsert.count >= batchSize {
+                await saveBatch(&booksToInsert, &metadataToInsert, &errors, &failCount, &successCount)
+            }
+            
+            // Update progress
+            updateBatchProgress(
+                &progress,
+                currentIndex: index + 1,
+                totalItems: primaryQueue.count,
+                queueType: .primary,
+                successCount: successCount,
+                duplicateCount: duplicateCount,
+                failCount: failCount,
+                batchStartTime: batchStartTime
+            )
+        }
+        
+        // Save any remaining books
+        if !booksToInsert.isEmpty {
+            await saveBatch(&booksToInsert, &metadataToInsert, &errors, &failCount, &successCount)
+        }
+        
+        // Process retry queue
+        primaryQueue = retryQueue
+    }
+    // MARK: - Fallback Queue Processing (Title/Author-based)
+    
+    /// Process fallback queue (books without ISBNs) using title/author search
+    private func processFallbackQueue(
+        progress: inout ImportProgress,
+        errors: inout [ImportError],
+        booksToInsert: inout [UserBook],
+        metadataToInsert: inout [BookMetadata],
+        successCount: inout Int,
+        duplicateCount: inout Int,
+        duplicatesISBN: inout Int,
+        duplicatesGoogleID: inout Int,
+        duplicatesTitleAuthor: inout Int,
+        failCount: inout Int,
+        apiSuccessCount: inout Int,
+        apiFallbackCount: inout Int,
+        importedBookIds: inout [UUID],
+        batchStartTime: Date
+    ) async {
+        
+        var retryQueue: [QueuedBook] = []
+        
+        for (index, var queuedBook) in fallbackQueue.enumerated() {
+            // Check for cancellation
+            if Task.isCancelled {
+                progress.isCancelled = true
+                progress.currentStep = .cancelled
+                progress.endTime = Date()
+                importProgress = progress
+                isImporting = false
+                return
+            }
+            
+            let parsedBook = queuedBook.parsedBook
+            
+            do {
+                let result = try await processBookWithTitleAuthor(parsedBook)
                 
-                // Then insert UserBooks
-                for userBook in booksToInsert {
-                    modelContext.insert(userBook)
-                }
-                
-                // Save the batch
-                do {
-                    try modelContext.save()
-                    // Update cached books with new additions
-                    cachedUserBooks?.append(contentsOf: booksToInsert)
-                } catch {
-                    // Handle batch save error
-                    for book in booksToInsert {
-                        let importError = ImportError(
-                            rowIndex: nil,
-                            bookTitle: book.metadata?.title,
-                            errorType: .storageError,
-                            message: "Failed to save batch: \(error.localizedDescription)",
-                            suggestions: ["Check device storage", "Try smaller import batches"]
-                        )
-                        errors.append(importError)
-                        failCount += booksToInsert.count
-                        successCount -= booksToInsert.count
+                switch result {
+                case .success(let bookData):
+                    booksToInsert.append(bookData.userBook)
+                    if bookData.isNewMetadata {
+                        metadataToInsert.append(bookData.metadata)
+                    }
+                    importedBookIds.append(bookData.userBook.id)
+                    processedBookIds.insert(parsedBook.id) // Track processed book for resume
+                    successCount += 1
+                    apiFallbackCount += 1
+                    progress.fallbackQueueProcessed += 1
+                    
+                case .duplicate(let method):
+                    duplicateCount += 1
+                    processedBookIds.insert(parsedBook.id) // Track processed book for resume
+                    switch method {
+                    case .isbn:
+                        duplicatesISBN += 1
+                    case .googleBooksID:
+                        duplicatesGoogleID += 1
+                    case .titleAuthor:
+                        duplicatesTitleAuthor += 1
+                    }
+                    progress.fallbackQueueProcessed += 1
+                    
+                case .failure(let error):
+                    // Check if we can retry this book
+                    if queuedBook.incrementRetry() {
+                        // Add to retry queue for later processing
+                        retryQueue.append(queuedBook)
+                    } else {
+                        // Max retries reached
+                        errors.append(error)
+                        failCount += 1
+                        progress.fallbackQueueProcessed += 1
                     }
                 }
                 
-                // Clear batch arrays
-                booksToInsert.removeAll()
-                metadataToInsert.removeAll()
+            } catch {
+                let importError = ImportError(
+                    rowIndex: parsedBook.rowIndex,
+                    bookTitle: parsedBook.title,
+                    errorType: .storageError,
+                    message: "Failed to process book: \(error.localizedDescription)",
+                    suggestions: ["Try importing again", "Check device storage space", "Ensure stable internet connection"]
+                )
+                errors.append(importError)
+                failCount += 1
+                progress.fallbackQueueProcessed += 1
             }
             
-            // Enhanced progress update with retry statistics and performance insights
-            let batchElapsed = Date().timeIntervalSince(batchStartTime)
-            let avgTimePerBook = batchElapsed / Double(index + 1)
-            let estimatedRemaining = avgTimePerBook * Double(lookupResults.count - index - 1)
-            
-            // Get current service statistics for enhanced reporting
-            let serviceStats = concurrentLookupService.performanceStats
-            
-            progress.processedBooks = index + 1
-            progress.successfulImports = successCount
-            progress.duplicatesSkipped = duplicateCount
-            progress.duplicatesISBN = duplicatesISBN
-            progress.duplicatesGoogleID = duplicatesGoogleID
-            progress.duplicatesTitleAuthor = duplicatesTitleAuthor
-            progress.failedImports = failCount
-            progress.errors = errors
-            progress.estimatedTimeRemaining = estimatedRemaining
-            
-            // Phase 2: Enhanced retry statistics
-            progress.retryAttempts = serviceStats.retryStats.totalRetryAttempts
-            progress.successfulRetries = serviceStats.retryStats.retriesSucceeded
-            progress.failedRetries = serviceStats.retryStats.retriesFailed
-            progress.maxRetryAttempts = serviceStats.retryStats.maxRetryAttempts
-            progress.circuitBreakerTriggered = serviceStats.retryStats.circuitBreakerTriggered > 0
-            progress.finalFailureReasons = serviceStats.finalFailureReasons
-            
-            // Create comprehensive status message
-            var statusComponents: [String] = []
-            statusComponents.append("Processing: \(index + 1) of \(lookupResults.count)")
-            
-            if serviceStats.retryStats.totalRetryAttempts > 0 {
-                let retrySuccessRate = serviceStats.retryStats.totalRetryAttempts > 0 ? 
-                    (Double(serviceStats.retryStats.retriesSucceeded) / Double(serviceStats.retryStats.totalRetryAttempts) * 100.0) : 0
-                statusComponents.append("Retries: \(serviceStats.retryStats.totalRetryAttempts) (\(Int(retrySuccessRate))% successful)")
+            // Batch processing: Save every batchSize books
+            if booksToInsert.count >= batchSize {
+                await saveBatch(&booksToInsert, &metadataToInsert, &errors, &failCount, &successCount)
             }
             
-            if serviceStats.requestsPerSecond > 0 {
-                statusComponents.append(String(format: "%.1f req/sec", serviceStats.requestsPerSecond))
-            }
-            
-            progress.message = statusComponents.joined(separator: " | ") + " (Concurrent: 5x faster!)"
+            // Update progress
+            updateBatchProgress(
+                &progress,
+                currentIndex: index + 1,
+                totalItems: fallbackQueue.count,
+                queueType: .fallback,
+                successCount: successCount,
+                duplicateCount: duplicateCount,
+                failCount: failCount,
+                batchStartTime: batchStartTime
+            )
+        }
+        
+        // Save any remaining books
+        if !booksToInsert.isEmpty {
+            await saveBatch(&booksToInsert, &metadataToInsert, &errors, &failCount, &successCount)
+        }
+        
+        // Process retry queue
+        fallbackQueue = retryQueue
+        
+        // Clear processed books from fallback queue
+        fallbackQueue.removeAll()
+    }
+    
+    // MARK: - Book Processing Methods
+    
+    /// Process a book using ISBN lookup
+    private func processBookWithISBN(_ parsedBook: ParsedBook) async throws -> OptimizedImportResult {
+        guard let isbn = parsedBook.isbn, !isbn.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            return .failure(ImportError(
+                rowIndex: parsedBook.rowIndex,
+                bookTitle: parsedBook.title,
+                errorType: .validationError,
+                message: "No ISBN provided for primary queue book",
+                suggestions: ["This book should have been placed in fallback queue"]
+            ))
+        }
+        
+        let cleanISBN = cleanISBN(isbn)
+        
+        // Check for duplicates using ISBN first
+        if let duplicate = checkForISBNDuplicate(cleanISBN) {
+            return .duplicate(duplicate)
+        }
+        
+        // Update progress message
+        if var progress = importProgress {
+            progress.message = "Primary queue: Looking up ISBN \(cleanISBN)..."
             importProgress = progress
         }
         
-        // Final progress update with comprehensive statistics
-        let serviceStats = concurrentLookupService.performanceStats
-        var finalMessage = "Completed concurrent processing with smart retry logic"
+        // Use SimpleISBNLookupService for ISBN lookup
+        let lookupResult = await simpleISBNLookupService.lookupISBN(cleanISBN)
         
-        if serviceStats.retryStats.totalRetryAttempts > 0 {
-            let retrySuccessRate = Double(serviceStats.retryStats.retriesSucceeded) / Double(serviceStats.retryStats.totalRetryAttempts) * 100.0
-            finalMessage += " - \(serviceStats.retryStats.totalRetryAttempts) retries (\(Int(retrySuccessRate))% successful)"
+        switch lookupResult {
+        case .success(let metadata):
+            return try await createUserBookFromMetadata(metadata, parsedBook: parsedBook, fromAPI: true)
+            
+        case .failure(let error):
+            return .failure(ImportError(
+                rowIndex: parsedBook.rowIndex,
+                bookTitle: parsedBook.title,
+                errorType: .networkError,
+                message: "Failed to lookup ISBN \(cleanISBN): \(error.localizedDescription)",
+                suggestions: ["Check internet connection", "Verify ISBN is correct", "Try again later"]
+            ))
         }
-        
-        if serviceStats.retryStats.circuitBreakerTriggered > 0 {
-            finalMessage += " - Circuit breaker protected API health"
-        }
-        
-        finalMessage += String(format: " - %.1f req/sec", serviceStats.requestsPerSecond)
-        
-        progress.message = finalMessage
-        importProgress = progress
     }
     
-    /// Process individual lookup result from concurrent service
-    private func processLookupResult(
-        _ lookupResult: ISBNLookupResult,
-        parsedBook: ParsedBook,
-        isbn: String
-    ) async throws -> OptimizedImportResult {
+    /// Process a book using title/author search
+    private func processBookWithTitleAuthor(_ parsedBook: ParsedBook) async throws -> OptimizedImportResult {
+        guard let title = parsedBook.title, !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+              let author = parsedBook.author, !author.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            return .failure(ImportError(
+                rowIndex: parsedBook.rowIndex,
+                bookTitle: parsedBook.title,
+                errorType: .validationError,
+                message: "Missing title or author for fallback queue book",
+                suggestions: ["Ensure title and author are present in CSV"]
+            ))
+        }
         
-        // Check for duplicates using ISBN first
+        // Check for duplicates using title/author first
+        if let duplicate = checkForTitleAuthorDuplicate(title: title, author: author) {
+            return .duplicate(duplicate)
+        }
+        
+        // Update progress message
+        if var progress = importProgress {
+            progress.message = "Fallback queue: Searching for \"\(title)\" by \(author)..."
+            importProgress = progress
+        }
+        
+        // Search using title and author
+        let searchQuery = "\(title) \(author)"
+        let searchResult = await BookSearchService.shared.search(
+            query: searchQuery,
+            sortBy: .relevance,
+            maxResults: 1,
+            includeTranslations: true
+        )
+        
+        switch searchResult {
+        case .success(let books):
+            if let firstBook = books.first {
+                return try await createUserBookFromMetadata(firstBook, parsedBook: parsedBook, fromAPI: true)
+            } else {
+                return .failure(ImportError(
+                    rowIndex: parsedBook.rowIndex,
+                    bookTitle: parsedBook.title,
+                    errorType: .networkError,
+                    message: "No results found for \"\(title)\" by \(author)",
+                    suggestions: ["Check spelling of title and author", "Book may not be in Google Books database", "Add ISBN if available"]
+                ))
+            }
+            
+        case .failure(let error):
+            return .failure(ImportError(
+                rowIndex: parsedBook.rowIndex,
+                bookTitle: parsedBook.title,
+                errorType: .networkError,
+                message: "Failed to search for \"\(title)\" by \(author): \(error.localizedDescription)",
+                suggestions: ["Check internet connection", "Try again later"]
+            ))
+        }
+    }
+    
+    // MARK: - Helper Methods
+    
+    /// Clean ISBN by removing formatting characters
+    private func cleanISBN(_ isbn: String) -> String {
+        return isbn
+            .replacingOccurrences(of: "=", with: "")
+            .replacingOccurrences(of: "-", with: "")
+            .replacingOccurrences(of: " ", with: "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+    
+    /// Check for duplicate using ISBN
+    private func checkForISBNDuplicate(_ cleanISBN: String) -> DuplicateDetectionService.DuplicateDetectionMethod? {
         let existingBooks = cachedUserBooks ?? []
         for existingBook in existingBooks {
             if let existingISBN = existingBook.metadata?.isbn?.replacingOccurrences(of: "-", with: "").replacingOccurrences(of: " ", with: ""),
-               existingISBN == isbn {
-                return .duplicate(.isbn)
+               existingISBN == cleanISBN {
+                return .isbn
+            }
+        }
+        return nil
+    }
+    
+    /// Check for duplicate using title and author
+    private func checkForTitleAuthorDuplicate(title: String, author: String) -> DuplicateDetectionService.DuplicateDetectionMethod? {
+        let existingBooks = cachedUserBooks ?? []
+        let normalizedTitle = title.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+        let normalizedAuthor = author.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        for existingBook in existingBooks {
+            if let existingTitle = existingBook.metadata?.title.lowercased().trimmingCharacters(in: .whitespacesAndNewlines),
+               let existingAuthor = existingBook.metadata?.authors.first?.lowercased().trimmingCharacters(in: .whitespacesAndNewlines),
+               existingTitle == normalizedTitle && existingAuthor == normalizedAuthor {
+                return .titleAuthor
+            }
+        }
+        return nil
+    }
+    
+    /// Create UserBook from BookMetadata and ParsedBook data
+    private func createUserBookFromMetadata(_ metadata: BookMetadata, parsedBook: ParsedBook, fromAPI: Bool) async throws -> OptimizedImportResult {
+        // Check for Google Books ID duplicates
+        let googleBooksIDToFind = metadata.googleBooksID
+        let existingBooks = cachedUserBooks ?? []
+        for existingBook in existingBooks {
+            if existingBook.metadata?.googleBooksID == googleBooksIDToFind {
+                return .duplicate(.googleBooksID)
             }
         }
         
-        // Process lookup result
-        switch lookupResult {
-        case .success(let metadata, let fromCache):
-            // Determine reading status from CSV
-            let readingStatus: ReadingStatus
-            if let statusString = parsedBook.readingStatus {
-                readingStatus = GoodreadsColumnMappings.mapReadingStatus(statusString)
-            } else {
-                readingStatus = .toRead
-            }
-            
-            // Check if metadata with this googleBooksID already exists
-            let googleBooksIDToFind = metadata.googleBooksID
-            var finalMetadata: BookMetadata
-            var isNewMetadata = false
-            
-            // Check cached metadata first
-            if let cached = cachedMetadata[googleBooksIDToFind] {
-                finalMetadata = cached
-            } else {
-                // Check in context
-                let existingMetadataQuery = FetchDescriptor<BookMetadata>(
-                    predicate: #Predicate<BookMetadata> { bookMetadata in
-                        bookMetadata.googleBooksID == googleBooksIDToFind
-                    }
-                )
-                
-                if let existing = try? modelContext.fetch(existingMetadataQuery).first {
-                    finalMetadata = existing
-                    // Cache it
-                    cachedMetadata[googleBooksIDToFind] = existing
-                } else {
-                    // New metadata
-                    finalMetadata = metadata
-                    isNewMetadata = true
-                    // Cache it
-                    cachedMetadata[googleBooksIDToFind] = metadata
+        // Determine reading status from CSV
+        let readingStatus: ReadingStatus
+        if let statusString = parsedBook.readingStatus {
+            readingStatus = GoodreadsColumnMappings.mapReadingStatus(statusString)
+        } else {
+            readingStatus = .toRead
+        }
+        
+        // Check if metadata with this googleBooksID already exists in cache or context
+        var finalMetadata: BookMetadata
+        var isNewMetadata = false
+        
+        // Check cached metadata first
+        if let cached = cachedMetadata[googleBooksIDToFind] {
+            finalMetadata = cached
+        } else {
+            // Check in context
+            let existingMetadataQuery = FetchDescriptor<BookMetadata>(
+                predicate: #Predicate<BookMetadata> { bookMetadata in
+                    bookMetadata.googleBooksID == googleBooksIDToFind
                 }
-            }
-            
-            // Create UserBook
-            let userBook = UserBook(
-                dateAdded: parsedBook.dateAdded ?? Date(),
-                readingStatus: readingStatus,
-                rating: parsedBook.rating,
-                notes: parsedBook.personalNotes,
-                tags: parsedBook.tags,
-                metadata: finalMetadata
             )
             
-            // Set date completed if book is read
-            if readingStatus == .read {
-                userBook.dateCompleted = parsedBook.dateRead ?? Date()
+            if let existing = try? modelContext.fetch(existingMetadataQuery).first {
+                finalMetadata = existing
+                // Cache it
+                cachedMetadata[googleBooksIDToFind] = existing
+            } else {
+                // New metadata
+                finalMetadata = metadata
+                isNewMetadata = true
+                // Cache it
+                cachedMetadata[googleBooksIDToFind] = metadata
             }
-            
-            return .success(ImportBookData(
-                userBook: userBook,
-                metadata: finalMetadata,
-                isNewMetadata: isNewMetadata,
-                fromAPI: !fromCache
-            ))
-            
-        case .notFound(let missingISBN):
-            return .failure(ImportError(
-                rowIndex: parsedBook.rowIndex,
-                bookTitle: parsedBook.title,
-                errorType: .networkError,
-                message: "ISBN \(missingISBN) not found in Google Books",
-                suggestions: ["Verify ISBN is correct", "Book may not be in Google Books database"]
-            ))
-            
-        case .failure(let failedISBN, let error):
-            return .failure(ImportError(
-                rowIndex: parsedBook.rowIndex,
-                bookTitle: parsedBook.title,
-                errorType: .networkError,
-                message: "Failed to fetch book data for ISBN \(failedISBN): \(error.localizedDescription)",
-                suggestions: ["Check internet connection", "Try again later"]
-            ))
+        }
+        
+        // Create UserBook with user data from CSV and metadata from API
+        let userBook = UserBook(
+            dateAdded: parsedBook.dateAdded ?? Date(),
+            readingStatus: readingStatus,
+            rating: parsedBook.rating,
+            notes: parsedBook.personalNotes,
+            tags: parsedBook.tags,
+            metadata: finalMetadata
+        )
+        
+        // Set date completed if book is read
+        if readingStatus == .read {
+            userBook.dateCompleted = parsedBook.dateRead ?? Date()
+        }
+        
+        return .success(ImportBookData(
+            userBook: userBook,
+            metadata: finalMetadata,
+            isNewMetadata: isNewMetadata,
+            fromAPI: fromAPI
+        ))
+    }
+    
+    /// Save batch of books and metadata
+    private func saveBatch(
+        _ booksToInsert: inout [UserBook],
+        _ metadataToInsert: inout [BookMetadata],
+        _ errors: inout [ImportError],
+        _ failCount: inout Int,
+        _ successCount: inout Int
+    ) async {
+        // Insert metadata first
+        for metadata in metadataToInsert {
+            modelContext.insert(metadata)
+        }
+        
+        // Then insert UserBooks
+        for userBook in booksToInsert {
+            modelContext.insert(userBook)
+        }
+        
+        // Save the batch
+        do {
+            try modelContext.save()
+            // Update cached books with new additions
+            cachedUserBooks?.append(contentsOf: booksToInsert)
+        } catch {
+            // Handle batch save error
+            let batchErrorCount = booksToInsert.count
+            for book in booksToInsert {
+                let importError = ImportError(
+                    rowIndex: nil,
+                    bookTitle: book.metadata?.title,
+                    errorType: .storageError,
+                    message: "Failed to save batch: \(error.localizedDescription)",
+                    suggestions: ["Check device storage", "Try smaller import batches"]
+                )
+                errors.append(importError)
+            }
+            failCount += batchErrorCount
+            successCount -= batchErrorCount
+        }
+        
+        // Clear batch arrays
+        booksToInsert.removeAll()
+        metadataToInsert.removeAll()
+    }
+    
+    /// Update progress during batch processing
+    private func updateBatchProgress(
+        _ progress: inout ImportProgress,
+        currentIndex: Int,
+        totalItems: Int,
+        queueType: ImportQueue,
+        successCount: Int,
+        duplicateCount: Int,
+        failCount: Int,
+        batchStartTime: Date
+    ) {
+        let batchElapsed = Date().timeIntervalSince(batchStartTime)
+        let estimatedRemaining: TimeInterval
+        
+        if currentIndex > 0 && batchElapsed > 0 {
+            let avgTimePerBook = batchElapsed / Double(currentIndex)
+            let remaining = avgTimePerBook * Double(totalItems - currentIndex)
+            // Cap the estimated time to 24 hours to prevent overflow
+            estimatedRemaining = min(remaining, 24 * 60 * 60)
+        } else {
+            estimatedRemaining = 0
+        }
+        
+        progress.processedBooks = (progress.primaryQueueProcessed + progress.fallbackQueueProcessed)
+        progress.successfulImports = successCount
+        progress.duplicatesSkipped = duplicateCount
+        progress.failedImports = failCount
+        progress.estimatedTimeRemaining = estimatedRemaining
+        
+        // Create progress message with queue information
+        let progressPercent = Double(currentIndex) / Double(totalItems) * 100.0
+        progress.message = "\(queueType.displayName): \(currentIndex)/\(totalItems) (\(Int(progressPercent))%) - \(progress.queueProgressSummary)"
+        
+        importProgress = progress
+        
+        // Periodically save progress with queue state (every 10 books)
+        if currentIndex % 10 == 0 {
+            ImportStateManager.shared.updateProgress(
+                progress,
+                primaryQueue: primaryQueue,
+                fallbackQueue: fallbackQueue,
+                processedBookIds: processedBookIds,
+                currentQueuePhase: currentQueuePhase
+            )
         }
     }
     
@@ -974,7 +1284,13 @@ class CSVImportService: ObservableObject {
             importProgress = progress
             
             // Save current progress
-            ImportStateManager.shared.updateProgress(progress)
+            ImportStateManager.shared.updateProgress(
+                progress,
+                primaryQueue: primaryQueue,
+                fallbackQueue: fallbackQueue,
+                processedBookIds: processedBookIds,
+                currentQueuePhase: currentQueuePhase
+            )
         }
         
         // Gracefully pause the import
@@ -1010,6 +1326,11 @@ class CSVImportService: ObservableObject {
     /// Check if import can be resumed
     func canResumeImport() -> Bool {
         return ImportStateManager.shared.canResumeImport()
+    }
+    
+    /// Get current performance statistics
+    func getPerformanceStats() async -> PerformanceStats? {
+        return await simpleISBNLookupService.getPerformanceStats()
     }
     
     deinit {

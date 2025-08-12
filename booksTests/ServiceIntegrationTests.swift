@@ -7,7 +7,6 @@ import SwiftData
 final class ServiceIntegrationTests: BookTrackerTestSuite {
     
     var mockBookSearchService: MockBookSearchService!
-    var mockConcurrentLookupService: MockConcurrentISBNLookupService!
     var mockImageCache: MockImageCache!
     var mockHapticFeedback: MockHapticFeedback!
     
@@ -15,14 +14,12 @@ final class ServiceIntegrationTests: BookTrackerTestSuite {
         try await super.setUp()
         
         mockBookSearchService = MockBookSearchService()
-        mockConcurrentLookupService = MockConcurrentISBNLookupService()
         mockImageCache = MockImageCache()
         mockHapticFeedback = MockHapticFeedback()
     }
     
     override func tearDown() async throws {
         mockBookSearchService = nil
-        mockConcurrentLookupService = nil
         mockImageCache = nil
         mockHapticFeedback = nil
         

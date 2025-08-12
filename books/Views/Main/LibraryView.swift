@@ -152,6 +152,9 @@ struct LibraryView: View {
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 HStack(spacing: Theme.Spacing.md) {
+                    // Background import progress indicator (subtle)
+                    BackgroundImportProgressIndicator()
+                    
                     Button { 
                         updateStableBooks()
                         HapticFeedbackManager.shared.lightImpact()
@@ -178,7 +181,10 @@ struct LibraryView: View {
             #endif
         }
         .onChange(of: allBooks) { _, _ in
-            updateStableBooks()
+            // Debounced update to prevent bouncing during background imports
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                updateStableBooks()
+            }
         }
         .onChange(of: searchText) { _, _ in
             // Debounce search updates
@@ -221,9 +227,21 @@ struct LibraryView: View {
         
         // Only update if there's a significant change
         if stableFilteredBooks.count != newCount || stableFilteredBooks != newBooks {
-            withAnimation(.none) { // Disable animation to prevent bouncing
-                stableFilteredBooks = newBooks
-                bookCount = newCount
+            // Use smooth animation for new books, no animation for re-filtering
+            let shouldAnimate = newCount > stableFilteredBooks.count && newCount - stableFilteredBooks.count <= 5
+            
+            if shouldAnimate {
+                // Gentle animation when adding small batches of books (background import)
+                withAnimation(.easeInOut(duration: 0.4)) {
+                    stableFilteredBooks = newBooks
+                    bookCount = newCount
+                }
+            } else {
+                // No animation for large changes or filtering operations
+                withAnimation(.none) {
+                    stableFilteredBooks = newBooks
+                    bookCount = newCount
+                }
             }
         }
     }

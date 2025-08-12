@@ -16,6 +16,7 @@ struct CSVImportView: View {
     @AppStorage("selectedTab") private var selectedTab = 0  // Add this to control tab selection
     
     @State private var importService: CSVImportService?
+    @State private var backgroundCoordinator: BackgroundImportCoordinator?
     @State private var showingFilePicker = false
     @State private var selectedFileURL: URL?
     @State private var importSession: CSVImportSession?
@@ -30,7 +31,6 @@ struct CSVImportView: View {
         case selectFile
         case preview
         case mapping
-        case importing
         case completed
     }
     
@@ -66,14 +66,6 @@ struct CSVImportView: View {
                                     onBack: { currentStep = .preview }
                                 )
                             }
-                        case .importing:
-                            ImportProgressView(
-                                importService: importService,
-                                onCancel: {
-                                    importService.cancelImport()
-                                    currentStep = .selectFile
-                                }
-                            )
                         case .completed:
                             if let result = importService.importResult {
                                 ImportCompletedView(
@@ -222,17 +214,15 @@ struct CSVImportView: View {
         
         // Check if we have essential columns for automated import
         if canProceedDirectlyToImport() {
-            // Skip mapping and go straight to import
-            currentStep = .importing
-            
-            // Use detected mappings
+            // Skip mapping and go straight to background import
             let detectedMappings = session.detectedColumns.reduce(into: [String: BookField]()) { mappings, column in
                 if let field = column.mappedField {
                     mappings[column.originalName] = field
                 }
             }
             
-            service.importBooks(from: session, columnMappings: detectedMappings)
+            columnMappings = detectedMappings
+            startImport()
         } else {
             // Fall back to manual mapping
             currentStep = .mapping
@@ -255,10 +245,22 @@ struct CSVImportView: View {
     }
     
     private func startImport() {
-        guard let session = importSession, let service = importService else { return }
+        guard let session = importSession else { return }
         
-        currentStep = .importing
-        service.importBooks(from: session, columnMappings: columnMappings)
+        // Phase 1: Start background import immediately
+        Task {
+            // Initialize background coordinator if needed
+            if backgroundCoordinator == nil {
+                backgroundCoordinator = BackgroundImportCoordinator(modelContext: modelContext)
+            }
+            
+            // Start background import
+            await backgroundCoordinator?.startBackgroundImport(session: session, mappings: columnMappings)
+            
+            // Navigate to library immediately so user can browse while importing
+            selectedTab = 0 // Library tab
+            dismiss() // Close import modal
+        }
     }
     
     private func resetImport() {
@@ -290,8 +292,13 @@ struct CSVImportView: View {
         guard let service = importService else { return }
         
         if service.resumeImportIfAvailable() {
-            currentStep = .importing
+            // For Phase 1: Resume will happen in background
+            if backgroundCoordinator == nil {
+                backgroundCoordinator = BackgroundImportCoordinator(modelContext: modelContext)
+            }
             resumableImportInfo = nil
+            selectedTab = 0 // Navigate to library
+            dismiss()
         } else {
             showError("Unable to resume import. Please try importing again.")
         }
@@ -303,191 +310,6 @@ struct CSVImportView: View {
     }
 }
 
-// MARK: - Import Progress View
-
-struct ImportProgressView: View {
-    @Environment(\.appTheme) private var currentTheme
-    @ObservedObject var importService: CSVImportService
-    @ObservedObject var backgroundTaskManager = BackgroundTaskManager.shared
-    let onCancel: () -> Void
-    
-    var body: some View {
-        VStack(spacing: Theme.Spacing.xl) {
-            Spacer()
-            
-            // Progress Animation and Details
-            progressContent
-            
-            // Background Status
-            if backgroundTaskManager.isBackgroundTaskActive {
-                backgroundStatusView
-            }
-            
-            Spacer()
-            
-            // Cancel Button
-            cancelButton
-        }
-        .padding(Theme.Spacing.lg)
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("Import in progress")
-        .accessibilityValue(importService.importProgress?.progress.formatted(.percent) ?? "Unknown progress")
-    }
-    
-    // MARK: - Sub-views
-    
-    @ViewBuilder
-    private var progressContent: some View {
-        VStack(spacing: Theme.Spacing.lg) {
-            // Progress Circle
-            progressCircle
-            
-            // Status and Details
-            if let progress = importService.importProgress {
-                progressDetails(progress)
-            }
-        }
-    }
-    
-    @ViewBuilder
-    private var progressCircle: some View {
-        ZStack {
-            Circle()
-                .stroke(currentTheme.outline, lineWidth: 8)
-                .frame(width: 120, height: 120)
-            
-            if let progress = importService.importProgress {
-                Circle()
-                    .trim(from: 0, to: progress.progress)
-                    .stroke(currentTheme.primaryAction, style: StrokeStyle(lineWidth: 8, lineCap: .round))
-                    .frame(width: 120, height: 120)
-                    .rotationEffect(.degrees(-90))
-                    .animation(Theme.Animation.gentleSpring, value: progress.progress)
-                
-                VStack(spacing: Theme.Spacing.xs) {
-                    percentageText(progress)
-                    progressCountText(progress)
-                }
-            }
-        }
-    }
-    
-    @ViewBuilder
-    private func percentageText(_ progress: ImportProgress) -> some View {
-        Text("\(Int(progress.progress * 100))%")
-            .titleLarge()
-            .fontWeight(.bold)
-            .foregroundColor(currentTheme.primaryText)
-    }
-    
-    @ViewBuilder
-    private func progressCountText(_ progress: ImportProgress) -> some View {
-        Text("\(progress.processedBooks)/\(progress.totalBooks)")
-            .labelMedium()
-            .foregroundColor(currentTheme.secondaryText)
-    }
-    
-    @ViewBuilder
-    private func progressDetails(_ progress: ImportProgress) -> some View {
-        VStack(spacing: Theme.Spacing.md) {
-            // Current step
-            Text(progress.currentStep.rawValue)
-                .titleMedium()
-                .foregroundColor(currentTheme.primaryText)
-                .multilineTextAlignment(.center)
-            
-            // Progress message
-            if !progress.message.isEmpty {
-                Text(progress.message)
-                    .labelMedium()
-                    .foregroundColor(currentTheme.secondaryText)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, Theme.Spacing.md)
-            }
-            
-            // Time remaining
-            if progress.estimatedTimeRemaining > 0 {
-                timeRemainingText(progress.estimatedTimeRemaining)
-            }
-            
-            // Stats summary
-            if progress.totalBooks > 0 {
-                progressStats(progress)
-            }
-        }
-    }
-    
-    @ViewBuilder
-    private func timeRemainingText(_ timeRemaining: TimeInterval) -> some View {
-        Text("Est. time remaining: \(formatTime(timeRemaining))")
-            .labelSmall()
-            .foregroundColor(currentTheme.secondaryText.opacity(0.8))
-    }
-    
-    @ViewBuilder
-    private func progressStats(_ progress: ImportProgress) -> some View {
-        VStack(spacing: Theme.Spacing.sm) {
-            HStack {
-                ProgressStat(title: "Imported", value: progress.successfulImports, color: currentTheme.success)
-                Spacer()
-                ProgressStat(title: "Duplicates", value: progress.duplicatesSkipped, color: currentTheme.warning)
-                Spacer()
-                ProgressStat(title: "Failed", value: progress.failedImports, color: currentTheme.error)
-            }
-        }
-        .padding(.horizontal, Theme.Spacing.lg)
-    }
-    
-    @ViewBuilder
-    private var cancelButton: some View {
-        Button("Cancel Import") {
-            onCancel()
-        }
-        .materialButton(style: .outlined, size: .large)
-        .padding(.horizontal, Theme.Spacing.lg)
-    }
-    
-    @ViewBuilder
-    private var backgroundStatusView: some View {
-        VStack(spacing: Theme.Spacing.sm) {
-            HStack(spacing: Theme.Spacing.xs) {
-                Image(systemName: "moon.fill")
-                    .font(.caption)
-                    .foregroundColor(currentTheme.primaryAction)
-                
-                Text("Background Processing Active")
-                    .labelMedium()
-                    .foregroundColor(currentTheme.primaryText)
-            }
-            
-            if backgroundTaskManager.backgroundTimeRemaining > 0 {
-                Text("Time remaining: \(formatTime(backgroundTaskManager.backgroundTimeRemaining))")
-                    .labelSmall()
-                    .foregroundColor(currentTheme.secondaryText)
-            }
-            
-            Text("Import will continue even if you close the app")
-                .labelSmall()
-                .foregroundColor(currentTheme.secondaryText)
-                .multilineTextAlignment(.center)
-        }
-        .padding(Theme.Spacing.md)
-        .background(currentTheme.primaryAction.opacity(0.1))
-        .materialCard()
-        .padding(.horizontal, Theme.Spacing.lg)
-    }
-    
-    private func formatTime(_ seconds: TimeInterval) -> String {
-        let minutes = Int(seconds) / 60
-        let remainingSeconds = Int(seconds) % 60
-        
-        if minutes > 0 {
-            return "\(minutes)m \(remainingSeconds)s"
-        } else {
-            return "\(remainingSeconds)s"
-        }
-    }
-}
 
 struct ProgressStat: View {
     @Environment(\.appTheme) private var currentTheme
@@ -704,7 +526,6 @@ struct ImportProgressHeader: View {
         (.selectFile, "Select"),
         (.preview, "Preview"),
         (.mapping, "Map"),
-        (.importing, "Import"),
         (.completed, "Done")
     ]
     

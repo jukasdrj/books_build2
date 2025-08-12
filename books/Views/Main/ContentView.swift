@@ -215,19 +215,24 @@ struct ContentView: View {
             .background(theme.background)
         } detail: {
             NavigationStack {
-                Group {
-                    switch selectedTab {
-                    case 0:
-                        LibraryView()
-                    case 1:
-                        SearchView()
-                    case 2:
-                        StatsView()
-                    case 3:
-                        CulturalDiversityView()
-                    default:
-                        LibraryView()
+                ZStack(alignment: .top) {
+                    Group {
+                        switch selectedTab {
+                        case 0:
+                            LibraryView()
+                        case 1:
+                            SearchView()
+                        case 2:
+                            StatsView()
+                        case 3:
+                            CulturalDiversityView()
+                        default:
+                            LibraryView()
+                        }
                     }
+                    
+                    // Import completion notification banner (iPad)
+                    ImportCompletionBanner()
                 }
             }
             .withNavigationDestinations() // Apply navigation destinations inside NavigationStack
@@ -242,7 +247,8 @@ struct ContentView: View {
     @ViewBuilder
     private var iPhoneLayout: some View {
         NavigationStack {
-            ZStack(alignment: .bottom) {
+            ZStack(alignment: .top) {
+                ZStack(alignment: .bottom) {
                 // Main content
                 Group {
                     switch selectedTab {
@@ -273,6 +279,10 @@ struct ContentView: View {
                     completedBooksCount: completedBooksCount,
                     currentlyReadingCount: currentlyReadingCount
                 )
+                }
+                
+                // Import completion notification banner (top layer)
+                ImportCompletionBanner()
             }
             .ignoresSafeArea(.keyboard, edges: .bottom)
             .withNavigationDestinations() // Apply navigation destinations inside NavigationStack
