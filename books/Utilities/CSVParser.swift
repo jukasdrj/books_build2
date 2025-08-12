@@ -343,8 +343,6 @@ struct CSVParser {
                 book.originalLanguage = value.isEmpty ? nil : value
             case .authorNationality:
                 book.authorNationality = value.isEmpty ? nil : value
-            case .translator:
-                book.translator = value.isEmpty ? nil : value
             case .genre:
                 book.genre = parseList(value)
             case .dateRead:

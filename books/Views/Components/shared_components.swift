@@ -101,7 +101,6 @@ struct AddBookView: View {
     @State private var language = ""
     @State private var originalLanguage = ""
     @State private var authorNationality = ""
-    @State private var translator = ""
     
     // Form validation
     private var isFormValid: Bool {
@@ -235,12 +234,6 @@ struct AddBookView: View {
                     placeholder: "Author's country or nationality"
                 )
                 
-                FormField(
-                    label: "Translator",
-                    icon: "textbook",
-                    text: $translator,
-                    placeholder: "If this is a translated work"
-                )
             }
         } header: {
             Text("Cultural & Language Details")
@@ -389,7 +382,6 @@ struct AddBookView: View {
             genre: [],
             originalLanguage: originalLanguage.isEmpty ? nil : originalLanguage,
             authorNationality: authorNationality.isEmpty ? nil : authorNationality,
-            translator: translator.isEmpty ? nil : translator
         )
         
         // Create UserBook - auto-date logic is now handled by the model

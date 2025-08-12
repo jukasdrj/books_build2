@@ -423,8 +423,7 @@ struct PublicationDetailsSection: View {
     private func hasCulturalInfo(book: UserBook) -> Bool {
         return !(book.metadata?.language?.isEmpty ?? true) ||
                !(book.metadata?.originalLanguage?.isEmpty ?? true) ||
-               book.metadata?.authorNationality != nil ||
-               !(book.metadata?.translator?.isEmpty ?? true)
+               book.metadata?.authorNationality != nil
     }
     
     private func hasPublicationInfo(book: UserBook) -> Bool {
@@ -519,12 +518,6 @@ struct CulturalDetailsView: View {
                 isPlaceholder: book.metadata?.authorNationality == nil
             )
             
-            if let translator = book.metadata?.translator, !translator.isEmpty {
-                DetailRowView(
-                    label: "Translator",
-                    value: translator
-                )
-            }
         }
     }
 }

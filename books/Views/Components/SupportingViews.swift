@@ -65,7 +65,6 @@ struct EnhancedEditBookView: View {
     @State private var publishedDate: String = ""
     @State private var originalLanguage: String = ""
     @State private var authorNationality: String = ""
-    @State private var translator: String = ""
     @State private var selectedFormat: BookFormat?
     @State private var bookDescription: String = ""
     @State private var categories: [String] = []
@@ -197,12 +196,6 @@ struct EnhancedEditBookView: View {
                         placeholder: "Author's country or nationality"
                     )
                     
-                    StyledTextField(
-                        label: "Translator",
-                        text: $translator,
-                        icon: "textbook",
-                        placeholder: "If this is a translated work"
-                    )
                 } header: {
                     Text("Cultural & Language Details")
                         .titleSmall()
@@ -348,7 +341,6 @@ struct EnhancedEditBookView: View {
             language = metadata.language ?? ""
             originalLanguage = metadata.originalLanguage ?? ""
             authorNationality = metadata.authorNationality ?? ""
-            translator = metadata.translator ?? ""
             selectedFormat = metadata.format
         }
         personalNotes = book.notes ?? ""
@@ -369,7 +361,6 @@ struct EnhancedEditBookView: View {
             existingMetadata.language = language.nilIfEmptyAfterTrimming
             existingMetadata.originalLanguage = originalLanguage.nilIfEmptyAfterTrimming
             existingMetadata.authorNationality = authorNationality.nilIfEmptyAfterTrimming
-            existingMetadata.translator = translator.nilIfEmptyAfterTrimming
             existingMetadata.format = selectedFormat
             
             // Handle page count conversion
@@ -392,7 +383,6 @@ struct EnhancedEditBookView: View {
                 genre: categories,
                 originalLanguage: originalLanguage.nilIfEmptyAfterTrimming,
                 authorNationality: authorNationality.nilIfEmptyAfterTrimming,
-                translator: translator.nilIfEmptyAfterTrimming,
                 format: selectedFormat
             )
             

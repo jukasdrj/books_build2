@@ -18,9 +18,9 @@ struct EditBookView: View {
     @State private var publisher: String
     @State private var language: String
     @State private var publishedDate: String
-    @State private var originalLanguage: String
-    @State private var authorNationality: String
-    @State private var translator: String
+    @State private var originalLanguage: String?
+    @State private var authorNationality: String?
+    // translator field removed - streamlined cultural tracking
     @State private var selectedFormat: BookFormat?
     @State private var tags: String
 
@@ -37,9 +37,9 @@ struct EditBookView: View {
         _publisher = State(initialValue: userBook.metadata?.publisher ?? "")
         _language = State(initialValue: userBook.metadata?.language ?? "")
         _publishedDate = State(initialValue: userBook.metadata?.publishedDate ?? "")
-        _originalLanguage = State(initialValue: userBook.metadata?.originalLanguage ?? "")
-        _authorNationality = State(initialValue: userBook.metadata?.authorNationality ?? "")
-        _translator = State(initialValue: userBook.metadata?.translator ?? "")
+        _originalLanguage = State(initialValue: userBook.metadata?.originalLanguage)
+        _authorNationality = State(initialValue: userBook.metadata?.authorNationality)
+        // translator initialization removed
         _selectedFormat = State(initialValue: userBook.metadata?.format)
         _tags = State(initialValue: userBook.tags.joined(separator: ", "))
     }
@@ -203,32 +203,11 @@ struct EditBookView: View {
                             .accessibilityHint("Read-only book metadata")
                     }
                     
-                    VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
-                        Text("Original Language")
-                            .labelMedium()
-                            .foregroundColor(currentTheme.secondaryText)
-                        TextField("Original publication language", text: $originalLanguage)
-                            .bodyMedium()
-                            .frame(minHeight: 44)
-                    }
-                    
-                    VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
-                        Text("Author's Cultural Background")
-                            .labelMedium()
-                            .foregroundColor(currentTheme.secondaryText)
-                        TextField("Author's nationality or cultural origin", text: $authorNationality)
-                            .bodyMedium()
-                            .frame(minHeight: 44)
-                    }
-                    
-                    VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
-                        Text("Translator")
-                            .labelMedium()
-                            .foregroundColor(currentTheme.secondaryText)
-                        TextField("Translator name (if applicable)", text: $translator)
-                            .bodyMedium()
-                            .frame(minHeight: 44)
-                    }
+                    // Use new structured cultural selection pickers
+                    CulturalSelectionSection(
+                        originalLanguage: $originalLanguage,
+                        authorNationality: $authorNationality
+                    )
                 } header: {
                     Text("Cultural & Language Details")
                         .titleSmall()
@@ -239,7 +218,7 @@ struct EditBookView: View {
                             Image(systemName: "info.circle")
                                 .foregroundColor(currentTheme.secondaryText)
                                 .font(.caption)
-                            Text("Add your own cultural and translation details to help track the diversity of your reading.")
+                            Text("Select standardized language codes and cultural backgrounds to track the diversity of your reading.")
                                 .labelSmall()
                                 .foregroundColor(currentTheme.secondaryText)
                         }
@@ -314,10 +293,10 @@ struct EditBookView: View {
         // The modifications are wrapped in a single block.
         // SwiftData automatically handles this as a single transaction.
         
-        // Update user-editable metadata
-        metadata.originalLanguage = originalLanguage.nilIfEmptyAfterTrimming
-        metadata.authorNationality = authorNationality.nilIfEmptyAfterTrimming
-        metadata.translator = translator.nilIfEmptyAfterTrimming
+        // Update user-editable metadata with structured selections
+        metadata.originalLanguage = originalLanguage
+        metadata.authorNationality = authorNationality
+        // translator field removed - using structured cultural selection
         metadata.format = selectedFormat
         
         // Update user-specific data

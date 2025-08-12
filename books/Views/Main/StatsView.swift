@@ -374,7 +374,7 @@ struct CulturalDiversitySection: View {
     }
     
     private var translatedWorksCount: Int {
-        books.filter { $0.metadata?.translator != nil }.count
+        books.filter { $0.metadata?.translatorNationality != nil && !($0.metadata?.translatorNationality?.isEmpty ?? true) }.count
     }
     
     var body: some View {
