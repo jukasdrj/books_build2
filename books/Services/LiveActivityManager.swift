@@ -9,6 +9,9 @@ import Foundation
 import ActivityKit
 import SwiftUI
 
+// Import the shared ActivityAttributes
+// Note: In the actual Xcode project, this would be included in both targets
+
 /// Manager for Live Activities during CSV import (Phase 2 preparation)
 @available(iOS 16.1, *)
 @MainActor
@@ -49,7 +52,9 @@ class LiveActivityManager: ObservableObject {
         
         let attributes = CSVImportActivityAttributes(
             fileName: fileName,
-            sessionId: sessionId
+            sessionId: sessionId,
+            fileSize: nil,
+            estimatedDuration: nil
         )
         
         let contentState = CSVImportActivityAttributes.ContentState(
@@ -59,7 +64,9 @@ class LiveActivityManager: ObservableObject {
             totalBooks: totalBooks,
             successCount: 0,
             duplicateCount: 0,
-            failureCount: 0
+            failureCount: 0,
+            currentBookTitle: nil,
+            currentBookAuthor: nil
         )
         
         do {
@@ -89,7 +96,9 @@ class LiveActivityManager: ObservableObject {
             totalBooks: progress.totalBooks,
             successCount: progress.successfulImports,
             duplicateCount: progress.duplicatesSkipped,
-            failureCount: progress.failedImports
+            failureCount: progress.failedImports,
+            currentBookTitle: progress.currentBookTitle,
+            currentBookAuthor: progress.currentBookAuthor
         )
         
         await activity.update(.init(state: contentState, staleDate: nil))
@@ -116,7 +125,9 @@ class LiveActivityManager: ObservableObject {
             totalBooks: result.totalBooks,
             successCount: result.successfulImports,
             duplicateCount: result.duplicatesSkipped,
-            failureCount: result.failedImports
+            failureCount: result.failedImports,
+            currentBookTitle: nil,
+            currentBookAuthor: nil
         )
         
         // Update with final state
@@ -156,6 +167,8 @@ struct CSVImportActivityAttributes: ActivityAttributes {
         var successCount: Int
         var duplicateCount: Int
         var failureCount: Int
+        var currentBookTitle: String?
+        var currentBookAuthor: String?
         
         var formattedProgress: String {
             return "\(Int(progress * 100))%"
@@ -165,13 +178,50 @@ struct CSVImportActivityAttributes: ActivityAttributes {
             if totalBooks == 0 { return "Preparing..." }
             return "\(booksProcessed)/\(totalBooks) books"
         }
+        
+        var isComplete: Bool {
+            return progress >= 1.0
+        }
+        
+        var hasErrors: Bool {
+            return failureCount > 0
+        }
+        
+        var hasDuplicates: Bool {
+            return duplicateCount > 0
+        }
+        
+        var completionSummary: String {
+            var parts: [String] = []
+            
+            if successCount > 0 {
+                parts.append("\(successCount) imported")
+            }
+            
+            if duplicateCount > 0 {
+                parts.append("\(duplicateCount) duplicates")
+            }
+            
+            if failureCount > 0 {
+                parts.append("\(failureCount) failed")
+            }
+            
+            return parts.isEmpty ? "No books processed" : parts.joined(separator: ", ")
+        }
     }
     
     var fileName: String
     var sessionId: UUID
+    var fileSize: Int64?
+    var estimatedDuration: TimeInterval?
     
     var displayName: String {
         return "Importing \(fileName)"
+    }
+    
+    var shortDisplayName: String {
+        let name = fileName.replacingOccurrences(of: ".csv", with: "")
+        return name.count > 20 ? String(name.prefix(17)) + "..." : name
     }
 }
 

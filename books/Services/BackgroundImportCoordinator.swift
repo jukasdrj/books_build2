@@ -24,6 +24,7 @@ class BackgroundImportCoordinator {
     
     private let csvImportService: CSVImportService
     private let modelContext: ModelContext
+    private let liveActivityManager = UnifiedLiveActivityManager.shared
     
     // MARK: - Computed Properties
     
@@ -63,6 +64,17 @@ class BackgroundImportCoordinator {
         
         currentImport = backgroundSession
         
+        // Start Live Activity for this import
+        let activityStarted = await liveActivityManager.startImportActivity(
+            fileName: session.fileName,
+            totalBooks: session.totalRows,
+            sessionId: session.id
+        )
+        
+        if activityStarted {
+            print("[BackgroundImportCoordinator] Live Activity started for import session: \(session.id)")
+        }
+        
         // Start the import in background using existing service
         // The CSVImportService will insert books into modelContext as they're processed
         // This automatically triggers @Query updates in LibraryView for seamless integration
@@ -81,6 +93,20 @@ class BackgroundImportCoordinator {
         // Check if any books need user review (ambiguous matches, no matches, etc.)
         await checkForReviewNeeds()
         
+        // Complete the Live Activity with final results
+        if let progress = session.progress {
+            let result = ImportResult(
+                totalBooks: progress.totalBooks,
+                successfulImports: progress.successfulImports,
+                duplicatesSkipped: progress.duplicatesSkipped,
+                failedImports: progress.failedImports,
+                processingTime: Date().timeIntervalSince(session.startTime)
+            )
+            await liveActivityManager.completeImportActivity(with: result)
+        } else {
+            await liveActivityManager.endCurrentActivity()
+        }
+        
         // Clear current import
         currentImport = nil
         
@@ -98,10 +124,14 @@ class BackgroundImportCoordinator {
     }
     
     /// Cancel current background import
-    func cancelImport() {
+    func cancelImport() async {
         guard currentImport != nil else { return }
         
         csvImportService.cancelImport()
+        
+        // End the Live Activity
+        await liveActivityManager.endCurrentActivity()
+        
         currentImport = nil
         needsUserReview.removeAll()
         
@@ -158,6 +188,9 @@ class BackgroundImportCoordinator {
             while isImporting {
                 if let progress = csvImportService.importProgress {
                     currentImport?.progress = progress
+                    
+                    // Update Live Activity with current progress
+                    await liveActivityManager.updateActivity(with: progress)
                     
                     // Check for completion
                     if progress.isComplete {

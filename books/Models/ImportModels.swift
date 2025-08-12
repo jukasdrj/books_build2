@@ -314,6 +314,10 @@ struct ImportProgress: Sendable {
     var message: String = ""  // Detailed progress message
     var estimatedTimeRemaining: TimeInterval = 0  // Estimated time to completion
     
+    // Current Book Information (for Live Activities)
+    var currentBookTitle: String? = nil  // Currently processing book title
+    var currentBookAuthor: String? = nil  // Currently processing book author
+    
     // Priority Queue Statistics
     var currentQueueType: ImportQueue? = nil  // Which queue is currently being processed
     var primaryQueueSize: Int = 0  // Number of books in primary queue
