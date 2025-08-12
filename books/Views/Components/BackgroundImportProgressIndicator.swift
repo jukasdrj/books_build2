@@ -136,8 +136,12 @@ struct BackgroundImportDetailView: View {
                     .materialButton(style: .filled, size: .large)
                     
                     Button("Cancel Import") {
-                        coordinator.cancelImport()
-                        dismiss()
+                        Task {
+                            await coordinator.cancelImport()
+                            await MainActor.run {
+                                dismiss()
+                            }
+                        }
                     }
                     .materialButton(style: .outlined, size: .medium)
                 }

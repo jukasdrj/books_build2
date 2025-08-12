@@ -166,7 +166,6 @@ enum BookField: String, CaseIterable, Identifiable, Codable, Sendable {
         case .language: return "Language"
         case .originalLanguage: return "Original Language"
         case .authorNationality: return "Author Nationality"
-        // translator case removed
         case .genre: return "Genre"
         case .dateRead: return "Date Read"
         case .dateAdded: return "Date Added"
@@ -226,7 +225,6 @@ struct ParsedBook: Identifiable, Codable, Sendable {
     var language: String?
     var originalLanguage: String?
     var authorNationality: String?
-    // translator field removed for streamlined cultural tracking
     var genre: [String]
     var dateRead: Date?
     var dateAdded: Date?
@@ -250,7 +248,6 @@ struct ParsedBook: Identifiable, Codable, Sendable {
         self.language = language
         self.originalLanguage = originalLanguage
         self.authorNationality = authorNationality
-        // translator field removed
         self.genre = genre
         self.dateRead = dateRead
         self.dateAdded = dateAdded

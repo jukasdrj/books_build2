@@ -1050,43 +1050,47 @@ class CSVImportService: ObservableObject {
             .trimmingCharacters(in: .whitespacesAndNewlines)
     }
     
-    /// Check for duplicate using ISBN
+    /// Check for duplicate using ISBN (using DuplicateDetectionService for consistency)
     private func checkForISBNDuplicate(_ cleanISBN: String) -> DuplicateDetectionService.DuplicateDetectionMethod? {
-        let existingBooks = cachedUserBooks ?? []
-        for existingBook in existingBooks {
-            if let existingISBN = existingBook.metadata?.isbn?.replacingOccurrences(of: "-", with: "").replacingOccurrences(of: " ", with: ""),
-               existingISBN == cleanISBN {
-                return .isbn
-            }
+        // Create temporary metadata for duplicate check
+        let tempMetadata = BookMetadata(
+            googleBooksID: "temp",
+            title: "temp",
+            authors: [],
+            isbn: cleanISBN
+        )
+        
+        let duplicateService = DuplicateDetectionService(modelContext: modelContext)
+        if let result = duplicateService.findExistingBook(for: tempMetadata),
+           result.method == .isbn {
+            return .isbn
         }
         return nil
     }
     
-    /// Check for duplicate using title and author
+    /// Check for duplicate using title and author (using DuplicateDetectionService for consistency)
     private func checkForTitleAuthorDuplicate(title: String, author: String) -> DuplicateDetectionService.DuplicateDetectionMethod? {
-        let existingBooks = cachedUserBooks ?? []
-        let normalizedTitle = title.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
-        let normalizedAuthor = author.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+        // Create temporary metadata for duplicate check
+        let tempMetadata = BookMetadata(
+            googleBooksID: "temp",
+            title: title,
+            authors: [author]
+        )
         
-        for existingBook in existingBooks {
-            if let existingTitle = existingBook.metadata?.title.lowercased().trimmingCharacters(in: .whitespacesAndNewlines),
-               let existingAuthor = existingBook.metadata?.authors.first?.lowercased().trimmingCharacters(in: .whitespacesAndNewlines),
-               existingTitle == normalizedTitle && existingAuthor == normalizedAuthor {
-                return .titleAuthor
-            }
+        let duplicateService = DuplicateDetectionService(modelContext: modelContext)
+        if let result = duplicateService.findExistingBook(for: tempMetadata),
+           result.method == .titleAuthor {
+            return .titleAuthor
         }
         return nil
     }
     
     /// Create UserBook from BookMetadata and ParsedBook data
     private func createUserBookFromMetadata(_ metadata: BookMetadata, parsedBook: ParsedBook, fromAPI: Bool) async throws -> OptimizedImportResult {
-        // Check for Google Books ID duplicates
-        let googleBooksIDToFind = metadata.googleBooksID
-        let existingBooks = cachedUserBooks ?? []
-        for existingBook in existingBooks {
-            if existingBook.metadata?.googleBooksID == googleBooksIDToFind {
-                return .duplicate(.googleBooksID)
-            }
+        // Check for duplicates using DuplicateDetectionService
+        let duplicateService = DuplicateDetectionService(modelContext: modelContext)
+        if let result = duplicateService.findExistingBook(for: metadata) {
+            return .duplicate(result.method)
         }
         
         // Determine reading status from CSV
@@ -1101,27 +1105,29 @@ class CSVImportService: ObservableObject {
         var finalMetadata: BookMetadata
         var isNewMetadata = false
         
+        let googleBooksID = metadata.googleBooksID
+        
         // Check cached metadata first
-        if let cached = cachedMetadata[googleBooksIDToFind] {
+        if let cached = cachedMetadata[googleBooksID] {
             finalMetadata = cached
         } else {
             // Check in context
             let existingMetadataQuery = FetchDescriptor<BookMetadata>(
                 predicate: #Predicate<BookMetadata> { bookMetadata in
-                    bookMetadata.googleBooksID == googleBooksIDToFind
+                    bookMetadata.googleBooksID == googleBooksID
                 }
             )
             
             if let existing = try? modelContext.fetch(existingMetadataQuery).first {
                 finalMetadata = existing
                 // Cache it
-                cachedMetadata[googleBooksIDToFind] = existing
+                cachedMetadata[googleBooksID] = existing
             } else {
                 // New metadata
                 finalMetadata = metadata
                 isNewMetadata = true
                 // Cache it
-                cachedMetadata[googleBooksIDToFind] = metadata
+                cachedMetadata[googleBooksID] = metadata
             }
         }
         

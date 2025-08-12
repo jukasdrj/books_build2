@@ -20,7 +20,6 @@ struct EditBookView: View {
     @State private var publishedDate: String
     @State private var originalLanguage: String?
     @State private var authorNationality: String?
-    // translator field removed - streamlined cultural tracking
     @State private var selectedFormat: BookFormat?
     @State private var tags: String
 
@@ -39,7 +38,6 @@ struct EditBookView: View {
         _publishedDate = State(initialValue: userBook.metadata?.publishedDate ?? "")
         _originalLanguage = State(initialValue: userBook.metadata?.originalLanguage)
         _authorNationality = State(initialValue: userBook.metadata?.authorNationality)
-        // translator initialization removed
         _selectedFormat = State(initialValue: userBook.metadata?.format)
         _tags = State(initialValue: userBook.tags.joined(separator: ", "))
     }
@@ -296,7 +294,6 @@ struct EditBookView: View {
         // Update user-editable metadata with structured selections
         metadata.originalLanguage = originalLanguage
         metadata.authorNationality = authorNationality
-        // translator field removed - using structured cultural selection
         metadata.format = selectedFormat
         
         // Update user-specific data

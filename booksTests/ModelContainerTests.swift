@@ -36,7 +36,7 @@ struct ModelContainerTests {
             genre: ["Fiction", "Test", "Programming"],
             originalLanguage: "Klingon",
             authorNationality: "Qo'noS",
-            translator: "Worf"
+            translatorNationality: "Federation" // translator field removed, using translatorNationality
         )
         
         let userBook = UserBook(readingStatus: .reading, metadata: metadata)
@@ -66,7 +66,7 @@ struct ModelContainerTests {
         #expect(savedMetadata?.genre.contains("Fiction") == true)
         #expect(savedMetadata?.originalLanguage == "Klingon")
         #expect(savedMetadata?.authorNationality == "Qo'noS")
-        #expect(savedMetadata?.translator == "Worf")
+        #expect(savedMetadata?.translatorNationality == "Federation")
         #expect(savedBook.rating == 4)
         #expect(savedBook.tags.contains("science-fiction"))
         #expect(savedBook.notes == "Great book for testing!")

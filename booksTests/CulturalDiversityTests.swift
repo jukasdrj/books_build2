@@ -138,23 +138,22 @@ final class CulturalDiversityTests: BookTrackerTestSuite {
         XCTAssertEqual(frenchBooks.count, 1)
     }
     
-    func testTranslatorTracking() async throws {
+    func testTranslatorNationalityTracking() async throws {
         let translatedBook = createTestBookMetadata(
             title: "The Metamorphosis",
             authors: ["Franz Kafka"],
             originalLanguage: "German"
         )
-        translatedBook.translator = "David Wyllie"
+        // Note: translator field was removed, only tracking translator nationality now
         translatedBook.translatorNationality = "British"
         
         try saveContext()
         
         let allMetadata = try fetchAllBookMetadata()
-        let booksWithTranslators = allMetadata.filter { $0.translator != nil }
+        let booksWithTranslatorNationality = allMetadata.filter { $0.translatorNationality != nil }
         
-        XCTAssertEqual(booksWithTranslators.count, 1)
-        XCTAssertEqual(booksWithTranslators.first?.translator, "David Wyllie")
-        XCTAssertEqual(booksWithTranslators.first?.translatorNationality, "British")
+        XCTAssertEqual(booksWithTranslatorNationality.count, 1)
+        XCTAssertEqual(booksWithTranslatorNationality.first?.translatorNationality, "British")
     }
     
     // MARK: - Cultural Themes Tests

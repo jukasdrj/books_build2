@@ -16,7 +16,73 @@ struct DuplicateDetectionService {
         let method: DuplicateDetectionMethod
     }
     
-    /// Check if a book already exists in the library
+    private let modelContext: ModelContext
+    
+    init(modelContext: ModelContext) {
+        self.modelContext = modelContext
+    }
+    
+    /// Performance-optimized duplicate detection with hash-based lookups
+    /// Creates lookup dictionaries for O(1) access instead of O(n) iteration
+    func findExistingBook(for metadata: BookMetadata) -> DuplicateDetectionResult? {
+        // Fetch all user books once
+        let descriptor = FetchDescriptor<UserBook>()
+        guard let userBooks = try? modelContext.fetch(descriptor) else {
+            return nil
+        }
+        
+        // Build lookup dictionaries for O(1) access
+        var googleBooksIDLookup: [String: UserBook] = [:]
+        var isbnLookup: [String: UserBook] = [:]
+        var titleAuthorLookup: [String: UserBook] = [:]
+        
+        for userBook in userBooks {
+            guard let bookMetadata = userBook.metadata else { continue }
+            
+            // Index by Google Books ID
+            if !bookMetadata.googleBooksID.isEmpty {
+                googleBooksIDLookup[bookMetadata.googleBooksID] = userBook
+            }
+            
+            // Index by clean ISBN
+            if let isbn = bookMetadata.isbn, !isbn.isEmpty {
+                let cleanISBN = Self.cleanISBN(isbn)
+                isbnLookup[cleanISBN] = userBook
+            }
+            
+            // Index by normalized title+author
+            if !bookMetadata.title.isEmpty, let firstAuthor = bookMetadata.authors.first {
+                let key = Self.normalizeTitle(bookMetadata.title) + "|" + Self.normalizeAuthor(firstAuthor)
+                titleAuthorLookup[key] = userBook
+            }
+        }
+        
+        // Check Google Books ID first (most reliable) - O(1)
+        if !metadata.googleBooksID.isEmpty,
+           let match = googleBooksIDLookup[metadata.googleBooksID] {
+            return DuplicateDetectionResult(userBook: match, method: .googleBooksID)
+        }
+        
+        // Check ISBN - O(1)
+        if let metadataISBN = metadata.isbn, !metadataISBN.isEmpty {
+            let cleanISBN = Self.cleanISBN(metadataISBN)
+            if let match = isbnLookup[cleanISBN] {
+                return DuplicateDetectionResult(userBook: match, method: .isbn)
+            }
+        }
+        
+        // Check title+author - O(1)
+        if !metadata.title.isEmpty, let firstAuthor = metadata.authors.first {
+            let key = Self.normalizeTitle(metadata.title) + "|" + Self.normalizeAuthor(firstAuthor)
+            if let match = titleAuthorLookup[key] {
+                return DuplicateDetectionResult(userBook: match, method: .titleAuthor)
+            }
+        }
+        
+        return nil
+    }
+    
+    /// Legacy static method for backward compatibility
     static func findExistingBook(
         for metadata: BookMetadata, 
         in userBooks: [UserBook]
@@ -27,7 +93,7 @@ struct DuplicateDetectionService {
         return nil
     }
     
-    /// Check if a book already exists in the library and return the detection method
+    /// Legacy static method for backward compatibility
     static func findExistingBookWithMethod(
         for metadata: BookMetadata, 
         in userBooks: [UserBook]

@@ -96,11 +96,19 @@ class BackgroundImportCoordinator {
         // Complete the Live Activity with final results
         if let progress = session.progress {
             let result = ImportResult(
+                sessionId: UUID(), // Generate unique ID for this import session
                 totalBooks: progress.totalBooks,
                 successfulImports: progress.successfulImports,
-                duplicatesSkipped: progress.duplicatesSkipped,
                 failedImports: progress.failedImports,
-                processingTime: Date().timeIntervalSince(session.startTime)
+                duplicatesSkipped: progress.duplicatesSkipped,
+                duplicatesISBN: 0, // TODO: Track these separately in future
+                duplicatesGoogleID: 0,
+                duplicatesTitleAuthor: 0,
+                duration: Date().timeIntervalSince(session.startTime),
+                errors: [], // TODO: Collect errors from import process
+                importedBookIds: [], // TODO: Track imported book IDs
+                retryAttempts: 0,
+                successfulRetries: 0
             )
             await liveActivityManager.completeImportActivity(with: result)
         } else {
