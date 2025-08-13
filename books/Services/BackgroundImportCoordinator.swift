@@ -84,7 +84,6 @@ class BackgroundImportCoordinator {
         currentImport = backgroundSession
         
         // Start Live Activity for this import
-        let sessionId = UUID() // Generate session ID for Live Activity tracking
 /*
         let activityStarted = await liveActivityManager.startImportActivity(
             fileName: session.fileName,

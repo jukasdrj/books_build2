@@ -63,6 +63,7 @@ struct booksApp: App {
 /// Wrapper view that observes ThemeStore and provides reactive theme environment
 struct ThemedRootView: View {
     @ObservedObject var themeStore: ThemeStore
+    @StateObject private var cloudKitManager = CloudKitManager()
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.modelContext) private var modelContext
     
@@ -72,11 +73,16 @@ struct ThemedRootView: View {
             themeStore.appTheme.background
                 .ignoresSafeArea()
             
-            ContentView()
-                .onAppear {
-                    BackgroundImportCoordinator.initialize(with: modelContext)
-                }
+            if cloudKitManager.isUserLoggedIn {
+                ContentView()
+                    .onAppear {
+                        _ = BackgroundImportCoordinator.initialize(with: modelContext)
+                    }
+            } else {
+                iCloudLoginView()
+            }
         }
+        .onAppear(perform: cloudKitManager.checkAccountStatus)
         // Integrate environment-based theme system with reactive updates
         .environment(\.themeStore, themeStore)
         .environment(\.appTheme, themeStore.appTheme)
