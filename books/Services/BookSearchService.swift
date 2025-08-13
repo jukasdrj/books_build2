@@ -7,6 +7,7 @@ class BookSearchService: ObservableObject {
     private init() {}
 
     private let baseURL = "https://www.googleapis.com/books/v1/volumes"
+    private let apiKey = "AIzaSyCj0-1RxPlVwO_XRZRkkQxCgp4lQVCxWaE"
     
     enum SortOption: String, CaseIterable, Identifiable {
         case relevance = "relevance"
@@ -93,6 +94,9 @@ class BookSearchService: ObservableObject {
         if !includeTranslations {
             queryItems.append(URLQueryItem(name: "langRestrict", value: "en"))
         }
+        
+        // Add API key
+        queryItems.append(URLQueryItem(name: "key", value: apiKey))
         
         components.queryItems = queryItems
 

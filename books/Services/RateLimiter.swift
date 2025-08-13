@@ -33,11 +33,12 @@ actor RateLimiter {
         var configuration: Configuration {
             switch self {
             case .googleBooks:
-                // Google Books API: Conservative 5 requests/second with burst capacity
+                // Google Books API: With API key - 1000 requests/day limit
+                // Conservative: ~1 request every 2 seconds (1800 requests/hour max)
                 return Configuration(
-                    tokensPerSecond: 5.0,
-                    bucketSize: 10,
-                    initialTokens: 5
+                    tokensPerSecond: 0.5,
+                    bucketSize: 5,
+                    initialTokens: 2
                 )
             case .openLibrary:
                 // OpenLibrary: More generous limits

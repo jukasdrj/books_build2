@@ -47,11 +47,11 @@ struct ConcurrentImportConfig {
     
     /// Conservative configuration for reliability (default)
     static let conservative = ConcurrentImportConfig(
-        maxConcurrentLookups: 4,
+        maxConcurrentLookups: 2,
         batchSize: 50,
-        concurrentBatchSize: 10,
-        apiRequestsPerSecond: 5.0,
-        rateLimiterBurstSize: 10,
+        concurrentBatchSize: 5,
+        apiRequestsPerSecond: 0.5,
+        rateLimiterBurstSize: 5,
         databaseBatchSize: 50,
         useConcurrentPrimaryQueue: true,
         useRateLimiting: true
@@ -59,11 +59,11 @@ struct ConcurrentImportConfig {
     
     /// Aggressive configuration for maximum speed
     static let aggressive = ConcurrentImportConfig(
-        maxConcurrentLookups: 8,
+        maxConcurrentLookups: 3,
         batchSize: 100,
-        concurrentBatchSize: 20,
-        apiRequestsPerSecond: 10.0,
-        rateLimiterBurstSize: 20,
+        concurrentBatchSize: 10,
+        apiRequestsPerSecond: 1.0,
+        rateLimiterBurstSize: 10,
         databaseBatchSize: 100,
         useConcurrentPrimaryQueue: true,
         useRateLimiting: true

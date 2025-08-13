@@ -66,7 +66,9 @@ class BackgroundImportCoordinator {
         self.csvImportService = CSVImportService(modelContext: modelContext)
         
         // Check for existing import on startup
-        checkForExistingImport()
+        Task {
+            await checkForExistingImport()
+        }
     }
     
     // MARK: - Public Interface
@@ -81,7 +83,9 @@ class BackgroundImportCoordinator {
             startTime: Date()
         )
         
-        currentImport = backgroundSession
+        await MainActor.run {
+            currentImport = backgroundSession
+        }
         
         // Start Live Activity for this import
 /*
@@ -123,8 +127,10 @@ class BackgroundImportCoordinator {
             } else {
                 print("[BackgroundImportCoordinator] Warning: Import failed to initialize within \(maxWaitTime) seconds")
                 // Reset state on initialization failure
-                currentImport = nil
-                currentProgress = nil
+                await MainActor.run {
+                    currentImport = nil
+                    currentProgress = nil
+                }
             }
         }
     }
@@ -164,8 +170,10 @@ class BackgroundImportCoordinator {
         
         // Stop monitoring and clear current import
         isMonitoring = false
-        currentImport = nil
-        currentProgress = nil
+        await MainActor.run {
+            currentImport = nil
+            currentProgress = nil
+        }
         
         // Show completion notification
         await showCompletionNotification()
@@ -191,8 +199,10 @@ class BackgroundImportCoordinator {
         
         // Stop monitoring
         isMonitoring = false
-        currentImport = nil
-        currentProgress = nil
+        await MainActor.run {
+            currentImport = nil
+            currentProgress = nil
+        }
         needsUserReview.removeAll()
         
         print("[BackgroundImportCoordinator] Background import cancelled")
@@ -216,7 +226,7 @@ class BackgroundImportCoordinator {
     
     // MARK: - Private Implementation
     
-    private func checkForExistingImport() {
+    private func checkForExistingImport() async {
         // Check ImportStateManager for existing import
         if let resumableInfo = ImportStateManager.shared.getResumableImportInfo(),
            ImportStateManager.shared.canResumeImport() {
@@ -237,7 +247,9 @@ class BackgroundImportCoordinator {
                 startTime: resumableInfo.lastUpdated
             )
             
-            currentImport = backgroundSession
+            await MainActor.run {
+                currentImport = backgroundSession
+            }
             monitorImportProgress()
         }
     }
@@ -264,8 +276,13 @@ class BackgroundImportCoordinator {
                 // Wait for import to actually start
                 if let progress = csvImportService.importProgress {
                     print("[BackgroundImportCoordinator] Progress update: \(progress.processedBooks)/\(progress.totalBooks), step: \(progress.currentStep)")
-                    currentProgress = progress
-                    currentImport?.progress = progress
+                    
+                    // Ensure UI updates happen on main thread
+                    await MainActor.run {
+                        currentProgress = progress
+                        currentImport?.progress = progress
+                        print("[BackgroundImportCoordinator] UI state updated - isImporting: \(isImporting), progress: \(String(describing: progress))")
+                    }
                     
                     // Update Live Activity with current progress
 //                    await liveActivityManager.updateActivity(with: progress)
