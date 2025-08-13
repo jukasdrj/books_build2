@@ -353,7 +353,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				"INFOPLIST_KEY_CFBundleDisplayName[sdk=*]" = BooksTracker;
+				"INFOPLIST_KEY_CFBundleDisplayName[sdk=*]" = "BooksTrack by oooe";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.books";
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
@@ -446,7 +446,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = books/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = BooksTracker;
+				INFOPLIST_KEY_CFBundleDisplayName = "BooksTrack by oooe";
 				INFOPLIST_KEY_CFBundleName = oooeBooksTracker;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.books";
 				INFOPLIST_KEY_NSCameraUsageDescription = "This app uses the camera to scan book barcodes for quick book lookup.";
@@ -492,7 +492,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = books/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = BooksTracker;
+				INFOPLIST_KEY_CFBundleDisplayName = "BooksTrack by oooe";
 				INFOPLIST_KEY_CFBundleName = oooeBooksTracker;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.books";
 				INFOPLIST_KEY_NSCameraUsageDescription = "This app uses the camera to scan book barcodes for quick book lookup.";

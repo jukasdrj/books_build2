@@ -53,8 +53,8 @@
 	<dict/>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
-	<key>CFBundleDisplayName</key>
-	<string>BooksTracker</string>
+	ckeyCFBundleDisplayName/key
+	stringBooksTrack by oooe/string
 	<key>CFBundleName</key>
 	<string>oooeBooksTracker</string>
 	<key>CFBundleIdentifier</key>
