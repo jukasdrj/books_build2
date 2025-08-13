@@ -16,7 +16,7 @@ class CloudKitManager: ObservableObject {
                 switch accountStatus {
                 case .available:
                     self?.isUserLoggedIn = true
-                case .noAccount, .restricted, .couldNotDetermine:
+                case .noAccount, .restricted, .couldNotDetermine, .temporarilyUnavailable:
                     self?.isUserLoggedIn = false
                 @unknown default:
                     self?.isUserLoggedIn = false
