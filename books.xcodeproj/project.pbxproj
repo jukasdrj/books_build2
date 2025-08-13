@@ -447,6 +447,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = books/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = BooksTracker;
+				INFOPLIST_KEY_CFBundleName = oooeBooksTracker;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.books";
 				INFOPLIST_KEY_NSCameraUsageDescription = "This app uses the camera to scan book barcodes for quick book lookup.";
 				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "We do not use your local network.";
@@ -492,6 +493,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = books/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = BooksTracker;
+				INFOPLIST_KEY_CFBundleName = oooeBooksTracker;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.books";
 				INFOPLIST_KEY_NSCameraUsageDescription = "This app uses the camera to scan book barcodes for quick book lookup.";
 				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "We do not use your local network.";

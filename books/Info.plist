@@ -56,7 +56,7 @@
 	<key>CFBundleDisplayName</key>
 	<string>BooksTracker</string>
 	<key>CFBundleName</key>
-	<string>books</string>
+	<string>oooeBooksTracker</string>
 	<key>CFBundleIdentifier</key>
 	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 </dict>
