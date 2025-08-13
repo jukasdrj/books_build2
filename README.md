@@ -1,6 +1,8 @@
 # Books Reading Tracker
 
-A comprehensive SwiftUI application for tracking your personal book library with advanced CSV import capabilities and real-time Live Activities support.
+Note: Live Activities (ActivityKit) is present in the codebase but temporarily disabled for the initial App Store release due to certificate/licensing setup. The rest of the app is fully functional.
+
+A comprehensive SwiftUI application for tracking your personal book library with advanced CSV import capabilities.
 
 ## Table of Contents
 
@@ -32,6 +34,7 @@ A comprehensive SwiftUI application for tracking your personal book library with
 - **Concurrent Processing**: 5x faster imports with parallel API calls
 - **State Persistence**: Resume interrupted imports after app crashes or termination
 - **Cultural Data Integration**: Streamlined diversity tracking with standardized selectors
+- **Live Activities (Temporarily Disabled)**: The UI and plumbing exist, but the feature is gated off until certificate/licensing is resolved for release.
 
 ### User Experience
 - **Dynamic Theming**: Multiple themes with system integration

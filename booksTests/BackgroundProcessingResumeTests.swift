@@ -11,6 +11,7 @@ import Foundation
 import SwiftData
 @testable import books
 
+@MainActor
 @Suite("Background Processing and Resume Tests")
 struct BackgroundProcessingResumeTests {
     
@@ -389,7 +390,7 @@ struct BackgroundProcessingResumeTests {
         
         #expect(firstBooks.count >= 1, "Should have imported at least one book")
         let firstBook = firstBooks.first!
-        #expect(firstBook.personalNotes == "Great book!", "Should preserve personal notes")
+        #expect(firstBook.notes == "Great book!", "Should preserve personal notes")
         #expect(firstBook.rating == 5, "Should preserve rating")
         
         // Resume and complete
@@ -410,13 +411,13 @@ struct BackgroundProcessingResumeTests {
         
         let sortedBooks = allBooks.sorted { $0.metadata?.title ?? "" < $1.metadata?.title ?? "" }
         
-        #expect(sortedBooks[0].personalNotes == "Great book!", "Book 1 should have correct notes")
+        #expect(sortedBooks[0].notes == "Great book!", "Book 1 should have correct notes")
         #expect(sortedBooks[0].rating == 5, "Book 1 should have correct rating")
         
-        #expect(sortedBooks[1].personalNotes == "Okay read", "Book 2 should have correct notes")
+        #expect(sortedBooks[1].notes == "Okay read", "Book 2 should have correct notes")
         #expect(sortedBooks[1].rating == 3, "Book 2 should have correct rating")
         
-        #expect(sortedBooks[2].personalNotes == "Loved it!", "Book 3 should have correct notes")
+        #expect(sortedBooks[2].notes == "Loved it!", "Book 3 should have correct notes")
         #expect(sortedBooks[2].rating == 5, "Book 3 should have correct rating")
     }
     
@@ -805,6 +806,7 @@ class BackgroundImportService {
         bookSearchService.maxConcurrentCalls = min(bookSearchService.maxConcurrentCalls, 3)
     }
     
+    @MainActor
     func resumeImport() -> BackgroundImportResumeResult {
         // Mock resume implementation
         let canResume = stateManager.canResumeImport()

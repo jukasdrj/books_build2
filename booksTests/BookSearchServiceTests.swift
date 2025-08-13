@@ -83,7 +83,7 @@ struct BookSearchServiceTests {
         #expect(metadata.genre.isEmpty) // Default is empty array, not nil
         #expect(metadata.originalLanguage == nil)
         #expect(metadata.authorNationality == nil)
-        #expect(metadata.translator == nil)
+        #expect(metadata.translatorNationality == nil)
     }
     
     @Test("BookMetadata Arrays - Should handle arrays correctly")

@@ -99,7 +99,7 @@ struct ModelContainerTests {
         let savedMetadata = try context.fetch(metadataDescriptor)
         
         #expect(savedMetadata.count == 1)
-        #expect(savedMetadata.first?.userBooks.count == 2)
+        #expect(savedMetadata.first?.userBooks?.count == 2)
     }
     
     @Test("Reading Status Auto-Dating - Should set dates correctly")

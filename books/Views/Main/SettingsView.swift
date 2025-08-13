@@ -9,6 +9,7 @@ struct SettingsView: View {
     @State private var showingCSVImport = false
     @State private var showingGoalSettings = false
     @State private var showingLibraryReset = false
+    @State private var showingAbout = false
     
     
     var body: some View {
@@ -261,8 +262,7 @@ struct SettingsView: View {
                         title: "About Books Tracker",
                         subtitle: "Version 1.0.0 • Made with 💜",
                         action: {
-                            // TODO: Show more detailed about info
-// print("About tapped")
+                            showingAbout = true
                             HapticFeedbackManager.shared.lightImpact()
                         }
                     )
@@ -297,6 +297,9 @@ struct SettingsView: View {
         }
         .sheet(isPresented: $showingLibraryReset) {
             LibraryResetConfirmationView(modelContext: modelContext)
+        }
+        .sheet(isPresented: $showingAbout) {
+            AboutThisAppView()
         }
     }
     

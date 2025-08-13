@@ -92,9 +92,9 @@ final class CSVImportWorkflowTests: BookTrackerTestSuite {
         // Set up mock preview result
         let mockPreview = CSVPreviewResult(
             books: [
-                CSVBookPreview(title: "The Great Gatsby", author: "F. Scott Fitzgerald", isbn: "9780743273565"),
-                CSVBookPreview(title: "To Kill a Mockingbird", author: "Harper Lee", isbn: "9780061120084"),
-                CSVBookPreview(title: "1984", author: "George Orwell", isbn: "9780451524935")
+                ParsedBook(rowIndex: 1, title: "The Great Gatsby", author: "F. Scott Fitzgerald", isbn: "9780743273565"),
+                ParsedBook(rowIndex: 2, title: "To Kill a Mockingbird", author: "Harper Lee", isbn: "9780061120084"),
+                ParsedBook(rowIndex: 3, title: "1984", author: "George Orwell", isbn: "9780451524935")
             ],
             mappedColumns: [
                 "Title": 0,
@@ -127,8 +127,8 @@ final class CSVImportWorkflowTests: BookTrackerTestSuite {
         
         let mockPreview = CSVPreviewResult(
             books: [
-                CSVBookPreview(title: "Book with, comma in title", author: "Author Name", isbn: "1234567890"),
-                CSVBookPreview(title: "Book with \"quoted\" words", author: "Another Author", isbn: "0987654321")
+                ParsedBook(rowIndex: 1, title: "Book with, comma in title", author: "Author Name", isbn: "1234567890"),
+                ParsedBook(rowIndex: 2, title: "Book with \"quoted\" words", author: "Another Author", isbn: "0987654321")
             ],
             mappedColumns: ["Title": 0, "Author": 1, "ISBN": 2],
             totalRows: 4,
@@ -140,8 +140,8 @@ final class CSVImportWorkflowTests: BookTrackerTestSuite {
         let preview = try await mockCSVImportService.previewCSV(from: csvFile)
         
         XCTAssertEqual(preview.books.count, 2)
-        XCTAssertTrue(preview.books[0].title.contains("comma"))
-        XCTAssertTrue(preview.books[1].title.contains("quoted"))
+        XCTAssertTrue(preview.books[0].title?.contains("comma") == true)
+        XCTAssertTrue(preview.books[1].title?.contains("quoted") == true)
         
         try? FileManager.default.removeItem(at: csvFile)
     }
@@ -235,12 +235,7 @@ final class CSVImportWorkflowTests: BookTrackerTestSuite {
     func testImportWithSkippedBooks() async throws {
         let csvFile = try createTestCSVFile(content: goodreadsCSVContent)
         
-        let skippedBook = CSVSkippedBook(
-            title: "Duplicate Book",
-            author: "Some Author",
-            reason: "Book already exists in library",
-            rowNumber: 2
-        )
+        let skippedBook = ParsedBook(rowIndex: 2, title: "Duplicate Book", author: "Some Author", isbn: nil)
         
         let mockResult = CSVImportResult(
             successCount: 2,
@@ -259,7 +254,7 @@ final class CSVImportWorkflowTests: BookTrackerTestSuite {
         
         XCTAssertEqual(result.successCount, 2)
         XCTAssertEqual(result.skippedBooks.count, 1)
-        XCTAssertEqual(result.skippedBooks.first?.reason, "Book already exists in library")
+        XCTAssertEqual(result.skippedBooks.first?.title, "Duplicate Book")
         
         try? FileManager.default.removeItem(at: csvFile)
     }
@@ -267,11 +262,12 @@ final class CSVImportWorkflowTests: BookTrackerTestSuite {
     func testImportWithErrors() async throws {
         let csvFile = try createTestCSVFile(content: goodreadsCSVContent)
         
-        let importError = CSVImportError(
+        let importError = ImportError(
+            rowIndex: 3,
+            bookTitle: "The Great Gatsby",
+            errorType: .validationError,
             message: "Invalid ISBN format",
-            rowNumber: 3,
-            columnName: "ISBN",
-            value: "invalid-isbn"
+            suggestions: ["Ensure the ISBN contains only digits"]
         )
         
         let mockResult = CSVImportResult(
@@ -292,7 +288,7 @@ final class CSVImportWorkflowTests: BookTrackerTestSuite {
         XCTAssertEqual(result.successCount, 2)
         XCTAssertEqual(result.errors.count, 1)
         XCTAssertEqual(result.errors.first?.message, "Invalid ISBN format")
-        XCTAssertEqual(result.errors.first?.columnName, "ISBN")
+        XCTAssertEqual(result.errors.first?.errorType, .validationError)
         
         try? FileManager.default.removeItem(at: csvFile)
     }
@@ -321,10 +317,10 @@ final class CSVImportWorkflowTests: BookTrackerTestSuite {
         let mockResult = CSVImportResult(
             successCount: 5,
             skippedBooks: [
-                CSVSkippedBook(title: "Duplicate", author: "Author", reason: "Already exists", rowNumber: 3)
+                ParsedBook(rowIndex: 3, title: "Duplicate", author: "Author", isbn: nil)
             ],
             errors: [
-                CSVImportError(message: "Invalid data", rowNumber: 7, columnName: "ISBN", value: "bad-isbn")
+                ImportError(rowIndex: 7, bookTitle: "Unknown", errorType: .validationError, message: "Invalid data", suggestions: ["Check the ISBN column"])
             ],
             importDuration: 3.2
         )
