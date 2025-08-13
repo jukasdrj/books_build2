@@ -22,16 +22,9 @@ struct booksApp: App {
         ])
 
 
-        // Configure model container with version-based naming
-        let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
-        let schemaVersion = "v6" // Update this when schema changes
-        let databaseName = "BooksModel_\(schemaVersion)_\(appVersion.replacingOccurrences(of: ".", with: "_"))"
-        
         let modelConfiguration = ModelConfiguration(
-            databaseName,
             schema: schema,
-            isStoredInMemoryOnly: false,
-            allowsSave: true
+            cloudKitContainerIdentifier: "iCloud.userLibrary"
         )
 
         do {
@@ -82,6 +75,9 @@ struct ThemedRootView: View {
                 .ignoresSafeArea()
             
             ContentView()
+                .onAppear {
+                    BackgroundImportCoordinator.initialize(with: self.sharedModelContainer.mainContext)
+                }
         }
         // Integrate environment-based theme system with reactive updates
         .environment(\.themeStore, themeStore)

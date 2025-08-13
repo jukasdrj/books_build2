@@ -73,14 +73,12 @@ class DataMigrationManager: ObservableObject {
         
         do {
             let descriptor = FetchDescriptor<BookMetadata>()
-            let allMetadata = try context.fetch(descriptor)
+            let _ = try context.fetch(descriptor)
             
-            var migrationCount = 0
             
             // Phase 3: Deprecated fields have been fully removed from the model
             // SwiftData will automatically handle schema evolution
             // No need to check for deprecated fields - they no longer exist
-            migrationCount = 0  // No deprecated fields to count
             
             // Phase 3 Complete: All deprecated fields have been removed
             // SwiftData automatically handles schema migration when fields are removed
