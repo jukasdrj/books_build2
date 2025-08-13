@@ -22,10 +22,7 @@ struct booksApp: App {
         ])
 
 
-        let modelConfiguration = ModelConfiguration(
-            schema: schema,
-            cloudKitContainerIdentifier: "iCloud.userLibrary"
-        )
+        let modelConfiguration = ModelConfiguration(schema: schema, cloudKitDatabase: .automatic)
 
         do {
             let container = try ModelContainer(for: schema, configurations: [modelConfiguration])
@@ -67,6 +64,7 @@ struct booksApp: App {
 struct ThemedRootView: View {
     @ObservedObject var themeStore: ThemeStore
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.modelContext) private var modelContext
     
     var body: some View {
         ZStack {
@@ -76,7 +74,7 @@ struct ThemedRootView: View {
             
             ContentView()
                 .onAppear {
-                    BackgroundImportCoordinator.initialize(with: self.sharedModelContainer.mainContext)
+                    BackgroundImportCoordinator.initialize(with: modelContext)
                 }
         }
         // Integrate environment-based theme system with reactive updates
