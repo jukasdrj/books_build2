@@ -1,5 +1,22 @@
 # Books Reading Tracker - Changelog
 
+## [Unreleased] - 2025-08-13 - Archiving fixes and cleanup
+
+- Info.plist (iOS app target):
+  - Cleaned UIBackgroundModes to valid values only: processing, fetch
+  - Added BGTaskSchedulerPermittedIdentifiers: com.books.readingtracker.csv-import
+  - Ensured CFBundleIdentifier uses $(PRODUCT_BUNDLE_IDENTIFIER)
+  - Sanitized names: CFBundleDisplayName=BooksTracker, CFBundleName=books (alphanumeric)
+- Xcode project settings:
+  - Unified PRODUCT_BUNDLE_IDENTIFIER to com.oooefam.booksV3 for Debug/Release
+- Git submodule cleanup:
+  - Removed dangling submodule entry for books_build2 and deleted empty directory
+- Build cache cleanup:
+  - Deleted project-specific DerivedData
+  - Performed xcodebuild clean
+- Validation:
+  - Linted all relevant Info.plist files with plutil -lint (OK)
+
 All notable changes to the Books Reading Tracker project are documented in this file. The project follows semantic versioning principles with major phases corresponding to significant feature releases.
 
 ## [3.2.0] - December 2024 Feature Updates - 2024-12-08
