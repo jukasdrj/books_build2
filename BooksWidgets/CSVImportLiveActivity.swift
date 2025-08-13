@@ -1,3 +1,4 @@
+/*
 //
 //  CSVImportLiveActivity.swift
 //  BooksWidgets
@@ -259,3 +260,4 @@ struct CSVImportLiveActivity_Previews: PreviewProvider {
             .previewDisplayName("Dynamic Island Minimal")
     }
 }
+*/

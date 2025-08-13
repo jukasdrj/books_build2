@@ -9,7 +9,9 @@
     </array>
     
     <!-- Live Activities capability -->
+<!--
     <key>com.apple.developer.ActivityKit</key>
     <true/>
+-->
 </dict>
 </plist>

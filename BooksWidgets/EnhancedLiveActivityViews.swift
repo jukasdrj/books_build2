@@ -1,3 +1,4 @@
+/*
 //
 //  EnhancedLiveActivityViews.swift
 //  BooksWidgets
@@ -388,3 +389,4 @@ struct CustomLinearProgressStyle: ProgressViewStyle {
         }
     }
 }
+*/

@@ -39,7 +39,7 @@ class BackgroundImportCoordinator {
     
     private let csvImportService: CSVImportService
     private let modelContext: ModelContext
-    private let liveActivityManager = UnifiedLiveActivityManager.shared
+//    private let liveActivityManager = UnifiedLiveActivityManager.shared
     
     // MARK: - Monitoring State
     
@@ -85,6 +85,7 @@ class BackgroundImportCoordinator {
         
         // Start Live Activity for this import
         let sessionId = UUID() // Generate session ID for Live Activity tracking
+/*
         let activityStarted = await liveActivityManager.startImportActivity(
             fileName: session.fileName,
             totalBooks: session.totalRows,
@@ -96,6 +97,7 @@ class BackgroundImportCoordinator {
         } else {
             print("[BackgroundImportCoordinator] Live Activity failed to start, continuing without Live Activity support")
         }
+*/
         
         // Start the import in background using existing service
         // The CSVImportService will insert books into modelContext as they're processed
@@ -138,6 +140,7 @@ class BackgroundImportCoordinator {
         await checkForReviewNeeds()
         
         // Complete the Live Activity with final results
+/*
         if let progress = session.progress {
             let result = ImportResult(
                 sessionId: UUID(), // Generate unique ID for this import session
@@ -158,6 +161,7 @@ class BackgroundImportCoordinator {
         } else {
             await liveActivityManager.endCurrentActivity()
         }
+*/
         
         // Stop monitoring and clear current import
         isMonitoring = false
@@ -184,7 +188,7 @@ class BackgroundImportCoordinator {
         csvImportService.cancelImport()
         
         // End the Live Activity
-        await liveActivityManager.endCurrentActivity()
+//        await liveActivityManager.endCurrentActivity()
         
         // Stop monitoring
         isMonitoring = false
@@ -265,7 +269,7 @@ class BackgroundImportCoordinator {
                     currentImport?.progress = progress
                     
                     // Update Live Activity with current progress
-                    await liveActivityManager.updateActivity(with: progress)
+//                    await liveActivityManager.updateActivity(with: progress)
                     
                     // Check for completion
                     if progress.isComplete {

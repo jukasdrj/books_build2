@@ -10,6 +10,7 @@ A comprehensive SwiftUI application for tracking your personal book library with
 - [Build](#build)
 - [Run](#run)
 - [Troubleshooting](#troubleshooting)
+- [Product Roadmap](#product-roadmap)
 - [Contributing](#contributing)
 - [License](#license)
 - [Acknowledgments](#acknowledgments)
@@ -25,7 +26,6 @@ A comprehensive SwiftUI application for tracking your personal book library with
 
 ### Advanced CSV Import System
 - **Background Processing**: Import large libraries without blocking the UI
-- **Live Activities**: Real-time progress in Dynamic Island and Lock Screen (iOS 16.1+)
 - **Smart Data Validation**: ISBN checksum verification, advanced date parsing, and data quality scoring
 - **Intelligent Reading Progress**: Automatically sets reading progress and page counts based on import status
 - **Smart Book Matching**: ISBN lookup with fallback to title/author search
@@ -42,18 +42,16 @@ A comprehensive SwiftUI application for tracking your personal book library with
 ## Quick Start
 
 ### For End Users
-1. **Install Requirements**: iOS 16.0+ (iOS 16.1+ recommended for Live Activities)
+1. **Install Requirements**: iOS 16.0+
 2. **Download App**: Install from App Store or TestFlight
 3. **First Launch**: Grant necessary permissions when prompted
 4. **Add Your First Book**: Use the "+" button or try CSV import
-5. **Enable Live Activities**: Allow notifications for import progress tracking
 
 ### For Developers
 1. **Clone Repository**: Download the complete project
 2. **Open in Xcode**: Requires Xcode 15+ for Swift 6 support
 3. **Configure Signing**: Set development team and bundle identifiers
 4. **Build and Run**: Test on simulator or device
-5. **Setup Widget Extension**: Manual configuration required
 
 ## Setup
 
@@ -104,10 +102,10 @@ group.Z67H8Y8DW.com.oooefam.booksV3
 
 To open the project, use one of the following methods:
 
-1.  **Using Finder:** Navigate to the project's root directory and double-click on `books.xcworkspace`. It's important to open the `.xcworkspace` file, not the `.xcodeproj` file, so that all project dependencies and targets are loaded correctly.
+1.  **Using Finder:** Navigate to the project's root directory and double-click on `books.xcodeproj`.
 2.  **Using the Command Line:**
     ```bash
-    open books.xcworkspace
+    open books.xcodeproj
     ```
 
 ### Scheme Selection
@@ -168,19 +166,14 @@ Here are some common build errors and their solutions:
 *   **Build fails with a "Command PhaseScriptExecution failed with a nonzero exit code" error**: This can have many causes. Check the build logs for more specific error messages. It could be a script failing, a missing file, or a permission issue.
 *   **The widget is not updating**: Make sure the App Group identifier is correctly configured for both the main app and the widget extension. Also, check the widget's timeline provider to ensure it's providing up-to-date information.
 
-**Widget Extension Build Errors**:
+**Widget Extension Build Errors** (Live Activities are temporarily disabled):
 ```swift
 // Issue: "No such module 'ActivityKit'"
-// Solution: Ensure deployment target is iOS 16.1+
-iOS Deployment Target → 16.1
+// Solution: The Live Activities feature has been temporarily disabled due to a certificate issue. All related code has been commented out.
 
 // Issue: App Groups not working
 // Solution: Verify identical group identifiers in both targets
 group.Z67H8Y8DW.com.oooefam.booksV3 (exactly matching)
-
-// Issue: Live Activities not appearing
-// Solution: Test on physical device with iOS 16.1+
-// Simulator doesn't support Live Activities
 ```
 
 **Background Processing Issues**:
@@ -197,6 +190,21 @@ group.Z67H8Y8DW.com.oooefam.booksV3 (exactly matching)
 // Solution: Check Background App Refresh settings
 Settings → General → Background App Refresh → Books Reading Tracker → On
 ```
+
+## Product Roadmap
+
+### Immediate Next Steps (Low-Risk, High-Impact)
+
+1.  **Resolve Certificate Issue:** The highest priority is to resolve the `ActivityKit` certificate issue to re-enable Live Activities. This is a critical feature for the app's user experience.
+2.  **CloudKit Integration:** Implement robust iCloud syncing to ensure data consistency across a user's devices. This is a high-value feature that significantly improves the user experience.
+3.  **UI/UX Polish:** Conduct a thorough review of the user interface to identify and address any inconsistencies or areas for improvement. This includes refining animations, improving layout on different screen sizes, and ensuring a consistent design language.
+
+### Future Enhancements
+
+*   **Advanced Analytics:** Expand the analytics dashboard with more detailed reading insights, such as reading streaks, average time to finish a book, and comparisons to previous time periods.
+*   **Social Features:** Introduce social features like reading challenges with friends, sharing book recommendations, and creating book clubs.
+*   **Book Recommendations:** Implement a personalized book recommendation engine based on a user's reading history and preferences.
+*   **Export Options:** Allow users to export their library to different formats, such as JSON or PDF.
 
 ## Contributing
 
@@ -221,13 +229,12 @@ This project is licensed under the a private license.
 
 - **Apple Developer Documentation**: iOS development best practices
 - **SwiftUI Community**: UI patterns and components
-- **ActivityKit Framework**: Live Activities implementation
 - **ISBN APIs**: Book metadata providers
 - **Open Source Community**: Various utility libraries
 
 ---
 
-**Current Version**: 2.0 (Phase 2 Complete - Live Activities)
+**Current Version**: 2.0 (Phase 2 Complete - Live Activities temporarily disabled)
 **Last Updated**: August 2024
-**Minimum iOS**: 16.0 (16.1 for Live Activities)
+**Minimum iOS**: 16.0
 

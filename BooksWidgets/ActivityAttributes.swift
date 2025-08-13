@@ -1,3 +1,4 @@
+/*
 //
 //  ActivityAttributes.swift
 //  BooksWidgets
@@ -78,3 +79,4 @@ struct CSVImportActivityAttributes: ActivityAttributes {
         return name.count > 20 ? String(name.prefix(17)) + "..." : name
     }
 }
+*/

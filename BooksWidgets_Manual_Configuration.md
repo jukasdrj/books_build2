@@ -1,6 +1,6 @@
-## BooksWidgets Extension Manual Configuration
+# BooksWidgets Extension Manual Configuration (Live Activities Temporarily Disabled)
 
-This document provides the necessary steps to manually configure the `BooksWidgets` extension in Xcode.
+This document provides the necessary steps to manually configure the `BooksWidgets` extension in Xcode. The Live Activities functionality has been temporarily disabled due to a certificate issue, but the widget target can still be configured.
 
 ### Step 1: Add Widget Extension Target
 
@@ -10,7 +10,7 @@ This document provides the necessary steps to manually configure the `BooksWidge
 4.  Choose **"Widget Extension"** from the template list.
 5.  Configure the new target:
     *   **Product Name**: `BooksWidgets`
-*   **Bundle Identifier**: `Z67H8Y8DW.com.oooefam.booksV3.BooksWidgets`
+    *   **Bundle Identifier**: `Z67H8Y8DW.com.oooefam.booksV3.BooksWidgets`
     *   **Language**: Swift
     *   **Include Configuration Intent**: No
 
@@ -37,79 +37,11 @@ This document provides the necessary steps to manually configure the `BooksWidge
 Add the following files from the `/BooksWidgets/` directory to the `BooksWidgets` target:
 
 *   `BooksWidgets/BooksWidgetsBundle.swift`
-*   `BooksWidgets/CSVImportLiveActivity.swift`
-*   `BooksWidgets/EnhancedLiveActivityViews.swift`
-*   `BooksWidgets/ActivityAttributes.swift` (add to **both** targets)
 *   `BooksWidgets/Info.plist`
 *   `BooksWidgets/BooksWidgets.entitlements`
 
-### Step 5: Configure Entitlements
-
-**Main App Entitlements (`books.entitlements`):**
-
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>com.apple.security.application-groups</key>
-    <array>
-        <string>group.Z67H8Y8DW.com.oooefam.booksV3</string>
-    </array>
-    <key>com.apple.developer.ActivityKit</key>
-    <true/>
-</dict>
-</plist>
-```
-
-**Widget Extension Entitlements (`BooksWidgets.entitlements`):**
-
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>com.apple.security.application-groups</key>
-    <array>
-        <string>group.Z67H8Y8DW.com.oooefam.booksV3</string>
-    </array>
-    <key>com.apple.developer.ActivityKit</key>
-    <true/>
-</dict>
-</plist>
-```
-
-### Step 6: Update Info.plist Files
-
-**Main App `Info.plist` additions:**
-
-```xml
-<key>NSSupportsLiveActivities</key>
-<true/>
-<key>UIBackgroundModes</key>
-<array>
-    <string>background-processing</string>
-    <string>background-fetch</string>
-</array>
-```
-
-**Widget Extension `Info.plist`:**
-
-```xml
-<key>NSSupportsLiveActivities</key>
-<true/>
-<key>NSExtension</key>
-<dict>
-    <key>NSExtensionPointIdentifier</key>
-    <string>com.apple.widgetkit-extension</string>
-</dict>
-```
-
-### Step 7: Build and Test
+### Step 5: Build and Test
 
 1.  **Clean Build**: Product > Clean Build Folder
 2.  **Build Both Targets**: Ensure both the main app and widget extension build successfully.
-3.  **Run on Device**: Live Activities require a physical device.
-4.  **Test CSV Import**: Verify Live Activities appear during the import process.
-5.  **Check Dynamic Island**: Confirm proper layouts on supported devices.
-
+3.  **Run on Device**: Test the widget on a physical device or simulator.

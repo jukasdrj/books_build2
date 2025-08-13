@@ -6,13 +6,14 @@
 //
 
 import Foundation
-import ActivityKit
+//import ActivityKit
 import SwiftUI
 
 // Import the shared ActivityAttributes
 // Note: In the actual Xcode project, this would be included in both targets
 
 /// Manager for Live Activities during CSV import (Phase 2 preparation)
+/*
 @available(iOS 16.1, *)
 @MainActor
 class LiveActivityManager: ObservableObject {
@@ -102,8 +103,8 @@ class LiveActivityManager: ObservableObject {
             booksProcessed: progress.processedBooks,
             totalBooks: progress.totalBooks,
             successCount: progress.successfulImports,
-            duplicateCount: progress.duplicatesSkipped,
-            failureCount: progress.failedImports,
+            duplicatesSkipped: progress.duplicatesSkipped,
+            failedImports: progress.failedImports,
             currentBookTitle: progress.currentBookTitle,
             currentBookAuthor: progress.currentBookAuthor
         )
@@ -131,8 +132,8 @@ class LiveActivityManager: ObservableObject {
             booksProcessed: result.totalBooks,
             totalBooks: result.totalBooks,
             successCount: result.successfulImports,
-            duplicateCount: result.duplicatesSkipped,
-            failureCount: result.failedImports,
+            duplicatesSkipped: result.duplicatesSkipped,
+            failedImports: result.failedImports,
             currentBookTitle: nil,
             currentBookAuthor: nil
         )
@@ -159,10 +160,12 @@ class LiveActivityManager: ObservableObject {
         print("[LiveActivityManager] Live Activities enabled: \(isLiveActivitySupported)")
     }
 }
+*/
 
 // MARK: - Activity Attributes (Phase 2 Implementation)
 
 /// Activity attributes for CSV import Live Activities
+/*
 @available(iOS 16.1, *)
 struct CSVImportActivityAttributes: ActivityAttributes {
     
@@ -231,6 +234,7 @@ struct CSVImportActivityAttributes: ActivityAttributes {
         return name.count > 20 ? String(name.prefix(17)) + "..." : name
     }
 }
+*/
 
 // MARK: - Fallback for iOS < 16.1
 
@@ -267,6 +271,7 @@ class FallbackLiveActivityManager: ObservableObject {
 // MARK: - Unified Interface
 
 /// Unified interface that works across iOS versions
+/*
 @MainActor
 class UnifiedLiveActivityManager: ObservableObject {
     
@@ -332,6 +337,7 @@ class UnifiedLiveActivityManager: ObservableObject {
         }
     }
 }
+*/
 
 // MARK: - Phase 2 TODO Implementation Notes
 
