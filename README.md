@@ -2,7 +2,19 @@
 
 A comprehensive SwiftUI application for tracking your personal book library with advanced CSV import capabilities and real-time Live Activities support.
 
-## 🌟 Features
+## Table of Contents
+
+- [Features](#features)
+- [Quick Start](#quick-start)
+- [Setup](#setup)
+- [Build](#build)
+- [Run](#run)
+- [Troubleshooting](#troubleshooting)
+- [Contributing](#contributing)
+- [License](#license)
+- [Acknowledgments](#acknowledgments)
+
+## Features
 
 ### Core Reading Tracking
 - **Personal Library Management**: Track books with detailed metadata, ratings, and reading status
@@ -27,273 +39,166 @@ A comprehensive SwiftUI application for tracking your personal book library with
 - **Haptic Feedback**: Contextual feedback for user interactions
 - **Responsive Design**: Optimized for all iPhone and iPad screen sizes
 
-## 📱 System Requirements
+## Quick Start
 
-- **iOS 16.0+** (iOS 16.1+ for Live Activities)
-- **iPhone/iPad** with sufficient storage for your book library
-- **Network Connection** for book metadata fetching during imports
+### For End Users
+1. **Install Requirements**: iOS 16.0+ (iOS 16.1+ recommended for Live Activities)
+2. **Download App**: Install from App Store or TestFlight
+3. **First Launch**: Grant necessary permissions when prompted
+4. **Add Your First Book**: Use the "+" button or try CSV import
+5. **Enable Live Activities**: Allow notifications for import progress tracking
 
-### Live Activities Support
-- **iPhone 14 Pro/Pro Max**: Full Dynamic Island experience
-- **Other iOS 16.1+ devices**: Lock Screen Live Activities
-- **Pre-iOS 16.1 devices**: Traditional progress indicators
-
-## 🚀 Quick Start
-
-### Basic Usage
-1. **Add Books**: Tap "+" to add books manually or via barcode scanning
-2. **Import Library**: Use CSV import for existing Goodreads libraries
-3. **Track Progress**: Update reading status and ratings as you read
-4. **Monitor Goals**: Set yearly reading goals and track progress
-
-### CSV Import
-1. **Prepare File**: Export your library from Goodreads or create a CSV with book data
-2. **Select File**: Choose your CSV file in the Import tab
-3. **Map Columns**: Map CSV columns to book fields (title, author, ISBN, etc.)
-4. **Start Import**: Begin background processing with Live Activities
-5. **Monitor Progress**: Watch real-time updates in Dynamic Island or Lock Screen
-6. **Review Results**: Handle any ambiguous matches after completion
-
-## 📊 Project Architecture
-
-### Phase 1: Background Import System ✅
-- **BackgroundImportCoordinator**: Orchestrates the entire import workflow
-- **ImportStateManager**: Handles state persistence and recovery
-- **BackgroundTaskManager**: Manages iOS background execution
-- **CSVImportService**: Core import logic with concurrent processing
-- **Smart Retry Logic**: Exponential backoff and circuit breaker patterns
-
-### Phase 2: Live Activities ✅
-- **BooksWidgets Extension**: Widget extension target for Live Activities
-- **LiveActivityManager**: Manages Live Activity lifecycle and updates
-- **Dynamic Island Integration**: Compact, expanded, and minimal layouts
-- **Lock Screen Widgets**: Detailed progress with statistics
-- **Real-time Updates**: Progress updates every 2 seconds during import
-
-### Core Services
-- **BookSearchService**: ISBN and metadata lookup with multiple providers
-- **DataMigrationManager**: Handles schema changes and data migration
-- **PerformanceMonitor**: Tracks import performance and optimization
-- **HapticFeedbackManager**: Contextual haptic feedback
-
-### UI Components
-- **Unified Book Components**: Consistent book display across views
-- **Cultural Selection Pickers**: Standardized diversity tracking interface
-- **Import Progress Indicators**: Real-time progress visualization
-- **Theme System**: Dynamic theming with multiple variants
-
-## 🛠 Technical Implementation
-
-### Concurrency & Performance
-- **Swift 6 Compliant**: Full concurrency safety with actor isolation
-- **Actor-Based Design**: Thread-safe state management throughout
-- **Concurrent Processing**: Parallel ISBN lookups with configurable limits
-- **Memory Optimization**: Efficient resource usage with automatic cleanup
-
-### Data Management
-- **SwiftData Integration**: Modern Core Data replacement with type safety
-- **State Persistence**: Complete import state recovery capabilities
-- **Migration Support**: Seamless schema evolution
-- **Performance Monitoring**: Detailed metrics and optimization tracking
-
-### Background Processing
-- **iOS Background Tasks**: Proper background execution with BGTaskScheduler
-- **State Recovery**: Full resume capability after app termination
-- **Progress Tracking**: Real-time updates with 2-second intervals
-- **Battery Optimization**: Efficient processing with minimal power impact
-
-## 📁 Project Structure
-
-```
-books/
-├── App/
-│   └── booksApp.swift                          # Main app entry point
-├── Models/
-│   ├── UserBook.swift                          # Core book model
-│   ├── BookMetadata.swift                      # Metadata structures
-│   ├── ImportModels.swift                      # Import data models
-│   └── CulturalSelections.swift                # Diversity tracking models
-├── Services/
-│   ├── BackgroundImportCoordinator.swift       # Import orchestration
-│   ├── LiveActivityManager.swift               # Live Activities management
-│   ├── CSVImportService.swift                  # Core import logic
-│   ├── ImportStateManager.swift                # State persistence
-│   ├── BackgroundTaskManager.swift             # iOS background tasks
-│   ├── BookSearchService.swift                 # Book metadata lookup
-│   └── [Additional Services]
-├── Views/
-│   ├── Main/
-│   │   ├── ContentView.swift                   # Main navigation
-│   │   ├── LibraryView.swift                   # Library display
-│   │   └── [Additional Main Views]
-│   ├── Import/
-│   │   ├── CSVImportView.swift                 # Import interface
-│   │   └── [Import Components]
-│   └── Components/
-│       ├── BackgroundImportProgressIndicator.swift
-│       ├── ImportCompletionBanner.swift
-│       ├── CulturalSelectionPickers.swift
-│       └── [Shared Components]
-└── [Additional Directories]
-
-BooksWidgets/                                   # Live Activities Extension
-├── BooksWidgetsBundle.swift                    # Widget bundle entry
-├── CSVImportLiveActivity.swift                 # Live Activity implementation
-├── ActivityAttributes.swift                   # Shared data models
-├── EnhancedLiveActivityViews.swift             # Enhanced UI components
-└── [Configuration Files]
-```
-
-## 📋 CSV Import Format
-
-The application supports flexible CSV formats with column mapping. Common Goodreads export columns:
-
-### Required Fields
-- **Title**: Book title (required)
-- **Author**: Primary author (required)
-
-### Optional Fields
-- **ISBN/ISBN13**: For metadata lookup
-- **Rating**: Your rating (1-5 stars)
-- **Date Read**: Completion date
-- **Bookshelves**: Reading status/categories
-- **Review**: Personal notes
-- **Pages**: Page count
-- **Publication Year**: Original publication date
-- **Publisher**: Publishing house
-- **Genres**: Book categories
-
-### Cultural Diversity Fields (Optional)
-- **Author Gender**: Author's gender identification
-- **Author Ethnicity**: Author's ethnic background
-- **Language**: Book's primary language (ISO 639-1 codes)
-
-## 🎯 Reading Goals & Analytics
-
-### Goal Setting
-- Set yearly reading targets (number of books or pages)
-- Track progress with visual indicators
-- Historical goal performance
-
-### Analytics Dashboard
-- **Reading Patterns**: Monthly reading trends
-- **Genre Distribution**: Visual breakdown of reading preferences
-- **Cultural Diversity**: Track diversity across multiple dimensions
-- **Progress Metrics**: Completion rates and reading velocity
-
-## 🌍 Cultural Diversity Tracking
-
-### Standardized Categories
-- **Gender Identity**: Using standardized options with "Prefer not to say"
-- **Ethnic Background**: Comprehensive ethnic categories
-- **Languages**: ISO 639-1 language codes for consistent tracking
-
-### Privacy & Sensitivity
-- Optional tracking with clear privacy controls
-- Respectful categorization following best practices
-- User control over data visibility and sharing
-
-## 🔧 Setup & Configuration
-
-### Development Setup
-1. **Clone Repository**: Get the latest code
+### For Developers
+1. **Clone Repository**: Download the complete project
 2. **Open in Xcode**: Requires Xcode 15+ for Swift 6 support
-3. **Configure Certificates**: Set up development team and signing
-4. **Build Dependencies**: Automatic package resolution
-5. **Run Tests**: Execute test suite to verify setup
+3. **Configure Signing**: Set development team and bundle identifiers
+4. **Build and Run**: Test on simulator or device
+5. **Setup Widget Extension**: Manual configuration required
 
-### Widget Extension Setup (Manual)
-Due to Xcode project complexity, the BooksWidgets extension requires manual setup:
+## Setup
 
-1. **Add Widget Extension Target** in Xcode
-2. **Configure App Groups** for data sharing
-3. **Set Proper Entitlements** for Live Activities
-4. **Copy Widget Files** from BooksWidgets directory
-5. **Test on Physical Device** (Live Activities require hardware)
+### Prerequisites
+**Required Software**:
+- **Xcode**: Version 15.0+ (for Swift 6 support)
+- **macOS**: macOS 13.0+ (Ventura) or later
+- **Apple Developer Account**: Required for device testing and distribution
+- **Command Line Tools**: Xcode command line tools installed
 
-Detailed instructions available in `/BooksWidgets/WidgetExtensionSetup.md`
+**Optional Tools**:
+- **Git**: For version control and collaboration
+- **SwiftLint**: Code style enforcement
 
-## 📱 Live Activities Experience
+### Project Configuration
+**1. Clone and Open Project**
+```bash
+# Clone the repository
+git clone <repository-url>
+cd books_build2
 
-### Dynamic Island (iPhone 14 Pro/Pro Max)
-- **Compact Leading**: Circular progress indicator
-- **Compact Trailing**: Book count display
-- **Expanded View**: Detailed progress with current book information
-- **Minimal View**: Simple progress ring
+# Open in Xcode
+open books.xcodeproj
+```
 
-### Lock Screen (All iOS 16.1+ Devices)
-- **File Name Header** with progress percentage
-- **Linear Progress Bar** with custom styling
-- **Current Step Description** showing import phase
-- **Statistics Badges** for success/duplicate/failure counts
-- **Current Book Section** with title and author being processed
+**2. Configure Development Team**
+```swift
+// In Xcode project settings:
+// 1. Select "books" target
+// 2. Go to "Signing & Capabilities"
+// 3. Set your development team
+// 4. Ensure "Automatically manage signing" is enabled
+```
 
-### Real-Time Updates
-- Progress updates every 2 seconds during active import
-- Current book title and author display
-- Live statistics tracking (imported, duplicates, failures)
-- Completion summary with final results
+**3. Verify Bundle Identifiers**
+```swift
+// Main app bundle identifier
+Z67H8Y8DW.com.oooefam.booksV3
 
-## 📖 User Guide
+// Widget extension bundle identifier
+Z67H8Y8DW.com.oooefam.booksV3.BooksWidgets
 
-### Getting Started
-1. **First Launch**: The app creates your personal library database
-2. **Add Your First Book**: Try the manual add or barcode scanner
-3. **Set Reading Goals**: Configure yearly targets in Settings
-4. **Customize Themes**: Choose from multiple visual themes
+// App Group identifier
+group.Z67H8Y8DW.com.oooefam.booksV3
+```
 
-### CSV Import Workflow
-1. **Prepare Your Data**: Export from Goodreads or prepare custom CSV
-2. **Access Import Tab**: Navigate to Import section
-3. **Select CSV File**: Choose your file from Files app
-4. **Preview Data**: Review first few rows
-5. **Map Columns**: Match CSV columns to book fields
-6. **Configure Options**: Set import preferences
-7. **Start Background Import**: Begin processing with Live Activities
-8. **Monitor Progress**: Watch Dynamic Island or Lock Screen updates
-9. **Handle Reviews**: Address any ambiguous matches
-10. **Celebrate**: Your library is imported!
+## Build
 
-### Tips for Best Results
-- **Clean Data**: Remove duplicate entries before import
-- **Include ISBNs**: Better metadata matching with ISBN-13 codes
-- **Check Dates**: Ensure date formats are consistent
-- **Review Mappings**: Double-check column mappings before import
-- **Physical Device**: Use actual iPhone/iPad for Live Activities testing
+To open the project, use one of the following methods:
 
-## 🧪 Testing
+1.  **Using Finder:** Navigate to the project's root directory and double-click on `books.xcworkspace`. It's important to open the `.xcworkspace` file, not the `.xcodeproj` file, so that all project dependencies and targets are loaded correctly.
+2.  **Using the Command Line:**
+    ```bash
+    open books.xcworkspace
+    ```
 
-### Test Coverage
-- **Unit Tests**: Core services and business logic
-- **Integration Tests**: Component interaction testing
-- **UI Tests**: Critical user workflows
-- **Performance Tests**: Import speed and memory usage
-- **Accessibility Tests**: VoiceOver and accessibility compliance
+### Scheme Selection
 
-### Live Activities Testing
-- **Physical Device Required**: Live Activities don't work in simulator
-- **iOS 16.1+ Testing**: Verify compatibility across devices
-- **Background Scenarios**: Test app backgrounding during import
-- **Error Handling**: Verify graceful failure modes
-- **Permission Testing**: Test with Live Activities disabled
+Xcode uses schemes to define which targets to build, what build configuration to use, and what executable to run. This project includes the following schemes:
 
-## 🚀 Future Roadmap
+*   **books:** This is the main scheme for the application. Use this scheme to build, run, and test the main app.
+*   **Book_Tracker_Widget:** This scheme is for the widget extension. Use it to build and run the widget on the home screen.
 
-### Phase 3: Advanced Features (Planned)
-- **Smart Retry System**: AI-powered import optimization
-- **Cloud Sync**: Multi-device library synchronization
-- **Enhanced Analytics**: Advanced reading insights
-- **Social Features**: Reading challenges and sharing
-- **Library Reset**: Complete library management tools
+To select a scheme, click on the active scheme name in the Xcode toolbar (next to the run/stop buttons) and choose the desired scheme from the dropdown menu.
 
-### Potential Enhancements
-- **Reading Timer**: Track reading sessions
-- **Book Recommendations**: AI-powered suggestions
-- **Library Statistics**: Advanced analytics dashboard
-- **Export Capabilities**: Multiple format support
-- **Backup & Restore**: Complete data portability
+### Build Settings
 
-## 🤝 Contributing
+For the most part, the default build settings should be sufficient. However, you may need to adjust the following:
+
+*   **Build Configuration:** You can switch between `Debug` and `Release` configurations in the scheme editor. `Debug` is for development and includes debugging symbols, while `Release` is optimized for performance and is used for App Store distribution.
+*   **Compiler Flags:** If you need to add custom compiler flags, you can do so in the "Swift Compiler - Custom Flags" or "Apple Clang - Custom Compiler Flags" sections of the build settings.
+
+### Signing and Capabilities
+
+To run the app on a physical device or distribute it to the App Store, you will need to configure code signing.
+
+1.  Select the `books` project in the Project Navigator.
+2.  Go to the "Signing & Capabilities" tab.
+3.  Select your development team from the "Team" dropdown menu. If you don't have a team set up, you will need to add your Apple ID in Xcode's preferences.
+4.  Ensure that a signing certificate and provisioning profile are automatically generated or manually selected.
+
+Repeat this process for the `Book_Tracker_Widget` target.
+
+#### Capabilities
+
+This project uses the following capabilities:
+
+*   **App Groups:** To share data between the main app and the widget extension.
+*   **iCloud:** To sync data across devices.
+
+## Run
+
+### Simulator
+To run the app on the simulator:
+
+1.  Select a simulator from the device dropdown in the Xcode toolbar.
+2.  Click the "Run" button or press `Cmd+R`.
+
+### Physical Device
+To run the app on a physical device:
+
+1.  Connect your device to your Mac.
+2.  Select your device from the device dropdown in the Xcode toolbar.
+3.  Click the "Run" button or press `Cmd+R`.
+
+## Troubleshooting
+
+Here are some common build errors and their solutions:
+
+*   **"Code signing is required for product type 'Application' in SDK 'iOS...'"**: This usually means there's an issue with your code signing configuration. Double-check your team selection and provisioning profiles in the "Signing & Capabilities" tab.
+*   **"No such module 'SomeFramework'"**: This error indicates that a dependency is missing. Make sure you have opened the `.xcworkspace` file and that all dependencies have been correctly installed. You can try running `pod install` or `carthage update` if you are using CocoaPods or Carthage.
+*   **Build fails with a "Command PhaseScriptExecution failed with a nonzero exit code" error**: This can have many causes. Check the build logs for more specific error messages. It could be a script failing, a missing file, or a permission issue.
+*   **The widget is not updating**: Make sure the App Group identifier is correctly configured for both the main app and the widget extension. Also, check the widget's timeline provider to ensure it's providing up-to-date information.
+
+**Widget Extension Build Errors**:
+```swift
+// Issue: "No such module 'ActivityKit'"
+// Solution: Ensure deployment target is iOS 16.1+
+iOS Deployment Target → 16.1
+
+// Issue: App Groups not working
+// Solution: Verify identical group identifiers in both targets
+group.Z67H8Y8DW.com.oooefam.booksV3 (exactly matching)
+
+// Issue: Live Activities not appearing
+// Solution: Test on physical device with iOS 16.1+
+// Simulator doesn't support Live Activities
+```
+
+**Background Processing Issues**:
+```swift
+// Issue: Import doesn't continue in background
+// Solution: Verify background modes in Info.plist
+<key>UIBackgroundModes</key>
+<array>
+    <string>background-processing</string>
+    <string>background-fetch</string>
+</array>
+
+// Issue: App terminated during import
+// Solution: Check Background App Refresh settings
+Settings → General → Background App Refresh → Books Reading Tracker → On
+```
+
+## Contributing
 
 ### Development Guidelines
 - **Swift 6 Compliance**: All code must be concurrency-safe
@@ -308,11 +213,11 @@ Detailed instructions available in `/BooksWidgets/WidgetExtensionSetup.md`
 - Comprehensive error handling
 - Clean architecture principles
 
-## 📄 License
+## License
 
-This project is licensed under the terms specified in the LICENSE file.
+This project is licensed under the a private license.
 
-## 🏆 Acknowledgments
+## Acknowledgments
 
 - **Apple Developer Documentation**: iOS development best practices
 - **SwiftUI Community**: UI patterns and components
@@ -322,6 +227,7 @@ This project is licensed under the terms specified in the LICENSE file.
 
 ---
 
-**Current Version**: 2.0 (Phase 2 Complete - Live Activities)  
-**Last Updated**: August 2024  
+**Current Version**: 2.0 (Phase 2 Complete - Live Activities)
+**Last Updated**: August 2024
 **Minimum iOS**: 16.0 (16.1 for Live Activities)
+
