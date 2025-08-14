@@ -59,5 +59,9 @@
 	<string>oooeBooksTracker</string>
 	<key>CFBundleIdentifier</key>
 	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>GoogleBooksAPIKey</key>
+	<string>$(GOOGLE_BOOKS_API_KEY)</string>
+	<key>GoogleBooksAPIKeyFallback</key>
+	<string>$(GOOGLE_BOOKS_API_KEY_FALLBACK)</string>
 </dict>
 </plist>

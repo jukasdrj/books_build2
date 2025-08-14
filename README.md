@@ -58,6 +58,54 @@ A comprehensive SwiftUI application for tracking your personal book library with
 
 ## Setup
 
+### Google Books API configuration
+
+To externalize your Google Books API credentials and keep secrets out of source control, this project uses xcconfig files and Info.plist build-setting substitutions.
+
+1) Create configuration files at project root
+- Config.xcconfig (NOT committed):
+  
+  GOOGLE_BOOKS_API_KEY = YOUR_API_KEY_HERE
+  GOOGLE_BOOKS_API_KEY_FALLBACK =
+  
+- Config.xcconfig.template (committed):
+  
+  GOOGLE_BOOKS_API_KEY = YOUR_API_KEY_HERE
+  GOOGLE_BOOKS_API_KEY_FALLBACK =
+  
+- Ensure Config.xcconfig is in .gitignore
+
+2) Link the config in Xcode
+- Project (not target) → Configurations → set Debug/Release Base Configuration to Config.xcconfig
+- Target → Build Settings → add User-Defined settings:
+  - GOOGLE_BOOKS_API_KEY = $(GOOGLE_BOOKS_API_KEY)
+  - GOOGLE_BOOKS_API_KEY_FALLBACK = $(GOOGLE_BOOKS_API_KEY_FALLBACK)
+
+3) Add Info.plist keys (already wired in project)
+- GoogleBooksAPIKey = $(GOOGLE_BOOKS_API_KEY)
+- GoogleBooksAPIKeyFallback = $(GOOGLE_BOOKS_API_KEY_FALLBACK)
+
+4) Test configuration (Debug-only convenience)
+- Optional test config file: Config.test.xcconfig
+  
+  GOOGLE_BOOKS_API_KEY = test_api_key_for_development
+  
+  Set this as the Base Configuration for Debug if you want a fixed test key.
+
+5) Debug scheme environment variables and launch arguments
+- Scheme → Edit Scheme… → Debug:
+  - Environment Variables:
+    - GOOGLE_BOOKS_TEST_MODE = 1
+    - GOOGLE_BOOKS_LOG_LEVEL = verbose
+  - Launch Arguments:
+    - -com.apple.CoreData.SQLDebug 1 (if using Core Data)
+    - -APILoggingEnabled YES
+
+### Diagnostics and Debug Console (Debug builds)
+- GoogleBooksDiagnostics collects lightweight request/response metadata and can export a textual report.
+- Open the Debug Console from the Search screen toolbar menu (…) → Open Debug Console (Debug builds only).
+- You can also export diagnostics from the same menu → Export Diagnostics.
+
 ### Prerequisites
 **Required Software**:
 - **Xcode**: Version 15.0+ (for Swift 6 support)

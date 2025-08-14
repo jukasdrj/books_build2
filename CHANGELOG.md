@@ -1,5 +1,30 @@
 # Books Reading Tracker - Changelog
 
+## [Unreleased]
+
+### Added
+- Google Books API integration improvements:
+  - Externalized API key via Config.xcconfig and Info.plist substitution (GoogleBooksAPIKey, GoogleBooksAPIKeyFallback)
+  - Added Config.xcconfig.template and .gitignore entry for secrets
+  - Optional Config.test.xcconfig for Debug/test runs
+- Diagnostics & Debugging:
+  - GoogleBooksDiagnostics for request/response logging and export
+  - DebugConsoleView (Debug builds) to view diagnostics
+  - Toolbar menu in Book Search to export diagnostics and open the Debug Console
+- Networking & Error Handling:
+  - GoogleBooksService with Combine pipeline and robust error mapping (GoogleBooksError)
+  - User-facing BooksViewModel with loading and error state management
+  - ErrorView SwiftUI component for friendly error display
+- Scheme configuration (Debug):
+  - Env vars: GOOGLE_BOOKS_TEST_MODE=1, GOOGLE_BOOKS_LOG_LEVEL=verbose
+  - Launch args: -com.apple.CoreData.SQLDebug 1, -APILoggingEnabled YES
+
+### Changed
+- Search tab now uses BookSearchContainerView to support error UI and debug menu.
+
+### Fixed
+- Ensured Config.xcconfig is ignored in git and template is committed.
+
 ## [Unreleased] - 2025-08-13 - Archiving fixes and cleanup
 
 - Info.plist (iOS app target):

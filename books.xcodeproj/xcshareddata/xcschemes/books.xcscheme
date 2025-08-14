@@ -16,7 +16,7 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "0718D72D2E347EFD00421DCB"
-               BuildableName = "books.app"
+               BuildableName = "BooksTrack.app"
                BlueprintName = "books"
                ReferencedContainer = "container:books.xcodeproj">
             </BuildableReference>
@@ -53,6 +53,18 @@
             </BuildableReference>
          </TestableReference>
       </Testables>
+      <EnvironmentVariables>
+         <EnvironmentVariable
+            key = "GOOGLE_BOOKS_TEST_MODE"
+            value = "1"
+            isEnabled = "YES">
+         </EnvironmentVariable>
+         <EnvironmentVariable
+            key = "GOOGLE_BOOKS_LOG_LEVEL"
+            value = "verbose"
+            isEnabled = "YES">
+         </EnvironmentVariable>
+      </EnvironmentVariables>
    </TestAction>
    <LaunchAction
       buildConfiguration = "Debug"
@@ -69,11 +81,41 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "0718D72D2E347EFD00421DCB"
-            BuildableName = "books.app"
+            BuildableName = "BooksTrack.app"
             BlueprintName = "books"
             ReferencedContainer = "container:books.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
+      <CommandLineArguments>
+         <CommandLineArgument
+            argument = "-com.apple.CoreData.SQLDebug"
+            isEnabled = "YES">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "1"
+            isEnabled = "YES">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "-APILoggingEnabled"
+            isEnabled = "YES">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "YES"
+            isEnabled = "YES">
+         </CommandLineArgument>
+      </CommandLineArguments>
+      <EnvironmentVariables>
+         <EnvironmentVariable
+            key = "GOOGLE_BOOKS_TEST_MODE"
+            value = "1"
+            isEnabled = "YES">
+         </EnvironmentVariable>
+         <EnvironmentVariable
+            key = "GOOGLE_BOOKS_LOG_LEVEL"
+            value = "verbose"
+            isEnabled = "YES">
+         </EnvironmentVariable>
+      </EnvironmentVariables>
       <AdditionalOptions>
          <AdditionalOption
             key = "APP_DISTRIBUTOR_ID_OVERRIDE"
@@ -93,7 +135,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "0718D72D2E347EFD00421DCB"
-            BuildableName = "books.app"
+            BuildableName = "BooksTrack.app"
             BlueprintName = "books"
             ReferencedContainer = "container:books.xcodeproj">
          </BuildableReference>

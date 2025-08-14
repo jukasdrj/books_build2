@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		0718D77A2E35ECCC00421DCB /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0718D7792E35ECCC00421DCB /* UIKit.framework */; };
 		0727225C2E4BB14A0000EF6D /* CloudKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0727225B2E4BB14A0000EF6D /* CloudKit.framework */; };
+		07272AEE2E4D602F0000EF6D /* Config.test.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = 07272AED2E4D602F0000EF6D /* Config.test.xcconfig */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -29,11 +30,13 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		0718D72E2E347EFD00421DCB /* books.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = books.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		0718D72E2E347EFD00421DCB /* BooksTrack.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BooksTrack.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		0718D73E2E347EFE00421DCB /* booksTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = booksTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		0718D7482E347EFE00421DCB /* booksUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = booksUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		0718D7792E35ECCC00421DCB /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.5.sdk/System/Library/Frameworks/UIKit.framework; sourceTree = DEVELOPER_DIR; };
 		0727225B2E4BB14A0000EF6D /* CloudKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CloudKit.framework; path = System/Library/Frameworks/CloudKit.framework; sourceTree = SDKROOT; };
+		0727225D2E4BB14A0000EF6E /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
+		07272AED2E4D602F0000EF6D /* Config.test.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.test.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -97,18 +100,20 @@
 		0718D7252E347EFD00421DCB = {
 			isa = PBXGroup;
 			children = (
+				0727225D2E4BB14A0000EF6E /* Config.xcconfig */,
 				0718D7302E347EFD00421DCB /* books */,
 				0718D7412E347EFE00421DCB /* booksTests */,
 				0718D74B2E347EFE00421DCB /* booksUITests */,
 				0718D7782E35ECCC00421DCB /* Frameworks */,
 				0718D72F2E347EFD00421DCB /* Products */,
+				07272AED2E4D602F0000EF6D /* Config.test.xcconfig */,
 			);
 			sourceTree = "<group>";
 		};
 		0718D72F2E347EFD00421DCB /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				0718D72E2E347EFD00421DCB /* books.app */,
+				0718D72E2E347EFD00421DCB /* BooksTrack.app */,
 				0718D73E2E347EFE00421DCB /* booksTests.xctest */,
 				0718D7482E347EFE00421DCB /* booksUITests.xctest */,
 			);
@@ -146,7 +151,7 @@
 			packageProductDependencies = (
 			);
 			productName = books;
-			productReference = 0718D72E2E347EFD00421DCB /* books.app */;
+			productReference = 0718D72E2E347EFD00421DCB /* BooksTrack.app */;
 			productType = "com.apple.product-type.application";
 		};
 		0718D73D2E347EFE00421DCB /* booksTests */ = {
@@ -243,6 +248,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				07272AEE2E4D602F0000EF6D /* Config.test.xcconfig in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -302,6 +308,7 @@
 /* Begin XCBuildConfiguration section */
 		0718D7502E347EFE00421DCB /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 07272AED2E4D602F0000EF6D /* Config.test.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -371,6 +378,7 @@
 		};
 		0718D7512E347EFE00421DCB /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 0727225D2E4BB14A0000EF6E /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -445,6 +453,8 @@
 				DEVELOPMENT_TEAM = 8Z67H8Y8DW;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				GOOGLE_BOOKS_API_KEY = "$(GOOGLE_BOOKS_API_KEY)";
+				GOOGLE_BOOKS_API_KEY_FALLBACK = "$(GOOGLE_BOOKS_API_KEY_FALLBACK)";
 				INFOPLIST_FILE = books/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "BooksTrack by oooe";
 				INFOPLIST_KEY_CFBundleName = oooeBooksTracker;
@@ -491,6 +501,8 @@
 				DEVELOPMENT_TEAM = 8Z67H8Y8DW;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				GOOGLE_BOOKS_API_KEY = "$(GOOGLE_BOOKS_API_KEY)";
+				GOOGLE_BOOKS_API_KEY_FALLBACK = "$(GOOGLE_BOOKS_API_KEY_FALLBACK)";
 				INFOPLIST_FILE = books/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "BooksTrack by oooe";
 				INFOPLIST_KEY_CFBundleName = oooeBooksTracker;

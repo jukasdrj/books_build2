@@ -66,6 +66,7 @@ struct ThemedRootView: View {
     @StateObject private var cloudKitManager = CloudKitManager()
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.modelContext) private var modelContext
+    @State private var showDebugConsole = false
     
     var body: some View {
         ZStack {
@@ -98,6 +99,11 @@ struct ThemedRootView: View {
                 // We'll set up the model context in the ContentView where it has access to the environment
             }
         }
+        #if DEBUG
+        .sheet(isPresented: $showDebugConsole) {
+            DebugConsoleView()
+        }
+        #endif
     }
 }
 

@@ -221,7 +221,7 @@ struct ContentView: View {
                         case 0:
                             LibraryView()
                         case 1:
-                            SearchView()
+                            BookSearchContainerView()
                         case 2:
                             StatsView()
                         case 3:
@@ -255,7 +255,7 @@ struct ContentView: View {
                     case 0:
                         LibraryView()
                     case 1:
-                        SearchView()
+                        BookSearchContainerView()
                     case 2:
                         StatsView()
                     case 3:
