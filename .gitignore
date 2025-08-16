@@ -4,12 +4,13 @@
 *.xcodeproj/xcuserdata/
 *.xcodeproj/project.xcworkspace/
 !*.xcodeproj/project.xcworkspace/contents.xcworkspacedata
+!*.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
 xcuserdata/
 
 # Swift Package Manager
 .swiftpm/
 Packages/
-*.resolved
+# Note: Package.resolved should be committed for Xcode Cloud builds
 
 # Documentation
 Documentation.md
