@@ -45,7 +45,7 @@ struct LibraryFilterView: View {
                         }
                         HapticFeedbackManager.shared.lightImpact()
                     }
-                    .materialButton(style: .text, size: .small)
+                    .nativeTextButton()
                     .disabled(!filter.isActive)
                 }
                 
@@ -113,7 +113,7 @@ struct LibraryFilterView: View {
             }
         }
         .padding(Theme.Spacing.lg)
-        .materialCard()
+        .nativeCard()
     }
     
     @ViewBuilder
@@ -136,7 +136,7 @@ struct LibraryFilterView: View {
                     }
                     HapticFeedbackManager.shared.lightImpact()
                 }
-                .materialButton(style: .text, size: .small)
+                .nativeTextButton()
             }
             
             LazyVGrid(columns: [
@@ -161,7 +161,7 @@ struct LibraryFilterView: View {
             }
         }
         .padding(Theme.Spacing.lg)
-        .materialCard()
+        .nativeCard()
     }
 }
 

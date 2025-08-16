@@ -34,11 +34,8 @@ struct BookCardView: View {
         }
         .frame(width: UnifiedBookCard.Dimensions.cardWidth, height: UnifiedBookCard.Dimensions.cardHeight)
         .padding(Theme.Spacing.sm)
-        .materialCard(elevation: Theme.Elevation.card)
-        .materialInteractive(
-            pressedScale: UnifiedBookCard.InteractiveStates.pressedScale,
-            pressedOpacity: UnifiedBookCard.InteractiveStates.pressedOpacity
-        )
+        .nativeCard()
+        .nativeInteractive()
         // Enhanced accessibility
         .accessibilityElement(children: .combine)
         .accessibilityLabel(accessibilityDescription)
