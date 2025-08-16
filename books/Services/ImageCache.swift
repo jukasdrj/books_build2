@@ -50,11 +50,12 @@ class ImageCache: @unchecked Sendable {
     /// Cache image for URL with automatic cost calculation
     func cache(image: UIImage, for url: String) {
         ioQueue.async { [weak self] in
-            let cost = self?.calculateImageCost(image) ?? 0
-            self?.cache.setObject(image, forKey: url as NSString, cost: cost)
+            guard let self = self else { return }
+            let cost = self.calculateImageCost(image)
+            self.cache.setObject(image, forKey: url as NSString, cost: cost)
             
             // Track the key
-            self?.keysQueue.async(flags: .barrier) {
+            self.keysQueue.async(flags: .barrier) { [weak self] in
                 self?.cacheKeys.insert(url)
             }
         }
