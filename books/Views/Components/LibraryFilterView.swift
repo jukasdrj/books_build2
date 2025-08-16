@@ -31,9 +31,6 @@ struct LibraryFilterView: View {
                     
                     // Reading Status Section
                     readingStatusSection
-                    
-                    // Collection Filters Section
-                    collectionFiltersSection
                 }
                 .padding(Theme.Spacing.lg)
             }
@@ -56,7 +53,8 @@ struct LibraryFilterView: View {
                     Button("Done") {
                         dismiss()
                     }
-                    .materialButton(style: .filled, size: .small)
+                    .foregroundColor(currentTheme.primary)
+                    .fontWeight(.semibold)
                 }
             }
         }
@@ -160,42 +158,6 @@ struct LibraryFilterView: View {
                         HapticFeedbackManager.shared.lightImpact()
                     }
                 }
-            }
-        }
-        .padding(Theme.Spacing.lg)
-        .materialCard()
-    }
-    
-    @ViewBuilder
-    private var collectionFiltersSection: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.md) {
-            Text("Collection Filters")
-                .titleMedium()
-                .foregroundColor(currentTheme.primaryText)
-            
-            VStack(spacing: Theme.Spacing.sm) {
-                FilterToggleRow(
-                    title: "Wishlist Items Only",
-                    subtitle: "Show only books on your wishlist",
-                    icon: "heart.fill",
-                    isOn: $filter.showWishlistOnly
-                )
-                .disabled(filter.showOwnedOnly)
-                
-                FilterToggleRow(
-                    title: "Owned Books Only",
-                    subtitle: "Show only books you own",
-                    icon: "books.vertical.fill",
-                    isOn: $filter.showOwnedOnly
-                )
-                .disabled(filter.showWishlistOnly)
-                
-                FilterToggleRow(
-                    title: "Favorites Only",
-                    subtitle: "Show only your starred favorites",
-                    icon: "star.fill",
-                    isOn: $filter.showFavoritesOnly
-                )
             }
         }
         .padding(Theme.Spacing.lg)

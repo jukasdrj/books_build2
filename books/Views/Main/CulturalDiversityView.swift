@@ -83,7 +83,8 @@ struct CulturalDiversityView: View {
                 Button("Goals", systemImage: "target") {
                     showingGoals = true
                 }
-                .materialButton(style: .tonal, size: .small)
+                .foregroundColor(currentTheme.primary)
+                .fontWeight(.semibold)
             }
         }
         .sheet(isPresented: $showingGoals) {
