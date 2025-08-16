@@ -40,6 +40,9 @@ struct BookSearchContainerView: View {
                         }
                         #if DEBUG
                         Divider()
+                        Button("Check Keychain API Key") {
+                            print(KeychainService.shared.loadAPIKeyForDebug())
+                        }
                         Button("Open Debug Console") {
                             showDebugConsole = true
                         }

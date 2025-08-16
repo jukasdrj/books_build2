@@ -21,8 +21,12 @@ struct booksApp: App {
             BookMetadata.self,
         ])
 
-
-        let modelConfiguration = ModelConfiguration(schema: schema, cloudKitDatabase: .automatic)
+        let modelConfiguration: ModelConfiguration
+        if UserDefaults.standard.bool(forKey: "hasBypassedICloudLogin") {
+            modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
+        } else {
+            modelConfiguration = ModelConfiguration(schema: schema, cloudKitDatabase: .automatic)
+        }
 
         do {
             let container = try ModelContainer(for: schema, configurations: [modelConfiguration])
@@ -67,6 +71,7 @@ struct ThemedRootView: View {
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.modelContext) private var modelContext
     @State private var showDebugConsole = false
+    @State private var hasBypassedICloudLogin = UserDefaults.standard.bool(forKey: "hasBypassedICloudLogin")
     
     var body: some View {
         ZStack {
@@ -74,13 +79,13 @@ struct ThemedRootView: View {
             themeStore.appTheme.background
                 .ignoresSafeArea()
             
-            if cloudKitManager.isUserLoggedIn {
+            if cloudKitManager.isUserLoggedIn || hasBypassedICloudLogin {
                 ContentView()
                     .onAppear {
                         _ = BackgroundImportCoordinator.initialize(with: modelContext)
                     }
             } else {
-                iCloudLoginView()
+                iCloudLoginView(hasBypassedICloudLogin: $hasBypassedICloudLogin)
             }
         }
         .onAppear(perform: cloudKitManager.checkAccountStatus)
@@ -118,6 +123,19 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         // Register background tasks
         BackgroundTaskManager.shared.registerBackgroundTasks()
         
+        // Migrate API key to Keychain on first launch
+        if KeychainService.shared.loadAPIKey() == nil {
+            if let apiKey = Bundle.main.object(forInfoDictionaryKey: "GoogleBooksAPIKey") as? String, !apiKey.isEmpty {
+                do {
+                    try KeychainService.shared.saveAPIKey(apiKey)
+                    print("[AppDelegate] API key migrated to Keychain.")
+                } catch {
+                    print("[AppDelegate] Failed to migrate API key to Keychain: \(error)")
+                }
+            }
+        }
+        GoogleBooksDiagnostics.shared.logAPIKeyStatus()
+
         print("[AppDelegate] App launched - background tasks registered")
         return true
     }
