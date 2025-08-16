@@ -14,9 +14,9 @@ struct BookSearchContainerView: View {
                     ProgressView("Searching...")
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else if let errorMessage = viewModel.errorMessage {
-                    ErrorView(
-                        message: errorMessage,
-                        details: viewModel.errorDetails,
+                    EnhancedErrorView(
+                        title: "Search Error",
+                        message: viewModel.errorDetails.map { "\(errorMessage)\n\n\($0)" } ?? errorMessage,
                         retryAction: {
                             viewModel.searchBooks(query: searchText)
                         }

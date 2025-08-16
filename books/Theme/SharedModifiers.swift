@@ -141,7 +141,7 @@ struct LoadingView: View {
 
 // MARK: - Error View
 
-struct ErrorView: View {
+struct ThemedErrorView: View {
     let error: Error
     let retry: () -> Void
     
@@ -378,7 +378,7 @@ struct FeatureHighlightCard: View {
     VStack(spacing: Theme.Spacing.xxxl) {
         LoadingView(message: "Loading books...")
         
-        ErrorView(error: NSError(domain: "TestError", code: 1, userInfo: [NSLocalizedDescriptionKey: "Test error message"])) {
+        ThemedErrorView(error: NSError(domain: "TestError", code: 1, userInfo: [NSLocalizedDescriptionKey: "Test error message"])) {
 // print("Retry tapped")
         }
         
