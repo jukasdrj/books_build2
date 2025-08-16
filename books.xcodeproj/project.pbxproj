@@ -10,6 +10,7 @@
 		0718D77A2E35ECCC00421DCB /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0718D7792E35ECCC00421DCB /* UIKit.framework */; };
 		0727225C2E4BB14A0000EF6D /* CloudKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0727225B2E4BB14A0000EF6D /* CloudKit.framework */; };
 		07272AEE2E4D602F0000EF6D /* Config.test.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = 07272AED2E4D602F0000EF6D /* Config.test.xcconfig */; };
+		07272BEF2E4FED580000EF6D /* KeychainAccess in Frameworks */ = {isa = PBXBuildFile; productRef = 07272BEE2E4FED580000EF6D /* KeychainAccess */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -77,6 +78,7 @@
 			files = (
 				0718D77A2E35ECCC00421DCB /* UIKit.framework in Frameworks */,
 				0727225C2E4BB14A0000EF6D /* CloudKit.framework in Frameworks */,
+				07272BEF2E4FED580000EF6D /* KeychainAccess in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -149,6 +151,7 @@
 			);
 			name = books;
 			packageProductDependencies = (
+				07272BEE2E4FED580000EF6D /* KeychainAccess */,
 			);
 			productName = books;
 			productReference = 0718D72E2E347EFD00421DCB /* BooksTrack.app */;
@@ -231,6 +234,9 @@
 			);
 			mainGroup = 0718D7252E347EFD00421DCB;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				07272BED2E4FED580000EF6D /* XCRemoteSwiftPackageReference "KeychainAccess" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 0718D72F2E347EFD00421DCB /* Products */;
 			projectDirPath = "";
@@ -628,7 +634,7 @@
 				0718D7512E347EFE00421DCB /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
+			defaultConfigurationName = Debug;
 		};
 		0718D7522E347EFE00421DCB /* Build configuration list for PBXNativeTarget "books" */ = {
 			isa = XCConfigurationList;
@@ -637,7 +643,7 @@
 				0718D7542E347EFE00421DCB /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
+			defaultConfigurationName = Debug;
 		};
 		0718D7552E347EFE00421DCB /* Build configuration list for PBXNativeTarget "booksTests" */ = {
 			isa = XCConfigurationList;
@@ -646,7 +652,7 @@
 				0718D7572E347EFE00421DCB /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
+			defaultConfigurationName = Debug;
 		};
 		0718D7582E347EFE00421DCB /* Build configuration list for PBXNativeTarget "booksUITests" */ = {
 			isa = XCConfigurationList;
@@ -655,9 +661,28 @@
 				0718D75A2E347EFE00421DCB /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
+			defaultConfigurationName = Debug;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		07272BED2E4FED580000EF6D /* XCRemoteSwiftPackageReference "KeychainAccess" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/kishikawakatsumi/KeychainAccess.git";
+			requirement = {
+				branch = master;
+				kind = branch;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		07272BEE2E4FED580000EF6D /* KeychainAccess */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 07272BED2E4FED580000EF6D /* XCRemoteSwiftPackageReference "KeychainAccess" */;
+			productName = KeychainAccess;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 0718D7262E347EFD00421DCB /* Project object */;
 }

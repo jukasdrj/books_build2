@@ -13,11 +13,10 @@ struct BookSearchContainerView: View {
                 if viewModel.isLoading {
                     ProgressView("Searching...")
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else if let errorMessage = viewModel.errorMessage {
+                } else if let error = viewModel.error {
                     ErrorView(
-                        message: errorMessage,
-                        details: viewModel.errorDetails,
-                        retryAction: {
+                        error: error,
+                        retry: {
                             viewModel.searchBooks(query: searchText)
                         }
                     )
@@ -40,6 +39,9 @@ struct BookSearchContainerView: View {
                         }
                         #if DEBUG
                         Divider()
+                        Button("Check Keychain API Key") {
+                            print(KeychainService.shared.loadAPIKeyForDebug())
+                        }
                         Button("Open Debug Console") {
                             showDebugConsole = true
                         }

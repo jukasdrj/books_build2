@@ -1,6 +1,8 @@
 import SwiftUI
 
 struct iCloudLoginView: View {
+    @Binding var hasBypassedICloudLogin: Bool
+
     var body: some View {
         VStack {
             Text("iCloud Account Required")
@@ -16,13 +18,19 @@ struct iCloudLoginView: View {
             }
             .padding()
             .buttonStyle(.borderedProminent)
+
+            Button("Continue without iCloud") {
+                UserDefaults.standard.set(true, forKey: "hasBypassedICloudLogin")
+                hasBypassedICloudLogin = true
+            }
+            .padding()
         }
     }
 }
 
 struct iCloudLoginView_Previews: PreviewProvider {
     static var previews: some View {
-        iCloudLoginView()
+        iCloudLoginView(hasBypassedICloudLogin: .constant(false))
     }
 }
 

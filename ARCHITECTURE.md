@@ -715,7 +715,7 @@ class PerformanceMonitor {
 **Network Security**:
 - HTTPS only for all API communications
 - Certificate pinning ready for production
-- API keys stored in Keychain Services
+- API keys stored in Keychain Services (using the KeychainAccess library)
 
 ### Privacy Compliance
 

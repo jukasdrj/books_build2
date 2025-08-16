@@ -4,27 +4,24 @@ import Combine
 final class BooksViewModel: ObservableObject {
     @Published var books: [BookMetadata] = []
     @Published var isLoading = false
-    @Published var errorMessage: String?
-    @Published var errorDetails: String?
-    
+    @Published var error: GoogleBooksError?
+
     private var cancellables = Set<AnyCancellable>()
     private let diagnostics = GoogleBooksDiagnostics.shared
-    
+
     func searchBooks(query: String) {
         let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else {
             // Clear state when query is empty
             books = []
             isLoading = false
-            errorMessage = nil
-            errorDetails = nil
+            error = nil
             return
         }
-        
+
         isLoading = true
-        errorMessage = nil
-        errorDetails = nil
-        
+        error = nil
+
         GoogleBooksService.shared.searchBooks(query: trimmed)
             .receive(on: DispatchQueue.main)
             .sink(
@@ -39,17 +36,15 @@ final class BooksViewModel: ObservableObject {
                     guard let self = self else { return }
                     self.books = books
                     if books.isEmpty {
-                        self.errorMessage = "No results found"
-                        self.errorDetails = "Try a different search term"
+                        self.error = .unknownError
                     }
                 }
             )
             .store(in: &cancellables)
     }
-    
+
     private func handleError(_ error: GoogleBooksError) {
-        errorMessage = error.errorDescription
-        errorDetails = error.recoverySuggestion
+        self.error = error
         
         // Log to console for debugging
         print("🔴 Search Error: \(error.errorDescription ?? "Unknown")")

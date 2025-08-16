@@ -60,46 +60,21 @@ A comprehensive SwiftUI application for tracking your personal book library with
 
 ### Google Books API configuration
 
-To externalize your Google Books API credentials and keep secrets out of source control, this project uses xcconfig files and Info.plist build-setting substitutions.
+To securely manage your Google Books API credentials, this project uses a combination of `xcconfig` files for local development and the device's Keychain for secure storage.
 
-1) Create configuration files at project root
-- Config.xcconfig (NOT committed):
-  
-  GOOGLE_BOOKS_API_KEY = YOUR_API_KEY_HERE
-  GOOGLE_BOOKS_API_KEY_FALLBACK =
-  
-- Config.xcconfig.template (committed):
-  
-  GOOGLE_BOOKS_API_KEY = YOUR_API_KEY_HERE
-  GOOGLE_BOOKS_API_KEY_FALLBACK =
-  
-- Ensure Config.xcconfig is in .gitignore
+**How it Works:**
+1.  **Local Configuration (`xcconfig`):** Your API key is stored in a `Config.xcconfig` file at the project root. This file is listed in `.gitignore` to prevent your key from being committed to source control.
+2.  **First Launch:** When the app is run for the first time, it reads the API key from the `xcconfig` file (via the `Info.plist`) and securely saves it to the device's Keychain.
+3.  **Subsequent Launches:** On all subsequent launches, the app retrieves the API key directly from the Keychain.
 
-2) Link the config in Xcode
-- Project (not target) → Configurations → set Debug/Release Base Configuration to Config.xcconfig
-- Target → Build Settings → add User-Defined settings:
-  - GOOGLE_BOOKS_API_KEY = $(GOOGLE_BOOKS_API_KEY)
-  - GOOGLE_BOOKS_API_KEY_FALLBACK = $(GOOGLE_BOOKS_API_KEY_FALLBACK)
+This ensures that the API key is not stored in plain text within the app bundle and is protected by the device's security.
 
-3) Add Info.plist keys (already wired in project)
-- GoogleBooksAPIKey = $(GOOGLE_BOOKS_API_KEY)
-- GoogleBooksAPIKeyFallback = $(GOOGLE_BOOKS_API_KEY_FALLBACK)
-
-4) Test configuration (Debug-only convenience)
-- Optional test config file: Config.test.xcconfig
-  
-  GOOGLE_BOOKS_API_KEY = test_api_key_for_development
-  
-  Set this as the Base Configuration for Debug if you want a fixed test key.
-
-5) Debug scheme environment variables and launch arguments
-- Scheme → Edit Scheme… → Debug:
-  - Environment Variables:
-    - GOOGLE_BOOKS_TEST_MODE = 1
-    - GOOGLE_BOOKS_LOG_LEVEL = verbose
-  - Launch Arguments:
-    - -com.apple.CoreData.SQLDebug 1 (if using Core Data)
-    - -APILoggingEnabled YES
+**Setup:**
+1.  Create a `Config.xcconfig` file in the project root with the following content:
+    ```
+    GOOGLE_BOOKS_API_KEY = YOUR_API_KEY_HERE
+    ```
+2.  For debugging, you can use the `Config.test.xcconfig` file to provide a test key for debug builds.
 
 ### Diagnostics and Debug Console (Debug builds)
 - GoogleBooksDiagnostics collects lightweight request/response metadata and can export a textual report.

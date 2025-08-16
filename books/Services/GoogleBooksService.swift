@@ -5,12 +5,10 @@ final class GoogleBooksService {
     static let shared = GoogleBooksService()
     private let diagnostics = GoogleBooksDiagnostics.shared
     private var apiKey: String? {
-        Bundle.main.object(forInfoDictionaryKey: "GoogleBooksAPIKey") as? String
+        KeychainService.shared.loadAPIKey()
     }
 
-    private init() {
-        diagnostics.logAPIKeyStatus()
-    }
+    private init() {}
 
     // Search Google Books and return BookMetadata models
     func searchBooks(query: String) -> AnyPublisher<[BookMetadata], GoogleBooksError> {

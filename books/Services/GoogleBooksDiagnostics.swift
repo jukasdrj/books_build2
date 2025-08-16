@@ -64,4 +64,3 @@ class GoogleBooksDiagnostics {
         return report
     }
 }
-
