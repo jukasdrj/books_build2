@@ -20,4 +20,4 @@ DerivedData/
 *.xcworkspace/xcuserdata/
 *.xcodeproj/xcuserdata/
 build/
-Config.xcconfig
+# Config.xcconfig now contains safe placeholder values and is committed for Xcode Cloud

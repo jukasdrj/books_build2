@@ -1,0 +1,13 @@
+//
+// Config.xcconfig
+// 
+// Build configuration file for Xcode Cloud and CI/CD builds
+// API keys are now managed through iOS Keychain via KeychainService
+// These placeholder values are used for compilation but not runtime
+//
+
+GOOGLE_BOOKS_API_KEY = BUILD_TIME_PLACEHOLDER_API_KEY
+GOOGLE_BOOKS_API_KEY_FALLBACK = BUILD_TIME_PLACEHOLDER_FALLBACK_KEY
+
+// Note: Actual API keys are configured at runtime through the app's 
+// debug console and stored securely in iOS Keychain
