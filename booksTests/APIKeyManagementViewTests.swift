@@ -30,28 +30,27 @@ struct APIKeyManagementViewTests {
         // Verify the view structure contains key status elements
         // In SwiftUI testing, we focus on state and behavior rather than exact UI elements
         
-        // Test that the view responds to APIKeyManager state
-        let keyManager = APIKeyManager.shared
-        let initialStatus = keyManager.keyStatus()
+        // Test that the view responds to KeychainService state
+        let keychainService = KeychainService.shared
+        let initialStatus = keychainService.keyStatus()
         
         #expect(initialStatus.keys.contains("Google Books"), "Should track Google Books API key status")
-        #expect(initialStatus.keys.contains("ISBNDB"), "Should track ISBNDB API key status")
     }
     
     // MARK: - State Management Tests
     
     @Test("View should update when API key status changes")
     func testStatusUpdates() async {
-        let keyManager = APIKeyManager.shared
+        let keychainService = KeychainService.shared
         
         // Clear keys first
-        await keyManager.clearAllKeys()
-        var status = await keyManager.keyStatus()
+        await keychainService.clearAllKeys()
+        var status = await keychainService.keyStatus()
         #expect(status["Google Books"] == false, "Google Books key should be missing initially")
         
         // Set a key
-        await keyManager.setGoogleBooksAPIKey("test-ui-key")
-        status = await keyManager.keyStatus()
+        await keychainService.setGoogleBooksAPIKey("test-ui-key")
+        status = await keychainService.keyStatus()
         #expect(status["Google Books"] == true, "Google Books key should be present after setting")
         
         // The view should reflect this change through its @StateObject
@@ -59,19 +58,19 @@ struct APIKeyManagementViewTests {
     
     @Test("View should handle refresh action correctly")
     func testRefreshAction() async {
-        let keyManager = APIKeyManager.shared
+        let keychainService = KeychainService.shared
         
         // Set up initial state
-        await keyManager.setupInitialKeys()
+        await keychainService.setupInitialKeys()
         
         // Create view and trigger refresh
         let view = APIKeyManagementView()
         
-        // The refresh action should update lastRefresh timestamp
-        // and trigger objectWillChange on the key manager
+        // The refresh action should update state
+        // and trigger objectWillChange on the keychain service
         
-        // Verify the key manager's state is consistent
-        let status = await keyManager.keyStatus()
+        // Verify the keychain service's state is consistent
+        let status = await keychainService.keyStatus()
         #expect(status["Google Books"] != nil, "Status should be available after refresh")
     }
     
@@ -104,40 +103,38 @@ struct APIKeyManagementViewTests {
     
     @Test("Clear action should remove all keys")
     func testClearAction() async {
-        let keyManager = APIKeyManager.shared
+        let keychainService = KeychainService.shared
         
         // Set up keys
-        await keyManager.setupInitialKeys()
-        #expect(await keyManager.googleBooksAPIKey != nil, "Key should be present before clear")
+        await keychainService.setupInitialKeys()
+        #expect(await keychainService.googleBooksAPIKey != nil, "Key should be present before clear")
         
         // Simulate clear action
-        await keyManager.clearAllKeys()
+        await keychainService.clearAllKeys()
         
         // Verify keys are cleared
-        #expect(await keyManager.googleBooksAPIKey == nil, "Key should be cleared after action")
-        #expect(await keyManager.isbndbAPIKey == nil, "ISBNDB key should also be cleared")
+        #expect(await keychainService.googleBooksAPIKey == nil, "Key should be cleared after action")
         
         // Verify status reflects cleared state
-        let status = await keyManager.keyStatus()
+        let status = await keychainService.keyStatus()
         #expect(status["Google Books"] == false, "Status should reflect cleared state")
-        #expect(status["ISBNDB"] == false, "ISBNDB status should reflect cleared state")
     }
     
     @Test("Reset action should restore default keys")
     func testResetAction() async {
-        let keyManager = APIKeyManager.shared
+        let keychainService = KeychainService.shared
         
         // Clear all keys first
-        await keyManager.clearAllKeys()
-        #expect(await keyManager.googleBooksAPIKey == nil, "Key should be cleared initially")
+        await keychainService.clearAllKeys()
+        #expect(await keychainService.googleBooksAPIKey == nil, "Key should be cleared initially")
         
         // Simulate reset action
-        await keyManager.resetToDefaults()
+        await keychainService.resetToDefaults()
         
         // Verify default key is restored
-        #expect(await keyManager.googleBooksAPIKey != nil, "Default key should be restored")
+        #expect(await keychainService.googleBooksAPIKey != nil, "Default key should be restored")
         
-        let status = await keyManager.keyStatus()
+        let status = await keychainService.keyStatus()
         #expect(status["Google Books"] == true, "Status should reflect restored key")
     }
     
@@ -220,14 +217,14 @@ struct APIKeyManagementViewTests {
     
     @Test("View should perform efficiently with frequent updates")
     func testViewPerformance() async {
-        let keyManager = APIKeyManager.shared
+        let keychainService = KeychainService.shared
         
         // Test performance with rapid key status changes
         let startTime = Date()
         
         for i in 0..<50 {
-            await keyManager.setGoogleBooksAPIKey("performance-test-\(i)")
-            let _ = await keyManager.keyStatus() // Simulate view updates
+            await keychainService.setGoogleBooksAPIKey("performance-test-\(i)")
+            let _ = await keychainService.keyStatus() // Simulate view updates
         }
         
         let elapsedTime = Date().timeIntervalSince(startTime)
@@ -238,16 +235,16 @@ struct APIKeyManagementViewTests {
     
     @Test("View should handle keychain errors gracefully")
     func testErrorStateHandling() async {
-        let keyManager = APIKeyManager.shared
+        let keychainService = KeychainService.shared
         
         // Test how the view handles various error states
         // Including keychain access failures, missing keys, etc.
         
         // Clear keys to create an error state
-        await keyManager.clearAllKeys()
+        await keychainService.clearAllKeys()
         
         // The view should still function and display appropriate status
-        let status = await keyManager.keyStatus()
+        let status = await keychainService.keyStatus()
         #expect(status["Google Books"] == false, "Should handle missing key state gracefully")
     }
     
@@ -270,8 +267,8 @@ extension APIKeyManagementViewTests {
     private func setupCleanEnvironment() {
         // Reset any global state that might affect UI tests
         Task {
-            let keyManager = APIKeyManager.shared
-            await keyManager.resetToDefaults()
+            let keychainService = KeychainService.shared
+            await keychainService.resetToDefaults()
         }
     }
 }
@@ -287,18 +284,13 @@ extension APIKeyManagementViewTests {
     }
 }
 
-// MARK: - APIKeyManager Test Extensions
+// MARK: - KeychainService Test Extensions
 
 @MainActor
-extension APIKeyManager {
+extension KeychainService {
     
     /// Test helper to set Google Books API key
     func setGoogleBooksAPIKey(_ key: String?) {
         self.googleBooksAPIKey = key
-    }
-    
-    /// Test helper to set ISBNDB API key
-    func setISBNDBAPIKey(_ key: String?) {
-        self.isbndbAPIKey = key
     }
 }

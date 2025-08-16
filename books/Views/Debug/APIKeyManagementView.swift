@@ -2,7 +2,7 @@
 import SwiftUI
 
 struct APIKeyManagementView: View {
-    @StateObject private var apiKeyManager = APIKeyManager.shared
+    @StateObject private var keychainService = KeychainService.shared
     @State private var showingClearAlert = false
     @State private var showingResetAlert = false
     @State private var lastRefresh = Date()
@@ -12,7 +12,7 @@ struct APIKeyManagementView: View {
             List {
                 // API Key Status Section
                 Section("API Key Status") {
-                    ForEach(Array(apiKeyManager.keyStatus().keys.sorted()), id: \.self) { service in
+                    ForEach(Array(keychainService.keyStatus().keys.sorted()), id: \.self) { service in
                         HStack {
                             Text(service)
                                 .bodyLarge()
@@ -20,7 +20,7 @@ struct APIKeyManagementView: View {
                             Spacer()
                             
                             HStack(spacing: Theme.Spacing.xs) {
-                                if apiKeyManager.keyStatus()[service] == true {
+                                if keychainService.keyStatus()[service] == true {
                                     Image(systemName: "checkmark.shield.fill")
                                         .foregroundColor(.green)
                                     Text("Configured")
@@ -141,7 +141,7 @@ struct APIKeyManagementView: View {
             .alert("Clear All Keys", isPresented: $showingClearAlert) {
                 Button("Cancel", role: .cancel) { }
                 Button("Clear", role: .destructive) {
-                    apiKeyManager.clearAllKeys()
+                    keychainService.clearAllKeys()
                     refreshStatus()
                 }
             } message: {
@@ -150,7 +150,7 @@ struct APIKeyManagementView: View {
             .alert("Reset to Defaults", isPresented: $showingResetAlert) {
                 Button("Cancel", role: .cancel) { }
                 Button("Reset", role: .destructive) {
-                    apiKeyManager.resetToDefaults()
+                    keychainService.resetToDefaults()
                     refreshStatus()
                 }
             } message: {
@@ -161,8 +161,8 @@ struct APIKeyManagementView: View {
     
     private func refreshStatus() {
         lastRefresh = Date()
-        // Force UI refresh by updating the apiKeyManager
-        apiKeyManager.objectWillChange.send()
+        // Force UI refresh by updating the keychainService
+        keychainService.objectWillChange.send()
     }
 }
 

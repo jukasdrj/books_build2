@@ -4,14 +4,14 @@ import Foundation
 @MainActor
 class BookSearchService: ObservableObject {
     static let shared = BookSearchService()
-    private let apiKeyManager = APIKeyManager.shared
+    private let keychainService = KeychainService.shared
     
     private init() {
         // Ensure API keys are set up on initialization
-        apiKeyManager.setupInitialKeys()
+        keychainService.setupInitialKeys()
         
         #if DEBUG
-        apiKeyManager.printKeyStatus()
+        keychainService.printKeyStatus()
         #endif
     }
 
@@ -19,7 +19,7 @@ class BookSearchService: ObservableObject {
     
     /// Secure API key retrieved from Keychain
     private var apiKey: String? {
-        return apiKeyManager.googleBooksAPIKey
+        return keychainService.googleBooksAPIKey
     }
     
     enum SortOption: String, CaseIterable, Identifiable {

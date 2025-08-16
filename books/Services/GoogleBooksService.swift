@@ -4,9 +4,6 @@ import Combine
 final class GoogleBooksService {
     static let shared = GoogleBooksService()
     private let diagnostics = GoogleBooksDiagnostics.shared
-    private var apiKey: String? {
-        KeychainService.shared.loadAPIKey()
-    }
 
     private init() {}
 
@@ -20,7 +17,7 @@ final class GoogleBooksService {
                 .eraseToAnyPublisher()
         }
 
-        guard let apiKey = apiKey, !apiKey.isEmpty else {
+        guard let apiKey = KeychainService.shared.loadAPIKey(), !apiKey.isEmpty else {
             diagnostics.logError(requestId: UUID(),
                                  error: GoogleBooksError.apiKeyMissing,
                                  context: "searchBooks")

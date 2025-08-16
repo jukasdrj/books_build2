@@ -3,17 +3,17 @@
 <plist version="1.0">
 <dict>
 	<key>API_KEY</key>
-	<string>AIzaSyCnwUXXc1lyTW0YmU31CQZVBfFPaNk2gBM</string>
+	<string>YOUR_FIREBASE_API_KEY_HERE</string>
 	<key>GCM_SENDER_ID</key>
-	<string>173675122179</string>
+	<string>YOUR_GCM_SENDER_ID_HERE</string>
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>Z67H8Y8DW.com.oooefam.booksV3</string>
+	<string>YOUR_BUNDLE_ID_HERE</string>
 	<key>PROJECT_ID</key>
-	<string>bluebubbles-d2d8</string>
+	<string>YOUR_PROJECT_ID_HERE</string>
 	<key>STORAGE_BUCKET</key>
-	<string>bluebubbles-d2d8.firebasestorage.app</string>
+	<string>YOUR_STORAGE_BUCKET_HERE</string>
 	<key>IS_ADS_ENABLED</key>
 	<false></false>
 	<key>IS_ANALYTICS_ENABLED</key>
@@ -25,6 +25,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:173675122179:ios:aa8a16618b6404a524c836</string>
+	<string>YOUR_GOOGLE_APP_ID_HERE</string>
 </dict>
 </plist>

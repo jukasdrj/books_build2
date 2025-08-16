@@ -13,10 +13,10 @@ struct BookSearchContainerView: View {
                 if viewModel.isLoading {
                     ProgressView("Searching...")
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else if let errorMessage = viewModel.errorMessage {
+                } else if let error = viewModel.error {
                     EnhancedErrorView(
                         title: "Search Error",
-                        message: viewModel.errorDetails.map { "\(errorMessage)\n\n\($0)" } ?? errorMessage,
+                        message: error.errorDescription ?? "Unknown error occurred",
                         retryAction: {
                             viewModel.searchBooks(query: searchText)
                         }

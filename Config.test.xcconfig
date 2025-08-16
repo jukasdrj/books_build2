@@ -1,2 +1,3 @@
-GOOGLE_BOOKS_API_KEY = AIzaSyB1NeT0lnhDPeHssd32k8clfACiGJyV_U8
-GOOGLE_BOOKS_API_KEY_FALLBACK = AIzaSyCj0-1RxPlVwO_XRZRkkQxCgp4lQVCxWaE
+// API keys removed for security - configure manually through app debug interface
+// GOOGLE_BOOKS_API_KEY = YOUR_API_KEY_HERE
+// GOOGLE_BOOKS_API_KEY_FALLBACK = YOUR_FALLBACK_KEY_HERE

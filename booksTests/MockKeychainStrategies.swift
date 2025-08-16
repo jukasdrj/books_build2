@@ -215,7 +215,7 @@ final class MockableAPIKeyManager: ObservableObject, @unchecked Sendable {
         guard isFirstRun else { return }
         
         // Migrate existing Google Books API key to Keychain
-        await keychain.setKeychainValue("AIzaSyCj0-1RxPlVwO_XRZRkkQxCgp4lQVCxWaE", for: KeychainKeys.googleBooksAPI)
+        await keychain.setKeychainValue("test-mock-api-key-placeholder", for: KeychainKeys.googleBooksAPI)
         
         // Mark setup as complete
         isFirstRun = false
