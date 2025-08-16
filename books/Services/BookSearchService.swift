@@ -4,10 +4,23 @@ import Foundation
 @MainActor
 class BookSearchService: ObservableObject {
     static let shared = BookSearchService()
-    private init() {}
+    private let apiKeyManager = APIKeyManager.shared
+    
+    private init() {
+        // Ensure API keys are set up on initialization
+        apiKeyManager.setupInitialKeys()
+        
+        #if DEBUG
+        apiKeyManager.printKeyStatus()
+        #endif
+    }
 
     private let baseURL = "https://www.googleapis.com/books/v1/volumes"
-    private let apiKey = "AIzaSyCj0-1RxPlVwO_XRZRkkQxCgp4lQVCxWaE"
+    
+    /// Secure API key retrieved from Keychain
+    private var apiKey: String? {
+        return apiKeyManager.googleBooksAPIKey
+    }
     
     enum SortOption: String, CaseIterable, Identifiable {
         case relevance = "relevance"
@@ -65,6 +78,14 @@ class BookSearchService: ObservableObject {
             return .success([]) // Return empty results for empty queries
         }
         
+        // Check for API key availability
+        guard let secureApiKey = self.apiKey else {
+            #if DEBUG
+            print("❌ BookSearchService: Google Books API key not found in Keychain")
+            #endif
+            return .failure(.networkError("API key not configured. Please restart the app to initialize secure storage."))
+        }
+        
         // Starting search with optimized query
         
         guard var components = URLComponents(string: baseURL) else {
@@ -95,8 +116,8 @@ class BookSearchService: ObservableObject {
             queryItems.append(URLQueryItem(name: "langRestrict", value: "en"))
         }
         
-        // Add API key
-        queryItems.append(URLQueryItem(name: "key", value: apiKey))
+        // Add secure API key
+        queryItems.append(URLQueryItem(name: "key", value: secureApiKey))
         
         components.queryItems = queryItems
 

@@ -6,23 +6,38 @@ struct DebugConsoleView: View {
     
     var body: some View {
         NavigationView {
-            ScrollView {
-                Text(diagnosticReport)
-                    .font(.system(.caption, design: .monospaced))
-                    .padding()
-                    .frame(maxWidth: .infinity, alignment: .leading)
+            List {
+                // API Security Management
+                Section("Security Management") {
+                    NavigationLink(destination: APIKeyManagementView()) {
+                        Label("API Key Management", systemImage: "key.fill")
+                    }
+                }
+                
+                // API Diagnostics Report
+                Section("Diagnostics Report") {
+                    VStack(alignment: .leading) {
+                        Text(diagnosticReport)
+                            .font(.system(.caption, design: .monospaced))
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding()
+                            .background(Color(UIColor.secondarySystemBackground))
+                            .cornerRadius(8)
+                    }
+                }
             }
-            .navigationTitle("API Diagnostics")
+            .navigationTitle("Debug Console")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Refresh") {
-                        diagnosticReport = GoogleBooksDiagnostics.shared.exportDiagnostics()
+                        // Use the view model's export to avoid direct dependency issues
+                        diagnosticReport = BooksViewModel().exportDiagnostics()
                     }
                 }
             }
         }
         .onAppear {
-            diagnosticReport = GoogleBooksDiagnostics.shared.exportDiagnostics()
+            diagnosticReport = BooksViewModel().exportDiagnostics()
         }
     }
 }
