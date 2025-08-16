@@ -86,6 +86,13 @@ class CSVImportService: ObservableObject {
         self.isImporting = true
         self.importResult = nil
         
+        // Post notification that import has started
+        NotificationCenter.default.post(
+            name: .csvImportDidStart,
+            object: self,
+            userInfo: ["session": session]
+        )
+        
         // Request background task capability
         let backgroundTaskStarted = BackgroundTaskManager.shared.beginBackgroundTask(for: session.id)
         if backgroundTaskStarted {
@@ -419,6 +426,15 @@ class CSVImportService: ObservableObject {
         }
         
         isImporting = false
+        
+        // Post notification that import has completed
+        NotificationCenter.default.post(
+            name: .csvImportDidComplete,
+            object: self,
+            userInfo: ["result": importResult as Any, "progress": progress]
+        )
+        
+        print("[CSVImportService] Import completed. Success: \(successCount), Duplicates: \(duplicateCount), Failed: \(failCount)")
     }
     
     // MARK: - Queue Management

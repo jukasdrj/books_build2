@@ -66,7 +66,9 @@ struct LibraryView: View {
     
     var body: some View {
         VStack(spacing: 0) {
-
+            // Import status banner (shows when import is active)
+            ImportStatusBanner()
+            
             // Quick filter bar
             QuickFilterBar(filter: $libraryFilter) { }
             

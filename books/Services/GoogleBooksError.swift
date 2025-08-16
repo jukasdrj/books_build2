@@ -8,7 +8,7 @@ enum GoogleBooksError: LocalizedError {
     case invalidRequest(String)
     case networkError(Error)
     case decodingError(Error)
-    case httpError(statusCode: Int, message: String?)
+    case httpError(statusCode: Int, message: String?, data: Data?)
     case unknownError
     
     var errorDescription: String? {
@@ -30,8 +30,12 @@ enum GoogleBooksError: LocalizedError {
             return "Network error: \(error.localizedDescription)"
         case .decodingError:
             return "Unable to process server response."
-        case .httpError(let code, let message):
-            return "Server error (\(code)): \(message ?? "Unknown error")"
+        case .httpError(let code, let message, let data):
+            var description = "Server error (\(code)): \(message ?? "Unknown error")"
+            if let data = data, let json = String(data: data, encoding: .utf8) {
+                description += "\nRaw Response:\n\(json)"
+            }
+            return description
         case .unknownError:
             return "An unknown error occurred."
         }

@@ -123,16 +123,32 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         // Register background tasks
         BackgroundTaskManager.shared.registerBackgroundTasks()
         
-        // Migrate API key to Keychain on first launch
+        // Configure API key on first launch
+        // IMPORTANT: Replace YOUR_API_KEY_HERE with your actual Google Books API key
+        let apiKeyToSet = "YOUR_API_KEY_HERE" // <-- PASTE YOUR API KEY HERE
+        
         if KeychainService.shared.loadAPIKey() == nil {
-            if let apiKey = Bundle.main.object(forInfoDictionaryKey: "GoogleBooksAPIKey") as? String, !apiKey.isEmpty {
+            // First check if we have a hardcoded key to set
+            if apiKeyToSet != "YOUR_API_KEY_HERE" && !apiKeyToSet.isEmpty {
+                do {
+                    try KeychainService.shared.saveAPIKey(apiKeyToSet)
+                    print("[AppDelegate] ✅ API key configured successfully in Keychain.")
+                } catch {
+                    print("[AppDelegate] ❌ Failed to save API key to Keychain: \(error)")
+                }
+            } else if let apiKey = Bundle.main.object(forInfoDictionaryKey: "GoogleBooksAPIKey") as? String, !apiKey.isEmpty {
+                // Fallback to Info.plist key if available
                 do {
                     try KeychainService.shared.saveAPIKey(apiKey)
-                    print("[AppDelegate] API key migrated to Keychain.")
+                    print("[AppDelegate] API key migrated from Info.plist to Keychain.")
                 } catch {
                     print("[AppDelegate] Failed to migrate API key to Keychain: \(error)")
                 }
+            } else {
+                print("[AppDelegate] ⚠️ No API key configured. Please set apiKeyToSet in booksApp.swift")
             }
+        } else {
+            print("[AppDelegate] ✅ API key already configured in Keychain")
         }
         GoogleBooksDiagnostics.shared.logAPIKeyStatus()
 

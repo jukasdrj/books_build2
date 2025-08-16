@@ -73,24 +73,30 @@ final class GoogleBooksService: @unchecked Sendable {
                 case 200:
                     return output.data
                 case 400:
-                    throw GoogleBooksError.invalidRequest("Bad request")
+                    let errorMessage = self.extractErrorMessage(from: output.data) ?? "Bad request"
+                    throw GoogleBooksError.httpError(statusCode: 400, message: errorMessage, data: output.data)
                 case 401:
-                    throw GoogleBooksError.invalidAPIKey
+                    let errorMessage = self.extractErrorMessage(from: output.data) ?? "Invalid API key"
+                    throw GoogleBooksError.httpError(statusCode: 401, message: errorMessage, data: output.data)
                 case 403:
-                    throw GoogleBooksError.quotaExceeded
+                    let errorMessage = self.extractErrorMessage(from: output.data) ?? "Quota exceeded"
+                    throw GoogleBooksError.httpError(statusCode: 403, message: errorMessage, data: output.data)
                 case 429:
-                    let retryAfter = httpResponse.value(forHTTPHeaderField: "Retry-After")
+                    let _ = httpResponse.value(forHTTPHeaderField: "Retry-After")
                         .flatMap { Double($0) }
-                    throw GoogleBooksError.rateLimitExceeded(retryAfter: retryAfter)
+                    let errorMessage = self.extractErrorMessage(from: output.data) ?? "Rate limit exceeded"
+                    throw GoogleBooksError.httpError(statusCode: 429, message: errorMessage, data: output.data)
                 case 500...599:
                     throw GoogleBooksError.httpError(
                         statusCode: httpResponse.statusCode,
-                        message: "Server error"
+                        message: "Server error",
+                        data: output.data
                     )
                 default:
                     throw GoogleBooksError.httpError(
                         statusCode: httpResponse.statusCode,
-                        message: HTTPURLResponse.localizedString(forStatusCode: httpResponse.statusCode)
+                        message: HTTPURLResponse.localizedString(forStatusCode: httpResponse.statusCode),
+                        data: output.data
                     )
                 }
             }
@@ -108,6 +114,15 @@ final class GoogleBooksService: @unchecked Sendable {
                 }
             }
             .eraseToAnyPublisher()
+    }
+
+    private func extractErrorMessage(from data: Data) -> String? {
+        if let json = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any],
+           let error = json["error"] as? [String: Any],
+           let message = error["message"] as? String {
+            return message
+        }
+        return nil
     }
 
     private func buildSearchURL(query: String, apiKey: String) -> URL? {

@@ -37,7 +37,7 @@ class BackgroundImportCoordinator {
     
     // MARK: - Services
     
-    private let csvImportService: CSVImportService
+    let csvImportService: CSVImportService  // Made public for UI access
     private let modelContext: ModelContext
 //    private let liveActivityManager = UnifiedLiveActivityManager.shared
     
