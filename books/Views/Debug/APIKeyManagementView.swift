@@ -6,6 +6,8 @@ struct APIKeyManagementView: View {
     @State private var showingClearAlert = false
     @State private var showingResetAlert = false
     @State private var lastRefresh = Date()
+    @State private var newAPIKey = ""
+    @State private var showingAPIKeyInput = false
     
     var body: some View {
         NavigationView {
@@ -36,6 +38,36 @@ struct APIKeyManagementView: View {
                             }
                         }
                         .padding(.vertical, Theme.Spacing.xs)
+                    }
+                }
+                
+                // API Key Configuration Section
+                Section("Configure API Key") {
+                    VStack(alignment: .leading, spacing: Theme.Spacing.md) {
+                        if keychainService.keyStatus()["Google Books"] == false {
+                            Text("No API key configured. Add your Google Books API key to enable book search.")
+                                .bodyMedium()
+                                .foregroundColor(.orange)
+                        }
+                        
+                        Button(action: {
+                            showingAPIKeyInput = true
+                        }) {
+                            HStack {
+                                Image(systemName: "key.fill")
+                                Text(keychainService.keyStatus()["Google Books"] == true ? "Update API Key" : "Add API Key")
+                                    .bodyLarge()
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                            }
+                        }
+                        .materialButton(style: .outlined, size: .medium)
+                        
+                        if keychainService.keyStatus()["Google Books"] == true {
+                            Text("API key is securely stored in iOS Keychain")
+                                .bodySmall()
+                                .foregroundColor(.green)
+                        }
                     }
                 }
                 
@@ -156,6 +188,21 @@ struct APIKeyManagementView: View {
             } message: {
                 Text("This will reset all API keys to their default values, overwriting any custom configurations.")
             }
+            .sheet(isPresented: $showingAPIKeyInput) {
+                APIKeyInputView(
+                    apiKey: $newAPIKey,
+                    onSave: { key in
+                        keychainService.googleBooksAPIKey = key
+                        refreshStatus()
+                        showingAPIKeyInput = false
+                        newAPIKey = ""
+                    },
+                    onCancel: {
+                        showingAPIKeyInput = false
+                        newAPIKey = ""
+                    }
+                )
+            }
         }
     }
     
@@ -188,6 +235,76 @@ private struct SecurityFeatureRow: View {
                     .labelSmall()
                     .foregroundColor(.secondary)
             }
+        }
+    }
+}
+
+// MARK: - API Key Input View
+
+private struct APIKeyInputView: View {
+    @Binding var apiKey: String
+    let onSave: (String) -> Void
+    let onCancel: () -> Void
+    @FocusState private var isKeyFieldFocused: Bool
+    
+    var body: some View {
+        NavigationView {
+            VStack(spacing: Theme.Spacing.lg) {
+                VStack(alignment: .leading, spacing: Theme.Spacing.md) {
+                    Text("Google Books API Key")
+                        .titleMedium()
+                    
+                    Text("Enter your Google Books API key. This will be securely stored in the iOS Keychain.")
+                        .bodyMedium()
+                        .foregroundColor(.secondary)
+                    
+                    SecureField("API Key", text: $apiKey)
+                        .textFieldStyle(.roundedBorder)
+                        .focused($isKeyFieldFocused)
+                        .onAppear {
+                            isKeyFieldFocused = true
+                        }
+                }
+                .padding()
+                
+                VStack(spacing: Theme.Spacing.sm) {
+                    Text("How to get your API key:")
+                        .titleSmall()
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    
+                    VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+                        Text("1. Visit Google Cloud Console")
+                        Text("2. Enable Books API")
+                        Text("3. Create credentials → API Key")
+                        Text("4. Restrict to Books API")
+                    }
+                    .bodySmall()
+                    .foregroundColor(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .padding()
+                .background(Color(UIColor.secondarySystemBackground))
+                .cornerRadius(8)
+                .padding(.horizontal)
+                
+                Spacer()
+                
+                HStack(spacing: Theme.Spacing.md) {
+                    Button("Cancel") {
+                        onCancel()
+                    }
+                    .materialButton(style: .outlined, size: .medium)
+                    
+                    Button("Save") {
+                        onSave(apiKey)
+                    }
+                    .materialButton(style: .filled, size: .medium)
+                    .disabled(apiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                }
+                .padding()
+            }
+            .navigationTitle("API Key")
+            .navigationBarTitleDisplayMode(.inline)
         }
     }
 }

@@ -235,7 +235,7 @@ extension RateLimiter {
     /// Execute an async operation with rate limiting
     /// - Parameter operation: The async operation to execute
     /// - Returns: Result of the operation
-    func execute<T>(_ operation: @escaping () async throws -> T) async throws -> T {
+    func execute<T: Sendable>(_ operation: @escaping @Sendable () async throws -> T) async throws -> T {
         await waitForPermission()
         
         do {

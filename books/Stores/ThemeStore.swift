@@ -2,6 +2,7 @@ import SwiftUI
 
 /// Observable theme store that manages the current app theme
 /// Provides persistence and reactive updates throughout the app
+@MainActor
 class ThemeStore: ObservableObject {
     private let userDefaults = UserDefaults.standard
     
@@ -23,7 +24,6 @@ class ThemeStore: ObservableObject {
     
     /// Sets a new theme with animation and haptic feedback
     /// - Parameter theme: The theme variant to set
-    @MainActor
     func setTheme(_ theme: ThemeVariant) {
         withAnimation(.easeInOut(duration: 0.3)) {
             currentTheme = theme
@@ -52,7 +52,8 @@ class ThemeStore: ObservableObject {
 
 // MARK: - Theme Store Environment Key
 
-struct ThemeStoreKey: EnvironmentKey {
+struct ThemeStoreKey: @preconcurrency EnvironmentKey {
+    @MainActor
     static let defaultValue = ThemeStore()
 }
 

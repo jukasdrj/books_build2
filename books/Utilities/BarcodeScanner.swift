@@ -1,6 +1,6 @@
 import UIKit
 import SwiftUI
-import AVFoundation
+@preconcurrency import AVFoundation
 import Vision
 
 struct BarcodeScannerView: View {
@@ -220,7 +220,9 @@ struct CameraPreview: UIViewRepresentable {
     
     func makeUIView(context: Context) -> CameraPreviewView {
         let view = CameraPreviewView()
-        view.onBarcodeScanned = onBarcodeScanned
+        view.onBarcodeScanned = { @MainActor barcode in
+            onBarcodeScanned(barcode)
+        }
         view.scanningEnabled = scanningEnabled
         onCameraReady(view)
         return view
@@ -241,8 +243,9 @@ struct CameraPreview: UIViewRepresentable {
 }
 
 // MARK: - Camera Preview UIView
+@MainActor
 class CameraPreviewView: UIView {
-    var onBarcodeScanned: ((String) -> Void)?
+    var onBarcodeScanned: (@MainActor (String) -> Void)?
     var scanningEnabled: Bool = true
     
     private var captureSession: AVCaptureSession?
@@ -277,40 +280,44 @@ class CameraPreviewView: UIView {
     }
     
     // MARK: - Public Methods
-    func updateTorch(isOn: Bool) {
-        guard let device = videoDevice, device.hasTorch else { return }
-        
-        sessionQueue.async {
-            do {
-                try device.lockForConfiguration()
-                device.torchMode = isOn ? .on : .off
-                device.unlockForConfiguration()
-            } catch {
+    nonisolated func updateTorch(isOn: Bool) {
+        Task { @MainActor in
+            guard let device = self.videoDevice, device.hasTorch else { return }
+            
+            sessionQueue.async {
+                do {
+                    try device.lockForConfiguration()
+                    device.torchMode = isOn ? .on : .off
+                    device.unlockForConfiguration()
+                } catch {
 // print("❌ Failed to configure torch: \(error)")
+                }
             }
         }
     }
     
-    func focusAtCenter() {
-        guard let device = videoDevice else { return }
-        
-        sessionQueue.async {
-            do {
-                try device.lockForConfiguration()
-                
-                if device.isFocusModeSupported(.autoFocus) {
-                    device.focusMode = .autoFocus
-                    device.focusPointOfInterest = CGPoint(x: 0.5, y: 0.5)
-                }
-                
-                if device.isExposureModeSupported(.autoExpose) {
-                    device.exposureMode = .autoExpose
-                    device.exposurePointOfInterest = CGPoint(x: 0.5, y: 0.5)
-                }
-                
-                device.unlockForConfiguration()
-            } catch {
+    nonisolated func focusAtCenter() {
+        Task { @MainActor in
+            guard let device = self.videoDevice else { return }
+            
+            sessionQueue.async {
+                do {
+                    try device.lockForConfiguration()
+                    
+                    if device.isFocusModeSupported(.autoFocus) {
+                        device.focusMode = .autoFocus
+                        device.focusPointOfInterest = CGPoint(x: 0.5, y: 0.5)
+                    }
+                    
+                    if device.isExposureModeSupported(.autoExpose) {
+                        device.exposureMode = .autoExpose
+                        device.exposurePointOfInterest = CGPoint(x: 0.5, y: 0.5)
+                    }
+                    
+                    device.unlockForConfiguration()
+                } catch {
 // print("❌ Failed to configure focus: \(error)")
+                }
             }
         }
     }
@@ -321,7 +328,9 @@ class CameraPreviewView: UIView {
         }
         
         sessionQueue.async { [weak self] in
-            self?.configureSession()
+            Task { @MainActor in
+                await self?.configureSession()
+            }
         }
         
         // Add app lifecycle observers
@@ -340,7 +349,7 @@ class CameraPreviewView: UIView {
         )
     }
     
-    private func configureSession() {
+    private func configureSession() async {
         guard captureSession == nil else { return }
         
         let session = AVCaptureSession()
@@ -430,9 +439,13 @@ class CameraPreviewView: UIView {
         // Remove observers
         NotificationCenter.default.removeObserver(self)
         
-        sessionQueue.async { [weak self] in
+        // Store current values to avoid actor isolation issues
+        let currentSession = captureSession
+        let currentDevice = videoDevice
+        
+        sessionQueue.async {
             // Turn off torch before stopping
-            if let device = self?.videoDevice, device.hasTorch {
+            if let device = currentDevice, device.hasTorch {
                 do {
                     try device.lockForConfiguration()
                     device.torchMode = .off
@@ -442,55 +455,61 @@ class CameraPreviewView: UIView {
                 }
             }
             
-            self?.captureSession?.stopRunning()
-            self?.captureSession = nil
-            self?.videoDevice = nil
-            self?.videoOutput = nil
+            currentSession?.stopRunning()
         }
         
-        DispatchQueue.main.async { [weak self] in
-            self?.previewLayer?.removeFromSuperlayer()
-            self?.previewLayer = nil
+        // Clear properties on main actor
+        Task { @MainActor in
+            self.captureSession = nil
+            self.videoDevice = nil
+            self.videoOutput = nil
+            self.previewLayer?.removeFromSuperlayer()
+            self.previewLayer = nil
         }
     }
     
     // MARK: - App Lifecycle Management
     @objc private func appWillEnterForeground() {
-        guard captureSession != nil else { return }
-        
-        sessionQueue.async { [weak self] in
-            self?.captureSession?.startRunning()
+        Task { @MainActor in
+            guard let session = self.captureSession else { return }
+            
+            sessionQueue.async {
+                session.startRunning()
+            }
         }
     }
     
     @objc private func appDidEnterBackground() {
-        guard captureSession != nil else { return }
-        
-        sessionQueue.async { [weak self] in
-            // Turn off torch when going to background
-            if let device = self?.videoDevice, device.hasTorch {
-                do {
-                    try device.lockForConfiguration()
-                    device.torchMode = .off
-                    device.unlockForConfiguration()
-                } catch {
-// print("❌ Failed to turn off torch: \(error)")
-                }
-            }
+        Task { @MainActor in
+            guard let session = self.captureSession else { return }
+            let device = self.videoDevice
             
-            self?.captureSession?.stopRunning()
+            sessionQueue.async {
+                // Turn off torch when going to background
+                if let device = device, device.hasTorch {
+                    do {
+                        try device.lockForConfiguration()
+                        device.torchMode = .off
+                        device.unlockForConfiguration()
+                    } catch {
+// print("❌ Failed to turn off torch: \(error)")
+                    }
+                }
+                
+                session.stopRunning()
+            }
         }
     }
 }
 
 // MARK: - Vision Framework Integration
 extension CameraPreviewView: AVCaptureVideoDataOutputSampleBufferDelegate {
-    func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
-        guard scanningEnabled,
-              let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else {
+    nonisolated func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
+        guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else {
             return
         }
         
+        // Process the pixel buffer directly without crossing actor boundaries
         let request = VNDetectBarcodesRequest { [weak self] request, error in
             guard error == nil,
                   let results = request.results as? [VNBarcodeObservation] else {
@@ -503,7 +522,8 @@ extension CameraPreviewView: AVCaptureVideoDataOutputSampleBufferDelegate {
                 
                 let cleanedBarcode = payloadString.replacingOccurrences(of: "-", with: "")
                 if self.isValidISBN(cleanedBarcode) {
-                    DispatchQueue.main.async {
+                    Task { @MainActor in
+                        guard self.scanningEnabled else { return }
                         self.onBarcodeScanned?(cleanedBarcode)
                     }
                     return
@@ -523,13 +543,13 @@ extension CameraPreviewView: AVCaptureVideoDataOutputSampleBufferDelegate {
 // print("❌ Vision barcode detection failed: \(error)")
         }
     }
+    
 }
 
 // MARK: - Fallback Barcode Detection (AVCapture)
 extension CameraPreviewView: AVCaptureMetadataOutputObjectsDelegate {
-    func metadataOutput(_ output: AVCaptureMetadataOutput, didOutput metadataObjects: [AVMetadataObject], from connection: AVCaptureConnection) {
-        guard scanningEnabled else { return }
-        
+    nonisolated func metadataOutput(_ output: AVCaptureMetadataOutput, didOutput metadataObjects: [AVMetadataObject], from connection: AVCaptureConnection) {
+        // Process metadata objects directly without crossing actor boundaries
         for metadataObject in metadataObjects {
             guard let readableObject = metadataObject as? AVMetadataMachineReadableCodeObject,
                   let stringValue = readableObject.stringValue else {
@@ -539,14 +559,17 @@ extension CameraPreviewView: AVCaptureMetadataOutputObjectsDelegate {
             // Validate that this looks like an ISBN
             let cleanedBarcode = stringValue.replacingOccurrences(of: "-", with: "")
             if isValidISBN(cleanedBarcode) {
-                onBarcodeScanned?(cleanedBarcode)
+                Task { @MainActor in
+                    guard self.scanningEnabled else { return }
+                    self.onBarcodeScanned?(cleanedBarcode)
+                }
                 return
             }
         }
     }
     
     // MARK: - Enhanced ISBN Validation
-    internal func isValidISBN(_ code: String) -> Bool {
+    nonisolated internal func isValidISBN(_ code: String) -> Bool {
         let digitsOnly = code.filter { $0.isNumber }
         
         // Check length first
@@ -561,7 +584,7 @@ extension CameraPreviewView: AVCaptureMetadataOutputObjectsDelegate {
         }
     }
     
-    internal func isValidISBN10(_ isbn: String) -> Bool {
+    nonisolated internal func isValidISBN10(_ isbn: String) -> Bool {
         guard isbn.count == 10 else { return false }
         
         var sum = 0
@@ -579,7 +602,7 @@ extension CameraPreviewView: AVCaptureMetadataOutputObjectsDelegate {
         return sum % 11 == 0
     }
     
-    internal func isValidISBN13(_ isbn: String) -> Bool {
+    nonisolated internal func isValidISBN13(_ isbn: String) -> Bool {
         guard isbn.count == 13 else { return false }
         
         var sum = 0

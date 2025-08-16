@@ -234,10 +234,23 @@ extension ConcurrentImportConfig {
 
 extension ConcurrentImportConfig {
     
+    /// Thread-safe storage for current configuration
+    @MainActor
+    private static var _current: ConcurrentImportConfig = .conservative
+    
     /// Current global configuration (can be changed for testing/tuning)
-    static var current: ConcurrentImportConfig = .conservative
+    @MainActor
+    static var current: ConcurrentImportConfig {
+        get {
+            return _current
+        }
+        set {
+            _current = newValue
+        }
+    }
     
     /// Update the current configuration
+    @MainActor
     static func setCurrent(_ config: ConcurrentImportConfig) {
         guard config.isValid else {
             print("⚠️ Invalid configuration, keeping current settings")

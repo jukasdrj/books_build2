@@ -1,7 +1,7 @@
 import Foundation
 import os.log
 
-final class GoogleBooksDiagnostics {
+final class GoogleBooksDiagnostics: @unchecked Sendable {
     static let shared = GoogleBooksDiagnostics()
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "GoogleBooksApp",
                                 category: "GoogleBooksAPI")

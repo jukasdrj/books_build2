@@ -1,7 +1,6 @@
 import Foundation
 import KeychainAccess
 
-@MainActor
 final class KeychainService: ObservableObject, @unchecked Sendable {
     static let shared = KeychainService()
     private let keychain = Keychain(service: "com.oooefam.booksV3.keychain")
@@ -26,7 +25,7 @@ final class KeychainService: ObservableObject, @unchecked Sendable {
         }
     }
 
-    func saveAPIKey(_ apiKey: String) throws {
+    nonisolated func saveAPIKey(_ apiKey: String) throws {
         try keychain.set(apiKey, key: apiKeyKey)
     }
 
@@ -34,7 +33,7 @@ final class KeychainService: ObservableObject, @unchecked Sendable {
         return try? keychain.get(apiKeyKey)
     }
 
-    func deleteAPIKey() throws {
+    nonisolated func deleteAPIKey() throws {
         try keychain.remove(apiKeyKey)
     }
     

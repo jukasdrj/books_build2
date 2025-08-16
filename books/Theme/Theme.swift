@@ -119,6 +119,7 @@ enum Theme {
         // MARK: - Accessibility-Aware Animations
         
         /// Returns animation that respects reduce motion preference
+        @MainActor
         static func respectingReduceMotion(_ animation: SwiftUI.Animation?) -> SwiftUI.Animation? {
             #if os(iOS)
             return UIAccessibility.isReduceMotionEnabled ? nil : animation
@@ -128,11 +129,13 @@ enum Theme {
         }
         
         /// Standard animation that respects accessibility preferences
+        @MainActor
         static var accessible: SwiftUI.Animation? {
             respectingReduceMotion(standardEaseInOut)
         }
         
         /// Gentle animation that respects accessibility preferences
+        @MainActor
         static var accessibleSpring: SwiftUI.Animation? {
             respectingReduceMotion(gentleSpring)
         }

@@ -239,7 +239,8 @@ struct CSVImportActivityAttributes: ActivityAttributes {
 // MARK: - Fallback for iOS < 16.1
 
 /// Fallback manager for devices that don't support Live Activities
-class FallbackLiveActivityManager: ObservableObject {
+@MainActor
+class FallbackLiveActivityManager: ObservableObject, @unchecked Sendable {
     static let shared = FallbackLiveActivityManager()
     
     @Published private(set) var isLiveActivitySupported = false

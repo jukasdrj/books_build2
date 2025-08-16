@@ -1,7 +1,7 @@
 import Foundation
 import Combine
 
-final class GoogleBooksService {
+final class GoogleBooksService: @unchecked Sendable {
     static let shared = GoogleBooksService()
     private let diagnostics = GoogleBooksDiagnostics.shared
 

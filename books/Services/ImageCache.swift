@@ -9,7 +9,7 @@ import UIKit
 import SwiftUI
 
 /// Singleton image cache for efficient image loading and storage
-class ImageCache {
+class ImageCache: @unchecked Sendable {
     static let shared = ImageCache()
     
     private let cache = NSCache<NSString, UIImage>()
