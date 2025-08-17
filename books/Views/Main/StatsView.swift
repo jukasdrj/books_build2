@@ -71,83 +71,55 @@ struct StatsView: View {
     // MARK: - Enhanced Hero Stats Section
     private var heroStatsSection: some View {
         VStack(spacing: Theme.Spacing.lg) {
-            // Beautiful header
-            VStack(spacing: Theme.Spacing.md) {
-                ZStack {
-                    Circle()
-                        .fill(
-                            LinearGradient(
-                                colors: [
-                                    currentTheme.primary.opacity(0.2),
-                                    currentTheme.secondary.opacity(0.1)
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        .frame(width: 100, height: 100)
-                    
-                    Image(systemName: "chart.bar.fill")
-                        .font(.system(size: 40, weight: .medium))
-                        .foregroundStyle(
-                            LinearGradient(
-                                colors: [currentTheme.primary, currentTheme.secondary],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                }
-                .shadow(color: currentTheme.primary.opacity(0.2), radius: 16, x: 0, y: 8)
-                
-                VStack(spacing: Theme.Spacing.sm) {
-                    Text("Your Reading Journey")
-                        .font(.title2)
-                        .fontWeight(.bold)
-                        .foregroundColor(currentTheme.primaryText)
-                    
-                    Text("Track your progress and celebrate your achievements")
-                        .font(.body)
-                        .foregroundColor(currentTheme.secondaryText)
-                        .multilineTextAlignment(.center)
-                }
-            }
+            // Hero header using unified component
+            UnifiedHeroSection(config: .init(
+                icon: "chart.bar.fill",
+                title: "Your Reading Journey",
+                subtitle: "Track your progress and celebrate your achievements",
+                style: .stats
+            ))
+            .frame(maxHeight: 200)
             
             // Enhanced Quick Stats Grid
             LazyVGrid(columns: [
                 GridItem(.flexible()),
                 GridItem(.flexible())
             ], spacing: Theme.Spacing.md) {
-                EnhancedStatCard(
+                UnifiedStatCard(config: .init(
                     title: "Total Books",
                     value: "\(allBooks.count)",
                     icon: "books.vertical.fill",
                     color: currentTheme.primary,
-                    subtitle: "in your library"
-                )
+                    subtitle: "in your library",
+                    style: .enhanced
+                ))
                 
-                EnhancedStatCard(
+                UnifiedStatCard(config: .init(
                     title: "Books Read",
                     value: "\(booksRead)",
                     icon: "checkmark.circle.fill",
                     color: currentTheme.tertiary,
-                    subtitle: "completed"
-                )
+                    subtitle: "completed",
+                    style: .enhanced
+                ))
                 
-                EnhancedStatCard(
+                UnifiedStatCard(config: .init(
                     title: "Currently Reading",
                     value: "\(currentlyReading)",
                     icon: "book.fill",
                     color: currentTheme.secondary,
-                    subtitle: "in progress"
-                )
+                    subtitle: "in progress",
+                    style: .enhanced
+                ))
                 
-                EnhancedStatCard(
+                UnifiedStatCard(config: .init(
                     title: "Want to Read",
                     value: "\(wantToRead)",
                     icon: "heart.fill",
                     color: currentTheme.primary.opacity(0.7),
-                    subtitle: "on wishlist"
-                )
+                    subtitle: "on wishlist",
+                    style: .enhanced
+                ))
             }
         }
         .padding(Theme.Spacing.lg)
@@ -505,55 +477,6 @@ struct CulturalDiversitySection: View {
     }
 }
 
-// MARK: - Enhanced Stat Card Component
-struct EnhancedStatCard: View {
-    @Environment(\.appTheme) private var currentTheme
-    let title: String
-    let value: String
-    let icon: String
-    let color: Color
-    let subtitle: String
-    
-    var body: some View {
-        VStack(spacing: Theme.Spacing.md) {
-            // Icon with gradient background
-            ZStack {
-                Circle()
-                    .fill(color.opacity(0.15))
-                    .frame(width: 50, height: 50)
-                
-                Image(systemName: icon)
-                    .font(.system(size: 24, weight: .medium))
-                    .foregroundColor(color)
-            }
-            
-            VStack(spacing: Theme.Spacing.xs) {
-                Text(value)
-                    .font(.title)
-                    .fontWeight(.bold)
-                    .foregroundColor(currentTheme.primaryText)
-                
-                Text(title)
-                    .font(.headline)
-                    .fontWeight(.medium)
-                    .foregroundColor(currentTheme.primaryText)
-                    .multilineTextAlignment(.center)
-                
-                Text(subtitle)
-                    .font(.caption)
-                    .foregroundColor(currentTheme.secondaryText)
-                    .multilineTextAlignment(.center)
-            }
-        }
-        .frame(maxWidth: .infinity)
-        .padding(Theme.Spacing.md)
-        .materialCard()
-        .overlay(
-            RoundedRectangle(cornerRadius: Theme.CornerRadius.card)
-                .stroke(color.opacity(0.2), lineWidth: 1)
-        )
-    }
-}
 
 struct ReadingStatusBreakdown: View {
     @Environment(\.appTheme) private var currentTheme

@@ -37,7 +37,11 @@ struct SearchView: View {
                         enhancedEmptyState
                         
                     case .searching:
-                        EnhancedLoadingView(message: "Searching millions of books")
+                        UnifiedLoadingState(config: .init(
+                            message: "Searching millions of books",
+                            subtitle: "Using smart relevance sorting",
+                            style: .spinner
+                        ))
                         
                     case .results(let books):
                         if books.isEmpty {
@@ -47,11 +51,12 @@ struct SearchView: View {
                         }
                         
                     case .error(let message):
-                        EnhancedErrorView(
+                        UnifiedErrorState(config: .init(
                             title: "Search Error",
                             message: message,
-                            retryAction: performSearch
-                        )
+                            retryAction: performSearch,
+                            style: .standard
+                        ))
                     }
                 }
                 .background(
@@ -319,176 +324,73 @@ struct SearchView: View {
     // MARK: - Enhanced Empty State for App Store Appeal
     @ViewBuilder
     private var enhancedEmptyState: some View {
-        VStack(spacing: Theme.Spacing.xl) {
-            // Beautiful hero section
-            VStack(spacing: Theme.Spacing.lg) {
-                ZStack {
-                    Circle()
-                        .fill(
-                            LinearGradient(
-                                colors: [
-                                    currentTheme.primary.opacity(0.2),
-                                    currentTheme.secondary.opacity(0.1)
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        .frame(width: 120, height: 120)
-                    
-                    Image(systemName: "magnifyingglass.circle.fill")
-                        .font(.system(size: 48, weight: .light))
-                        .foregroundStyle(
-                            LinearGradient(
-                                colors: [currentTheme.primary, currentTheme.secondary],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                }
-                .shadow(color: currentTheme.primary.opacity(0.15), radius: 20, x: 0, y: 10)
-                
-                VStack(spacing: Theme.Spacing.md) {
-                    Text("Discover Your Next Great Read")
-                        .font(.title)
-                        .fontWeight(.bold)
-                        .foregroundColor(currentTheme.primaryText)
-                        .multilineTextAlignment(.center)
-                    
-                    Text("Search millions of books with smart sorting and find exactly what you're looking for")
-                        .font(.body)
-                        .foregroundColor(currentTheme.secondaryText)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, Theme.Spacing.md)
-                }
-            }
-            .accessibilityLabel("Search for books")
-            .accessibilityHint("Use the search field above to find books by title, author, or ISBN")
-            
-            // Search features highlight
-            VStack(spacing: 12) {
-                searchFeatureRow(
-                    icon: "target",
+        UnifiedHeroSection(config: .init(
+            icon: "magnifyingglass.circle.fill",
+            title: "Discover Your Next Great Read",
+            subtitle: "Search millions of books with smart sorting and find exactly what you're looking for",
+            style: .discovery,
+            actions: [
+                .init(
                     title: "Smart Relevance",
+                    icon: "target",
                     description: "Find the most relevant results for your search"
-                )
-                
-                searchFeatureRow(
-                    icon: "star.fill",
+                ) {},
+                .init(
                     title: "Sort by Popularity",
+                    icon: "star.fill",
                     description: "Discover trending and highly-rated books"
-                )
-                
-                searchFeatureRow(
-                    icon: "globe",
+                ) {},
+                .init(
                     title: "All Languages",
+                    icon: "globe",
                     description: "Include translated works from around the world"
-                )
-            }
-            .padding(.horizontal, Theme.Spacing.lg)
-            
-            Spacer()
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding(.top, Theme.Spacing.xl)
+                ) {}
+            ]
+        ))
+        .accessibilityLabel("Search for books")
+        .accessibilityHint("Use the search field above to find books by title, author, or ISBN")
     }
     
-    @ViewBuilder
-    private func searchFeatureRow(icon: String, title: String, description: String) -> some View {
-        HStack(spacing: 12) {
-            Image(systemName: icon)
-                .font(.system(size: 16, weight: .medium))
-                .foregroundColor(currentTheme.primary)
-                .frame(width: 24, height: 24)
-            
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                    .foregroundColor(currentTheme.primaryText)
-                
-                Text(description)
-                    .font(.caption)
-                    .foregroundColor(currentTheme.secondaryText)
-            }
-            
-            Spacer()
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 8)
-        .background(currentTheme.surfaceVariant.opacity(0.3))
-        .cornerRadius(12)
-    }
     
     // MARK: - Enhanced No Results State
     @ViewBuilder
     private var noResultsState: some View {
-        VStack(spacing: Theme.Spacing.xl) {
-            VStack(spacing: Theme.Spacing.lg) {
-                ZStack {
-                    Circle()
-                        .fill(currentTheme.outline.opacity(0.1))
-                        .frame(width: 100, height: 100)
-                    
-                    Image(systemName: "questionmark.circle.fill")
-                        .font(.system(size: 40, weight: .light))
-                        .foregroundColor(currentTheme.outline)
+        UnifiedHeroSection(config: .init(
+            icon: "questionmark.circle.fill",
+            title: "No Results Found",
+            subtitle: "Try different search terms or check your spelling. You can also try including translated works.",
+            style: .error,
+            actions: [
+                .init(
+                    title: "Book titles",
+                    icon: "book.fill",
+                    description: "Try \"The Great Gatsby\""
+                ) {
+                    searchQuery = "The Great Gatsby"
+                    performSearch()
+                },
+                .init(
+                    title: "Author names",
+                    icon: "person.fill",
+                    description: "Try \"Maya Angelou\""
+                ) {
+                    searchQuery = "Maya Angelou"
+                    performSearch()
+                },
+                .init(
+                    title: "ISBN numbers",
+                    icon: "barcode",
+                    description: "Try \"9780451524935\""
+                ) {
+                    searchQuery = "9780451524935"
+                    performSearch()
                 }
-                
-                VStack(spacing: Theme.Spacing.md) {
-                    Text("No Results Found")
-                        .font(.title2)
-                        .fontWeight(.semibold)
-                        .foregroundColor(currentTheme.primaryText)
-                    
-                    Text("Try different search terms or check your spelling. You can also try including translated works.")
-                        .font(.body)
-                        .foregroundColor(currentTheme.secondaryText)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, Theme.Spacing.md)
-                }
-            }
-            .accessibilityLabel("No search results found")
-            .accessibilityHint("Try different search terms or check spelling")
-            
-            // Search suggestions
-            VStack(spacing: 8) {
-                Text("Try searching for:")
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                    .foregroundColor(currentTheme.primaryText)
-                
-                LazyVStack(spacing: 6) {
-                    suggestionButton("Book titles: \"The Great Gatsby\"")
-                    suggestionButton("Author names: \"Maya Angelou\"")
-                    suggestionButton("ISBN numbers: \"9780451524935\"")
-                }
-            }
-            .padding(.horizontal, Theme.Spacing.lg)
-            
-            Spacer()
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding(.top, Theme.Spacing.xl)
+            ]
+        ))
+        .accessibilityLabel("No search results found")
+        .accessibilityHint("Try different search terms or check spelling")
     }
     
-    @ViewBuilder
-    private func suggestionButton(_ text: String) -> some View {
-        Button {
-            let suggestion = text.components(separatedBy: ": \"").last?.replacingOccurrences(of: "\"", with: "") ?? ""
-            searchQuery = suggestion
-            performSearch()
-        } label: {
-            Text(text)
-                .font(.caption)
-                .foregroundColor(currentTheme.primary)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
-                .background(currentTheme.primaryContainer.opacity(0.3))
-                .cornerRadius(12)
-        }
-        .buttonStyle(.plain)
-    }
     
     // MARK: - Actions
     private func handleBarcodeScanned(_ scannedBarcode: String) {
@@ -578,128 +480,6 @@ struct SearchView: View {
     }
 }
 
-// MARK: - Enhanced Loading View
-struct EnhancedLoadingView: View {
-    @Environment(\.appTheme) private var currentTheme
-    let message: String
-    @State private var isAnimating = false
-    @State private var dotCount = 0
-    
-    private let timer = Timer.publish(every: 0.6, on: .main, in: .common).autoconnect()
-    
-    var body: some View {
-        VStack(spacing: Theme.Spacing.lg) {
-            ZStack {
-                // Background circle
-                Circle()
-                    .stroke(currentTheme.outline.opacity(0.3), lineWidth: 3)
-                    .frame(width: 60, height: 60)
-                
-                // Animated progress circle - respect Reduce Motion
-                Circle()
-                    .trim(from: 0, to: 0.3)
-                    .stroke(
-                        LinearGradient(
-                            colors: [currentTheme.primaryAction, currentTheme.primaryAction.opacity(0.3)],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        ),
-                        style: StrokeStyle(lineWidth: 3, lineCap: .round)
-                    )
-                    .frame(width: 60, height: 60)
-                    .rotationEffect(.degrees(isAnimating ? 360 : 0))
-                    .animation(
-                        UIAccessibility.isReduceMotionEnabled ? 
-                            .linear(duration: 0.1) :
-                            .linear(duration: 1.2).repeatForever(autoreverses: false),
-                        value: isAnimating
-                    )
-                
-                // Inner pulse - respect Reduce Motion
-                Circle()
-                    .fill(currentTheme.primaryAction.opacity(0.2))
-                    .frame(width: 30, height: 30)
-                    .scaleEffect(isAnimating ? 1.2 : 0.8)
-                    .opacity(isAnimating ? 0.3 : 0.8)
-                    .animation(
-                        UIAccessibility.isReduceMotionEnabled ?
-                            .linear(duration: 0.1) :
-                            .easeInOut(duration: 1.0).repeatForever(autoreverses: true),
-                        value: isAnimating
-                    )
-            }
-            
-            VStack(spacing: Theme.Spacing.sm) {
-                Text(message + String(repeating: ".", count: dotCount))
-                    .bodyMedium()
-                    .foregroundColor(currentTheme.primaryText)
-                    .multilineTextAlignment(.center)
-                
-                Text("Using smart relevance sorting")
-                    .labelSmall()
-                    .foregroundColor(currentTheme.secondaryText)
-            }
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .onAppear {
-            isAnimating = true
-        }
-        .onReceive(timer) { _ in
-            dotCount = (dotCount + 1) % 4
-        }
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel(message)
-        .accessibilityHint("Loading content, please wait")
-    }
-}
-
-// MARK: - Enhanced Error View
-struct EnhancedErrorView: View {
-    @Environment(\.appTheme) private var currentTheme
-    let title: String
-    let message: String
-    let retryAction: () -> Void
-    
-    var body: some View {
-        VStack(spacing: Theme.Spacing.lg) {
-            VStack(spacing: Theme.Spacing.md) {
-                Image(systemName: "exclamationmark.triangle.fill")
-                    .headlineSmall()
-                    .foregroundColor(currentTheme.error)
-                
-                Text(title)
-                    .titleMedium()
-                    .foregroundColor(currentTheme.primaryText)
-                
-                Text(message)
-                    .bodyMedium()
-                    .foregroundColor(currentTheme.secondaryText)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, Theme.Spacing.lg)
-            }
-            
-            Button(action: {
-                // Haptic feedback for retry - respect VoiceOver
-                if !UIAccessibility.isVoiceOverRunning {
-                    let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
-                    impactFeedback.impactOccurred()
-                }
-                retryAction()
-            }) {
-                HStack(spacing: Theme.Spacing.sm) {
-                    Image(systemName: "arrow.clockwise")
-                    Text("Try Again")
-                }
-            }
-            .materialButton(style: .filled, size: .large)
-            .frame(minHeight: 44)
-            .accessibilityLabel("Retry search")
-            .accessibilityHint("Attempts to search again")
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding(Theme.Spacing.lg)
-    }
-}
 
 // MARK: - Search Result Row (Enhanced)
 struct SearchResultRow: View {

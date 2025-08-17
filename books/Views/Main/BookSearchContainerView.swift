@@ -14,13 +14,14 @@ struct BookSearchContainerView: View {
                     ProgressView("Searching...")
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else if let error = viewModel.error {
-                    EnhancedErrorView(
+                    UnifiedErrorState(config: .init(
                         title: "Search Error",
                         message: error.errorDescription ?? "Unknown error occurred",
                         retryAction: {
                             viewModel.searchBooks(query: searchText)
-                        }
-                    )
+                        },
+                        style: .standard
+                    ))
                 } else {
                     BookListView(books: viewModel.books)
                 }

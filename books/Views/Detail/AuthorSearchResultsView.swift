@@ -39,7 +39,11 @@ struct AuthorSearchResultsView: View {
             Group {
                 switch searchState {
                 case .searching:
-                    EnhancedLoadingView(message: "Searching books by \(authorName)")
+                    UnifiedLoadingState(config: .init(
+                        message: "Searching books by \(authorName)",
+                        subtitle: "Using smart relevance sorting",
+                        style: .spinner
+                    ))
                         .task(id: authorName) {
                             await performAuthorSearch()
                         }
@@ -52,15 +56,16 @@ struct AuthorSearchResultsView: View {
                     }
                     
                 case .error(let message):
-                    EnhancedErrorView(
+                    UnifiedErrorState(config: .init(
                         title: "Search Error",
                         message: message,
                         retryAction: {
                             Task {
                                 await performAuthorSearch()
                             }
-                        }
-                    )
+                        },
+                        style: .standard
+                    ))
                 }
             }
             .background(
@@ -257,55 +262,26 @@ struct AuthorSearchResultsView: View {
     // MARK: - Author Not Found State
     @ViewBuilder
     private var authorNotFoundState: some View {
-        VStack(spacing: Theme.Spacing.xl) {
-            VStack(spacing: Theme.Spacing.lg) {
-                ZStack {
-                    Circle()
-                        .fill(currentTheme.outline.opacity(0.1))
-                        .frame(width: 100, height: 100)
-                    
-                    Image(systemName: "person.circle.fill")
-                        .font(.system(size: 40, weight: .light))
-                        .foregroundColor(currentTheme.outline)
-                }
-                
-                VStack(spacing: Theme.Spacing.md) {
-                    Text("No Books Found")
-                        .font(.title2)
-                        .fontWeight(.semibold)
-                        .foregroundColor(currentTheme.primaryText)
-                    
-                    Text("We couldn't find any books by \"\(authorName)\" in our database.")
-                        .font(.body)
-                        .foregroundColor(currentTheme.secondaryText)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, Theme.Spacing.md)
-                }
-            }
-            .accessibilityLabel("No books found by \(authorName)")
-            .accessibilityHint("Try checking the spelling or search for a different author")
-            
-            // Suggestion
-            VStack(spacing: 8) {
-                Text("Try:")
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                    .foregroundColor(currentTheme.primaryText)
-                
-                Text("• Check the author's name spelling")
-                    .font(.caption)
-                    .foregroundColor(currentTheme.secondaryText)
-                
-                Text("• Search for individual names if it's a multi-author work")
-                    .font(.caption)
-                    .foregroundColor(currentTheme.secondaryText)
-            }
-            .padding(.horizontal, Theme.Spacing.lg)
-            
-            Spacer()
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding(.top, Theme.Spacing.xl)
+        UnifiedHeroSection(config: .init(
+            icon: "person.circle.fill",
+            title: "No Books Found",
+            subtitle: "We couldn't find any books by \"\(authorName)\" in our database.",
+            style: .error,
+            actions: [
+                .init(
+                    title: "Check Spelling",
+                    icon: "textformat.abc",
+                    description: "Verify the author's name spelling"
+                ) {},
+                .init(
+                    title: "Try Individual Names",
+                    icon: "person.2.fill",
+                    description: "Search for individual names if it's a multi-author work"
+                ) {}
+            ]
+        ))
+        .accessibilityLabel("No books found by \(authorName)")
+        .accessibilityHint("Try checking the spelling or search for a different author")
     }
     
     // MARK: - Search Function
