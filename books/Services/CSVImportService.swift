@@ -1333,6 +1333,35 @@ class CSVImportService: ObservableObject {
     
     /// Create a book from CSV data only when network/API calls fail
     private func createBookFromCSVData(_ parsedBook: ParsedBook) -> OptimizedImportResult {
+        // Create field-level data sources for CSV data
+        var fieldSources: [String: DataSourceInfo] = [:]
+        let csvSourceInfo = DataSourceInfo(source: .csvImport, confidence: 0.7)
+        
+        // Track which fields came from CSV
+        if let title = parsedBook.title?.trimmingCharacters(in: .whitespacesAndNewlines), !title.isEmpty {
+            fieldSources["title"] = csvSourceInfo
+        }
+        if let author = parsedBook.author?.trimmingCharacters(in: .whitespacesAndNewlines), !author.isEmpty {
+            fieldSources["authors"] = csvSourceInfo
+        }
+        if parsedBook.publishedDate != nil {
+            fieldSources["publishedDate"] = csvSourceInfo
+        }
+        if parsedBook.pageCount != nil {
+            fieldSources["pageCount"] = csvSourceInfo
+        }
+        if let publisher = parsedBook.publisher, !publisher.isEmpty {
+            fieldSources["publisher"] = csvSourceInfo
+        }
+        if let isbn = parsedBook.isbn?.trimmingCharacters(in: .whitespacesAndNewlines), !isbn.isEmpty {
+            fieldSources["isbn"] = csvSourceInfo
+        }
+
+        // Calculate completeness based on available CSV fields
+        let totalExpectedFields: Double = 6.0 // Title, author, date, pages, publisher, ISBN
+        let presentFields = Double(fieldSources.count)
+        let completeness = presentFields / totalExpectedFields
+
         // Create basic metadata from CSV data
         let metadata = BookMetadata(
             googleBooksID: "csv_\(UUID().uuidString)", // Unique ID for CSV-only books
@@ -1347,7 +1376,11 @@ class CSVImportService: ObservableObject {
             infoLink: nil,
             publisher: parsedBook.publisher,
             isbn: parsedBook.isbn?.trimmingCharacters(in: .whitespacesAndNewlines),
-            genre: []
+            genre: [],
+            dataSource: .csvImport,
+            fieldDataSources: fieldSources,
+            dataCompleteness: completeness,
+            dataQualityScore: 0.8  // CSV data quality depends on source but generally good
         )
         
         // Create UserBook from CSV data
@@ -1375,6 +1408,34 @@ class CSVImportService: ObservableObject {
         if let dateCompleted = parsedBook.dateRead {
             userBook.dateCompleted = dateCompleted
         }
+        
+        // Set up user data source tracking for CSV-imported fields
+        var personalSources: [String: DataSourceInfo] = [:]
+        let csvUserSourceInfo = DataSourceInfo(source: .csvImport, confidence: 0.8)
+        
+        if parsedBook.rating != nil {
+            personalSources["rating"] = csvUserSourceInfo
+        }
+        if parsedBook.readingStatus != nil {
+            personalSources["readingStatus"] = csvUserSourceInfo
+        }
+        if parsedBook.readingProgress != nil && parsedBook.readingProgress! > 0.0 {
+            personalSources["readingProgress"] = csvUserSourceInfo
+        }
+        if parsedBook.dateStarted != nil {
+            personalSources["dateStarted"] = csvUserSourceInfo
+        }
+        if parsedBook.dateRead != nil {
+            personalSources["dateCompleted"] = csvUserSourceInfo
+        }
+        
+        userBook.personalDataSources = personalSources
+        
+        // Calculate user data completeness
+        userBook.userDataCompleteness = DataCompletenessService.calculateUserCompleteness(userBook)
+        
+        // Generate initial prompts for CSV imported books
+        userBook.needsUserInput = DataCompletenessService.generateUserPrompts(userBook)
         
         let bookData = ImportBookData(
             userBook: userBook,

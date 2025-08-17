@@ -97,6 +97,19 @@ final class UserBook: Identifiable {
     var recommendedBy: String?
     var wouldRecommend: Bool?
     var discussionNotes: String? // for book clubs or discussions
+    
+    // MARK: - Data Source Tracking (Phase 3)
+    
+    // User engagement tracking (stored as JSON string for SwiftData compatibility)
+    private var needsUserInputString: String = "[]"
+    
+    // User data completeness metrics
+    var userDataCompleteness: Double = 0.0 // Personal data completeness
+    var lastUserReview: Date?
+    var userEngagementScore: Double = 0.0 // How actively user maintains this book
+    
+    // Data source awareness for user fields (stored as JSON string for SwiftData compatibility)
+    private var personalDataSourcesString: String = "{}"
 
     @Relationship(deleteRule: .nullify)
     var metadata: BookMetadata?
@@ -153,6 +166,48 @@ final class UserBook: Identifiable {
                 readingSessionsData = String(data: data, encoding: .utf8) ?? ""
             } catch {
                 readingSessionsData = ""
+            }
+        }
+    }
+    
+    // Computed property for user input needs array
+    var needsUserInput: [UserInputPrompt] {
+        get {
+            guard !needsUserInputString.isEmpty, needsUserInputString != "[]" else { return [] }
+            guard let data = needsUserInputString.data(using: .utf8) else { return [] }
+            do {
+                return try JSONDecoder().decode([UserInputPrompt].self, from: data)
+            } catch {
+                return []
+            }
+        }
+        set {
+            do {
+                let data = try JSONEncoder().encode(newValue)
+                needsUserInputString = String(data: data, encoding: .utf8) ?? "[]"
+            } catch {
+                needsUserInputString = "[]"
+            }
+        }
+    }
+    
+    // Computed property for personal data sources
+    var personalDataSources: [String: DataSourceInfo] {
+        get {
+            guard !personalDataSourcesString.isEmpty, personalDataSourcesString != "{}" else { return [:] }
+            guard let data = personalDataSourcesString.data(using: .utf8) else { return [:] }
+            do {
+                return try JSONDecoder().decode([String: DataSourceInfo].self, from: data)
+            } catch {
+                return [:]
+            }
+        }
+        set {
+            do {
+                let data = try JSONEncoder().encode(newValue)
+                personalDataSourcesString = String(data: data, encoding: .utf8) ?? "{}"
+            } catch {
+                personalDataSourcesString = "{}"
             }
         }
     }
@@ -382,6 +437,56 @@ enum ReadingStatus: String, Codable, CaseIterable, Identifiable, Sendable {
         case .read: return "Finished reading"
         case .onHold: return "On hold"
         case .dnf: return "Did not finish"
+        }
+    }
+}
+
+// MARK: - User Input Prompt Types
+
+enum UserInputPrompt: String, Codable, CaseIterable, Sendable {
+    case addPersonalRating = "add_personal_rating"
+    case addPersonalNotes = "add_personal_notes"
+    case reviewCulturalData = "review_cultural_data"
+    case validateImportedData = "validate_imported_data"
+    case addTags = "add_tags"
+    case updateReadingProgress = "update_reading_progress"
+    case confirmBookDetails = "confirm_book_details"
+    
+    var displayText: String {
+        switch self {
+        case .addPersonalRating:
+            return "Add your rating"
+        case .addPersonalNotes:
+            return "Add personal notes"
+        case .reviewCulturalData:
+            return "Review cultural information"
+        case .validateImportedData:
+            return "Verify imported details"
+        case .addTags:
+            return "Add tags"
+        case .updateReadingProgress:
+            return "Update reading progress"
+        case .confirmBookDetails:
+            return "Confirm book details"
+        }
+    }
+    
+    var icon: String {
+        switch self {
+        case .addPersonalRating:
+            return "star"
+        case .addPersonalNotes:
+            return "note.text"
+        case .reviewCulturalData:
+            return "globe"
+        case .validateImportedData:
+            return "checkmark.circle"
+        case .addTags:
+            return "tag"
+        case .updateReadingProgress:
+            return "book.pages"
+        case .confirmBookDetails:
+            return "info.circle"
         }
     }
 }

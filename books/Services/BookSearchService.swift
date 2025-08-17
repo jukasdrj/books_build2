@@ -1,10 +1,214 @@
 // books-buildout-main/books/BookSearchService.swift
 import Foundation
 
+// MARK: - Cloudflare AI Gateway Integration
+
+/// Configuration and management for Cloudflare AI Gateway integration
+@MainActor
+class CloudflareGatewayService: ObservableObject {
+    static let shared = CloudflareGatewayService()
+    
+    // MARK: - Gateway Configuration
+    
+    /// Your Cloudflare Account ID (you'll need to get this from Cloudflare dashboard)
+    /// This should be a 32-character alphanumeric string, not an email address
+    private let accountId = "d03bed0be6d976acd8a1707b55052f79" // Your Cloudflare Account ID
+    
+    /// Your AI Gateway ID (set this to your gateway name)
+    private let gatewayId = "books-api-gateway" // TODO: Replace with your Gateway ID
+    
+    /// Base URL for Google Books API through Cloudflare AI Gateway
+    private var gatewayBaseURL: String {
+        "https://gateway.ai.cloudflare.com/v1/\(accountId)/\(gatewayId)/google-books"
+    }
+    
+    /// Fallback to direct Google Books API if gateway fails
+    private let fallbackBaseURL = "https://www.googleapis.com/books/v1/volumes"
+    
+    private init() {}
+    
+    // MARK: - Gateway Integration
+    
+    /// Enhanced URL request with Cloudflare AI Gateway headers
+    func createGatewayRequest(for components: URLComponents, cacheTTL: Int = 3600) -> URLRequest? {
+        // First try to construct gateway URL
+        guard let originalURL = components.url else { return nil }
+        
+        // Replace the base URL with gateway URL
+        let urlString = originalURL.absoluteString.replacingOccurrences(
+            of: "https://www.googleapis.com/books/v1/volumes",
+            with: gatewayBaseURL + "/v1/volumes"
+        )
+        
+        guard let gatewayURL = URL(string: urlString) else { return nil }
+        
+        var request = URLRequest(url: gatewayURL)
+        
+        // Add Cloudflare AI Gateway headers for caching and cost optimization
+        addGatewayHeaders(to: &request, cacheTTL: cacheTTL)
+        
+        return request
+    }
+    
+    /// Add Cloudflare AI Gateway optimization headers
+    private func addGatewayHeaders(to request: inout URLRequest, cacheTTL: Int = 3600) {
+        // Cache duration based on request type
+        request.setValue(String(cacheTTL), forHTTPHeaderField: "cf-aig-cache-ttl")
+        
+        // Add custom cost tracking (estimate: $0.001 per request)
+        request.setValue("{\"per_request\": 0.001}", forHTTPHeaderField: "cf-aig-custom-cost")
+        
+        // Add metadata for analytics
+        let metadata = [
+            "app": "books-tracker",
+            "api": "google-books",
+            "version": "1.0"
+        ]
+        
+        if let metadataData = try? JSONSerialization.data(withJSONObject: metadata),
+           let metadataString = String(data: metadataData, encoding: .utf8) {
+            request.setValue(metadataString, forHTTPHeaderField: "cf-aig-metadata")
+        }
+        
+        // Set reasonable timeout
+        request.timeoutInterval = 30.0
+    }
+    
+    /// Create fallback request for direct Google Books API
+    func createFallbackRequest(for components: URLComponents) -> URLRequest? {
+        guard let url = components.url else { return nil }
+        var request = URLRequest(url: url)
+        request.timeoutInterval = 20.0
+        return request
+    }
+    
+    // MARK: - Configuration Validation
+    
+    /// Check if gateway is properly configured
+    var isGatewayConfigured: Bool {
+        return !accountId.contains("YOUR_ACCOUNT_ID_HERE") && 
+               !gatewayId.isEmpty &&
+               accountId.count > 10 // Basic validation
+    }
+    
+    /// Get configuration status for debugging
+    func getConfigurationStatus() -> String {
+        var status = "Cloudflare AI Gateway Configuration:\n"
+        status += "- Account ID: \(accountId.contains("YOUR_ACCOUNT_ID_HERE") ? "❌ Not configured" : "✅ Set")\n"
+        status += "- Gateway ID: \(gatewayId.isEmpty ? "❌ Empty" : "✅ \(gatewayId)")\n"
+        status += "- Gateway URL: \(gatewayBaseURL)\n"
+        status += "- Status: \(isGatewayConfigured ? "✅ Ready" : "❌ Needs configuration")"
+        return status
+    }
+    
+    // MARK: - Request Execution
+    
+    /// Execute request with gateway fallback
+    func executeWithFallback<T>(
+        components: URLComponents,
+        cacheTTL: Int = 3600,
+        decoder: @escaping (Data) throws -> T
+    ) async -> Result<T, BookSearchService.BookError> {
+        
+        // First, try the gateway
+        if isGatewayConfigured {
+            let gatewayResult = await executeGatewayRequest(components: components, cacheTTL: cacheTTL, decoder: decoder)
+            
+            switch gatewayResult {
+            case .success(let result):
+                #if DEBUG
+                print("✅ [Gateway] Request successful")
+                #endif
+                return .success(result)
+            case .failure(let error):
+                #if DEBUG
+                print("⚠️ [Gateway] Failed, falling back to direct API: \(error.localizedDescription)")
+                #endif
+            }
+        }
+        
+        // Fallback to direct API
+        return await executeFallbackRequest(components: components, decoder: decoder)
+    }
+    
+    private func executeGatewayRequest<T>(
+        components: URLComponents,
+        cacheTTL: Int = 3600,
+        decoder: @escaping (Data) throws -> T
+    ) async -> Result<T, BookSearchService.BookError> {
+        
+        guard let request = createGatewayRequest(for: components, cacheTTL: cacheTTL) else {
+            return .failure(.invalidURL)
+        }
+        
+        return await executeRequest(request, decoder: decoder)
+    }
+    
+    private func executeFallbackRequest<T>(
+        components: URLComponents,
+        decoder: @escaping (Data) throws -> T
+    ) async -> Result<T, BookSearchService.BookError> {
+        
+        guard let request = createFallbackRequest(for: components) else {
+            return .failure(.invalidURL)
+        }
+        
+        let result = await executeRequest(request, decoder: decoder)
+        #if DEBUG
+        print("📡 [Direct API] Request executed")
+        #endif
+        return result
+    }
+    
+    private func executeRequest<T>(
+        _ request: URLRequest,
+        decoder: @escaping (Data) throws -> T
+    ) async -> Result<T, BookSearchService.BookError> {
+        
+        do {
+            let configuration = URLSessionConfiguration.default
+            configuration.timeoutIntervalForRequest = 30.0
+            configuration.timeoutIntervalForResource = 60.0
+            configuration.waitsForConnectivity = true
+            let session = URLSession(configuration: configuration)
+            
+            let (data, response) = try await session.data(for: request)
+            
+            // Check HTTP response
+            if let httpResponse = response as? HTTPURLResponse {
+                guard 200...299 ~= httpResponse.statusCode else {
+                    return .failure(.networkError("HTTP \(httpResponse.statusCode)"))
+                }
+                
+                // Check for cache hit in Cloudflare headers
+                let cacheStatus = httpResponse.value(forHTTPHeaderField: "cf-cache-status") ?? "MISS"
+                let wasCacheHit = cacheStatus == "HIT"
+                
+                #if DEBUG
+                if wasCacheHit {
+                    print("🚀 [Cache HIT] Response served from Cloudflare cache")
+                }
+                #endif
+            }
+            
+            let result = try decoder(data)
+            return .success(result)
+            
+        } catch let error as URLError {
+            return .failure(.networkError(error.localizedDescription))
+        } catch {
+            return .failure(.decodingError(error.localizedDescription))
+        }
+    }
+}
+
+// MARK: - Book Search Service
+
 @MainActor
 class BookSearchService: ObservableObject {
     static let shared = BookSearchService()
     private let keychainService = KeychainService.shared
+    private let gatewayService = CloudflareGatewayService.shared
     
     private init() {
         // Ensure API keys are set up on initialization
@@ -12,6 +216,7 @@ class BookSearchService: ObservableObject {
         
         #if DEBUG
         keychainService.printKeyStatus()
+        print(gatewayService.getConfigurationStatus())
         #endif
     }
 
@@ -121,52 +326,69 @@ class BookSearchService: ObservableObject {
         
         components.queryItems = queryItems
 
-        guard let url = components.url else {
+        guard components.url != nil else {
             // Failed to construct URL from components
             return .failure(.invalidURL)
         }
         
-        // Making network request
+        // Making network request through Cloudflare AI Gateway with fallback
 
-        do {
-            // Create URL session with better configuration
-            let configuration = URLSessionConfiguration.default
-            configuration.timeoutIntervalForRequest = 20.0
-            configuration.timeoutIntervalForResource = 40.0
-            configuration.waitsForConnectivity = true
-            let session = URLSession(configuration: configuration)
-            
-            let (data, response) = try await session.data(from: url)
-            
-            // Check HTTP response
-            if let httpResponse = response as? HTTPURLResponse {
-                // HTTP response received
-                guard 200...299 ~= httpResponse.statusCode else {
-                    return .failure(.networkError("HTTP \(httpResponse.statusCode)"))
-                }
-            }
-            
-            // Processing response data
-            
+        let result = await gatewayService.executeWithFallback(
+            components: components
+        ) { [self] data in
             let searchResponse = try JSONDecoder().decode(GoogleBooksResponse.self, from: data)
-            
             let metadataItems = searchResponse.items?.compactMap { $0.toBookMetadata() } ?? []
             
             // Apply post-processing sorting and filtering
-            let processedResults = processSearchResults(
+            return self.processSearchResults(
                 metadataItems, 
                 originalQuery: trimmedQuery,
                 sortBy: sortBy
             )
-            
-            // Returning processed results
-            return .success(processedResults)
-            
-        } catch let error as URLError {
-            return .failure(.networkError(error.localizedDescription))
-        } catch {
-            return .failure(.decodingError(error.localizedDescription))
         }
+        
+        return result
+    }
+    
+    /// Specialized search for ISBN lookups with aggressive caching (used by CSVImportService)
+    func searchByISBN(_ isbn: String) async -> Result<BookMetadata?, BookError> {
+        let cleanedISBN = isbn.replacingOccurrences(of: "=", with: "")
+            .replacingOccurrences(of: "-", with: "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        guard !cleanedISBN.isEmpty else {
+            return .success(nil)
+        }
+        
+        // Check for API key availability
+        guard let secureApiKey = self.apiKey else {
+            return .failure(.networkError("API key not configured"))
+        }
+        
+        guard var components = URLComponents(string: baseURL) else {
+            return .failure(.invalidURL)
+        }
+        
+        // Build ISBN query with more aggressive caching (24 hours)
+        let queryItems = [
+            URLQueryItem(name: "q", value: "isbn:\(cleanedISBN)"),
+            URLQueryItem(name: "maxResults", value: "1"),
+            URLQueryItem(name: "printType", value: "books"),
+            URLQueryItem(name: "projection", value: "full"),
+            URLQueryItem(name: "key", value: secureApiKey)
+        ]
+        
+        components.queryItems = queryItems
+        
+        let result = await gatewayService.executeWithFallback(
+            components: components,
+            cacheTTL: 86400 // 24 hours - ISBN data never changes
+        ) { data in
+            let searchResponse = try JSONDecoder().decode(GoogleBooksResponse.self, from: data)
+            return searchResponse.items?.first?.toBookMetadata()
+        }
+        
+        return result
     }
     
     // MARK: - Query Optimization
@@ -432,6 +654,45 @@ private struct VolumeItem: Codable, Sendable {
         let isbn13 = volumeInfo.industryIdentifiers?.first(where: { $0.type == "ISBN_13" })?.identifier
         let isbn10 = volumeInfo.industryIdentifiers?.first(where: { $0.type == "ISBN_10" })?.identifier
 
+        // Create field-level data sources for API data
+        var fieldSources: [String: DataSourceInfo] = [:]
+        let apiSourceInfo = DataSourceInfo(source: .googleBooksAPI, confidence: 1.0)
+        
+        // Track all fields from Google Books API
+        fieldSources["title"] = apiSourceInfo
+        if let authors = volumeInfo.authors, !authors.isEmpty {
+            fieldSources["authors"] = apiSourceInfo
+        }
+        if volumeInfo.publishedDate != nil {
+            fieldSources["publishedDate"] = apiSourceInfo
+        }
+        if volumeInfo.pageCount != nil {
+            fieldSources["pageCount"] = apiSourceInfo
+        }
+        if volumeInfo.description != nil {
+            fieldSources["bookDescription"] = apiSourceInfo
+        }
+        if volumeInfo.imageLinks?.thumbnail != nil {
+            fieldSources["imageURL"] = apiSourceInfo
+        }
+        if volumeInfo.language != nil {
+            fieldSources["language"] = apiSourceInfo
+        }
+        if volumeInfo.publisher != nil {
+            fieldSources["publisher"] = apiSourceInfo
+        }
+        if isbn13 != nil || isbn10 != nil {
+            fieldSources["isbn"] = apiSourceInfo
+        }
+        if let categories = volumeInfo.categories, !categories.isEmpty {
+            fieldSources["genre"] = apiSourceInfo
+        }
+
+        // Calculate completeness based on available fields
+        let totalFields: Double = 10.0 // Core fields we expect from API
+        let presentFields = Double(fieldSources.count)
+        let completeness = presentFields / totalFields
+
         return BookMetadata(
             googleBooksID: self.id,
             title: volumeInfo.title,
@@ -445,7 +706,11 @@ private struct VolumeItem: Codable, Sendable {
             infoLink: URL(string: volumeInfo.infoLink ?? ""),
             publisher: volumeInfo.publisher,
             isbn: isbn13 ?? isbn10,
-            genre: volumeInfo.categories ?? []
+            genre: volumeInfo.categories ?? [],
+            dataSource: .googleBooksAPI,
+            fieldDataSources: fieldSources,
+            dataCompleteness: completeness,
+            dataQualityScore: 1.0
         )
     }
 }

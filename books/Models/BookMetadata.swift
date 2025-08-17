@@ -41,6 +41,19 @@ final class BookMetadata: Identifiable, Hashable, @unchecked Sendable {
     var readingDifficulty: ReadingDifficulty?
     var timeToRead: Int? // estimated minutes
     
+    // MARK: - Data Source Tracking (Phase 3)
+    
+    // Primary data source for the entire book record
+    var dataSource: DataSource = DataSource.manualEntry
+    
+    // Field-level tracking for mixed-source books (stored as JSON string for SwiftData compatibility)
+    private var fieldDataSourcesString: String = "{}"
+    
+    // Overall data quality metrics
+    var dataCompleteness: Double = 0.0 // 0.0-1.0
+    var lastDataUpdate: Date = Date()
+    var dataQualityScore: Double = 1.0 // Enhanced from existing field
+    
 
     // One-to-many relationship: BookMetadata can have multiple UserBooks
     @Relationship(inverse: \UserBook.metadata)
@@ -82,8 +95,29 @@ final class BookMetadata: Identifiable, Hashable, @unchecked Sendable {
         }
     }
     
+    // Computed property for field-level data sources
+    var fieldDataSources: [String: DataSourceInfo] {
+        get {
+            guard !fieldDataSourcesString.isEmpty, fieldDataSourcesString != "{}" else { return [:] }
+            guard let data = fieldDataSourcesString.data(using: .utf8) else { return [:] }
+            do {
+                return try JSONDecoder().decode([String: DataSourceInfo].self, from: data)
+            } catch {
+                return [:]
+            }
+        }
+        set {
+            do {
+                let data = try JSONEncoder().encode(newValue)
+                fieldDataSourcesString = String(data: data, encoding: .utf8) ?? "{}"
+            } catch {
+                fieldDataSourcesString = "{}"
+            }
+        }
+    }
+    
 
-    init(googleBooksID: String, title: String, authors: [String] = [], publishedDate: String? = nil, pageCount: Int? = nil, bookDescription: String? = nil, imageURL: URL? = nil, language: String? = nil, previewLink: URL? = nil, infoLink: URL? = nil, publisher: String? = nil, isbn: String? = nil, genre: [String] = [], originalLanguage: String? = nil, authorNationality: String? = nil, format: BookFormat? = nil, authorGender: AuthorGender? = nil, authorEthnicity: String? = nil, culturalRegion: CulturalRegion? = nil, originalPublicationCountry: String? = nil, translatorNationality: String? = nil, culturalThemes: [String] = [], readingDifficulty: ReadingDifficulty? = nil, timeToRead: Int? = nil) {
+    init(googleBooksID: String, title: String, authors: [String] = [], publishedDate: String? = nil, pageCount: Int? = nil, bookDescription: String? = nil, imageURL: URL? = nil, language: String? = nil, previewLink: URL? = nil, infoLink: URL? = nil, publisher: String? = nil, isbn: String? = nil, genre: [String] = [], originalLanguage: String? = nil, authorNationality: String? = nil, format: BookFormat? = nil, authorGender: AuthorGender? = nil, authorEthnicity: String? = nil, culturalRegion: CulturalRegion? = nil, originalPublicationCountry: String? = nil, translatorNationality: String? = nil, culturalThemes: [String] = [], readingDifficulty: ReadingDifficulty? = nil, timeToRead: Int? = nil, dataSource: DataSource = DataSource.manualEntry, fieldDataSources: [String: DataSourceInfo] = [:], dataCompleteness: Double = 0.0, dataQualityScore: Double = 1.0) {
         self.googleBooksID = googleBooksID
         self.title = title.trimmingCharacters(in: .whitespacesAndNewlines)
         self.publishedDate = publishedDate
@@ -105,11 +139,16 @@ final class BookMetadata: Identifiable, Hashable, @unchecked Sendable {
         self.translatorNationality = translatorNationality
         self.readingDifficulty = readingDifficulty
         self.timeToRead = timeToRead
+        self.dataSource = dataSource
+        self.dataCompleteness = dataCompleteness
+        self.dataQualityScore = dataQualityScore
+        self.lastDataUpdate = Date()
         
         // Set the computed properties which will update the private strings
         self.authors = authors
         self.genre = genre
         self.culturalThemes = culturalThemes
+        self.fieldDataSources = fieldDataSources
     }
     
     // MARK: - Hashable Conformance
@@ -340,5 +379,29 @@ enum ReadingDifficulty: String, Codable, CaseIterable, Identifiable, Sendable {
         case .challenging: return "3.circle.fill"
         case .advanced: return "4.circle.fill"
         }
+    }
+}
+
+// MARK: - Data Source Tracking Types
+
+enum DataSource: String, Codable, CaseIterable, Sendable {
+    case googleBooksAPI = "google_books_api"
+    case csvImport = "csv_import"
+    case manualEntry = "manual_entry"
+    case mixedSources = "mixed_sources"
+    case userInput = "user_input"
+}
+
+struct DataSourceInfo: Codable, Sendable {
+    let source: DataSource
+    let timestamp: Date
+    let confidence: Double // 0.0-1.0 (API=1.0, CSV=0.7, manual=0.9)
+    let fieldPath: String? // e.g., "title", "authors[0]", "userRating"
+    
+    init(source: DataSource, timestamp: Date = Date(), confidence: Double, fieldPath: String? = nil) {
+        self.source = source
+        self.timestamp = timestamp
+        self.confidence = confidence
+        self.fieldPath = fieldPath
     }
 }

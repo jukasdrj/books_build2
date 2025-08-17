@@ -8,6 +8,7 @@ struct LibraryView: View {
     @State private var selectedLayout: LayoutType = .grid
     @State private var showingFilters = false
     @State private var showingSettings = false
+    @State private var showingEnhancement = false
     @State private var libraryFilter = LibraryFilter.all
     
     
@@ -127,11 +128,22 @@ struct LibraryView: View {
         .sheet(isPresented: $showingSettings) {
             SettingsView()
         }
+        .sheet(isPresented: $showingEnhancement) {
+            LibraryEnhancementView()
+        }
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 HStack(spacing: Theme.Spacing.md) {
                     // Background import progress indicator (subtle)
                     BackgroundImportProgressIndicator()
+                    
+                    // Library enhancement insights button
+                    Button { showingEnhancement.toggle() } label: {
+                        Image(systemName: "chart.line.uptrend.xyaxis")
+                            .foregroundColor(currentTheme.primary)
+                    }
+                    .accessibilityLabel("Library insights")
+                    .accessibilityHint("View data quality and enhancement recommendations")
                     
                     Button { showingFilters.toggle() } label: {
                         Image(systemName: libraryFilter.isActive ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle")
