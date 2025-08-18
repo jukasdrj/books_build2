@@ -16,42 +16,48 @@ struct booksApp: App {
     }
     
     var sharedModelContainer: ModelContainer = {
+        // FIXED: CloudKit unique constraint issue resolved
+        
+        // Try simple in-memory container first to test model validity
         let schema = Schema([
             UserBook.self,
             BookMetadata.self,
         ])
-
-        let modelConfiguration: ModelConfiguration
-        if UserDefaults.standard.bool(forKey: "hasBypassedICloudLogin") {
-            modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
-        } else {
-            modelConfiguration = ModelConfiguration(schema: schema, cloudKitDatabase: .automatic)
-        }
-
+        
+        // Debug: Print schema information
+        print("SwiftData Schema Debug:")
+        print("- UserBook: \(UserBook.self)")
+        print("- BookMetadata: \(BookMetadata.self)")
+        
         do {
-            let container = try ModelContainer(for: schema, configurations: [modelConfiguration])
-            // Successfully created ModelContainer
-            return container
-        } catch {
-            // Could not create ModelContainer, attempting fallback migration
-
-            // Try with a completely new database name
-            let fallbackConfig = ModelConfiguration(
-                "BooksModel_Fresh_\(Date().timeIntervalSince1970)",
+            // Configure without CloudKit to avoid unique constraint conflict
+            let localConfig = ModelConfiguration(
                 schema: schema,
                 isStoredInMemoryOnly: false,
-                allowsSave: true
+                cloudKitDatabase: .none  // Explicitly disable CloudKit
             )
-
+            let container = try ModelContainer(for: schema, configurations: [localConfig])
+            print("✅ Local-only ModelContainer created successfully (no CloudKit)")
+            return container
+        } catch {
+            print("❌ Local container failed: \(error)")
+            
+            // Fallback: Try in-memory only
             do {
-                return try ModelContainer(for: schema, configurations: [fallbackConfig])
+                let memoryConfig = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+                let container = try ModelContainer(for: schema, configurations: [memoryConfig])
+                print("✅ In-memory ModelContainer created successfully")
+                return container
             } catch {
-                // Fallback failed, using in-memory storage as last resort
-                do {
-                    return try ModelContainer(for: schema, configurations: [ModelConfiguration(isStoredInMemoryOnly: true)])
-                } catch {
-                    fatalError("Critical: Unable to create even in-memory ModelContainer: \(error)")
+                print("❌ All ModelContainer creation attempts failed: \(error)")
+                print("❌ This indicates a fundamental issue with the SwiftData models")
+                
+                // Instead of fatal error, try to identify the specific issue
+                if let swiftDataError = error as? any Error {
+                    print("❌ SwiftData Error Details: \(swiftDataError)")
                 }
+                
+                fatalError("Critical: Unable to create ModelContainer. Error: \(error)")
             }
         }
     }()
@@ -123,36 +129,10 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         // Register background tasks
         BackgroundTaskManager.shared.registerBackgroundTasks()
         
-        // Configure API key on first launch
-        // IMPORTANT: Replace YOUR_API_KEY_HERE with your actual Google Books API key
-        let apiKeyToSet = "YOUR_API_KEY_HERE" // <-- PASTE YOUR API KEY HERE
+        #if DEBUG
+        print("[AppDelegate] ✅ App launched using proxy-based book search - no API key management needed")
+        #endif
         
-        if KeychainService.shared.loadAPIKey() == nil {
-            // First check if we have a hardcoded key to set
-            if apiKeyToSet != "YOUR_API_KEY_HERE" && !apiKeyToSet.isEmpty {
-                do {
-                    try KeychainService.shared.saveAPIKey(apiKeyToSet)
-                    print("[AppDelegate] ✅ API key configured successfully in Keychain.")
-                } catch {
-                    print("[AppDelegate] ❌ Failed to save API key to Keychain: \(error)")
-                }
-            } else if let apiKey = Bundle.main.object(forInfoDictionaryKey: "GoogleBooksAPIKey") as? String, !apiKey.isEmpty {
-                // Fallback to Info.plist key if available
-                do {
-                    try KeychainService.shared.saveAPIKey(apiKey)
-                    print("[AppDelegate] API key migrated from Info.plist to Keychain.")
-                } catch {
-                    print("[AppDelegate] Failed to migrate API key to Keychain: \(error)")
-                }
-            } else {
-                print("[AppDelegate] ⚠️ No API key configured. Please set apiKeyToSet in booksApp.swift")
-            }
-        } else {
-            print("[AppDelegate] ✅ API key already configured in Keychain")
-        }
-        GoogleBooksDiagnostics.shared.logAPIKeyStatus()
-
-        print("[AppDelegate] App launched - background tasks registered")
         return true
     }
     

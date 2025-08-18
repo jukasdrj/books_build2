@@ -1,230 +1,21 @@
-// books-buildout-main/books/BookSearchService.swift
+// books/Services/BookSearchServiceProxy.swift
 import Foundation
 
-// MARK: - Cloudflare AI Gateway Integration
-
-/// Configuration and management for Cloudflare AI Gateway integration
-@MainActor
-class CloudflareGatewayService: ObservableObject {
-    static let shared = CloudflareGatewayService()
-    
-    // MARK: - Gateway Configuration
-    
-    /// Your Cloudflare Account ID (you'll need to get this from Cloudflare dashboard)
-    /// This should be a 32-character alphanumeric string, not an email address
-    private let accountId = "d03bed0be6d976acd8a1707b55052f79" // Your Cloudflare Account ID
-    
-    /// Your AI Gateway ID (set this to your gateway name)
-    private let gatewayId = "books-api-gateway" // TODO: Replace with your Gateway ID
-    
-    /// Base URL for Google Books API through Cloudflare AI Gateway
-    private var gatewayBaseURL: String {
-        "https://gateway.ai.cloudflare.com/v1/\(accountId)/\(gatewayId)/google-books"
-    }
-    
-    /// Fallback to direct Google Books API if gateway fails
-    private let fallbackBaseURL = "https://www.googleapis.com/books/v1/volumes"
-    
-    private init() {}
-    
-    // MARK: - Gateway Integration
-    
-    /// Enhanced URL request with Cloudflare AI Gateway headers
-    func createGatewayRequest(for components: URLComponents, cacheTTL: Int = 3600) -> URLRequest? {
-        // First try to construct gateway URL
-        guard let originalURL = components.url else { return nil }
-        
-        // Replace the base URL with gateway URL
-        let urlString = originalURL.absoluteString.replacingOccurrences(
-            of: "https://www.googleapis.com/books/v1/volumes",
-            with: gatewayBaseURL + "/v1/volumes"
-        )
-        
-        guard let gatewayURL = URL(string: urlString) else { return nil }
-        
-        var request = URLRequest(url: gatewayURL)
-        
-        // Add Cloudflare AI Gateway headers for caching and cost optimization
-        addGatewayHeaders(to: &request, cacheTTL: cacheTTL)
-        
-        return request
-    }
-    
-    /// Add Cloudflare AI Gateway optimization headers
-    private func addGatewayHeaders(to request: inout URLRequest, cacheTTL: Int = 3600) {
-        // Cache duration based on request type
-        request.setValue(String(cacheTTL), forHTTPHeaderField: "cf-aig-cache-ttl")
-        
-        // Add custom cost tracking (estimate: $0.001 per request)
-        request.setValue("{\"per_request\": 0.001}", forHTTPHeaderField: "cf-aig-custom-cost")
-        
-        // Add metadata for analytics
-        let metadata = [
-            "app": "books-tracker",
-            "api": "google-books",
-            "version": "1.0"
-        ]
-        
-        if let metadataData = try? JSONSerialization.data(withJSONObject: metadata),
-           let metadataString = String(data: metadataData, encoding: .utf8) {
-            request.setValue(metadataString, forHTTPHeaderField: "cf-aig-metadata")
-        }
-        
-        // Set reasonable timeout
-        request.timeoutInterval = 30.0
-    }
-    
-    /// Create fallback request for direct Google Books API
-    func createFallbackRequest(for components: URLComponents) -> URLRequest? {
-        guard let url = components.url else { return nil }
-        var request = URLRequest(url: url)
-        request.timeoutInterval = 20.0
-        return request
-    }
-    
-    // MARK: - Configuration Validation
-    
-    /// Check if gateway is properly configured
-    var isGatewayConfigured: Bool {
-        return !accountId.contains("YOUR_ACCOUNT_ID_HERE") && 
-               !gatewayId.isEmpty &&
-               accountId.count > 10 // Basic validation
-    }
-    
-    /// Get configuration status for debugging
-    func getConfigurationStatus() -> String {
-        var status = "Cloudflare AI Gateway Configuration:\n"
-        status += "- Account ID: \(accountId.contains("YOUR_ACCOUNT_ID_HERE") ? "❌ Not configured" : "✅ Set")\n"
-        status += "- Gateway ID: \(gatewayId.isEmpty ? "❌ Empty" : "✅ \(gatewayId)")\n"
-        status += "- Gateway URL: \(gatewayBaseURL)\n"
-        status += "- Status: \(isGatewayConfigured ? "✅ Ready" : "❌ Needs configuration")"
-        return status
-    }
-    
-    // MARK: - Request Execution
-    
-    /// Execute request with gateway fallback
-    func executeWithFallback<T>(
-        components: URLComponents,
-        cacheTTL: Int = 3600,
-        decoder: @escaping (Data) throws -> T
-    ) async -> Result<T, BookSearchService.BookError> {
-        
-        // First, try the gateway
-        if isGatewayConfigured {
-            let gatewayResult = await executeGatewayRequest(components: components, cacheTTL: cacheTTL, decoder: decoder)
-            
-            switch gatewayResult {
-            case .success(let result):
-                #if DEBUG
-                print("✅ [Gateway] Request successful")
-                #endif
-                return .success(result)
-            case .failure(let error):
-                #if DEBUG
-                print("⚠️ [Gateway] Failed, falling back to direct API: \(error.localizedDescription)")
-                #endif
-            }
-        }
-        
-        // Fallback to direct API
-        return await executeFallbackRequest(components: components, decoder: decoder)
-    }
-    
-    private func executeGatewayRequest<T>(
-        components: URLComponents,
-        cacheTTL: Int = 3600,
-        decoder: @escaping (Data) throws -> T
-    ) async -> Result<T, BookSearchService.BookError> {
-        
-        guard let request = createGatewayRequest(for: components, cacheTTL: cacheTTL) else {
-            return .failure(.invalidURL)
-        }
-        
-        return await executeRequest(request, decoder: decoder)
-    }
-    
-    private func executeFallbackRequest<T>(
-        components: URLComponents,
-        decoder: @escaping (Data) throws -> T
-    ) async -> Result<T, BookSearchService.BookError> {
-        
-        guard let request = createFallbackRequest(for: components) else {
-            return .failure(.invalidURL)
-        }
-        
-        let result = await executeRequest(request, decoder: decoder)
-        #if DEBUG
-        print("📡 [Direct API] Request executed")
-        #endif
-        return result
-    }
-    
-    private func executeRequest<T>(
-        _ request: URLRequest,
-        decoder: @escaping (Data) throws -> T
-    ) async -> Result<T, BookSearchService.BookError> {
-        
-        do {
-            let configuration = URLSessionConfiguration.default
-            configuration.timeoutIntervalForRequest = 30.0
-            configuration.timeoutIntervalForResource = 60.0
-            configuration.waitsForConnectivity = true
-            let session = URLSession(configuration: configuration)
-            
-            let (data, response) = try await session.data(for: request)
-            
-            // Check HTTP response
-            if let httpResponse = response as? HTTPURLResponse {
-                guard 200...299 ~= httpResponse.statusCode else {
-                    return .failure(.networkError("HTTP \(httpResponse.statusCode)"))
-                }
-                
-                // Check for cache hit in Cloudflare headers
-                let cacheStatus = httpResponse.value(forHTTPHeaderField: "cf-cache-status") ?? "MISS"
-                let wasCacheHit = cacheStatus == "HIT"
-                
-                #if DEBUG
-                if wasCacheHit {
-                    print("🚀 [Cache HIT] Response served from Cloudflare cache")
-                }
-                #endif
-            }
-            
-            let result = try decoder(data)
-            return .success(result)
-            
-        } catch let error as URLError {
-            return .failure(.networkError(error.localizedDescription))
-        } catch {
-            return .failure(.decodingError(error.localizedDescription))
-        }
-    }
-}
-
-// MARK: - Book Search Service
+// MARK: - Proxy-Based Book Search Service
 
 @MainActor
 class BookSearchService: ObservableObject {
     static let shared = BookSearchService()
-    private let keychainService = KeychainService.shared
-    private let gatewayService = CloudflareGatewayService.shared
+    
+    // MARK: - Configuration
+    
+    /// Your CloudFlare Worker endpoint - update this after deployment
+    private let proxyBaseURL = "https://books-api-proxy.jukasdrj.workers.dev"
     
     private init() {
-        // Ensure API keys are set up on initialization
-        keychainService.setupInitialKeys()
-        
         #if DEBUG
-        keychainService.printKeyStatus()
-        print(gatewayService.getConfigurationStatus())
+        print("✅ BookSearchService: Using proxy-based API at \(proxyBaseURL)")
         #endif
-    }
-
-    private let baseURL = "https://www.googleapis.com/books/v1/volumes"
-    
-    /// Secure API key retrieved from Keychain
-    private var apiKey: String? {
-        return keychainService.googleBooksAPIKey
     }
     
     enum SortOption: String, CaseIterable, Identifiable {
@@ -256,6 +47,7 @@ class BookSearchService: ObservableObject {
         case networkError(String)
         case decodingError(String)
         case noData
+        case proxyError(String)
         
         var errorDescription: String? {
             switch self {
@@ -267,49 +59,38 @@ class BookSearchService: ObservableObject {
                 return "Data parsing error: \(message)"
             case .noData:
                 return "No data received"
+            case .proxyError(let message):
+                return "Service error: \(message)"
             }
         }
     }
 
+    // MARK: - Search Methods
+    
     func search(
         query: String, 
         sortBy: SortOption = .relevance,
         maxResults: Int = 40,
         includeTranslations: Bool = true
     ) async -> Result<[BookMetadata], BookError> {
-        // Handle empty or whitespace-only queries
+        // Handle empty queries
         let trimmedQuery = query.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedQuery.isEmpty else {
-            return .success([]) // Return empty results for empty queries
+            return .success([])
         }
         
-        // Check for API key availability
-        guard let secureApiKey = self.apiKey else {
-            #if DEBUG
-            print("❌ BookSearchService: Google Books API key not found in Keychain")
-            #endif
-            return .failure(.networkError("API key not configured. Please restart the app to initialize secure storage."))
-        }
-        
-        // Starting search with optimized query
-        
-        guard var components = URLComponents(string: baseURL) else {
-            // Invalid base URL
+        // Build proxy URL
+        guard var components = URLComponents(string: "\(proxyBaseURL)/search") else {
             return .failure(.invalidURL)
         }
         
-        // Enhanced query construction
-        let optimizedQuery = buildOptimizedQuery(trimmedQuery)
-        
-        // Build query parameters with Google Books API optimizations
+        // Build query parameters
         var queryItems = [
-            URLQueryItem(name: "q", value: optimizedQuery),
+            URLQueryItem(name: "q", value: optimizeQuery(trimmedQuery)),
             URLQueryItem(name: "maxResults", value: String(maxResults)),
-            URLQueryItem(name: "printType", value: "books"),
-            URLQueryItem(name: "projection", value: "full") // Get full volume info including ratings
         ]
         
-        // Add sorting parameter for Google Books API
+        // Add sorting parameter
         if sortBy == .newest {
             queryItems.append(URLQueryItem(name: "orderBy", value: "newest"))
         } else {
@@ -321,22 +102,21 @@ class BookSearchService: ObservableObject {
             queryItems.append(URLQueryItem(name: "langRestrict", value: "en"))
         }
         
-        // Add secure API key
-        queryItems.append(URLQueryItem(name: "key", value: secureApiKey))
-        
         components.queryItems = queryItems
-
-        guard components.url != nil else {
-            // Failed to construct URL from components
+        
+        guard let url = components.url else {
             return .failure(.invalidURL)
         }
         
-        // Making network request through Cloudflare AI Gateway with fallback
-
-        let result = await gatewayService.executeWithFallback(
-            components: components
-        ) { [self] data in
-            let searchResponse = try JSONDecoder().decode(GoogleBooksResponse.self, from: data)
+        // Execute request through proxy
+        return await executeProxyRequest(url: url) { data in
+            let searchResponse = try JSONDecoder().decode(ProxySearchResponse.self, from: data)
+            
+            // Handle proxy errors
+            if let error = searchResponse.error {
+                throw ProxyError.serverError(error)
+            }
+            
             let metadataItems = searchResponse.items?.compactMap { $0.toBookMetadata() } ?? []
             
             // Apply post-processing sorting and filtering
@@ -346,11 +126,9 @@ class BookSearchService: ObservableObject {
                 sortBy: sortBy
             )
         }
-        
-        return result
     }
     
-    /// Specialized search for ISBN lookups with aggressive caching (used by CSVImportService)
+    /// Specialized search for ISBN lookups
     func searchByISBN(_ isbn: String) async -> Result<BookMetadata?, BookError> {
         let cleanedISBN = isbn.replacingOccurrences(of: "=", with: "")
             .replacingOccurrences(of: "-", with: "")
@@ -360,67 +138,95 @@ class BookSearchService: ObservableObject {
             return .success(nil)
         }
         
-        // Check for API key availability
-        guard let secureApiKey = self.apiKey else {
-            return .failure(.networkError("API key not configured"))
-        }
-        
-        guard var components = URLComponents(string: baseURL) else {
+        guard var components = URLComponents(string: "\(proxyBaseURL)/isbn") else {
             return .failure(.invalidURL)
         }
         
-        // Build ISBN query with more aggressive caching (24 hours)
-        let queryItems = [
-            URLQueryItem(name: "q", value: "isbn:\(cleanedISBN)"),
-            URLQueryItem(name: "maxResults", value: "1"),
-            URLQueryItem(name: "printType", value: "books"),
-            URLQueryItem(name: "projection", value: "full"),
-            URLQueryItem(name: "key", value: secureApiKey)
+        components.queryItems = [
+            URLQueryItem(name: "isbn", value: cleanedISBN)
         ]
         
-        components.queryItems = queryItems
-        
-        let result = await gatewayService.executeWithFallback(
-            components: components,
-            cacheTTL: 86400 // 24 hours - ISBN data never changes
-        ) { data in
-            let searchResponse = try JSONDecoder().decode(GoogleBooksResponse.self, from: data)
-            return searchResponse.items?.first?.toBookMetadata()
+        guard let url = components.url else {
+            return .failure(.invalidURL)
         }
         
-        return result
+        return await executeProxyRequest(url: url) { data in
+            let response = try JSONDecoder().decode(ProxyISBNResponse.self, from: data)
+            
+            // Handle proxy errors
+            if let error = response.error {
+                if error.contains("not found") {
+                    return nil // ISBN not found
+                }
+                throw ProxyError.serverError(error)
+            }
+            
+            return response.toBookMetadata()
+        }
     }
     
-    // MARK: - Query Optimization
+    // MARK: - Private Methods
     
-    private func buildOptimizedQuery(_ query: String) -> String {
+    private func executeProxyRequest<T>(
+        url: URL,
+        decoder: @escaping (Data) throws -> T
+    ) async -> Result<T, BookError> {
+        
+        do {
+            let configuration = URLSessionConfiguration.default
+            configuration.timeoutIntervalForRequest = 30.0
+            configuration.timeoutIntervalForResource = 60.0
+            configuration.waitsForConnectivity = true
+            let session = URLSession(configuration: configuration)
+            
+            var request = URLRequest(url: url)
+            request.setValue("BooksTrack-iOS/1.0", forHTTPHeaderField: "User-Agent")
+            
+            let (data, response) = try await session.data(for: request)
+            
+            // Check HTTP response
+            if let httpResponse = response as? HTTPURLResponse {
+                guard 200...299 ~= httpResponse.statusCode else {
+                    // Handle specific error cases
+                    if httpResponse.statusCode == 429 {
+                        let retryAfter = httpResponse.value(forHTTPHeaderField: "Retry-After") ?? "60"
+                        return .failure(.proxyError("Rate limit exceeded. Please try again in \(retryAfter) seconds."))
+                    }
+                    return .failure(.networkError("HTTP \(httpResponse.statusCode)"))
+                }
+                
+                // Log cache status for debugging
+                let cacheStatus = httpResponse.value(forHTTPHeaderField: "X-Cache") ?? "UNKNOWN"
+                let provider = httpResponse.value(forHTTPHeaderField: "X-Provider") ?? "unknown"
+                
+                #if DEBUG
+                print("📊 [BookSearch] Provider: \(provider), Cache: \(cacheStatus)")
+                #endif
+            }
+            
+            let result = try decoder(data)
+            return .success(result)
+            
+        } catch let error as URLError {
+            return .failure(.networkError(error.localizedDescription))
+        } catch let error as ProxyError {
+            return .failure(.proxyError(error.localizedDescription))
+        } catch {
+            return .failure(.decodingError(error.localizedDescription))
+        }
+    }
+    
+    private func optimizeQuery(_ query: String) -> String {
         let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
         
-        // Check if it's already an ISBN query (handle CSVImportService calls)
+        // Check if it's already an ISBN query
         if trimmed.hasPrefix("isbn:") {
-            // Already formatted, ensure clean ISBN after prefix
-            let isbnPart = String(trimmed.dropFirst(5))
-                .replacingOccurrences(of: "=", with: "")
-                .replacingOccurrences(of: "-", with: "")
-                .replacingOccurrences(of: " ", with: "")
-            return "isbn:\(isbnPart)"
+            return trimmed
         }
         
         // Handle ISBN searches
         if isISBN(trimmed) {
             return "isbn:\(trimmed.replacingOccurrences(of: "=", with: "").replacingOccurrences(of: "-", with: ""))"
-        }
-        
-        // Handle author-specific searches (when coming from AuthorSearchResultsView)
-        // Check if this looks like an author name (contains spaces but no special terms)
-        let isLikelyAuthorName = trimmed.contains(" ") && 
-                                !trimmed.lowercased().contains("by ") && 
-                                !trimmed.contains("\"") &&
-                                !trimmed.contains(":") &&
-                                trimmed.split(separator: " ").count <= 4 // Reasonable author name length
-        
-        if isLikelyAuthorName {
-            return "inauthor:\"\(trimmed)\""
         }
         
         // Handle author-specific searches with "by"
@@ -445,20 +251,16 @@ class BookSearchService: ObservableObject {
         return cleaned.count == 10 || cleaned.count == 13 && cleaned.allSatisfy { $0.isNumber }
     }
     
-    // MARK: - Result Processing & Sorting
-    
     private func processSearchResults(
         _ results: [BookMetadata], 
         originalQuery: String,
         sortBy: SortOption
     ) -> [BookMetadata] {
         
-        // First, filter out low-quality results
+        // Filter out low-quality results
         let filteredResults = results.filter { metadata in
-            // Must have title and at least one author
             guard !metadata.title.isEmpty && !metadata.authors.isEmpty else { return false }
             
-            // Filter out obvious non-books (magazines, etc.)
             let title = metadata.title.lowercased()
             let badKeywords = ["magazine", "journal", "newsletter", "catalog", "brochure"]
             return !badKeywords.contains { title.contains($0) }
@@ -467,7 +269,7 @@ class BookSearchService: ObservableObject {
         // Remove duplicates based on title and author similarity
         let deduplicatedResults = removeDuplicates(filteredResults)
         
-        // Apply sorting
+        // Apply sorting (proxy handles basic sorting, but we can fine-tune)
         let sortedResults = sortResults(deduplicatedResults, by: sortBy, originalQuery: originalQuery)
         
         return sortedResults
@@ -478,7 +280,6 @@ class BookSearchService: ObservableObject {
         
         for result in results {
             let isDuplicate = uniqueResults.contains { existing in
-                // Check for similar titles and authors
                 let titleSimilarity = stringSimilarity(result.title, existing.title)
                 let authorSimilarity = authorsSimilarity(result.authors, existing.authors)
                 
@@ -531,7 +332,7 @@ class BookSearchService: ObservableObject {
         for queryWord in queryWords {
             for titleWord in titleWords {
                 if titleWord.contains(queryWord) {
-                    score += titleWord == queryWord ? 10 : 5 // Exact match vs partial
+                    score += titleWord == queryWord ? 10 : 5
                 }
             }
         }
@@ -555,11 +356,9 @@ class BookSearchService: ObservableObject {
     private func calculatePopularityScore(_ metadata: BookMetadata) -> Double {
         var score: Double = 0
         
-        // Boost books with covers and descriptions (usually more popular)
         if metadata.imageURL != nil { score += 3 }
         if metadata.bookDescription != nil && !metadata.bookDescription!.isEmpty { score += 2 }
         
-        // Boost books from major publishers
         if let publisher = metadata.publisher?.lowercased() {
             let majorPublishers = ["penguin", "random house", "harpercollins", "simon", "macmillan", "scholastic"]
             if majorPublishers.contains(where: publisher.contains) {
@@ -567,14 +366,12 @@ class BookSearchService: ObservableObject {
             }
         }
         
-        // Prefer books with reasonable page counts (not too short/long)
         if let pageCount = metadata.pageCount {
             if pageCount >= 100 && pageCount <= 800 {
                 score += 2
             }
         }
         
-        // Boost recent but not too recent books (proven popular)
         if let year = extractYear(from: metadata.publishedDate) {
             let currentYear = Calendar.current.component(.year, from: Date())
             let age = currentYear - year
@@ -640,25 +437,44 @@ class BookSearchService: ObservableObject {
     }
 }
 
-// MARK: - Google Books API Response Structures
+// MARK: - Proxy Response Models
 
-private struct GoogleBooksResponse: Codable, Sendable {
-    let items: [VolumeItem]?
+private struct ProxySearchResponse: Codable {
+    let kind: String?
+    let totalItems: Int?
+    let provider: String?
+    let cached: Bool?
+    let items: [ProxyVolumeItem]?
+    let error: String?
 }
 
-private struct VolumeItem: Codable, Sendable {
+private struct ProxyISBNResponse: Codable {
+    let kind: String?
+    let id: String?
+    let volumeInfo: ProxyVolumeInfo?
+    let provider: String?
+    let error: String?
+    let isbn: String?
+    
+    func toBookMetadata() -> BookMetadata? {
+        guard let volumeInfo = volumeInfo else { return nil }
+        return ProxyVolumeItem(kind: kind ?? "", id: id ?? "", volumeInfo: volumeInfo).toBookMetadata()
+    }
+}
+
+private struct ProxyVolumeItem: Codable {
+    let kind: String
     let id: String
-    let volumeInfo: VolumeInfo
+    let volumeInfo: ProxyVolumeInfo
     
     func toBookMetadata() -> BookMetadata {
         let isbn13 = volumeInfo.industryIdentifiers?.first(where: { $0.type == "ISBN_13" })?.identifier
         let isbn10 = volumeInfo.industryIdentifiers?.first(where: { $0.type == "ISBN_10" })?.identifier
 
-        // Create field-level data sources for API data
         var fieldSources: [String: DataSourceInfo] = [:]
-        let apiSourceInfo = DataSourceInfo(source: .googleBooksAPI, confidence: 1.0)
+        let apiSourceInfo = DataSourceInfo(source: .proxyAPI, confidence: 1.0)
         
-        // Track all fields from Google Books API
+        // Track all fields from proxy API
         fieldSources["title"] = apiSourceInfo
         if let authors = volumeInfo.authors, !authors.isEmpty {
             fieldSources["authors"] = apiSourceInfo
@@ -688,14 +504,13 @@ private struct VolumeItem: Codable, Sendable {
             fieldSources["genre"] = apiSourceInfo
         }
 
-        // Calculate completeness based on available fields
-        let totalFields: Double = 10.0 // Core fields we expect from API
+        let totalFields: Double = 10.0
         let presentFields = Double(fieldSources.count)
         let completeness = presentFields / totalFields
 
         return BookMetadata(
             googleBooksID: self.id,
-            title: volumeInfo.title,
+            title: volumeInfo.title ?? "",
             authors: volumeInfo.authors ?? [],
             publishedDate: volumeInfo.publishedDate,
             pageCount: volumeInfo.pageCount,
@@ -707,7 +522,7 @@ private struct VolumeItem: Codable, Sendable {
             publisher: volumeInfo.publisher,
             isbn: isbn13 ?? isbn10,
             genre: volumeInfo.categories ?? [],
-            dataSource: .googleBooksAPI,
+            dataSource: .proxyAPI,
             fieldDataSources: fieldSources,
             dataCompleteness: completeness,
             dataQualityScore: 1.0
@@ -715,31 +530,40 @@ private struct VolumeItem: Codable, Sendable {
     }
 }
 
-private struct VolumeInfo: Codable, Sendable {
-    let title: String
+private struct ProxyVolumeInfo: Codable {
+    let title: String?
     let authors: [String]?
     let publisher: String?
     let publishedDate: String?
     let description: String?
-    let industryIdentifiers: [IndustryIdentifier]?
+    let industryIdentifiers: [ProxyIndustryIdentifier]?
     let pageCount: Int?
     let categories: [String]?
-    let imageLinks: ImageLinks?
+    let imageLinks: ProxyImageLinks?
     let language: String?
     let previewLink: String?
     let infoLink: String?
-    let averageRating: Double?
-    let ratingsCount: Int?
 }
 
-private struct IndustryIdentifier: Codable, Sendable {
+private struct ProxyIndustryIdentifier: Codable {
     let type: String
     let identifier: String
 }
 
-private struct ImageLinks: Codable, Sendable {
+private struct ProxyImageLinks: Codable {
     let smallThumbnail: String?
     let thumbnail: String?
+}
+
+private enum ProxyError: LocalizedError {
+    case serverError(String)
+    
+    var errorDescription: String? {
+        switch self {
+        case .serverError(let message):
+            return message
+        }
+    }
 }
 
 private extension String {
@@ -749,4 +573,10 @@ private extension String {
         }
         return URL(string: self)
     }
+}
+
+// MARK: - Data Source Extension
+
+extension DataSource {
+    static let proxyAPI = DataSource(rawValue: "proxyAPI") ?? .googleBooksAPI
 }
