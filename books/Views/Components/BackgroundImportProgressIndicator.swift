@@ -44,8 +44,13 @@ struct BackgroundImportProgressIndicator: View {
             }
         }
         .onAppear {
+            // Use existing shared instance or create if needed
             if backgroundCoordinator == nil {
-                backgroundCoordinator = BackgroundImportCoordinator.initialize(with: modelContext)
+                if let shared = BackgroundImportCoordinator.shared {
+                    backgroundCoordinator = shared
+                } else {
+                    backgroundCoordinator = BackgroundImportCoordinator.initialize(with: modelContext)
+                }
             }
         }
         .animation(.easeInOut(duration: 0.3), value: (backgroundCoordinator?.isImporting ?? false) && (backgroundCoordinator?.progress != nil))

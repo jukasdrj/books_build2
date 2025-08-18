@@ -48,6 +48,7 @@
 		<key>BGTaskSchedulerPermittedIdentifiers</key>
 		<array>
 			<string>com.books.readingtracker.csv-import</string>
+			<string>com.books.readingtracker.metadata-enrichment</string>
 		</array>
 	<key>UILaunchScreen</key>
 	<dict/>

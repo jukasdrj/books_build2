@@ -67,57 +67,8 @@ struct LibraryView: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            // Import status banner (shows when import is active)
-            ImportStatusBanner()
-            
-            // Quick filter bar
-            QuickFilterBar(filter: $libraryFilter) { }
-            
-            Divider()
-            
-            // Layout toggle section
-            HStack {
-                if libraryFilter.isActive {
-                    HStack(spacing: Theme.Spacing.xs) {
-                        Circle()
-                            .fill(currentTheme.primary)
-                            .frame(width: 8, height: 8)
-                        Text("Filtered")
-                            .labelSmall()
-                            .foregroundColor(currentTheme.primary)
-                    }
-                }
-                
-                Spacer()
-                
-                Picker("Layout", selection: $selectedLayout) {
-                    ForEach(LayoutType.allCases, id: \.self) { layout in
-                        Image(systemName: layout.icon).tag(layout)
-                    }
-                }
-                .pickerStyle(.segmented)
-                .frame(width: 120)
-            }
-            .padding(.horizontal, Theme.Spacing.md)
-            .padding(.vertical, Theme.Spacing.sm)
-            .background(currentTheme.surface)
-            
-            Divider()
-            
-            // Content section - Use stable filtered books
-            if stableFilteredBooks.isEmpty {
-                Text("No books to display")
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .padding()
-            } else {
-                ScrollView(.vertical) {
-                    if selectedLayout == .grid {
-                        UniformGridLayoutView(books: stableFilteredBooks)
-                    } else {
-                        ListLayoutView(books: stableFilteredBooks)
-                    }
-                }
-            }
+            headerSection
+            contentSection
         }
         .navigationTitle(libraryFilter.showWishlistOnly ? "Wishlist (\(bookCount))" : "Library (\(bookCount))")
         .navigationBarTitleDisplayMode(.large)
@@ -129,7 +80,7 @@ struct LibraryView: View {
             SettingsView()
         }
         .sheet(isPresented: $showingEnhancement) {
-            LibraryEnhancementView()
+            LibraryEnrichmentView(modelContext: modelContext)
         }
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
@@ -318,6 +269,76 @@ struct ListLayoutView: View {
             }
         }
         .padding(.horizontal, Theme.Spacing.md)
+    }
+}
+
+// MARK: - LibraryView Extension
+
+private extension LibraryView {
+    // MARK: - View Components
+    
+    var headerSection: some View {
+        VStack(spacing: 0) {
+            // Import status banner (shows when import is active)
+            ImportStatusBanner()
+            
+            // Quick filter bar
+            QuickFilterBar(filter: $libraryFilter) { }
+            
+            Divider()
+            
+            // Layout toggle section
+            layoutToggleSection
+        }
+    }
+    
+    var layoutToggleSection: some View {
+        HStack {
+            if libraryFilter.isActive {
+                HStack(spacing: Theme.Spacing.xs) {
+                    Circle()
+                        .fill(currentTheme.primary)
+                        .frame(width: 8, height: 8)
+                    Text("Filtered")
+                        .labelSmall()
+                        .foregroundColor(currentTheme.primary)
+                }
+            }
+            
+            Spacer()
+            
+            Picker("Layout", selection: $selectedLayout) {
+                ForEach(LayoutType.allCases, id: \.self) { layout in
+                    Image(systemName: layout.icon).tag(layout)
+                }
+            }
+            .pickerStyle(.segmented)
+            .frame(width: 120)
+        }
+        .padding(.horizontal, Theme.Spacing.md)
+        .padding(.vertical, Theme.Spacing.sm)
+        .background(currentTheme.surface)
+    }
+    
+    var contentSection: some View {
+        VStack(spacing: 0) {
+            Divider()
+            
+            // Content section - Use stable filtered books
+            if stableFilteredBooks.isEmpty {
+                Text("No books to display")
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .padding()
+            } else {
+                ScrollView(.vertical) {
+                    if selectedLayout == .grid {
+                        UniformGridLayoutView(books: stableFilteredBooks)
+                    } else {
+                        ListLayoutView(books: stableFilteredBooks)
+                    }
+                }
+            }
+        }
     }
 }
 
