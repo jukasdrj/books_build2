@@ -1,0 +1,37 @@
+# CloudFlare Worker Configuration
+name = "books-api-proxy"
+main = "src/index.js"
+compatibility_date = "2025-02-04"
+compatibility_flags = ["nodejs_compat"]
+
+# Observability
+[observability]
+enabled = true
+
+# Environment variables (set these in CloudFlare dashboard)
+# [env.production]
+# name = "books-api-proxy-prod"
+
+# [env.staging]
+# name = "books-api-proxy-staging"
+
+# KV Storage for caching and rate limiting (hot cache)
+[[kv_namespaces]]
+binding = "BOOKS_CACHE"
+id = "b9cade63b6db48fd80c109a013f38fdb"
+preview_id = "b9cade63b6db48fd80c109a013f38fdb"
+
+# R2 Storage for extended caching (cold cache)
+[[r2_buckets]]
+binding = "BOOKS_R2"
+bucket_name = "books-cache"
+preview_bucket_name = "books-cache-preview"
+
+# Environment Variables (secrets - set via wrangler secret)
+# wrangler secret put GOOGLE_BOOKS_API_KEY
+# wrangler secret put WORLDCAT_API_KEY (if you get one)
+
+# Custom domains (optional - set up after deployment)
+# routes = [
+#   { pattern = "books-api.yourdomain.com/*", zone_name = "yourdomain.com" }
+# ]

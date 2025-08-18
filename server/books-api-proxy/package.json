@@ -1,0 +1,27 @@
+{
+  "name": "books-api-proxy",
+  "version": "1.0.0",
+  "description": "Multi-provider book search API proxy with intelligent fallbacks",
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "deploy:staging": "wrangler deploy --env staging",
+    "deploy:production": "wrangler deploy --env production",
+    "tail": "wrangler tail",
+    "test": "wrangler dev --test"
+  },
+  "keywords": [
+    "books",
+    "api",
+    "proxy",
+    "google-books",
+    "open-library",
+    "cloudflare-worker"
+  ],
+  "author": "BooksTrack",
+  "license": "MIT",
+  "devDependencies": {
+    "wrangler": "^4.30.0"
+  }
+}
