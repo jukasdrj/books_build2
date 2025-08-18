@@ -305,7 +305,7 @@ struct ParsedBook: Identifiable, Codable, Sendable {
 }
 
 /// Progress tracking for import operation
-struct ImportProgress: Sendable {
+struct ImportProgress: Sendable, Equatable {
     let sessionId: UUID
     var currentStep: ImportStep = .preparing
     var totalBooks: Int = 0

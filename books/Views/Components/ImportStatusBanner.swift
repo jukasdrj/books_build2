@@ -16,6 +16,7 @@ struct ImportStatusBanner: View {
     @State private var showCancelAlert = false
     @State private var updateTimer: Timer?
     @State private var refreshTrigger = 0  // Used to force UI updates
+    @State private var lastProgress: ImportProgress?  // Track progress changes
     
     var body: some View {
         Group {
@@ -153,10 +154,17 @@ struct ImportStatusBanner: View {
         }
         .onAppear {
             setupImportService()
-            startUpdateTimer()
+            startUpdateTimerIfNeeded()
         }
         .onDisappear {
             stopUpdateTimer()
+        }
+        .onChange(of: importService?.isImporting) { _, isImporting in
+            if isImporting == true {
+                startUpdateTimerIfNeeded()
+            } else {
+                stopUpdateTimer()
+            }
         }
         .onReceive(NotificationCenter.default.publisher(for: .importServiceCreated)) { notification in
             if let service = notification.object as? CSVImportService {
@@ -186,10 +194,19 @@ struct ImportStatusBanner: View {
         }
     }
     
-    private func startUpdateTimer() {
-        stopUpdateTimer()  // Stop any existing timer
+    private func startUpdateTimerIfNeeded() {
+        // Only start timer if there's an active import
+        guard let service = importService, service.isImporting else {
+            stopUpdateTimer()
+            return
+        }
         
-        // Check every 0.5 seconds for import state
+        // Don't create multiple timers
+        guard updateTimer == nil else { return }
+        
+        print("[ImportStatusBanner] Starting update timer for active import")
+        
+        // Check every 0.5 seconds for import progress changes
         updateTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { _ in
             Task { @MainActor in
                 // Re-check for the coordinator and service
@@ -197,15 +214,36 @@ struct ImportStatusBanner: View {
                     self.setupImportService()
                 }
                 
-                // Force UI update by incrementing the refresh trigger
-                self.refreshTrigger += 1
+                // Only trigger UI update if progress actually changed
+                if let service = self.importService,
+                   service.isImporting,
+                   let currentProgress = service.importProgress {
+                    
+                    let shouldUpdate = self.lastProgress == nil ||
+                                     self.lastProgress?.processedBooks != currentProgress.processedBooks ||
+                                     self.lastProgress?.currentStep != currentProgress.currentStep ||
+                                     self.lastProgress?.message != currentProgress.message
+                    
+                    if shouldUpdate {
+                        print("[ImportStatusBanner] Progress changed, updating UI: \(currentProgress.processedBooks)/\(currentProgress.totalBooks)")
+                        self.lastProgress = currentProgress
+                        self.refreshTrigger += 1
+                    }
+                } else {
+                    // Import finished or service disappeared - stop timer
+                    self.stopUpdateTimer()
+                }
             }
         }
     }
     
     private func stopUpdateTimer() {
+        if updateTimer != nil {
+            print("[ImportStatusBanner] Stopping update timer")
+        }
         updateTimer?.invalidate()
         updateTimer = nil
+        lastProgress = nil  // Reset progress tracking
     }
 }
 

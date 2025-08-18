@@ -4,8 +4,17 @@ import SwiftUI
 
 @Model
 final class BookMetadata: Identifiable, Hashable, @unchecked Sendable {
+    // FIXED: Removed .unique constraint for CloudKit compatibility
+    // Note: You'll need to handle duplicates manually in your business logic
     var googleBooksID: String = ""
-    var title: String = ""
+    var title: String = "" {
+        didSet {
+            // Prevent nil assignment - SwiftData sometimes passes nil during loading
+            if title.isEmpty {
+                title = "Unknown Title"
+            }
+        }
+    }
     
     // Store authors as a comma-separated string for SwiftData compatibility
     private var authorsString: String = ""
@@ -43,8 +52,17 @@ final class BookMetadata: Identifiable, Hashable, @unchecked Sendable {
     
     // MARK: - Data Source Tracking (Phase 3)
     
-    // Primary data source for the entire book record
-    var dataSource: DataSource = DataSource.manualEntry
+    // Primary data source for the entire book record - handle existing nil values
+    private var _dataSource: DataSource? = DataSource.manualEntry
+    
+    var dataSource: DataSource {
+        get {
+            return _dataSource ?? .manualEntry
+        }
+        set {
+            _dataSource = newValue
+        }
+    }
     
     // Field-level tracking for mixed-source books (stored as JSON string for SwiftData compatibility)
     private var fieldDataSourcesString: String = "{}"
@@ -57,7 +75,7 @@ final class BookMetadata: Identifiable, Hashable, @unchecked Sendable {
 
     // One-to-many relationship: BookMetadata can have multiple UserBooks
     @Relationship(inverse: \UserBook.metadata)
-    var userBooks: [UserBook]? = []
+    var userBooks: [UserBook] = []
     
     @Transient
     var id: String { googleBooksID }
@@ -95,7 +113,8 @@ final class BookMetadata: Identifiable, Hashable, @unchecked Sendable {
         }
     }
     
-    // Computed property for field-level data sources
+    // Use @Transient to exclude this computed property from SwiftData persistence
+    @Transient
     var fieldDataSources: [String: DataSourceInfo] {
         get {
             guard !fieldDataSourcesString.isEmpty, fieldDataSourcesString != "{}" else { return [:] }
@@ -118,8 +137,9 @@ final class BookMetadata: Identifiable, Hashable, @unchecked Sendable {
     
 
     init(googleBooksID: String, title: String, authors: [String] = [], publishedDate: String? = nil, pageCount: Int? = nil, bookDescription: String? = nil, imageURL: URL? = nil, language: String? = nil, previewLink: URL? = nil, infoLink: URL? = nil, publisher: String? = nil, isbn: String? = nil, genre: [String] = [], originalLanguage: String? = nil, authorNationality: String? = nil, format: BookFormat? = nil, authorGender: AuthorGender? = nil, authorEthnicity: String? = nil, culturalRegion: CulturalRegion? = nil, originalPublicationCountry: String? = nil, translatorNationality: String? = nil, culturalThemes: [String] = [], readingDifficulty: ReadingDifficulty? = nil, timeToRead: Int? = nil, dataSource: DataSource = DataSource.manualEntry, fieldDataSources: [String: DataSourceInfo] = [:], dataCompleteness: Double = 0.0, dataQualityScore: Double = 1.0) {
-        self.googleBooksID = googleBooksID
-        self.title = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        // Ensure non-nil values for required properties
+        self.googleBooksID = googleBooksID.isEmpty ? "unknown_\(UUID().uuidString)" : googleBooksID
+        self.title = title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "Unknown Title" : title.trimmingCharacters(in: .whitespacesAndNewlines)
         self.publishedDate = publishedDate
         self.pageCount = pageCount
         self.bookDescription = bookDescription
@@ -139,7 +159,7 @@ final class BookMetadata: Identifiable, Hashable, @unchecked Sendable {
         self.translatorNationality = translatorNationality
         self.readingDifficulty = readingDifficulty
         self.timeToRead = timeToRead
-        self.dataSource = dataSource
+        self._dataSource = dataSource
         self.dataCompleteness = dataCompleteness
         self.dataQualityScore = dataQualityScore
         self.lastDataUpdate = Date()

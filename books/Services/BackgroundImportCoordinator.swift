@@ -227,11 +227,12 @@ class BackgroundImportCoordinator {
     // MARK: - Private Implementation
     
     private func checkForExistingImport() async {
-        // Check ImportStateManager for existing import
+        // Check ImportStateManager for existing import AND that CSVImportService is actually importing
         if let resumableInfo = ImportStateManager.shared.getResumableImportInfo(),
-           ImportStateManager.shared.canResumeImport() {
+           ImportStateManager.shared.canResumeImport(),
+           csvImportService.isImporting {
             
-            print("[BackgroundImportCoordinator] Found existing import: \(resumableInfo.fileName)")
+            print("[BackgroundImportCoordinator] Found existing active import: \(resumableInfo.fileName)")
             
             // Recreate background session from persisted state
             let backgroundSession = BackgroundImportSession(
@@ -251,6 +252,12 @@ class BackgroundImportCoordinator {
                 currentImport = backgroundSession
             }
             monitorImportProgress()
+        } else {
+            // Clear any stale import state if there's no active import
+            if ImportStateManager.shared.getResumableImportInfo() != nil {
+                print("[BackgroundImportCoordinator] Found stale import state with no active import, cleaning up")
+                ImportStateManager.shared.clearImportState()
+            }
         }
     }
     
@@ -261,9 +268,9 @@ class BackgroundImportCoordinator {
             return
         }
         
-        // Only start monitoring if there's actually an import session
-        guard currentImport != nil else {
-            print("[BackgroundImportCoordinator] No active import session, skipping monitoring")
+        // Only start monitoring if there's actually an import session AND it's actively importing
+        guard currentImport != nil, csvImportService.isImporting else {
+            print("[BackgroundImportCoordinator] No active import session or not importing, skipping monitoring")
             return
         }
         
@@ -275,13 +282,19 @@ class BackgroundImportCoordinator {
             while isImporting && isMonitoring {
                 // Wait for import to actually start
                 if let progress = csvImportService.importProgress {
-                    print("[BackgroundImportCoordinator] Progress update: \(progress.processedBooks)/\(progress.totalBooks), step: \(progress.currentStep)")
+                    // Only update if progress has actually changed to reduce UI bouncing
+                    let hasProgressChanged = currentProgress?.processedBooks != progress.processedBooks ||
+                                           currentProgress?.currentStep != progress.currentStep
                     
-                    // Ensure UI updates happen on main thread
-                    await MainActor.run {
-                        currentProgress = progress
-                        currentImport?.progress = progress
-                        print("[BackgroundImportCoordinator] UI state updated - isImporting: \(isImporting), progress: \(String(describing: progress))")
+                    if hasProgressChanged {
+                        print("[BackgroundImportCoordinator] Progress update: \(progress.processedBooks)/\(progress.totalBooks), step: \(progress.currentStep)")
+                        
+                        // Ensure UI updates happen on main thread
+                        await MainActor.run {
+                            currentProgress = progress
+                            currentImport?.progress = progress
+                            print("[BackgroundImportCoordinator] UI state updated - isImporting: \(isImporting), progress: \(String(describing: progress))")
+                        }
                     }
                     
                     // Update Live Activity with current progress

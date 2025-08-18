@@ -149,7 +149,8 @@ final class UserBook: Identifiable {
         }
     }
     
-    // Computed property for reading sessions array
+    // Use @Transient to exclude this computed property from SwiftData persistence
+    @Transient
     var readingSessions: [ReadingSession] {
         get {
             guard !readingSessionsData.isEmpty else { return [] }
@@ -170,7 +171,8 @@ final class UserBook: Identifiable {
         }
     }
     
-    // Computed property for user input needs array
+    // Use @Transient to exclude this computed property from SwiftData persistence
+    @Transient
     var needsUserInput: [UserInputPrompt] {
         get {
             guard !needsUserInputString.isEmpty, needsUserInputString != "[]" else { return [] }
@@ -191,7 +193,8 @@ final class UserBook: Identifiable {
         }
     }
     
-    // Computed property for personal data sources
+    // Use @Transient to exclude this computed property from SwiftData persistence
+    @Transient
     var personalDataSources: [String: DataSourceInfo] {
         get {
             guard !personalDataSourcesString.isEmpty, personalDataSourcesString != "{}" else { return [:] }
