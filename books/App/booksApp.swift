@@ -53,9 +53,7 @@ struct booksApp: App {
                 print("❌ This indicates a fundamental issue with the SwiftData models")
                 
                 // Instead of fatal error, try to identify the specific issue
-                if let swiftDataError = error as? any Error {
-                    print("❌ SwiftData Error Details: \(swiftDataError)")
-                }
+                print("❌ SwiftData Error Details: \(error)")
                 
                 fatalError("Critical: Unable to create ModelContainer. Error: \(error)")
             }
