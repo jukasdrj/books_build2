@@ -60,7 +60,6 @@ struct CulturalDiversityView: View {
                 languageDiversitySection
                 genderDiversitySection
                 culturalGoalsSection
-                marginizedVoicesSection
             }
             .padding(.horizontal, Theme.Spacing.md)
             .padding(.bottom, Theme.Spacing.xl)
@@ -398,7 +397,7 @@ struct CulturalDiversityView: View {
                 HStack(spacing: Theme.Spacing.md) {
                     goalCard(title: "African Literature", progress: culturalStats[.africa] ?? 0, target: 12)
                     goalCard(title: "Translated Works", progress: translatedWorksCount, target: 24)
-                    goalCard(title: "Indigenous Voices", progress: indigenousAuthorsCount, target: 6)
+                    goalCard(title: "Female Authors", progress: femaleAuthorsCount, target: 15)
                 }
                 .padding(.horizontal, Theme.Spacing.md)
             }
@@ -430,61 +429,13 @@ struct CulturalDiversityView: View {
         .materialCard()
     }
     
-    private var marginizedVoicesSection: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.md) {
-            Text("Marginalized Voices")
-                .titleMedium()
-            
-            HStack(spacing: Theme.Spacing.lg) {
-                VStack(spacing: Theme.Spacing.xs) {
-                    Text("\(indigenousAuthorsCount)")
-                        .readingStats()
-                        .foregroundColor(currentTheme.cultureIndigenous)
-                    
-                    Text("Indigenous Authors")
-                        .labelSmall()
-                        .foregroundColor(currentTheme.secondaryText)
-                        .multilineTextAlignment(.center)
-                }
-                
-                VStack(spacing: Theme.Spacing.xs) {
-                    Text("\(marginizedVoicesCount)")
-                        .readingStats()
-                        .foregroundColor(currentTheme.secondaryAction)
-                    
-                    Text("Marginalized Voices")
-                        .labelSmall()
-                        .foregroundColor(currentTheme.secondaryText)
-                        .multilineTextAlignment(.center)
-                }
-                
-                VStack(spacing: Theme.Spacing.xs) {
-                    Text("\(translatedWorksCount)")
-                        .readingStats()
-                        .foregroundColor(currentTheme.tertiary)
-                    
-                    Text("Translated Works")
-                        .labelSmall()
-                        .foregroundColor(currentTheme.secondaryText)
-                        .multilineTextAlignment(.center)
-                }
-            }
-            .padding(Theme.Spacing.md)
-            .materialCard()
-        }
-    }
-    
-    // Computed properties for marginalized voices stats
-    private var indigenousAuthorsCount: Int {
-        readBooks.filter { $0.metadata?.hasIndigenousVoice() == true }.count
-    }
-    
-    private var marginizedVoicesCount: Int {
-        readBooks.filter { $0.metadata?.hasMarginalizedVoice() == true }.count
-    }
     
     private var translatedWorksCount: Int {
         readBooks.filter { $0.metadata?.translatorNationality != nil && !($0.metadata?.translatorNationality?.isEmpty ?? true) }.count
+    }
+    
+    private var femaleAuthorsCount: Int {
+        readBooks.filter { $0.metadata?.authorGender == .female }.count
     }
 }
 

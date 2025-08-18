@@ -20,15 +20,15 @@ This is a SwiftUI iOS book reading tracker app with cultural diversity tracking 
 - Scheme: `books.xcscheme` (configured for Debug/Release builds)
 - Three targets: `books` (main app), `booksTests`, `booksUITests`
 
-### API Key Setup
-To use the Google Books API integration:
+### Search Infrastructure
+The app uses a **CloudFlare Workers proxy** for book search functionality:
 
-1. **Get API Key**: Obtain a Google Books API key from the [Google Cloud Console](https://console.cloud.google.com/)
-2. **Set API Key**: The app uses KeychainService for secure storage. On first launch, if no key is found, the app will prompt for setup
-3. **Development**: For development, you can set the API key in `booksApp.swift` line 128 (replace `"YOUR_API_KEY_HERE"`)
-4. **Production**: Use Xcode's environment variables or the keychain for secure storage
+1. **Proxy Service**: CloudFlare Workers proxy at `https://books-api-proxy.jukasdrj.workers.dev`
+2. **No API Keys Required**: The proxy handles all external API integration securely
+3. **Caching**: Hybrid R2 + KV caching for optimal performance
+4. **Search Service**: Uses `BookSearchService` for all search operations
 
-**Important**: Never commit API keys to version control. The KeychainService ensures secure storage and proper key management.
+**Architecture**: The app communicates only with the CloudFlare proxy, which handles Google Books API integration behind the scenes.
 
 ## Architecture
 
@@ -43,7 +43,7 @@ To use the Google Books API integration:
 - **Theme System**: Multi-theme Material Design 3 system with 5 variants (Purple Boho, Forest Sage, Ocean Blues, Sunset Warmth, Monochrome)
 
 ### Key Services
-- **BookSearchService**: Google Books API integration with async/await
+- **BookSearchService**: CloudFlare Workers proxy integration with async/await
 - **CSVImportService**: Goodreads CSV import with smart fallback strategies and Phase 3A data validation
 - **BackgroundImportCoordinator**: Singleton coordinator for managing background imports without UI bouncing
 - **DataValidationService**: ISBN checksum verification, date parsing, and data quality scoring

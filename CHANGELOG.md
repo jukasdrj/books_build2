@@ -3,24 +3,17 @@
 ## [Unreleased]
 
 ### Added
-- Google Books API integration improvements:
-  - Externalized API key via Config.xcconfig and Info.plist substitution (GoogleBooksAPIKey, GoogleBooksAPIKeyFallback)
-  - Added Config.xcconfig.template and .gitignore entry for secrets
-  - Optional Config.test.xcconfig for Debug/test runs
-- Diagnostics & Debugging:
-  - GoogleBooksDiagnostics for request/response logging and export
-  - DebugConsoleView (Debug builds) to view diagnostics
-  - Toolbar menu in Book Search to export diagnostics and open the Debug Console
-- Networking & Error Handling:
-  - GoogleBooksService with Combine pipeline and robust error mapping (GoogleBooksError)
-  - User-facing BooksViewModel with loading and error state management
-  - ErrorView SwiftUI component for friendly error display
-- Scheme configuration (Debug):
-  - Env vars: GOOGLE_BOOKS_TEST_MODE=1, GOOGLE_BOOKS_LOG_LEVEL=verbose
-  - Launch args: -com.apple.CoreData.SQLDebug 1, -APILoggingEnabled YES
+- CloudFlare Workers proxy integration:
+  - Migrated from Google Books API to CloudFlare Workers proxy
+  - Hybrid R2 + KV caching for optimal performance
+  - No API keys required in client app
+- Book search functionality:
+  - BookSearchService with async/await patterns
+  - Comprehensive error handling and retry logic
+  - SearchView with modern SwiftUI patterns
 
 ### Changed
-- Search tab now uses BookSearchContainerView to support error UI and debug menu.
+- Search architecture migrated to CloudFlare Workers proxy-based system
 
 ### Fixed
 - Ensured Config.xcconfig is ignored in git and template is committed.

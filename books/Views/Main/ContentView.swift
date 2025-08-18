@@ -14,6 +14,9 @@ struct ContentView: View {
     @State private var completedBooksCount = 0
     @State private var currentlyReadingCount = 0
     
+    // Barcode scanning
+    @State private var showingBarcodeScanner = false
+    
     
     var body: some View {
         Group {
@@ -76,6 +79,38 @@ struct ContentView: View {
             return "Culture"
         default:
             return "PaperTracks"
+        }
+    }
+    
+    // MARK: - Barcode Scanning
+    
+    private func handleBarcodeScanned(_ scannedBarcode: String) {
+        showingBarcodeScanner = false
+        
+        HapticFeedbackManager.shared.lightImpact()
+        
+        // Navigate to search tab 
+        selectedTab = 1
+        
+        // Trigger search with the scanned barcode
+        Task {
+            let searchService = BookSearchService.shared
+            let result = await searchService.searchByISBN(scannedBarcode)
+            await MainActor.run {
+                switch result {
+                case .success(let book):
+                    if let book = book {
+                        HapticFeedbackManager.shared.success()
+                        // Navigate to the book details
+                        // Note: You may need to implement navigation to book details here
+                    } else {
+                        HapticFeedbackManager.shared.error()
+                    }
+                case .failure(let error):
+                    HapticFeedbackManager.shared.error()
+                    print("Barcode search failed: \(error)")
+                }
+            }
         }
     }
     
@@ -270,6 +305,21 @@ struct ContentView: View {
                 // Add navigation title based on selected tab
                 .navigationTitle(tabTitle(for: selectedTab))
                 .navigationBarTitleDisplayMode(selectedTab == 1 ? .large : .inline)
+                .toolbar {
+                    if selectedTab == 1 { // Search tab
+                        ToolbarItem(placement: .navigationBarTrailing) {
+                            Button {
+                                showingBarcodeScanner = true
+                            } label: {
+                                Image(systemName: "barcode.viewfinder")
+                                    .font(.title3)
+                            }
+                            .accessibilityLabel("Scan book barcode")
+                            .accessibilityHint("Opens the camera to scan a book's ISBN barcode")
+                            .foregroundColor(theme.primaryAction)
+                        }
+                    }
+                }
                 
                 // Custom Enhanced Tab Bar
                 EnhancedTabBar(
@@ -286,6 +336,11 @@ struct ContentView: View {
             }
             .ignoresSafeArea(.keyboard, edges: .bottom)
             .withNavigationDestinations() // Apply navigation destinations inside NavigationStack
+            .sheet(isPresented: $showingBarcodeScanner) {
+                BarcodeScannerView { scannedBarcode in
+                    handleBarcodeScanned(scannedBarcode)
+                }
+            }
         }
     }
     

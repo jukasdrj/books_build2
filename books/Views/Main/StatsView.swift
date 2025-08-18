@@ -313,16 +313,13 @@ struct CulturalDiversitySection: View {
         return stats
     }
     
-    private var indigenousAuthorsCount: Int {
-        books.filter { $0.metadata?.hasIndigenousVoice() == true }.count
-    }
-    
-    private var marginizedVoicesCount: Int {
-        books.filter { $0.metadata?.hasMarginalizedVoice() == true }.count
-    }
     
     private var translatedWorksCount: Int {
         books.filter { $0.metadata?.translatorNationality != nil && !($0.metadata?.translatorNationality?.isEmpty ?? true) }.count
+    }
+    
+    private var femaleAuthorsCount: Int {
+        books.filter { $0.metadata?.authorGender == .female }.count
     }
     
     var body: some View {
@@ -454,9 +451,8 @@ struct CulturalDiversitySection: View {
                 .foregroundColor(currentTheme.primaryText)
             
             HStack(spacing: Theme.Spacing.md) {
-                diverseVoicesStat(title: "Indigenous", count: indigenousAuthorsCount, color: currentTheme.primaryAction)
-                diverseVoicesStat(title: "Marginalized", count: marginizedVoicesCount, color: currentTheme.secondaryAction)
-                diverseVoicesStat(title: "Translated", count: translatedWorksCount, color: currentTheme.accentHighlight)
+                diverseVoicesStat(title: "Translated", count: translatedWorksCount, color: currentTheme.primaryAction)
+                diverseVoicesStat(title: "Female Authors", count: femaleAuthorsCount, color: currentTheme.accentHighlight)
             }
         }
     }

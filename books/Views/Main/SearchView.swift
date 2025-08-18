@@ -12,9 +12,6 @@ struct SearchView: View {
     @State private var showingSortOptions = false
     @State private var includeTranslations = true
     
-    @State private var showingBarcodeScanner = false
-    @State private var barcodeSearchResult: BookMetadata?
-    @State private var showingBarcodeSearchResult = false
 
     enum SearchState: Equatable {
         case idle
@@ -71,8 +68,6 @@ struct SearchView: View {
                 )
                 .animation(Theme.Animation.accessible, value: searchState)
             }
-            .navigationTitle("Search Books")
-            .navigationBarTitleDisplayMode(.large)
             .background(currentTheme.background)
             .searchable(text: $searchQuery, prompt: "Search by title, author, or ISBN")
             .searchSuggestions {
@@ -93,36 +88,8 @@ struct SearchView: View {
                     clearSearchResults()
                 }
             }
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    HStack(spacing: 8) {
-                        if !searchQuery.isEmpty {
-                            Button("Clear") {
-                                clearSearch()
-                            }
-                            .accessibilityLabel("Clear search")
-                            .accessibilityHint("Clear the search field and results")
-                            .foregroundColor(currentTheme.primaryAction)
-                        }
-                        
-                        Button {
-                            showingBarcodeScanner = true
-                        } label: {
-                            Label("Scan Barcode", systemImage: "barcode.viewfinder")
-                        }
-                        .accessibilityLabel("Scan book barcode")
-                        .accessibilityHint("Opens the camera to scan a book's ISBN barcode")
-                        .foregroundColor(currentTheme.primaryAction)
-                    }
-                }
-            }
             .sheet(isPresented: $showingSortOptions) {
                 sortOptionsSheet
-            }
-            .sheet(isPresented: $showingBarcodeScanner) {
-                BarcodeScannerView { scannedBarcode in
-                    handleBarcodeScanned(scannedBarcode)
-                }
             }
     }
     
@@ -393,38 +360,6 @@ struct SearchView: View {
     
     
     // MARK: - Actions
-    private func handleBarcodeScanned(_ scannedBarcode: String) {
-        showingBarcodeScanner = false
-        
-        HapticFeedbackManager.shared.lightImpact()
-        
-        Task {
-            let result = await searchService.search(
-                query: scannedBarcode,
-                sortBy: sortOption,
-                includeTranslations: includeTranslations
-            )
-            await MainActor.run {
-                switch result {
-                case .success(let books):
-                    if let firstBook = books.first {
-                        // Navigate to the first book found via barcode
-                        searchState = .results([firstBook])
-                        HapticFeedbackManager.shared.success()
-                    } else {
-                        // FALLBACK: If no books found, show traditional search
-                        searchQuery = scannedBarcode
-                        performSearch()
-                    }
-                case .failure(let error):
-                    // FALLBACK: If search fails, show traditional search
-                    searchQuery = scannedBarcode
-                    searchState = .error(formatError(error))
-                    HapticFeedbackManager.shared.error()
-                }
-            }
-        }
-    }
     
     private func performSearch() {
         let trimmedQuery = searchQuery.trimmingCharacters(in: .whitespacesAndNewlines)
