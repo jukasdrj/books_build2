@@ -299,7 +299,7 @@ struct UnifiedStatCard: View {
                 metricContent
             }
         }
-        .frame(maxWidth: .infinity)
+        .frame(maxWidth: .infinity, minHeight: 140)
         .padding(Theme.Spacing.md)
         .materialCard()
         .overlay(

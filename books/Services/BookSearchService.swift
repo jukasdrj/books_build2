@@ -91,9 +91,12 @@ class BookSearchService: ObservableObject {
         ]
         
         // Add sorting parameter
-        if sortBy == .newest {
+        switch sortBy {
+        case .newest:
             queryItems.append(URLQueryItem(name: "orderBy", value: "newest"))
-        } else {
+        case .popularity:
+            queryItems.append(URLQueryItem(name: "orderBy", value: "popularity"))
+        case .relevance:
             queryItems.append(URLQueryItem(name: "orderBy", value: "relevance"))
         }
         
@@ -126,6 +129,52 @@ class BookSearchService: ObservableObject {
                 sortBy: sortBy
             )
         }
+    }
+    
+    /// Specialized search for author-specific queries
+    func searchByAuthor(
+        _ author: String,
+        sortBy: SortOption = .popularity,
+        maxResults: Int = 40,
+        includeTranslations: Bool = true
+    ) async -> Result<[BookMetadata], BookError> {
+        let trimmedAuthor = author.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedAuthor.isEmpty else {
+            return .success([])
+        }
+        
+        // Format as author-specific query
+        let authorQuery = "inauthor:\"\(trimmedAuthor)\""
+        
+        return await search(
+            query: authorQuery,
+            sortBy: sortBy,
+            maxResults: maxResults,
+            includeTranslations: includeTranslations
+        )
+    }
+    
+    /// Specialized search for title-specific queries
+    func searchByTitle(
+        _ title: String,
+        sortBy: SortOption = .relevance,
+        maxResults: Int = 40,
+        includeTranslations: Bool = true
+    ) async -> Result<[BookMetadata], BookError> {
+        let trimmedTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedTitle.isEmpty else {
+            return .success([])
+        }
+        
+        // Format as title-specific query
+        let titleQuery = "intitle:\"\(trimmedTitle)\""
+        
+        return await search(
+            query: titleQuery,
+            sortBy: sortBy,
+            maxResults: maxResults,
+            includeTranslations: includeTranslations
+        )
     }
     
     /// Specialized search for ISBN lookups

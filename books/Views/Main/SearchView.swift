@@ -11,6 +11,7 @@ struct SearchView: View {
     @State private var sortOption: BookSearchService.SortOption = .relevance
     @State private var showingSortOptions = false
     @State private var includeTranslations = true
+    @State private var fromBarcodeScanner = false
     
 
     enum SearchState: Equatable {
@@ -69,11 +70,11 @@ struct SearchView: View {
                 .animation(Theme.Animation.accessible, value: searchState)
             }
             .background(currentTheme.background)
-            .searchable(text: $searchQuery, prompt: "Search by title, author, or ISBN")
-            .searchSuggestions {
+            .searchable(text: $searchQuery, prompt: "Search by title, author, or ISBN") {
+                // Search suggestions appear properly below the search field
                 if searchQuery.isEmpty {
                     Text("\"The Great Gatsby\"").searchCompletion("The Great Gatsby")
-                    Text("\"Maya Angelou\"").searchCompletion("Maya Angelou")
+                    Text("\"Maya Angelou\"").searchCompletion("Maya Angelou") 
                     Text("\"9780451524935\"").searchCompletion("9780451524935")
                 }
             }
@@ -90,6 +91,12 @@ struct SearchView: View {
             }
             .sheet(isPresented: $showingSortOptions) {
                 sortOptionsSheet
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .barcodeSearchCompleted)) { notification in
+                handleBarcodeSearchCompleted(notification)
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .barcodeSearchError)) { notification in
+                handleBarcodeSearchError(notification)
             }
     }
     
@@ -412,6 +419,45 @@ struct SearchView: View {
         } else {
             return "Something went wrong. Please try again later."
         }
+    }
+    
+    // MARK: - Barcode Scanning Integration
+    
+    private func handleBarcodeSearchCompleted(_ notification: Notification) {
+        guard let userInfo = notification.userInfo,
+              let query = userInfo["query"] as? String,
+              let results = userInfo["results"] as? [BookMetadata],
+              let fromBarcode = userInfo["fromBarcodeScanner"] as? Bool,
+              fromBarcode else {
+            return
+        }
+        
+        // Update search state with barcode results
+        searchQuery = query
+        fromBarcodeScanner = true
+        
+        if results.isEmpty {
+            searchState = .error("No books found for the scanned ISBN. Try searching by title or author instead.")
+        } else {
+            searchState = .results(results)
+            HapticFeedbackManager.shared.success()
+        }
+    }
+    
+    private func handleBarcodeSearchError(_ notification: Notification) {
+        guard let userInfo = notification.userInfo,
+              let query = userInfo["query"] as? String,
+              let errorMessage = userInfo["error"] as? String,
+              let fromBarcode = userInfo["fromBarcodeScanner"] as? Bool,
+              fromBarcode else {
+            return
+        }
+        
+        // Update search state with error
+        searchQuery = query
+        fromBarcodeScanner = true
+        searchState = .error("Barcode search failed: \(errorMessage)")
+        HapticFeedbackManager.shared.error()
     }
 }
 

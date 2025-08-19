@@ -89,26 +89,55 @@ struct ContentView: View {
         
         HapticFeedbackManager.shared.lightImpact()
         
-        // Navigate to search tab 
+        // Navigate to search tab first
         selectedTab = 1
         
-        // Trigger search with the scanned barcode
+        // Trigger search with the scanned barcode using the full search method
         Task {
             let searchService = BookSearchService.shared
-            let result = await searchService.searchByISBN(scannedBarcode)
+            let result = await searchService.search(query: scannedBarcode, sortBy: .relevance, includeTranslations: true)
+            
             await MainActor.run {
                 switch result {
-                case .success(let book):
-                    if let book = book {
+                case .success(let books):
+                    if !books.isEmpty {
                         HapticFeedbackManager.shared.success()
-                        // Navigate to the book details
-                        // Note: You may need to implement navigation to book details here
+                        // Post notification to SearchView to update with results
+                        NotificationCenter.default.post(
+                            name: .barcodeSearchCompleted,
+                            object: nil,
+                            userInfo: [
+                                "query": scannedBarcode,
+                                "results": books,
+                                "fromBarcodeScanner": true
+                            ]
+                        )
                     } else {
                         HapticFeedbackManager.shared.error()
+                        // Post notification for no results
+                        NotificationCenter.default.post(
+                            name: .barcodeSearchCompleted,
+                            object: nil,
+                            userInfo: [
+                                "query": scannedBarcode,
+                                "results": [],
+                                "fromBarcodeScanner": true
+                            ]
+                        )
                     }
                 case .failure(let error):
                     HapticFeedbackManager.shared.error()
                     print("Barcode search failed: \(error)")
+                    // Post notification for error
+                    NotificationCenter.default.post(
+                        name: .barcodeSearchError,
+                        object: nil,
+                        userInfo: [
+                            "query": scannedBarcode,
+                            "error": error.localizedDescription,
+                            "fromBarcodeScanner": true
+                        ]
+                    )
                 }
             }
         }
@@ -575,4 +604,10 @@ extension View {
 #Preview {
     ContentView()
         .modelContainer(for: [UserBook.self, BookMetadata.self], inMemory: true)
+}
+
+// MARK: - Notification Names
+extension Notification.Name {
+    static let barcodeSearchCompleted = Notification.Name("barcodeSearchCompleted")
+    static let barcodeSearchError = Notification.Name("barcodeSearchError")
 }

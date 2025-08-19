@@ -288,9 +288,9 @@ struct AuthorSearchResultsView: View {
     private func performAuthorSearch() async {
         searchState = .searching
         
-        // Use the enhanced search functionality with author-specific optimization
-        let result = await searchService.search(
-            query: authorName, // Let the service handle the inauthor: optimization
+        // Use the dedicated author search method for proper proxy API formatting
+        let result = await searchService.searchByAuthor(
+            authorName,
             sortBy: sortOption,
             maxResults: 40,
             includeTranslations: true
