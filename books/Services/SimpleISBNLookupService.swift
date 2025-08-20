@@ -76,24 +76,17 @@ class SimpleISBNLookupService: ObservableObject {
             await incrementRateLimitEvents()
         }
         
-        // Use BookSearchService with isbn: query format
-        let query = "isbn:\(cleanISBN)"
-        
-        let result = await bookSearchService.search(
-            query: query,
-            sortBy: .relevance,
-            maxResults: 1,
-            includeTranslations: true
-        )
+        // Use BookSearchService searchByISBN with automatic ISBNDB fallback
+        let result = await bookSearchService.searchByISBN(cleanISBN)
         
         switch result {
-        case .success(let books):
-            if let firstBook = books.first {
+        case .success(let book):
+            if let book = book {
                 await rateLimiter.reportSuccess()
                 await updateStats(success: true)
-                return .success(firstBook)
+                return .success(book)
             } else {
-                // No books found for ISBN
+                // No books found for ISBN (tried both Google Books and ISBNDB)
                 await updateStats(success: false)
                 return .failure(.noData)
             }
