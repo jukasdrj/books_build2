@@ -1048,9 +1048,9 @@ class CSVImportService: ObservableObject {
             importProgress = progress
         }
         
-        // Search using title and author
-        let searchQuery = "\(title) \(author)"
-        let searchResult = await BookSearchService.shared.search(
+        // Search using proper Google Books syntax with ISBNDB fallback
+        let searchQuery = "intitle:\"\(title)\" inauthor:\"\(author)\""
+        let searchResult = await BookSearchService.shared.searchWithFallback(
             query: searchQuery,
             sortBy: .relevance,
             maxResults: 1,

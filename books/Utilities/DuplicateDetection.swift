@@ -39,9 +39,19 @@ struct DuplicateDetectionService {
         for userBook in userBooks {
             guard let bookMetadata = userBook.metadata else { continue }
             
-            // Index by Google Books ID
+            // Index by provider ID (Google Books ID, ISBNDB ID, etc.)
             if !bookMetadata.googleBooksID.isEmpty {
                 googleBooksIDLookup[bookMetadata.googleBooksID] = userBook
+                
+                // Also index by provider type for cross-provider duplicate detection
+                if bookMetadata.googleBooksID.contains(":") {
+                    let components = bookMetadata.googleBooksID.components(separatedBy: ":")
+                    if components.count == 2 {
+                        let providerType = components[0]
+                        let providerId = components[1]
+                        googleBooksIDLookup[providerId] = userBook // Index base ID too
+                    }
+                }
             }
             
             // Index by clean ISBN
@@ -57,13 +67,7 @@ struct DuplicateDetectionService {
             }
         }
         
-        // Check Google Books ID first (most reliable) - O(1)
-        if !metadata.googleBooksID.isEmpty,
-           let match = googleBooksIDLookup[metadata.googleBooksID] {
-            return DuplicateDetectionResult(userBook: match, method: .googleBooksID)
-        }
-        
-        // Check ISBN - O(1)
+        // PRIORITY 1: Check ISBN first (most reliable unique identifier)
         if let metadataISBN = metadata.isbn, !metadataISBN.isEmpty {
             let cleanISBN = Self.cleanISBN(metadataISBN)
             if let match = isbnLookup[cleanISBN] {
@@ -71,11 +75,37 @@ struct DuplicateDetectionService {
             }
         }
         
-        // Check title+author - O(1)
+        // PRIORITY 2: Check Google Books ID (reliable but only when both have it)
+        if !metadata.googleBooksID.isEmpty,
+           let match = googleBooksIDLookup[metadata.googleBooksID] {
+            return DuplicateDetectionResult(userBook: match, method: .googleBooksID)
+        }
+        
+        // PRIORITY 3: Enhanced title+author matching with fuzzy logic
         if !metadata.title.isEmpty, let firstAuthor = metadata.authors.first {
             let key = Self.normalizeTitle(metadata.title) + "|" + Self.normalizeAuthor(firstAuthor)
+            
+            // Exact match first
             if let match = titleAuthorLookup[key] {
                 return DuplicateDetectionResult(userBook: match, method: .titleAuthor)
+            }
+            
+            // Fuzzy matching for title+author when exact fails
+            let normalizedTitle = Self.normalizeTitle(metadata.title)
+            let normalizedAuthor = Self.normalizeAuthor(firstAuthor)
+            
+            for userBook in userBooks {
+                guard let existingMetadata = userBook.metadata else { continue }
+                guard !existingMetadata.title.isEmpty, let existingFirstAuthor = existingMetadata.authors.first else { continue }
+                
+                let existingNormalizedTitle = Self.normalizeTitle(existingMetadata.title)
+                let existingNormalizedAuthor = Self.normalizeAuthor(existingFirstAuthor)
+                
+                // Check if titles and authors are very close matches
+                if Self.isVeryCloseMatch(normalizedTitle, existingNormalizedTitle) &&
+                   Self.isVeryCloseMatch(normalizedAuthor, existingNormalizedAuthor) {
+                    return DuplicateDetectionResult(userBook: userBook, method: .titleAuthor)
+                }
             }
         }
         
@@ -151,8 +181,10 @@ struct DuplicateDetectionService {
     
     /// Clean and normalize ISBN for comparison
     private static func cleanISBN(_ isbn: String) -> String {
-        return isbn.replacingOccurrences(of: "-", with: "")
+        return isbn.replacingOccurrences(of: "=", with: "") // Remove leading = from Goodreads exports
+                  .replacingOccurrences(of: "-", with: "")
                   .replacingOccurrences(of: " ", with: "")
+                  .trimmingCharacters(in: .whitespacesAndNewlines)
                   .uppercased()
     }
     

@@ -1,5 +1,7 @@
 // books/Services/BookSearchServiceProxy.swift
 import Foundation
+import SwiftData
+import SwiftUI
 
 // MARK: - Proxy-Based Book Search Service
 
@@ -120,7 +122,7 @@ class BookSearchService: ObservableObject {
                 throw ProxyError.serverError(error)
             }
             
-            let metadataItems = searchResponse.items?.compactMap { $0.toBookMetadata() } ?? []
+            let metadataItems = searchResponse.items?.compactMap { $0.toBookMetadata(provider: searchResponse.provider) } ?? []
             
             // Apply post-processing sorting and filtering
             return self.processSearchResults(
@@ -177,7 +179,7 @@ class BookSearchService: ObservableObject {
         )
     }
     
-    /// Specialized search for ISBN lookups
+    /// Specialized search for ISBN lookups with automatic ISBNDB fallback
     func searchByISBN(_ isbn: String) async -> Result<BookMetadata?, BookError> {
         let cleanedISBN = isbn.replacingOccurrences(of: "=", with: "")
             .replacingOccurrences(of: "-", with: "")
@@ -187,12 +189,128 @@ class BookSearchService: ObservableObject {
             return .success(nil)
         }
         
+        // First try: Google Books via search endpoint (more reliable for ISBN)
+        let searchResult = await search(
+            query: "isbn:\(cleanedISBN)",
+            sortBy: .relevance,
+            maxResults: 1,
+            includeTranslations: false
+        )
+        
+        switch searchResult {
+        case .success(let books):
+            if let book = books.first {
+                return .success(book)
+            }
+            // If Google Books fails, try ISBNDB fallback
+            return await searchByISBNWithISBNDBFallback(cleanedISBN)
+            
+        case .failure:
+            // If Google Books fails, try ISBNDB fallback
+            return await searchByISBNWithISBNDBFallback(cleanedISBN)
+        }
+    }
+    
+    /// Enhanced search with automatic ISBNDB fallback for title/author queries
+    func searchWithFallback(
+        query: String,
+        sortBy: SortOption = .relevance,
+        maxResults: Int = 40,
+        includeTranslations: Bool = true
+    ) async -> Result<[BookMetadata], BookError> {
+        // First try Google Books
+        let primaryResult = await search(
+            query: query,
+            sortBy: sortBy,
+            maxResults: maxResults,
+            includeTranslations: includeTranslations
+        )
+        
+        switch primaryResult {
+        case .success(let books):
+            if !books.isEmpty {
+                return .success(books)
+            }
+            // If Google Books returns no results, try ISBNDB fallback
+            return await searchWithISBNDBFallback(
+                query: query,
+                sortBy: sortBy,
+                maxResults: maxResults
+            )
+            
+        case .failure:
+            // If Google Books fails completely, try ISBNDB fallback
+            return await searchWithISBNDBFallback(
+                query: query,
+                sortBy: sortBy,
+                maxResults: maxResults
+            )
+        }
+    }
+    
+    /// ISBNDB fallback search for title/author queries
+    private func searchWithISBNDBFallback(
+        query: String,
+        sortBy: SortOption,
+        maxResults: Int
+    ) async -> Result<[BookMetadata], BookError> {
+        guard var components = URLComponents(string: "\(proxyBaseURL)/search") else {
+            return .failure(.invalidURL)
+        }
+        
+        var queryItems = [
+            URLQueryItem(name: "q", value: optimizeQuery(query)),
+            URLQueryItem(name: "maxResults", value: String(maxResults)),
+            URLQueryItem(name: "provider", value: "isbndb"), // Force ISBNDB
+            URLQueryItem(name: "fallback", value: "true")    // Enable fallback mode
+        ]
+        
+        // Add sorting parameter
+        switch sortBy {
+        case .newest:
+            queryItems.append(URLQueryItem(name: "orderBy", value: "newest"))
+        case .popularity:
+            queryItems.append(URLQueryItem(name: "orderBy", value: "popularity"))
+        case .relevance:
+            break // Default relevance sorting
+        }
+        
+        components.queryItems = queryItems
+        
+        guard let url = components.url else {
+            return .failure(.invalidURL)
+        }
+        
+        return await executeProxyRequest(url: url) { data in
+            let response = try JSONDecoder().decode(ProxySearchResponse.self, from: data)
+            
+            // Handle proxy errors
+            if let error = response.error {
+                throw ProxyError.serverError(error)
+            }
+            
+            // Parse results
+            let metadataItems = response.items?.map { $0.toBookMetadata(provider: response.provider) } ?? []
+            
+            // Apply post-processing sorting and filtering
+            return self.processSearchResults(
+                metadataItems, 
+                originalQuery: query,
+                sortBy: sortBy
+            )
+        }
+    }
+    
+    /// Direct ISBNDB fallback for ISBN lookups when Google Books fails
+    private func searchByISBNWithISBNDBFallback(_ isbn: String) async -> Result<BookMetadata?, BookError> {
         guard var components = URLComponents(string: "\(proxyBaseURL)/isbn") else {
             return .failure(.invalidURL)
         }
         
         components.queryItems = [
-            URLQueryItem(name: "isbn", value: cleanedISBN)
+            URLQueryItem(name: "isbn", value: isbn),
+            URLQueryItem(name: "provider", value: "isbndb"), // Force ISBNDB
+            URLQueryItem(name: "fallback", value: "true")    // Enable fallback mode
         ]
         
         guard let url = components.url else {
@@ -205,7 +323,7 @@ class BookSearchService: ObservableObject {
             // Handle proxy errors
             if let error = response.error {
                 if error.contains("not found") {
-                    return nil // ISBN not found
+                    return nil // ISBN not found in ISBNDB either
                 }
                 throw ProxyError.serverError(error)
             }
@@ -507,7 +625,7 @@ private struct ProxyISBNResponse: Codable {
     
     func toBookMetadata() -> BookMetadata? {
         guard let volumeInfo = volumeInfo else { return nil }
-        return ProxyVolumeItem(kind: kind ?? "", id: id ?? "", volumeInfo: volumeInfo).toBookMetadata()
+        return ProxyVolumeItem(kind: kind ?? "", id: id ?? "", volumeInfo: volumeInfo).toBookMetadata(provider: provider)
     }
 }
 
@@ -516,7 +634,7 @@ private struct ProxyVolumeItem: Codable {
     let id: String
     let volumeInfo: ProxyVolumeInfo
     
-    func toBookMetadata() -> BookMetadata {
+    func toBookMetadata(provider: String? = nil) -> BookMetadata {
         let isbn13 = volumeInfo.industryIdentifiers?.first(where: { $0.type == "ISBN_13" })?.identifier
         let isbn10 = volumeInfo.industryIdentifiers?.first(where: { $0.type == "ISBN_10" })?.identifier
 
@@ -557,8 +675,27 @@ private struct ProxyVolumeItem: Codable {
         let presentFields = Double(fieldSources.count)
         let completeness = presentFields / totalFields
 
+        // Handle different provider IDs appropriately with proper prefixing
+        let providerID: String
+        if let provider = provider?.lowercased() {
+            switch provider {
+            case "isbndb":
+                // Prefix ISBNDB book_id to distinguish from Google Books IDs
+                providerID = "isbndb:\(self.id)"
+            case "google-books":
+                // Use Google Books ID as-is
+                providerID = self.id
+            default:
+                // Unknown provider - use prefixed ID
+                providerID = "\(provider):\(self.id)"
+            }
+        } else {
+            // No provider specified - assume Google Books
+            providerID = self.id
+        }
+        
         return BookMetadata(
-            googleBooksID: self.id,
+            googleBooksID: providerID,
             title: volumeInfo.title ?? "",
             authors: volumeInfo.authors ?? [],
             publishedDate: volumeInfo.publishedDate,
