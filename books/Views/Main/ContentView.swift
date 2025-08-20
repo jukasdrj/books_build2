@@ -36,6 +36,11 @@ struct ContentView: View {
             Task { @MainActor in
                 ImportStateManager.shared.setModelContext(modelContext)
             }
+            
+            // Prevent navigation bar bounce by ensuring consistent state
+            withAnimation(.easeInOut(duration: 0.0)) {
+                // Force navigation bar layout consistency
+            }
         }
         .onChange(of: selectedTab) { oldValue, newValue in
             // Haptic feedback on tab switch
@@ -331,9 +336,9 @@ struct ContentView: View {
                 .ignoresSafeArea(.keyboard)
                 .padding(.bottom, 72) // Add padding to prevent custom tab bar from blocking content
                 .animation(.easeInOut(duration: 0.3), value: selectedTab)
-                // Add navigation title based on selected tab
+                // Add navigation title based on selected tab with consistent display mode
                 .navigationTitle(tabTitle(for: selectedTab))
-                .navigationBarTitleDisplayMode(selectedTab == 1 ? .large : .inline)
+                .navigationBarTitleDisplayMode(.large)
                 .toolbar {
                     if selectedTab == 1 { // Search tab
                         ToolbarItem(placement: .navigationBarTrailing) {

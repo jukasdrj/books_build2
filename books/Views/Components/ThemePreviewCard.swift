@@ -44,22 +44,21 @@ struct ThemePreviewCard: View {
                 )
         )
         .scaleEffect(scale)
-        .materialInteractive()
         .onTapGesture {
-            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                scale = 1.0
+            // Immediate visual feedback
+            withAnimation(.spring(response: 0.2, dampingFraction: 0.8)) {
+                scale = 0.95
             }
-            onSelect()
+            
+            // Reset scale and trigger selection
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                    scale = 1.0
+                }
+                onSelect()
+            }
         }
-        .onLongPressGesture(minimumDuration: 0.05) {
-            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                scale = 0.98
-            }
-        } onPressingChanged: { isPressing in
-            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                scale = isPressing ? 0.98 : 1.0
-            }
-        }
+        .contentShape(Rectangle()) // Ensure entire card area is tappable
     }
     
     @ViewBuilder

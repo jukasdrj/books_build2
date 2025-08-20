@@ -4,10 +4,6 @@
 <dict>
 	<key>aps-environment</key>
 	<string>development</string>
-<!--
-	<key>com.apple.developer.ActivityKit</key>
-	<true/>
--->
 	<key>com.apple.developer.icloud-container-identifiers</key>
 	<array>
 		<string>iCloud.userLibrary</string>
@@ -20,9 +16,5 @@
 	<array>
 		<string>group.com.books.readingtracker.shared</string>
 	</array>
-	<key>com.apple.security.assets.pictures.read-write</key>
-	<true/>
-	<key>com.apple.security.network.client</key>
-	<true/>
 </dict>
 </plist>
