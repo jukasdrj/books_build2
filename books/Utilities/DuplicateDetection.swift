@@ -47,7 +47,7 @@ struct DuplicateDetectionService {
                 if bookMetadata.googleBooksID.contains(":") {
                     let components = bookMetadata.googleBooksID.components(separatedBy: ":")
                     if components.count == 2 {
-                        let providerType = components[0]
+                        let _ = components[0] // provider type
                         let providerId = components[1]
                         googleBooksIDLookup[providerId] = userBook // Index base ID too
                     }
