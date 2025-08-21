@@ -76,6 +76,7 @@ struct SearchView: View {
                 .animation(Theme.Animation.accessible, value: searchState)
             }
             .background(currentTheme.background)
+            .keyboardAvoidingLayout() // Prevent keyboard constraint conflicts
             .if(UIDevice.current.userInterfaceIdiom != .pad) { view in
                 view.searchable(text: $searchQuery, prompt: "Search by title, author, or ISBN") {
                     // Search suggestions appear properly below the search field
@@ -85,6 +86,7 @@ struct SearchView: View {
                         Text("\"9780451524935\"").searchCompletion("9780451524935")
                     }
                 }
+                .keyboardToolbar() // Add Done button to prevent constraint conflicts
             }
             .accessibilityLabel("Search for books")
             .accessibilityHint("Enter a book title, author name, or ISBN to search for books in the online database")
@@ -127,7 +129,7 @@ struct SearchView: View {
                     .foregroundStyle(.primary)
                     .opacity(0.7)
                 
-                // Enhanced search field
+                // Enhanced search field with keyboard constraint fix
                 TextField("Search by title, author, or ISBN", text: $searchQuery)
                     .font(.title3)
                     .fontWeight(.regular)
@@ -137,6 +139,15 @@ struct SearchView: View {
                         performSearch()
                     }
                     .opacity(searchQuery.isEmpty ? 0.6 : 1.0)
+                    .keyboardDismissMode(.onDrag)
+                    .toolbar {
+                        ToolbarItemGroup(placement: .keyboard) {
+                            Spacer()
+                            Button("Done") {
+                                isSearchFieldFocused = false
+                            }
+                        }
+                    }
                 
                 // Clear button with glass effect
                 if !searchQuery.isEmpty {
@@ -179,7 +190,14 @@ struct SearchView: View {
             // Subtle background blur
             Rectangle()
                 .fill(.ultraThinMaterial)
-                .ignoresSafeArea()
+                .ignoresSafeArea(edges: .top)
+        }
+        .keyboardAvoidingLayout()
+        .onTapGesture {
+            // Dismiss keyboard on background tap for iPad
+            if UIDevice.current.userInterfaceIdiom == .pad {
+                isSearchFieldFocused = false
+            }
         }
     }
     

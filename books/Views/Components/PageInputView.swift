@@ -36,6 +36,8 @@ struct PageInputView: View {
                         TextField("0", text: $currentPageText)
                             .frame(width: 80)
                             .bodyMedium()
+                            .keyboardType(.numberPad)
+                            .multilineTextAlignment(.trailing)
                     }
                     
                     HStack {
@@ -45,6 +47,8 @@ struct PageInputView: View {
                         TextField("0", text: $totalPagesText)
                             .frame(width: 80)
                             .bodyMedium()
+                            .keyboardType(.numberPad)
+                            .multilineTextAlignment(.trailing)
                     }
                 }
                 
@@ -62,6 +66,7 @@ struct PageInputView: View {
                 }
             }
             .navigationTitle("Update Progress")
+            .keyboardAvoidingLayout()
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
@@ -73,6 +78,14 @@ struct PageInputView: View {
                         dismiss()
                     }
                     .disabled(!isValidInput)
+                }
+                
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button("Done") {
+                        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), 
+                                                      to: nil, from: nil, for: nil)
+                    }
                 }
             }
         }

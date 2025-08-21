@@ -1,4 +1,199 @@
 import SwiftUI
+import UIKit
+
+// MARK: - Keyboard Layout Extensions
+extension View {
+    /// Provides safe keyboard avoidance without constraint conflicts
+    func keyboardAvoidingLayout() -> some View {
+        self.modifier(KeyboardAvoidingModifier())
+            .modifier(KeyboardConstraintFixModifier())
+    }
+    
+    /// Sets keyboard dismiss mode for text fields
+    func keyboardDismissMode(_ mode: UIScrollView.KeyboardDismissMode) -> some View {
+        self.background(
+            KeyboardDismissHostView(mode: mode)
+                .allowsHitTesting(false)
+        )
+    }
+    
+    /// Adds keyboard toolbar with Done button to prevent constraint conflicts
+    func keyboardToolbar() -> some View {
+        self.toolbar {
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                Button("Done") {
+                    hideKeyboard()
+                }
+                .foregroundColor(.blue)
+            }
+        }
+    }
+    
+    private func hideKeyboard() {
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+    }
+}
+
+struct KeyboardAvoidingModifier: ViewModifier {
+    @State private var keyboardHeight: CGFloat = 0
+    @State private var keyboardAnimationDuration: Double = 0.25
+    
+    func body(content: Content) -> some View {
+        content
+            .padding(.bottom, keyboardHeight)
+            .animation(.easeInOut(duration: keyboardAnimationDuration), value: keyboardHeight)
+            .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { notification in
+                updateKeyboardHeight(from: notification, isShowing: true)
+            }
+            .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { notification in
+                updateKeyboardHeight(from: notification, isShowing: false)
+            }
+    }
+    
+    @MainActor
+    private func updateKeyboardHeight(from notification: Notification, isShowing: Bool) {
+        guard let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect,
+              let animationDuration = notification.userInfo?[UIResponder.keyboardAnimationDurationUserInfoKey] as? Double else {
+            return
+        }
+        
+        Task { @MainActor in
+            self.keyboardAnimationDuration = animationDuration
+            
+            if isShowing {
+                // Use safe area adjusted height to prevent constraint conflicts
+                self.keyboardHeight = max(0, keyboardFrame.height - getSafeAreaBottom())
+            } else {
+                self.keyboardHeight = 0
+            }
+        }
+    }
+    
+    @MainActor
+    private func getSafeAreaBottom() -> CGFloat {
+        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+              let window = windowScene.windows.first else {
+            return 0
+        }
+        return window.safeAreaInsets.bottom
+    }
+}
+
+struct KeyboardDismissHostView: UIViewRepresentable {
+    let mode: UIScrollView.KeyboardDismissMode
+    
+    func makeUIView(context: Context) -> UIView {
+        let view = UIView()
+        view.backgroundColor = .clear
+        return view
+    }
+    
+    func updateUIView(_ uiView: UIView, context: Context) {
+        if let scrollView = uiView.findSuperview(of: UIScrollView.self) {
+            scrollView.keyboardDismissMode = mode
+        }
+    }
+}
+
+// MARK: - Keyboard Constraint Fix Modifier
+struct KeyboardConstraintFixModifier: ViewModifier {
+    func body(content: Content) -> some View {
+        content
+            .background(KeyboardConstraintFixHelper())
+    }
+}
+
+struct KeyboardConstraintFixHelper: UIViewRepresentable {
+    func makeUIView(context: Context) -> UIView {
+        let view = UIView()
+        view.backgroundColor = .clear
+        
+        // Set up keyboard constraint conflict mitigation
+        setupKeyboardConstraintFix(for: view)
+        
+        return view
+    }
+    
+    func updateUIView(_ uiView: UIView, context: Context) {
+        // No updates needed
+    }
+    
+    @MainActor
+    private func setupKeyboardConstraintFix(for view: UIView) {
+        NotificationCenter.default.addObserver(
+            forName: UIResponder.keyboardWillShowNotification,
+            object: nil,
+            queue: .main
+        ) { [weak view] _ in
+            Task { @MainActor in
+                // Small delay to let keyboard setup complete
+                try? await Task.sleep(nanoseconds: 50_000_000) // 0.05 seconds
+                view?.fixKeyboardConstraintConflicts()
+            }
+        }
+    }
+}
+
+extension UIView {
+    @MainActor
+    func fixKeyboardConstraintConflicts() {
+        guard let window = window else { return }
+        
+        // Find and fix keyboard placeholder view constraint conflicts
+        findAndFixKeyboardConstraints(in: window)
+    }
+    
+    @MainActor
+    private func findAndFixKeyboardConstraints(in view: UIView) {
+        // Look for RemoteKeyboardPlaceholderViews
+        for subview in view.subviews {
+            let className = String(describing: type(of: subview))
+            if className.contains("RemoteKeyboardPlaceholder") {
+                fixPlaceholderConstraints(for: subview)
+            }
+            findAndFixKeyboardConstraints(in: subview)
+        }
+    }
+    
+    @MainActor
+    private func fixPlaceholderConstraints(for view: UIView) {
+        // Lower priority of conflicting constraints to allow Auto Layout to resolve conflicts
+        for constraint in view.constraints {
+            if let identifier = constraint.identifier {
+                if identifier.contains("accessoryView") || identifier.contains("inputView") {
+                    // Lower priority to allow flexibility
+                    constraint.priority = UILayoutPriority(999)
+                }
+            }
+        }
+        
+        // Also check superview constraints
+        if let superview = view.superview {
+            for constraint in superview.constraints {
+                if (constraint.firstItem === view || constraint.secondItem === view),
+                   let identifier = constraint.identifier {
+                    if identifier.contains("accessoryView") || identifier.contains("inputView") {
+                        constraint.priority = UILayoutPriority(999)
+                    }
+                }
+            }
+        }
+    }
+}
+
+extension UIView {
+    func findSuperview<T: UIView>(of type: T.Type) -> T? {
+        var view = superview
+        while view != nil {
+            if let typedView = view as? T {
+                return typedView
+            }
+            view = view?.superview
+        }
+        return nil
+    }
+}
 
 extension Color {
     // Legacy static references removed - use @Environment(\.appTheme) instead

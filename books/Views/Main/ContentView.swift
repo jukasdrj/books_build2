@@ -30,6 +30,7 @@ struct ContentView: View {
         }
         .fullStatusBarTheming() // Apply complete status bar theming (background + style)
         .preferredColorScheme(getPreferredColorScheme()) // Apply color scheme based on theme
+        .keyboardAvoidingLayout() // Prevent keyboard constraint conflicts
         .onAppear {
             updateBadgeCounts()
             // Set up import state manager with model context
