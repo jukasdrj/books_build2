@@ -348,7 +348,7 @@ struct UnifiedStatusBadge: View {
             case .read: return "Read"
             case .onHold: return "Hold"
             case .dnf: return "DNF"
-            case .toRead: return "TBR"
+            case .toRead, .wantToRead: return "TBR"
             }
         case .row:
             return status.rawValue

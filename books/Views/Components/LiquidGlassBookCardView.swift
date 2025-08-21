@@ -71,11 +71,11 @@ struct LiquidGlassBookCardView: View {
             .liquidGlassVibrancy(.prominent)
             
             // Status overlay with liquid glass effect
-            if let status = book.readingStatus, status != .wantToRead {
+            if book.readingStatus != .wantToRead && book.readingStatus != .toRead {
                 VStack {
                     HStack {
                         Spacer()
-                        statusIndicator(for: status)
+                        statusIndicator(for: book.readingStatus)
                     }
                     Spacer()
                 }
@@ -118,14 +118,14 @@ struct LiquidGlassBookCardView: View {
             HStack(spacing: 12) {
                 // Rating with vibrancy
                 if let rating = book.rating, rating > 0 {
-                    ratingView(rating: rating)
+                    ratingView(rating: Double(rating))
                 }
                 
                 Spacer()
                 
                 // Reading progress with liquid glass styling
-                if let progress = book.readingProgress, progress > 0 {
-                    progressView(progress: progress)
+                if book.readingProgress > 0 {
+                    progressView(progress: book.readingProgress)
                 }
             }
             
@@ -228,13 +228,11 @@ struct LiquidGlassBookCardView: View {
             label += ", rated \(rating) out of 5 stars"
         }
         
-        if let progress = book.readingProgress, progress > 0 {
-            label += ", \(Int(progress))% complete"
+        if book.readingProgress > 0 {
+            label += ", \(Int(book.readingProgress * 100))% complete"
         }
         
-        if let status = book.readingStatus {
-            label += ", status: \(status.displayName)"
-        }
+        label += ", status: \(book.readingStatus.displayName)"
         
         return label
     }
@@ -269,20 +267,20 @@ struct LiquidGlassBookCoverView: View {
             // Book cover image or placeholder
             Group {
                 if let urlString = imageURL, let url = URL(string: urlString), !loadError {
-                    AsyncImage(url: url) { image in
-                        image
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                            .liquidGlassVibrancy(.maximum)
-                    } placeholder: {
-                        loadingPlaceholder
-                    }
-                    .onAppear {
-                        isLoading = false
-                    }
-                    .onFailure {
-                        loadError = true
-                        isLoading = false
+                    AsyncImage(url: url) { phase in
+                        switch phase {
+                        case .success(let image):
+                            image
+                                .resizable()
+                                .aspectRatio(contentMode: .fill)
+                                .liquidGlassVibrancy(.maximum)
+                        case .failure(_):
+                            bookPlaceholder
+                        case .empty:
+                            loadingPlaceholder
+                        @unknown default:
+                            loadingPlaceholder
+                        }
                     }
                 } else {
                     bookPlaceholder
@@ -368,19 +366,6 @@ extension View {
     }
 }
 
-// MARK: - Extensions for AsyncImage Error Handling
-
-extension AsyncImage {
-    func onFailure(_ action: @escaping () -> Void) -> some View {
-        self.onAppear {
-            // This is a simplified error handling approach
-            // In a real implementation, you'd want more sophisticated error detection
-            DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
-                action()
-            }
-        }
-    }
-}
 
 // MARK: - Color Extensions
 
@@ -408,13 +393,15 @@ extension Color {
 extension UserBook {
     static func sampleBook() -> UserBook {
         let book = UserBook()
-        book.metadata = BookMetadata()
-        book.metadata?.title = "The Design of Everyday Things"
-        book.metadata?.authors = ["Don Norman"]
-        book.rating = 4.5
+        book.metadata = BookMetadata(
+            googleBooksID: "sample_book_id",
+            title: "The Design of Everyday Things",
+            authors: ["Don Norman"],
+            culturalRegion: .northAmerica
+        )
+        book.rating = 4
         book.readingStatus = .reading
-        book.readingProgress = 65
-        book.metadata?.culturalRegion = .northAmerica
+        book.readingProgress = 0.65
         return book
     }
 }

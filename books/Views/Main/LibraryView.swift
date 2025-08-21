@@ -187,20 +187,32 @@ struct LibraryView: View {
 struct UniformGridLayoutView: View {
     let books: [UserBook]
     
+    /// Performance optimization: Virtual scrolling for large datasets
+    @State private var isLargeDataset: Bool = false
+    
     var body: some View {
         let columns = createAdaptiveColumns()
         
-        LazyVGrid(columns: columns, spacing: adaptiveSpacing()) {
-            ForEach(books) { book in
-                NavigationLink(value: book) {
-                    BookCardView(book: book)
+        // Use virtual scrolling for large datasets (2000+ books)
+        if books.count > 1500 {
+            VirtualizedGridView(books: books, columns: columns)
+                .padding(adaptivePadding())
+                .onAppear {
+                    isLargeDataset = true
                 }
-                .buttonStyle(PlainButtonStyle())
-                .accessibilityLabel("View details for \(book.metadata?.title ?? "Unknown Title")")
-                .accessibilityHint("Opens book details screen")
+        } else {
+            LazyVGrid(columns: columns, spacing: adaptiveSpacing()) {
+                ForEach(books) { book in
+                    NavigationLink(value: book) {
+                        BookCardView(book: book)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                    .accessibilityLabel("View details for \(book.metadata?.title ?? "Unknown Title")")
+                    .accessibilityHint("Opens book details screen")
+                }
             }
+            .padding(adaptivePadding())
         }
-        .padding(adaptivePadding())
     }
     
     // MARK: - iPad-Optimized Layout
@@ -254,21 +266,27 @@ struct ListLayoutView: View {
     let books: [UserBook]
     
     var body: some View {
-        LazyVStack(spacing: 0) {
-            ForEach(books) { book in
-                NavigationLink(value: book) {
-                    BookRowView(userBook: book)
-                }
-                .buttonStyle(PlainButtonStyle())
-                .accessibilityLabel("View details for \(book.metadata?.title ?? "Unknown Title")")
-                
-                if book.id != books.last?.id {
-                    Divider()
-                        .padding(.leading, 80) // Align with text
+        // Use virtual scrolling for large datasets in list view too
+        if books.count > 1500 {
+            VirtualizedListView(books: books)
+                .padding(.horizontal, Theme.Spacing.md)
+        } else {
+            LazyVStack(spacing: 0) {
+                ForEach(books) { book in
+                    NavigationLink(value: book) {
+                        BookRowView(userBook: book)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                    .accessibilityLabel("View details for \(book.metadata?.title ?? "Unknown Title")")
+                    
+                    if book.id != books.last?.id {
+                        Divider()
+                            .padding(.leading, 80) // Align with text
+                    }
                 }
             }
+            .padding(.horizontal, Theme.Spacing.md)
         }
-        .padding(.horizontal, Theme.Spacing.md)
     }
 }
 
@@ -339,6 +357,173 @@ private extension LibraryView {
                 }
             }
         }
+    }
+}
+
+// MARK: - Virtual Scrolling Components for Large Datasets
+
+/// High-performance grid view for large datasets using virtual scrolling
+struct VirtualizedGridView: View {
+    let books: [UserBook]
+    let columns: [GridItem]
+    
+    @State private var visibleRange: Range<Int> = 0..<50
+    @State private var scrollOffset: CGFloat = 0
+    
+    private let itemHeight: CGFloat = 300 // Approximate BookCardView height
+    private let batchSize = 50
+    
+    var body: some View {
+        GeometryReader { geometry in
+            ScrollViewReader { proxy in
+                ScrollView(.vertical) {
+                    LazyVStack(spacing: 0) {
+                        // Top spacer for items before visible range
+                        if visibleRange.lowerBound > 0 {
+                            Color.clear
+                                .frame(height: CGFloat(visibleRange.lowerBound / columnsPerRow) * itemHeight)
+                                .id("spacer-top")
+                        }
+                        
+                        // Visible items in grid format
+                        let visibleBooks = Array(books[visibleRange])
+                        LazyVGrid(columns: columns, spacing: Theme.Spacing.lg) {
+                            ForEach(visibleBooks) { book in
+                                NavigationLink(value: book) {
+                                    BookCardView(book: book)
+                                }
+                                .buttonStyle(PlainButtonStyle())
+                                .accessibilityLabel("View details for \(book.metadata?.title ?? "Unknown Title")")
+                                .id(book.id)
+                            }
+                        }
+                        
+                        // Bottom spacer for items after visible range
+                        if visibleRange.upperBound < books.count {
+                            Color.clear
+                                .frame(height: CGFloat((books.count - visibleRange.upperBound) / columnsPerRow) * itemHeight)
+                                .id("spacer-bottom")
+                        }
+                    }
+                    .background(
+                        GeometryReader { scrollGeometry in
+                            Color.clear.preference(
+                                key: ScrollOffsetPreferenceKey.self,
+                                value: scrollGeometry.frame(in: .named("scroll")).minY
+                            )
+                        }
+                    )
+                }
+                .coordinateSpace(name: "scroll")
+                .onPreferenceChange(ScrollOffsetPreferenceKey.self) { offset in
+                    updateVisibleRange(for: offset, viewHeight: geometry.size.height)
+                }
+            }
+        }
+    }
+    
+    private var columnsPerRow: Int {
+        columns.count > 0 ? columns.count : 2 // Fallback to 2 columns
+    }
+    
+    private func updateVisibleRange(for offset: CGFloat, viewHeight: CGFloat) {
+        let rowHeight = itemHeight + Theme.Spacing.lg
+        let visibleStartRow = max(0, Int((-offset - viewHeight) / rowHeight))
+        let visibleEndRow = min(books.count / columnsPerRow, Int((-offset + viewHeight * 2) / rowHeight))
+        
+        let newStart = max(0, visibleStartRow * columnsPerRow - batchSize)
+        let newEnd = min(books.count, (visibleEndRow + 1) * columnsPerRow + batchSize)
+        
+        let newRange = newStart..<newEnd
+        
+        // Only update if range changed significantly
+        if abs(newRange.lowerBound - visibleRange.lowerBound) > batchSize / 2 ||
+           abs(newRange.upperBound - visibleRange.upperBound) > batchSize / 2 {
+            visibleRange = newRange
+        }
+    }
+}
+
+/// High-performance list view for large datasets using virtual scrolling
+struct VirtualizedListView: View {
+    let books: [UserBook]
+    
+    @State private var visibleRange: Range<Int> = 0..<50
+    
+    private let itemHeight: CGFloat = 80 // Approximate BookRowView height
+    private let batchSize = 100
+    
+    var body: some View {
+        GeometryReader { geometry in
+            ScrollView(.vertical) {
+                LazyVStack(spacing: 0) {
+                    // Top spacer
+                    if visibleRange.lowerBound > 0 {
+                        Color.clear
+                            .frame(height: CGFloat(visibleRange.lowerBound) * itemHeight)
+                    }
+                    
+                    // Visible items
+                    let visibleBooks = Array(books[visibleRange])
+                    ForEach(visibleBooks) { book in
+                        NavigationLink(value: book) {
+                            BookRowView(userBook: book)
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        .accessibilityLabel("View details for \(book.metadata?.title ?? "Unknown Title")")
+                        .id(book.id)
+                        
+                        if book.id != visibleBooks.last?.id {
+                            Divider()
+                                .padding(.leading, 80)
+                        }
+                    }
+                    
+                    // Bottom spacer
+                    if visibleRange.upperBound < books.count {
+                        Color.clear
+                            .frame(height: CGFloat(books.count - visibleRange.upperBound) * itemHeight)
+                    }
+                }
+                .background(
+                    GeometryReader { scrollGeometry in
+                        Color.clear.preference(
+                            key: ScrollOffsetPreferenceKey.self,
+                            value: scrollGeometry.frame(in: .named("scroll")).minY
+                        )
+                    }
+                )
+            }
+            .coordinateSpace(name: "scroll")
+            .onPreferenceChange(ScrollOffsetPreferenceKey.self) { offset in
+                updateVisibleRange(for: offset, viewHeight: geometry.size.height)
+            }
+        }
+    }
+    
+    private func updateVisibleRange(for offset: CGFloat, viewHeight: CGFloat) {
+        let visibleStart = max(0, Int((-offset - viewHeight) / itemHeight))
+        let visibleEnd = min(books.count, Int((-offset + viewHeight * 2) / itemHeight))
+        
+        let newStart = max(0, visibleStart - batchSize)
+        let newEnd = min(books.count, visibleEnd + batchSize)
+        
+        let newRange = newStart..<newEnd
+        
+        // Only update if range changed significantly
+        if abs(newRange.lowerBound - visibleRange.lowerBound) > batchSize / 2 ||
+           abs(newRange.upperBound - visibleRange.upperBound) > batchSize / 2 {
+            visibleRange = newRange
+        }
+    }
+}
+
+/// Preference key for tracking scroll offset in virtual scrolling
+struct ScrollOffsetPreferenceKey: PreferenceKey {
+    nonisolated(unsafe) static var defaultValue: CGFloat = 0
+    
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = nextValue()
     }
 }
 

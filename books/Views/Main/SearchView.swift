@@ -12,6 +12,7 @@ struct SearchView: View {
     @State private var showingSortOptions = false
     @State private var includeTranslations = true
     @State private var fromBarcodeScanner = false
+    @FocusState private var isSearchFieldFocused: Bool
     
 
     enum SearchState: Equatable {
@@ -23,6 +24,11 @@ struct SearchView: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            // Search bar for iPad
+            if UIDevice.current.userInterfaceIdiom == .pad {
+                simpleiPadSearchBar
+            }
+            
             // Search Controls
             if case .results(let books) = searchState, !books.isEmpty {
                 searchControlsBar
@@ -52,7 +58,7 @@ struct SearchView: View {
                         UnifiedErrorState(config: .init(
                             title: "Search Error",
                             message: message,
-                            retryAction: performSearch,
+                            retryAction: retrySearch,
                             style: .standard
                         ))
                     }
@@ -70,12 +76,14 @@ struct SearchView: View {
                 .animation(Theme.Animation.accessible, value: searchState)
             }
             .background(currentTheme.background)
-            .searchable(text: $searchQuery, prompt: "Search by title, author, or ISBN") {
-                // Search suggestions appear properly below the search field
-                if searchQuery.isEmpty {
-                    Text("\"The Great Gatsby\"").searchCompletion("The Great Gatsby")
-                    Text("\"Maya Angelou\"").searchCompletion("Maya Angelou") 
-                    Text("\"9780451524935\"").searchCompletion("9780451524935")
+            .if(UIDevice.current.userInterfaceIdiom != .pad) { view in
+                view.searchable(text: $searchQuery, prompt: "Search by title, author, or ISBN") {
+                    // Search suggestions appear properly below the search field
+                    if searchQuery.isEmpty {
+                        Text("\"The Great Gatsby\"").searchCompletion("The Great Gatsby")
+                        Text("\"Maya Angelou\"").searchCompletion("Maya Angelou") 
+                        Text("\"9780451524935\"").searchCompletion("9780451524935")
+                    }
                 }
             }
             .accessibilityLabel("Search for books")
@@ -98,76 +106,419 @@ struct SearchView: View {
             .onReceive(NotificationCenter.default.publisher(for: .barcodeSearchError)) { notification in
                 handleBarcodeSearchError(notification)
             }
+            .onAppear {
+                // Reset search state when view appears to ensure clean state
+                if case .error = searchState {
+                    searchState = .idle
+                }
+            }
     }
     
-    // MARK: - Search Controls Bar
+    // MARK: - Enhanced iPad Search Bar with Liquid Glass
     @ViewBuilder
-    private var searchControlsBar: some View {
-        HStack(spacing: 12) {
-            // Sort button
-            Button {
-                showingSortOptions = true
-            } label: {
-                HStack(spacing: 4) {
-                    Image(systemName: sortOption.systemImage)
-                        .font(.caption)
-                    Text(sortOption.displayName)
-                        .font(.caption)
-                        .fontWeight(.medium)
-                    Image(systemName: "chevron.down")
-                        .font(.caption2)
+    private var simpleiPadSearchBar: some View {
+        VStack(spacing: Theme.Spacing.lg) {
+            // Main search container with glass effect
+            HStack(spacing: Theme.Spacing.md) {
+                // Search icon with glass vibrancy
+                Image(systemName: "magnifyingglass")
+                    .font(.title2)
+                    .fontWeight(.medium)
+                    .foregroundStyle(.primary)
+                    .opacity(0.7)
+                
+                // Enhanced search field
+                TextField("Search by title, author, or ISBN", text: $searchQuery)
+                    .font(.title3)
+                    .fontWeight(.regular)
+                    .textFieldStyle(.plain)
+                    .focused($isSearchFieldFocused)
+                    .onSubmit {
+                        performSearch()
+                    }
+                    .opacity(searchQuery.isEmpty ? 0.6 : 1.0)
+                
+                // Clear button with glass effect
+                if !searchQuery.isEmpty {
+                    Button {
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                            searchQuery = ""
+                            clearSearchResults()
+                        }
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.title3)
+                            .foregroundStyle(.secondary)
+                    }
+                    .transition(.scale.combined(with: .opacity))
                 }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
-                .background(currentTheme.primaryContainer)
-                .foregroundColor(currentTheme.onPrimaryContainer)
-                .cornerRadius(16)
             }
-            .accessibilityLabel("Sort by \(sortOption.displayName)")
-            .accessibilityHint("Opens sort options menu")
-            
-            // Translations toggle
-            Button {
-                includeTranslations.toggle()
-                // Re-search with new setting
-                if case .results = searchState {
-                    performSearch()
-                }
-            } label: {
-                HStack(spacing: 4) {
-                    Image(systemName: includeTranslations ? "globe" : "globe.badge.chevron.backward")
-                        .font(.caption)
-                    Text(includeTranslations ? "All Languages" : "English Only")
-                        .font(.caption)
-                        .fontWeight(.medium)
-                }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
-                .background(includeTranslations ? currentTheme.tertiaryContainer : currentTheme.outline.opacity(0.1))
-                .foregroundColor(includeTranslations ? currentTheme.tertiary : currentTheme.outline)
-                .cornerRadius(16)
+            .padding(.horizontal, Theme.Spacing.xl)
+            .padding(.vertical, Theme.Spacing.lg)
+            .background {
+                // Liquid Glass background
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(.regularMaterial)
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 16)
+                            .stroke(.primary.opacity(0.1), lineWidth: 0.5)
+                    }
+                    .shadow(
+                        color: .black.opacity(0.04),
+                        radius: 8,
+                        x: 0,
+                        y: 2
+                    )
             }
-            .accessibilityLabel(includeTranslations ? "Including all languages" : "English only")
-            .accessibilityHint("Toggle to include or exclude translated works")
-            
-            Spacer()
-            
-            // Results count
-            if case .results(let books) = searchState {
-                Text("\(books.count) results")
-                    .font(.caption)
-                    .foregroundColor(currentTheme.onSurfaceVariant)
-            }
+            .scaleEffect(isSearchFieldFocused ? 1.02 : 1.0)
+            .animation(.spring(response: 0.4, dampingFraction: 0.8), value: isSearchFieldFocused)
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 8)
-        .background(currentTheme.surface)
+        .padding(.horizontal, Theme.Spacing.lg)
+        .padding(.vertical, Theme.Spacing.md)
+        .background {
+            // Subtle background blur
+            Rectangle()
+                .fill(.ultraThinMaterial)
+                .ignoresSafeArea()
+        }
+    }
+    
+    // MARK: - iPad Prominent Search Bar
+    @ViewBuilder
+    private var iPadProminentSearchBar: some View {
+        VStack(spacing: Theme.Spacing.md) {
+            // Main search field with enhanced styling
+            HStack(spacing: Theme.Spacing.sm) {
+                // Search icon
+                Image(systemName: "magnifyingglass")
+                    .font(.title2)
+                    .foregroundColor(currentTheme.onSurfaceVariant)
+                    .scaleEffect(searchQuery.isEmpty ? 1.0 : 0.9)
+                    .animation(.easeInOut(duration: 0.2), value: searchQuery.isEmpty)
+                
+                // Enhanced search field
+                TextField("Search by title, author, or ISBN", text: $searchQuery)
+                    .font(.title3)
+                    .foregroundColor(currentTheme.onSurface)
+                    .textFieldStyle(.plain)
+                    .focused($isSearchFieldFocused)
+                    .onSubmit {
+                        performSearch()
+                    }
+                    .onChange(of: searchQuery) { oldValue, newValue in
+                        // Clear results when search query is cleared
+                        if newValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !oldValue.isEmpty {
+                            clearSearchResults()
+                        }
+                    }
+                
+                // Clear button for iPad
+                if !searchQuery.isEmpty {
+                    Button {
+                        searchQuery = ""
+                        clearSearchResults()
+                        HapticFeedbackManager.shared.lightImpact()
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.title3)
+                            .foregroundColor(currentTheme.onSurfaceVariant)
+                    }
+                    .buttonStyle(.plain)
+                    .transition(.scale.combined(with: .opacity))
+                }
+                
+                // Search button
+                Button {
+                    performSearch()
+                } label: {
+                    Text("Search")
+                        .font(.headline)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 12)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(
+                                    searchQuery.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 
+                                    currentTheme.outline.opacity(0.3) : currentTheme.primary
+                                )
+                        )
+                }
+                .disabled(searchQuery.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                .animation(.easeInOut(duration: 0.2), value: searchQuery.isEmpty)
+            }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 16)
+            .background(
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(currentTheme.surface)
+                    .stroke(
+                        isSearchFieldFocused ? currentTheme.primary : currentTheme.outline.opacity(0.2),
+                        lineWidth: isSearchFieldFocused ? 2 : 1
+                    )
+                    .shadow(
+                        color: isSearchFieldFocused ? currentTheme.primary.opacity(0.1) : Color.clear,
+                        radius: isSearchFieldFocused ? 8 : 0,
+                        x: 0,
+                        y: 2
+                    )
+            )
+            .animation(.easeInOut(duration: 0.2), value: isSearchFieldFocused)
+            
+            // Quick filters for iPad
+            iPadQuickFilters
+        }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 16)
+        .background(
+            LinearGradient(
+                colors: [currentTheme.background, currentTheme.surface.opacity(0.3)],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        )
         .overlay(
             Rectangle()
                 .frame(height: 0.5)
                 .foregroundColor(currentTheme.outline.opacity(0.2)),
             alignment: .bottom
         )
+    }
+    
+    // MARK: - iPad Quick Filters
+    @ViewBuilder
+    private var iPadQuickFilters: some View {
+        HStack(spacing: Theme.Spacing.md) {
+            // Sort selector
+            Menu {
+                ForEach(BookSearchService.SortOption.allCases) { option in
+                    Button {
+                        sortOption = option
+                        HapticFeedbackManager.shared.mediumImpact()
+                        if case .results = searchState, !searchQuery.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                            performSearch()
+                        }
+                    } label: {
+                        HStack {
+                            Text(option.displayName)
+                            if sortOption == option {
+                                Image(systemName: "checkmark")
+                            }
+                        }
+                    }
+                }
+            } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: sortOption.systemImage)
+                        .font(.callout)
+                    Text(sortOption.displayName)
+                        .font(.callout)
+                        .fontWeight(.medium)
+                    Image(systemName: "chevron.down")
+                        .font(.caption2)
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
+                .background(
+                    RoundedRectangle(cornerRadius: 20)
+                        .fill(currentTheme.primaryContainer.opacity(0.8))
+                )
+                .foregroundColor(currentTheme.onPrimaryContainer)
+            }
+            .menuStyle(.borderlessButton)
+            
+            // Language toggle
+            Button {
+                includeTranslations.toggle()
+                HapticFeedbackManager.shared.lightImpact()
+                if case .results = searchState, !searchQuery.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    performSearch()
+                }
+            } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: includeTranslations ? "globe" : "globe.badge.chevron.backward")
+                        .font(.callout)
+                    Text(includeTranslations ? "All Languages" : "English Only")
+                        .font(.callout)
+                        .fontWeight(.medium)
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
+                .background(
+                    RoundedRectangle(cornerRadius: 20)
+                        .fill(
+                            includeTranslations ? 
+                            currentTheme.tertiaryContainer.opacity(0.8) : 
+                            currentTheme.outline.opacity(0.1)
+                        )
+                )
+                .foregroundColor(
+                    includeTranslations ? 
+                    currentTheme.primary : 
+                    currentTheme.onSurfaceVariant
+                )
+            }
+            
+            Spacer()
+            
+            // Results count for iPad
+            if case .results(let books) = searchState {
+                Text("\(books.count) results")
+                    .font(.callout)
+                    .fontWeight(.medium)
+                    .foregroundColor(currentTheme.onSurfaceVariant)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(
+                        Capsule()
+                            .fill(currentTheme.surfaceVariant.opacity(0.5))
+                    )
+            }
+        }
+    }
+    
+    // MARK: - Search Controls Bar with Liquid Glass
+    @ViewBuilder
+    private var searchControlsBar: some View {
+        HStack(spacing: Theme.Spacing.md) {
+            // Sort button with glass capsule
+            Button {
+                withAnimation(LiquidGlassTheme.FluidAnimation.quick.springAnimation) {
+                    showingSortOptions = true
+                }
+            } label: {
+                HStack(spacing: 4) {
+                    Image(systemName: sortOption.systemImage)
+                        .font(.caption)
+                        .fontWeight(.medium)
+                    Text(sortOption.displayName)
+                        .font(LiquidGlassTheme.typography.labelMedium)
+                        .fontWeight(.medium)
+                    Image(systemName: "chevron.down")
+                        .font(.caption2)
+                        .fontWeight(.semibold)
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .foregroundStyle(.primary)
+                .background {
+                    let capsuleShape = Capsule()
+                    capsuleShape
+                        .fill(.regularMaterial)
+                        .overlay {
+                            capsuleShape
+                                .strokeBorder(.primary.opacity(0.1), lineWidth: 0.5)
+                        }
+                        .shadow(color: .black.opacity(0.08), radius: 4, x: 0, y: 2)
+                }
+            }
+            .accessibilityLabel("Sort by \(sortOption.displayName)")
+            .accessibilityHint("Opens sort options menu")
+            
+            // Translations toggle with enhanced glass effect
+            Button {
+                withAnimation(LiquidGlassTheme.FluidAnimation.quick.springAnimation) {
+                    includeTranslations.toggle()
+                }
+                // Re-search with new setting - if we have a valid query and previous search attempt
+                let trimmedQuery = searchQuery.trimmingCharacters(in: .whitespacesAndNewlines)
+                if !trimmedQuery.isEmpty {
+                    switch searchState {
+                    case .results, .error:
+                        performSearch()
+                    default:
+                        break
+                    }
+                }
+            } label: {
+                HStack(spacing: 4) {
+                    Image(systemName: includeTranslations ? "globe" : "globe.badge.chevron.backward")
+                        .font(.caption)
+                        .fontWeight(.medium)
+                    Text(includeTranslations ? "All Languages" : "English Only")
+                        .font(LiquidGlassTheme.typography.labelMedium)
+                        .fontWeight(.medium)
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .foregroundStyle(includeTranslations ? .white : .primary)
+                .background {
+                    let capsuleShape = Capsule()
+                    let primaryGradient = LinearGradient(
+                        colors: [currentTheme.primary, currentTheme.primary.opacity(0.8)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                    
+                    Group {
+                        if includeTranslations {
+                            capsuleShape.fill(primaryGradient)
+                        } else {
+                            capsuleShape.fill(.regularMaterial)
+                        }
+                    }
+                    .overlay {
+                        if !includeTranslations {
+                            capsuleShape.strokeBorder(.primary.opacity(0.1), lineWidth: 0.5)
+                        }
+                    }
+                    .shadow(
+                        color: includeTranslations ? currentTheme.primary.opacity(0.2) : .black.opacity(0.08),
+                        radius: includeTranslations ? 6 : 4,
+                        x: 0,
+                        y: includeTranslations ? 3 : 2
+                    )
+                }
+            }
+            .accessibilityLabel(includeTranslations ? "Including all languages" : "English only")
+            .accessibilityHint("Toggle to include or exclude translated works")
+            
+            Spacer()
+            
+            // Results count with liquid glass styling
+            if case .results(let books) = searchState {
+                Text("\(books.count) results")
+                    .font(LiquidGlassTheme.typography.labelSmall)
+                    .fontWeight(.medium)
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background {
+                        let capsuleShape = Capsule()
+                        capsuleShape
+                            .fill(.ultraThinMaterial)
+                            .overlay {
+                                capsuleShape.strokeBorder(.secondary.opacity(0.1), lineWidth: 0.5)
+                            }
+                    }
+            }
+        }
+        .padding(.horizontal, Theme.Spacing.lg)
+        .padding(.vertical, Theme.Spacing.md)
+        .background {
+            // Liquid glass background with subtle depth
+            Rectangle()
+                .fill(.ultraThinMaterial)
+                .overlay {
+                    Rectangle()
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    .clear,
+                                    currentTheme.primary.opacity(0.02)
+                                ],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+                }
+                .overlay(alignment: .bottom) {
+                    Rectangle()
+                        .fill(.separator.opacity(0.3))
+                        .frame(height: 0.5)
+                }
+        }
     }
     
     // MARK: - Sort Options Sheet
@@ -197,9 +548,15 @@ struct SearchView: View {
                             showingSortOptions = false
                             HapticFeedbackManager.shared.mediumImpact()
                             
-                            // Re-search with new sort option
-                            if case .results = searchState {
-                                performSearch()
+                            // Re-search with new sort option - if we have a valid query and previous search attempt
+                            let trimmedQuery = searchQuery.trimmingCharacters(in: .whitespacesAndNewlines)
+                            if !trimmedQuery.isEmpty {
+                                switch searchState {
+                                case .results, .error:
+                                    performSearch()
+                                default:
+                                    break
+                                }
                             }
                         } label: {
                             HStack(spacing: 16) {
@@ -281,6 +638,44 @@ struct SearchView: View {
     // MARK: - Search Results List
     @ViewBuilder
     private func searchResultsList(books: [BookMetadata]) -> some View {
+        // Use iPhone layout for now (working implementation)
+        iPhoneSearchResultsList(books: books)
+    }
+    
+    // MARK: - iPad Grid Layout
+    @ViewBuilder
+    private func iPadSearchResultsGrid(books: [BookMetadata]) -> some View {
+        ScrollView {
+            LazyVGrid(
+                columns: [
+                    GridItem(.adaptive(minimum: 320, maximum: 400), spacing: Theme.Spacing.md)
+                ],
+                spacing: Theme.Spacing.md
+            ) {
+                ForEach(books) { book in
+                    NavigationLink(value: book) {
+                        iPadSearchResultCard(book: book)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(.horizontal, 20)
+            .padding(.bottom, 20)
+        }
+        .background(currentTheme.background)
+        .accessibilityLabel("\(books.count) search results sorted by \(sortOption.displayName)")
+    }
+    
+    // MARK: - iPad Search Result Card
+    @ViewBuilder
+    private func iPadSearchResultCard(book: BookMetadata) -> some View {
+        // Simplified placeholder - use iPhone layout for now
+        SearchResultRow(book: book)
+    }
+    
+    // MARK: - iPhone List Layout
+    @ViewBuilder
+    private func iPhoneSearchResultsList(books: [BookMetadata]) -> some View {
         List(books) { book in
             NavigationLink(value: book) {
                 SearchResultRow(book: book)
@@ -298,6 +693,171 @@ struct SearchView: View {
     // MARK: - Enhanced Empty State for App Store Appeal
     @ViewBuilder
     private var enhancedEmptyState: some View {
+        if UIDevice.current.userInterfaceIdiom == .pad {
+            iPadEnhancedEmptyState
+        } else {
+            iPhoneEnhancedEmptyState
+        }
+    }
+    
+    // MARK: - iPad Empty State with Liquid Glass Depth
+    @ViewBuilder
+    private var iPadEnhancedEmptyState: some View {
+        VStack(spacing: Theme.Spacing.xl) {
+            // Hero content with enhanced glass depth
+            VStack(spacing: Theme.Spacing.lg) {
+                ZStack {
+                    // Enhanced backdrop with multiple depth layers
+                    Circle()
+                        .fill(.regularMaterial)
+                        .frame(width: 140, height: 140)
+                        .overlay {
+                            Circle()
+                                .fill(
+                                    LinearGradient(
+                                        colors: [
+                                            currentTheme.primary.opacity(0.15),
+                                            currentTheme.secondary.opacity(0.08)
+                                        ],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                        }
+                        .shadow(
+                            color: currentTheme.primary.opacity(0.15),
+                            radius: 20,
+                            x: 0,
+                            y: 8
+                        )
+                        .shadow(
+                            color: .black.opacity(0.1),
+                            radius: 8,
+                            x: 0,
+                            y: 4
+                        )
+                    
+                    // Icon with vibrancy effects
+                    Image(systemName: "magnifyingglass.circle.fill")
+                        .font(.system(size: 64, weight: .medium))
+                        .foregroundStyle(
+                            LinearGradient(
+                                colors: [currentTheme.primary, currentTheme.secondary],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .shadow(color: currentTheme.primary.opacity(0.3), radius: 4, x: 0, y: 2)
+                }
+                
+                VStack(spacing: Theme.Spacing.sm) {
+                    Text("Discover Your Next Great Read")
+                        .font(LiquidGlassTheme.typography.displaySmall)
+                        .fontWeight(.light)
+                        .multilineTextAlignment(.center)
+                        .foregroundStyle(.primary)
+                    
+                    Text("Search millions of books with smart sorting and powerful filters")
+                        .font(LiquidGlassTheme.typography.titleMedium)
+                        .fontWeight(.regular)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 40)
+                }
+            }
+            
+            // Enhanced quick search examples with glass capsules
+            VStack(spacing: Theme.Spacing.md) {
+                Text("Try these searches:")
+                    .font(LiquidGlassTheme.typography.titleSmall)
+                    .fontWeight(.medium)
+                    .foregroundStyle(.secondary)
+                
+                HStack(spacing: Theme.Spacing.md) {
+                    ForEach([
+                        ("The Great Gatsby", "book.fill"),
+                        ("Maya Angelou", "person.fill"),
+                        ("9780451524935", "barcode")
+                    ], id: \.0) { example, icon in
+                        Button {
+                            withAnimation(LiquidGlassTheme.FluidAnimation.smooth.springAnimation) {
+                                searchQuery = example
+                                performSearch()
+                            }
+                        } label: {
+                            HStack(spacing: Theme.Spacing.xs) {
+                                Image(systemName: icon)
+                                    .font(.callout)
+                                    .fontWeight(.medium)
+                                Text(example)
+                                    .font(LiquidGlassTheme.typography.labelLarge)
+                                    .fontWeight(.medium)
+                            }
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 12)
+                            .foregroundStyle(.primary)
+                            .background {
+                                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                    .fill(.thinMaterial)
+                                    .overlay {
+                                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                            .strokeBorder(
+                                                LinearGradient(
+                                                    colors: [
+                                                        currentTheme.primary.opacity(0.2),
+                                                        currentTheme.primary.opacity(0.05)
+                                                    ],
+                                                    startPoint: .topLeading,
+                                                    endPoint: .bottomTrailing
+                                                ),
+                                                lineWidth: 1
+                                            )
+                                    }
+                                    .shadow(
+                                        color: currentTheme.primary.opacity(0.1),
+                                        radius: 8,
+                                        x: 0,
+                                        y: 4
+                                    )
+                                    .shadow(
+                                        color: .black.opacity(0.05),
+                                        radius: 2,
+                                        x: 0,
+                                        y: 1
+                                    )
+                            }
+                        }
+                        .buttonStyle(.plain)
+                        .scaleEffect(1.0)
+                        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: searchQuery)
+                    }
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background {
+            // Immersive liquid glass background
+            Rectangle()
+                .fill(.ultraThinMaterial)
+                .overlay {
+                    LinearGradient(
+                        colors: [
+                            currentTheme.background.opacity(0.8),
+                            currentTheme.surface.opacity(0.4),
+                            currentTheme.primary.opacity(0.02)
+                        ],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                }
+        }
+        .accessibilityLabel("Search for books")
+        .accessibilityHint("Use the search field above to find books by title, author, or ISBN")
+    }
+    
+    // MARK: - iPhone Empty State
+    @ViewBuilder
+    private var iPhoneEnhancedEmptyState: some View {
         UnifiedHeroSection(config: .init(
             icon: "magnifyingglass.circle.fill",
             title: "Discover Your Next Great Read",
@@ -421,6 +981,57 @@ struct SearchView: View {
         }
     }
     
+    private func retrySearch() {
+        // Enhanced retry logic that validates state before attempting search
+        let trimmedQuery = searchQuery.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        // If query is empty, reset to idle state instead of attempting search
+        guard !trimmedQuery.isEmpty else {
+            searchState = .idle
+            HapticFeedbackManager.shared.lightImpact()
+            return
+        }
+        
+        // Clear any existing error state and retry
+        searchState = .searching
+        HapticFeedbackManager.shared.lightImpact()
+        
+        // Add a small delay to prevent rapid retry attempts
+        Task {
+            try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
+            await performSearchWithRetry()
+        }
+    }
+    
+    private func performSearchWithRetry() async {
+        let trimmedQuery = searchQuery.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        // Double-check query is still valid
+        guard !trimmedQuery.isEmpty else {
+            await MainActor.run {
+                searchState = .idle
+            }
+            return
+        }
+        
+        let result = await searchService.search(
+            query: trimmedQuery,
+            sortBy: sortOption,
+            includeTranslations: includeTranslations
+        )
+        
+        await MainActor.run {
+            switch result {
+            case .success(let books):
+                searchState = .results(books)
+                HapticFeedbackManager.shared.success()
+            case .failure(let error):
+                searchState = .error(formatError(error))
+                HapticFeedbackManager.shared.error()
+            }
+        }
+    }
+    
     // MARK: - Barcode Scanning Integration
     
     private func handleBarcodeSearchCompleted(_ notification: Notification) {
@@ -508,7 +1119,7 @@ struct SearchResultRow: View {
                     .lineLimit(1)
                 
                 HStack(spacing: Theme.Spacing.md) {
-                    if let publishedYear = extractYear(from: book.publishedDate) {
+                    if let publishedYear = self.extractYear(from: book.publishedDate) {
                         Label(publishedYear, systemImage: "calendar")
                             .labelSmall()
                             .foregroundStyle(currentTheme.secondaryText)

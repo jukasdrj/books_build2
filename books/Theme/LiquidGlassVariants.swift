@@ -283,6 +283,30 @@ extension CulturalRegion {
                 dark: Color(red: 0.2, green: 0.7, blue: 1.0),
                 vibrancy: 0.9
             )
+        case .middleEast:
+            return VibrancyColor(
+                light: Color(red: 0.8, green: 0.5, blue: 0.2),
+                dark: Color(red: 0.9, green: 0.6, blue: 0.3),
+                vibrancy: 0.8
+            )
+        case .caribbean:
+            return VibrancyColor(
+                light: Color(red: 0.2, green: 0.8, blue: 0.6),
+                dark: Color(red: 0.3, green: 0.9, blue: 0.7),
+                vibrancy: 0.85
+            )
+        case .centralAsia:
+            return VibrancyColor(
+                light: Color(red: 0.6, green: 0.4, blue: 0.8),
+                dark: Color(red: 0.7, green: 0.5, blue: 0.9),
+                vibrancy: 0.8
+            )
+        case .indigenous:
+            return VibrancyColor(
+                light: Color(red: 0.5, green: 0.3, blue: 0.1),
+                dark: Color(red: 0.6, green: 0.4, blue: 0.2),
+                vibrancy: 0.9
+            )
         case .antarctica:
             return VibrancyColor(
                 light: Color(red: 0.8, green: 0.9, blue: 1.0),

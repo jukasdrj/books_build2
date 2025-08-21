@@ -170,34 +170,36 @@ extension BookCardView {
     var liquidGlassMigration: some View {
         VStack(alignment: .leading, spacing: 12) {
             // Book cover with enhanced vibrancy
-            BookCoverImage(book: book)
+            BookCoverImage(
+                imageURL: book.metadata?.imageURL?.absoluteString,
+                width: 120,
+                height: 180
+            )
                 .liquidGlassVibrancy(.prominent)
             
             VStack(alignment: .leading, spacing: 8) {
                 // Title with liquid glass typography
-                Text(book.title)
+                Text(book.metadata?.title ?? "Unknown Title")
                     .font(LiquidGlassTheme.typography.titleMedium)
                     .foregroundColor(.primary)
                     .liquidGlassVibrancy(.maximum)
                     .lineLimit(2)
                 
                 // Author with subtle vibrancy
-                Text(book.author)
+                Text(book.metadata?.authors.joined(separator: ", ") ?? "Unknown Author")
                     .font(LiquidGlassTheme.typography.bodySmall)
                     .foregroundColor(.secondary)
                     .liquidGlassVibrancy(.subtle)
                     .lineLimit(1)
                 
                 // Reading status with vibrancy
-                if let status = book.readingStatus {
-                    Text(status.displayName)
+                Text(book.readingStatus.displayName)
                         .font(LiquidGlassTheme.typography.labelSmall)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
                         .background(.regularMaterial)
                         .clipShape(Capsule())
                         .liquidGlassVibrancy(.medium)
-                }
             }
             .padding(.horizontal, 12)
             .padding(.bottom, 12)

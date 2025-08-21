@@ -345,6 +345,8 @@ enum CulturalRegion: String, Codable, CaseIterable, Identifiable, Sendable {
     case caribbean = "Caribbean"
     case centralAsia = "Central Asia"
     case indigenous = "Indigenous"
+    case antarctica = "Antarctica"
+    case international = "International"
     
     var id: Self { self }
     
@@ -358,8 +360,30 @@ enum CulturalRegion: String, Codable, CaseIterable, Identifiable, Sendable {
         case .middleEast, .centralAsia: return theme.cultureMiddleEast
         case .caribbean: return theme.cultureAmericas
         case .indigenous: return theme.cultureIndigenous
+        case .antarctica: return theme.primary.opacity(0.7)
+        case .international: return theme.secondary.opacity(0.8)
         }
     }
+    
+    // MARK: - Additional Properties for LiquidGlass Compatibility
+    
+    var emoji: String {
+        switch self {
+        case .africa: return "🌍"
+        case .asia: return "🌏"
+        case .europe: return "🌍"
+        case .northAmerica: return "🌎"
+        case .southAmerica: return "🌎"
+        case .oceania: return "🏝️"
+        case .middleEast: return "🕌"
+        case .caribbean: return "🏖️"
+        case .centralAsia: return "🏔️"
+        case .indigenous: return "🪶"
+        case .antarctica: return "🧊"
+        case .international: return "🌐"
+        }
+    }
+    
     
     var icon: String {
         switch self {
@@ -371,6 +395,8 @@ enum CulturalRegion: String, Codable, CaseIterable, Identifiable, Sendable {
         case .middleEast, .centralAsia: return "globe.europe.africa.fill"
         case .caribbean: return "globe.americas.fill"
         case .indigenous: return "leaf.fill"
+        case .antarctica: return "snow"
+        case .international: return "globe"
         }
     }
 }

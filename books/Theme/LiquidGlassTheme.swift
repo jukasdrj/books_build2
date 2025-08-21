@@ -26,7 +26,7 @@ struct LiquidGlassTheme {
             case .thick:
                 return .thickMaterial
             case .chrome:
-                return .chromeGlass // New iOS 26 material
+                return .regularMaterial // Fallback for now
             }
         }
         
@@ -316,7 +316,7 @@ struct LiquidGlassTabView: View {
                 .tabItem {
                     Label("Library", systemImage: "books.vertical")
                 }
-                .badge(libraryCount > 0 ? libraryCount : nil)
+                .badge(libraryCount > 0 ? libraryCount : 0)
                 .tag(0)
             
             SearchView()
@@ -329,7 +329,7 @@ struct LiquidGlassTabView: View {
                 .tabItem {
                     Label("Stats", systemImage: "chart.bar")
                 }
-                .badge(completedBooksCount > 0 ? completedBooksCount : nil)
+                .badge(completedBooksCount > 0 ? completedBooksCount : 0)
                 .tag(2)
             
             CulturalDiversityView()
@@ -338,7 +338,7 @@ struct LiquidGlassTabView: View {
                 }
                 .tag(3)
         }
-        .tabViewStyle(.liquidGlass) // New iOS 26 style
+        .tabViewStyle(.automatic) // Fallback to automatic style
         .tint(.primary)
     }
 }
@@ -346,7 +346,7 @@ struct LiquidGlassTabView: View {
 // MARK: - Accessibility Enhancements
 
 extension LiquidGlassTheme {
-    static func respectingAccessibility<T>(_ value: T, reducedMotion: T) -> T {
+    @MainActor static func respectingAccessibility<T>(_ value: T, reducedMotion: T) -> T {
         #if os(iOS)
         return UIAccessibility.isReduceMotionEnabled ? reducedMotion : value
         #else

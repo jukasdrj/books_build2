@@ -265,6 +265,8 @@ struct CulturalDiversityView: View {
         case .caribbean: return "🏝️"
         case .centralAsia: return "🌏"
         case .indigenous: return "🍃"
+        case .antarctica: return "🧊"
+        case .international: return "🌐"
         }
     }
     
@@ -439,39 +441,6 @@ struct CulturalDiversityView: View {
     }
 }
 
-struct CulturalGoalsView: View {
-    @Environment(\.dismiss) private var dismiss
-    @Environment(\.appTheme) private var currentTheme
-    
-    var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(spacing: Theme.Spacing.lg) {
-                    Text("Set your cultural reading goals for this year")
-                        .bodyLarge()
-                        .foregroundColor(currentTheme.secondaryText)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, Theme.Spacing.md)
-                    
-                    // Cultural goals content will be implemented here
-                    Text("Cultural Goals Setup Coming Soon")
-                        .titleMedium()
-                        .foregroundColor(currentTheme.secondaryText)
-                        .padding(Theme.Spacing.xl)
-                }
-            }
-            .navigationTitle("Cultural Goals")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
-                        dismiss()
-                    }
-                }
-            }
-        }
-    }
-}
 
 #Preview {
     NavigationStack {

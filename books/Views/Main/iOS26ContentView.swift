@@ -27,36 +27,36 @@ struct iOS26ContentView: View {
             NavigationStack {
                 LibraryView()
                     .withNavigationDestinations()
-                    .toolbar {
-                        ToolbarItemGroup(placement: .navigationBarTrailing) {
-                            libraryToolbarItems
-                        }
-                    }
+                    // .toolbar {
+                    //     ToolbarItemGroup(placement: .navigationBarTrailing) {
+                    //         libraryToolbarItems
+                    //     }
+                    // }
                     .navigationTitle("Library")
                     .navigationBarTitleDisplayMode(.large)
             }
             .tabItem {
                 Label("Library", systemImage: "books.vertical")
             }
-            .badge(libraryCount > 0 ? libraryCount : nil)
+            .badge(libraryCount > 0 ? libraryCount : 0)
             .tag(0)
             
             // Search Tab
             NavigationStack {
                 SearchView()
                     .withNavigationDestinations()
-                    .toolbar {
-                        ToolbarItem(placement: .navigationBarTrailing) {
-                            Button {
-                                showingBarcodeScanner = true
-                            } label: {
-                                Image(systemName: "barcode.viewfinder")
-                                    .font(.title3)
-                            }
-                            .accessibilityLabel("Scan book barcode")
-                            .accessibilityHint("Opens the camera to scan a book's ISBN barcode")
-                        }
-                    }
+                    // .toolbar {
+                    //     ToolbarItem(placement: .navigationBarTrailing) {
+                    //         Button {
+                    //             showingBarcodeScanner = true
+                    //         } label: {
+                    //             Image(systemName: "barcode.viewfinder")
+                    //                 .font(.title3)
+                    //         }
+                    //         .accessibilityLabel("Scan book barcode")
+                    //         .accessibilityHint("Opens the camera to scan a book's ISBN barcode")
+                    //     }
+                    // }
                     .navigationTitle("Search Books")
                     .navigationBarTitleDisplayMode(.large)
             }
@@ -75,7 +75,7 @@ struct iOS26ContentView: View {
             .tabItem {
                 Label("Stats", systemImage: "chart.bar")
             }
-            .badge(completedBooksCount > 0 ? completedBooksCount : nil)
+            .badge(completedBooksCount > 0 ? completedBooksCount : 0)
             .tag(2)
             
             // Culture Tab
@@ -90,7 +90,7 @@ struct iOS26ContentView: View {
             }
             .tag(3)
         }
-        .tabViewStyle(.liquidGlass) // New iOS 26 style
+        .tabViewStyle(.automatic) // Fallback for compatibility
         .tint(theme.primary)
         .preferredColorScheme(getPreferredColorScheme())
         .liquidGlassStatusBarTheming()
@@ -338,7 +338,7 @@ struct iOS26iPadContentView: View {
             liquidGlassHeader
             
             // Navigation items with enhanced styling
-            List(selection: $selectedTab) {
+            List {
                 LiquidGlassNavigationItem(
                     title: "Library",
                     icon: "books.vertical",

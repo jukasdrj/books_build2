@@ -479,7 +479,7 @@ struct LiquidGlassCulturalDiversityView: View {
                     .font(.largeTitle)
                 
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(region.displayName)
+                    Text(region.rawValue)
                         .font(LiquidGlassTheme.typography.titleLarge)
                         .foregroundColor(theme.primaryText)
                         .liquidGlassVibrancy(.maximum)
@@ -711,99 +711,7 @@ struct RegionCard: View {
     }
 }
 
-struct FlowLayout: Layout {
-    let spacing: CGFloat
-    
-    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
-        let result = FlowResult(
-            in: proposal.replacingUnspecifiedDimensions().width,
-            subviews: subviews,
-            spacing: spacing
-        )
-        return result.size
-    }
-    
-    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
-        let result = FlowResult(
-            in: bounds.width,
-            subviews: subviews,
-            spacing: spacing
-        )
-        
-        for (index, subview) in subviews.enumerated() {
-            subview.place(at: result.positions[index], proposal: ProposedViewSize(result.sizes[index]))
-        }
-    }
-}
 
-struct FlowResult {
-    let size: CGSize
-    let positions: [CGPoint]
-    let sizes: [CGSize]
-    
-    init(in maxWidth: CGFloat, subviews: LayoutSubviews, spacing: CGFloat) {
-        var sizes: [CGSize] = []
-        var positions: [CGPoint] = []
-        
-        var currentRowY: CGFloat = 0
-        var currentRowX: CGFloat = 0
-        var currentRowHeight: CGFloat = 0
-        
-        for subview in subviews {
-            let size = subview.sizeThatFits(.unspecified)
-            
-            if currentRowX + size.width > maxWidth && currentRowX > 0 {
-                // Start new row
-                currentRowY += currentRowHeight + spacing
-                currentRowX = 0
-                currentRowHeight = 0
-            }
-            
-            positions.append(CGPoint(x: currentRowX, y: currentRowY))
-            sizes.append(size)
-            
-            currentRowX += size.width + spacing
-            currentRowHeight = max(currentRowHeight, size.height)
-        }
-        
-        self.positions = positions
-        self.sizes = sizes
-        self.size = CGSize(
-            width: maxWidth,
-            height: currentRowY + currentRowHeight
-        )
-    }
-}
-
-struct CulturalGoalsView: View {
-    @Environment(\.dismiss) private var dismiss
-    @Environment(\.appTheme) private var theme
-    
-    var body: some View {
-        NavigationView {
-            VStack {
-                Text("Cultural Reading Goals")
-                    .font(LiquidGlassTheme.typography.headlineLarge)
-                    .foregroundColor(theme.primaryText)
-                    .liquidGlassVibrancy(.maximum)
-                
-                Text("Coming soon...")
-                    .font(LiquidGlassTheme.typography.bodyLarge)
-                    .foregroundColor(theme.secondaryText)
-                    .liquidGlassVibrancy(.medium)
-                
-                Spacer()
-            }
-            .padding()
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") { dismiss() }
-                }
-            }
-        }
-    }
-}
 
 // MARK: - Data Models
 
@@ -845,6 +753,10 @@ extension CulturalRegion {
         case .northAmerica: return "N. America"
         case .southAmerica: return "S. America"
         case .oceania: return "Oceania"
+        case .middleEast: return "Middle East"
+        case .caribbean: return "Caribbean"
+        case .centralAsia: return "C. Asia"
+        case .indigenous: return "Indigenous"
         case .antarctica: return "Antarctica"
         case .international: return "International"
         }
