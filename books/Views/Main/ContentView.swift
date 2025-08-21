@@ -33,9 +33,11 @@ struct ContentView: View {
         .keyboardAvoidingLayout() // Prevent keyboard constraint conflicts
         .onAppear {
             updateBadgeCounts()
-            // Set up import state manager with model context
+            
+            // Initialize import infrastructure once
             Task { @MainActor in
                 ImportStateManager.shared.setModelContext(modelContext)
+                _ = BackgroundImportCoordinator.initialize(with: modelContext)
             }
             
             // Prevent navigation bar bounce by ensuring consistent state
@@ -43,10 +45,23 @@ struct ContentView: View {
                 // Force navigation bar layout consistency
             }
         }
+        .onDisappear {
+            // Clean up when view disappears (app going to background)
+            Task { @MainActor in
+                print("[ContentView] View disappeared, cleaning up if needed")
+            }
+        }
         .onChange(of: selectedTab) { oldValue, newValue in
             // Haptic feedback on tab switch
             HapticFeedbackManager.shared.lightImpact()
             updateBadgeCounts()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
+            // Handle app resume - refresh badge counts and prevent tab bar bouncing
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                print("[ContentView] App became active, refreshing badge counts")
+                updateBadgeCounts()
+            }
         }
     }
     

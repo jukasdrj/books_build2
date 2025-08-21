@@ -15,32 +15,41 @@ import SwiftData
 @Observable
 class BackgroundImportCoordinator {
     
-    // MARK: - Singleton with Proper Lifecycle Management
+    // MARK: - Singleton with Thread-Safe Initialization
     
     private static var _shared: BackgroundImportCoordinator?
-    private static let sharedQueue = DispatchQueue(label: "backgroundImportCoordinator.shared", attributes: .concurrent)
+    private static let lockQueue = DispatchQueue(label: "backgroundImportCoordinator.lock")
     
     static func initialize(with modelContext: ModelContext) -> BackgroundImportCoordinator {
-        return sharedQueue.sync(flags: .barrier) {
+        return lockQueue.sync {
             if let existing = _shared {
-                return existing
+                // Ensure the existing coordinator has the same model context
+                if existing.modelContext === modelContext {
+                    print("[BackgroundImportCoordinator] Using existing coordinator with same context")
+                    return existing
+                } else {
+                    print("[BackgroundImportCoordinator] Model context changed, creating new coordinator")
+                    existing.cleanupResources()
+                    _shared = nil
+                }
             }
             
             let coordinator = BackgroundImportCoordinator(modelContext: modelContext)
             _shared = coordinator
+            print("[BackgroundImportCoordinator] Initialized new coordinator")
             return coordinator
         }
     }
     
     static var shared: BackgroundImportCoordinator? {
-        return sharedQueue.sync {
+        return lockQueue.sync {
             return _shared
         }
     }
     
     /// Call this to properly clean up the singleton when no longer needed
     static func cleanup() {
-        sharedQueue.sync(flags: .barrier) {
+        lockQueue.sync {
             _shared?.cleanupResources()
             _shared = nil
         }

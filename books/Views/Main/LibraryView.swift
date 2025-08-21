@@ -115,8 +115,15 @@ struct LibraryView: View {
             #endif
         }
         .onChange(of: allBooks) { _, _ in
-            // Debounced update to prevent bouncing during background imports
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            // Debounced update to prevent bouncing during background imports and app resume
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                updateStableBooks()
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
+            // Handle app resume - refresh state after a delay to prevent bouncing
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                print("[LibraryView] App became active, refreshing library state")
                 updateStableBooks()
             }
         }
