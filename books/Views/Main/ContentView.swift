@@ -63,6 +63,16 @@ struct ContentView: View {
                 updateBadgeCounts()
             }
         }
+        .onReceive(NotificationCenter.default.publisher(for: .memoryPressureDetected)) { _ in
+            // Handle memory pressure by clearing JSON caches
+            Task { @MainActor in
+                print("[ContentView] Memory pressure detected, clearing JSON caches")
+                let books = try? modelContext.fetch(FetchDescriptor<UserBook>())
+                books?.forEach { book in
+                    book.clearJSONCaches()
+                }
+            }
+        }
     }
     
     // MARK: - Theme Helper Functions
@@ -355,6 +365,15 @@ struct ContentView: View {
                 // Add navigation title based on selected tab with consistent display mode
                 .navigationTitle(tabTitle(for: selectedTab))
                 .navigationBarTitleDisplayMode(.large)
+                // Add pull-down gesture for easier reachability
+                .onTapGesture(count: 2) {
+                    // Double tap anywhere to scroll to top for one-handed use
+                    withAnimation(.easeOut(duration: 0.5)) {
+                        // This would trigger scroll to top in individual views
+                        NotificationCenter.default.post(name: .scrollToTop, object: nil)
+                    }
+                    HapticFeedbackManager.shared.lightImpact()
+                }
                 .toolbar {
                     if selectedTab == 1 { // Search tab
                         ToolbarItem(placement: .navigationBarTrailing) {
@@ -503,11 +522,25 @@ struct EnhancedTabBar: View {
                 }
             }
             .padding(.horizontal, Theme.Spacing.md)
-            .padding(.vertical, 8)
-            .background(
-                .regularMaterial,
-                in: RoundedRectangle(cornerRadius: 0)
-            )
+            .padding(.vertical, 12) // Increased for better thumb accessibility
+            .background {
+                ZStack {
+                    // Liquid Glass base
+                    Color.clear
+                        .background(.regularMaterial)
+                    
+                    // Theme-aware tint with subtle depth
+                    LinearGradient(
+                        colors: [
+                            theme.surface.opacity(0.5),
+                            theme.surfaceVariant.opacity(0.2)
+                        ],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                    .blendMode(.overlay)
+                }
+            }
             .overlay(
                 Rectangle()
                     .frame(height: 0.5)
@@ -542,14 +575,26 @@ struct EnhancedTabBarButton: View {
     let action: () -> Void
     
     var body: some View {
-        Button(action: action) {
-            VStack(spacing: 4) {
+        Button(action: {
+            // Enhanced haptic feedback for different interactions
+            if isSelected {
+                HapticFeedbackManager.shared.lightImpact() // Already selected
+            } else {
+                HapticFeedbackManager.shared.mediumImpact() // Tab switch
+            }
+            action()
+        }) {
+            VStack(spacing: 6) { // Increased spacing for better thumb targets
                 ZStack {
-                    // Background circle for selected state
+                    // Enhanced background with glass effect for selected state
                     Circle()
-                        .fill(theme.primaryContainer.opacity(0.2))
-                        .frame(width: 28, height: 28)
-                        .scaleEffect(isSelected ? 1.0 : 0.0)
+                        .fill(.thinMaterial)
+                        .overlay {
+                            Circle()
+                                .fill(theme.primaryContainer.opacity(isSelected ? 0.3 : 0.0))
+                        }
+                        .frame(width: 36, height: 36) // Larger target for thumb accessibility
+                        .scaleEffect(isSelected ? 1.0 : 0.8)
                         .animation(.spring(response: 0.3, dampingFraction: 0.8), value: isSelected)
                     
                     // Icon
@@ -588,8 +633,14 @@ struct EnhancedTabBarButton: View {
             }
         }
         .buttonStyle(.plain)
-        .frame(maxWidth: .infinity)
+        .frame(maxWidth: .infinity, minHeight: 56) // iOS 26 minimum touch target for thumb accessibility
         .contentShape(Rectangle())
+        .background {
+            // Invisible expanded touch area for easier thumb access
+            Rectangle()
+                .fill(Color.clear)
+                .frame(minHeight: 64) // Extra touch area beyond visual bounds
+        }
     }
     
     private var badgeTitle: String {
@@ -631,4 +682,5 @@ extension View {
 extension Notification.Name {
     static let barcodeSearchCompleted = Notification.Name("barcodeSearchCompleted")
     static let barcodeSearchError = Notification.Name("barcodeSearchError")
+    static let scrollToTop = Notification.Name("scrollToTop")
 }

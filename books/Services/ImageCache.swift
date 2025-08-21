@@ -171,6 +171,9 @@ class ImageCache: @unchecked Sendable {
             
             print("[ImageCache] Cleared \(keysToRemove.count) images, \(self.cacheKeys.count) remaining")
         }
+        
+        // Notify other components about memory pressure
+        NotificationCenter.default.post(name: .memoryPressureDetected, object: nil)
     }
     
     @objc private func applicationDidEnterBackground() {
@@ -248,4 +251,10 @@ enum ImageCacheError: LocalizedError {
             return "Network error: \(error.localizedDescription)"
         }
     }
+}
+
+// MARK: - Memory Pressure Notifications
+
+extension Notification.Name {
+    static let memoryPressureDetected = Notification.Name("memoryPressureDetected")
 }

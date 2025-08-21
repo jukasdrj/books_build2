@@ -73,7 +73,7 @@ class BookSearchService: ObservableObject {
         query: String, 
         sortBy: SortOption = .relevance,
         maxResults: Int = 40,
-        includeTranslations: Bool = true
+        includeTranslations: Bool = false
     ) async -> Result<[BookMetadata], BookError> {
         // Handle empty queries
         let trimmedQuery = query.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -97,7 +97,9 @@ class BookSearchService: ObservableObject {
         case .newest:
             queryItems.append(URLQueryItem(name: "orderBy", value: "newest"))
         case .popularity:
-            queryItems.append(URLQueryItem(name: "orderBy", value: "popularity"))
+            // Google Books API doesn't have popularity sort, so we'll use a different strategy
+            // Send special parameter to proxy to handle popularity sorting
+            queryItems.append(URLQueryItem(name: "sortType", value: "popularity"))
         case .relevance:
             queryItems.append(URLQueryItem(name: "orderBy", value: "relevance"))
         }
@@ -138,7 +140,7 @@ class BookSearchService: ObservableObject {
         _ author: String,
         sortBy: SortOption = .popularity,
         maxResults: Int = 40,
-        includeTranslations: Bool = true
+        includeTranslations: Bool = false
     ) async -> Result<[BookMetadata], BookError> {
         let trimmedAuthor = author.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedAuthor.isEmpty else {
@@ -161,7 +163,7 @@ class BookSearchService: ObservableObject {
         _ title: String,
         sortBy: SortOption = .relevance,
         maxResults: Int = 40,
-        includeTranslations: Bool = true
+        includeTranslations: Bool = false
     ) async -> Result<[BookMetadata], BookError> {
         let trimmedTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedTitle.isEmpty else {
@@ -216,7 +218,7 @@ class BookSearchService: ObservableObject {
         query: String,
         sortBy: SortOption = .relevance,
         maxResults: Int = 40,
-        includeTranslations: Bool = true
+        includeTranslations: Bool = false
     ) async -> Result<[BookMetadata], BookError> {
         // First try Google Books
         let primaryResult = await search(
@@ -270,7 +272,9 @@ class BookSearchService: ObservableObject {
         case .newest:
             queryItems.append(URLQueryItem(name: "orderBy", value: "newest"))
         case .popularity:
-            queryItems.append(URLQueryItem(name: "orderBy", value: "popularity"))
+            // Google Books API doesn't have popularity sort, so we'll use a different strategy
+            // Send special parameter to proxy to handle popularity sorting
+            queryItems.append(URLQueryItem(name: "sortType", value: "popularity"))
         case .relevance:
             break // Default relevance sorting
         }

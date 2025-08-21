@@ -67,9 +67,10 @@ class BackgroundImportCoordinator {
     private let modelContext: ModelContext
 //    private let liveActivityManager = UnifiedLiveActivityManager.shared
     
-    // MARK: - Monitoring State
+    // MARK: - Monitoring State & Task Management
     
     private var isMonitoring: Bool = false
+    private var monitoringTask: Task<Void, Never>?
     
     // MARK: - Computed Properties
     
@@ -194,7 +195,9 @@ class BackgroundImportCoordinator {
         }
 */
         
-        // Stop monitoring and clear current import
+        // Stop monitoring task and clear current import
+        monitoringTask?.cancel()
+        monitoringTask = nil
         isMonitoring = false
         await MainActor.run {
             currentImport = nil
@@ -217,6 +220,9 @@ class BackgroundImportCoordinator {
     /// Cancel current background import
     func cancelImport() async {
         guard currentImport != nil else { return }
+        
+        // Cancel monitoring task first
+        monitoringTask?.cancel()
         
         csvImportService.cancelImport()
         
@@ -253,6 +259,10 @@ class BackgroundImportCoordinator {
     /// Clean up resources and cancel any ongoing operations
     func cleanupResources() {
         print("[BackgroundImportCoordinator] Cleaning up resources")
+        
+        // Cancel monitoring task first to prevent memory leaks
+        monitoringTask?.cancel()
+        monitoringTask = nil
         
         // Cancel any ongoing imports
         csvImportService.cancelImport()
@@ -307,6 +317,9 @@ class BackgroundImportCoordinator {
     }
     
     private func monitorImportProgress() {
+        // Cancel any existing monitoring task
+        monitoringTask?.cancel()
+        
         // Prevent multiple monitoring tasks from running
         guard !isMonitoring else {
             print("[BackgroundImportCoordinator] Monitoring already in progress, skipping")
@@ -322,9 +335,21 @@ class BackgroundImportCoordinator {
         isMonitoring = true
         print("[BackgroundImportCoordinator] Starting import progress monitoring")
         
-        // Monitor the CSVImportService progress
-        Task {
-            while isImporting && isMonitoring {
+        // Create and track the monitoring task
+        monitoringTask = Task { @MainActor in
+            defer {
+                isMonitoring = false
+                monitoringTask = nil
+                print("[BackgroundImportCoordinator] Stopped import progress monitoring")
+            }
+            
+            while isImporting && isMonitoring && !Task.isCancelled {
+                // Check for task cancellation
+                guard !Task.isCancelled else {
+                    print("[BackgroundImportCoordinator] Monitoring task cancelled")
+                    break
+                }
+                
                 // Wait for import to actually start
                 if let progress = csvImportService.importProgress {
                     // Only update if progress has actually changed to reduce UI bouncing
@@ -334,12 +359,10 @@ class BackgroundImportCoordinator {
                     if hasProgressChanged {
                         print("[BackgroundImportCoordinator] Progress update: \(progress.processedBooks)/\(progress.totalBooks), step: \(progress.currentStep)")
                         
-                        // Ensure UI updates happen on main thread
-                        await MainActor.run {
-                            currentProgress = progress
-                            currentImport?.progress = progress
-                            print("[BackgroundImportCoordinator] UI state updated - isImporting: \(isImporting), progress: \(String(describing: progress))")
-                        }
+                        // Update state directly on MainActor
+                        currentProgress = progress
+                        currentImport?.progress = progress
+                        print("[BackgroundImportCoordinator] UI state updated - isImporting: \(isImporting), progress: \(String(describing: progress))")
                     }
                     
                     // Update Live Activity with current progress
@@ -354,12 +377,14 @@ class BackgroundImportCoordinator {
                     print("[BackgroundImportCoordinator] Waiting for import to start... (isImporting: \(csvImportService.isImporting))")
                 }
                 
-                // Check every 2 seconds
-                try? await Task.sleep(nanoseconds: 2_000_000_000)
+                // Check every 2 seconds with cancellation support
+                do {
+                    try await Task.sleep(nanoseconds: 2_000_000_000)
+                } catch {
+                    print("[BackgroundImportCoordinator] Monitoring sleep interrupted")
+                    break
+                }
             }
-            
-            isMonitoring = false
-            print("[BackgroundImportCoordinator] Stopped import progress monitoring")
         }
     }
     

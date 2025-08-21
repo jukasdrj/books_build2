@@ -301,24 +301,62 @@ struct UnifiedStatCard: View {
         }
         .frame(maxWidth: .infinity, minHeight: 140)
         .padding(Theme.Spacing.md)
-        .materialCard()
-        .overlay(
+        .background {
+            // Liquid Glass card with theme-aware styling
             RoundedRectangle(cornerRadius: Theme.CornerRadius.card)
-                .stroke(config.color.opacity(0.2), lineWidth: 1)
-        )
+                .fill(.regularMaterial)
+                .overlay {
+                    RoundedRectangle(cornerRadius: Theme.CornerRadius.card)
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    config.color.opacity(0.08),
+                                    config.color.opacity(0.03)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                }
+                .overlay {
+                    RoundedRectangle(cornerRadius: Theme.CornerRadius.card)
+                        .strokeBorder(config.color.opacity(0.15), lineWidth: 1)
+                }
+                .shadow(color: config.color.opacity(0.1), radius: 8, x: 0, y: 4)
+        }
     }
     
     @ViewBuilder
     private var enhancedContent: some View {
-        // Icon with gradient background
+        // Icon with glass background
         ZStack {
             Circle()
-                .fill(config.color.opacity(0.15))
+                .fill(.thinMaterial)
+                .overlay {
+                    Circle()
+                        .fill(
+                            RadialGradient(
+                                colors: [
+                                    config.color.opacity(0.2),
+                                    config.color.opacity(0.05)
+                                ],
+                                center: .center,
+                                startRadius: 5,
+                                endRadius: 25
+                            )
+                        )
+                }
+                .overlay {
+                    Circle()
+                        .strokeBorder(config.color.opacity(0.2), lineWidth: 1)
+                }
+                .shadow(color: config.color.opacity(0.15), radius: 6, x: 0, y: 3)
                 .frame(width: 50, height: 50)
             
             Image(systemName: config.icon)
                 .font(.system(size: 24, weight: .medium))
                 .foregroundColor(config.color)
+                .shadow(color: config.color.opacity(0.3), radius: 2, x: 0, y: 1)
         }
         
         VStack(spacing: Theme.Spacing.xs) {

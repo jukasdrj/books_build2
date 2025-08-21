@@ -10,7 +10,7 @@ struct SearchView: View {
     @State private var searchState: SearchState = .idle
     @State private var sortOption: BookSearchService.SortOption = .relevance
     @State private var showingSortOptions = false
-    @State private var includeTranslations = true
+    @State private var includeTranslations = false
     @State private var fromBarcodeScanner = false
     @FocusState private var isSearchFieldFocused: Bool
     
@@ -29,9 +29,13 @@ struct SearchView: View {
                 simpleiPadSearchBar
             }
             
-            // Search Controls
+            // Search Controls - device-specific layout
             if case .results(let books) = searchState, !books.isEmpty {
-                searchControlsBar
+                if UIDevice.current.userInterfaceIdiom == .pad {
+                    iPadSearchControlsBar
+                } else {
+                    iPhoneSearchControlsBar
+                }
             }
             
             // Content Area with enhanced empty state
@@ -187,18 +191,18 @@ struct SearchView: View {
         .padding(.horizontal, Theme.Spacing.lg)
         .padding(.vertical, Theme.Spacing.md)
         .background {
-            // Subtle background blur
+            // Subtle background blur with targeted keyboard dismissal
             Rectangle()
                 .fill(.ultraThinMaterial)
                 .ignoresSafeArea(edges: .top)
+                .onTapGesture {
+                    // Dismiss keyboard on search bar background tap for iPad only
+                    if UIDevice.current.userInterfaceIdiom == .pad {
+                        isSearchFieldFocused = false
+                    }
+                }
         }
         .keyboardAvoidingLayout()
-        .onTapGesture {
-            // Dismiss keyboard on background tap for iPad
-            if UIDevice.current.userInterfaceIdiom == .pad {
-                isSearchFieldFocused = false
-            }
-        }
     }
     
     // MARK: - iPad Prominent Search Bar
@@ -396,9 +400,9 @@ struct SearchView: View {
         }
     }
     
-    // MARK: - Search Controls Bar with Liquid Glass
+    // MARK: - iPad Search Controls Bar with Liquid Glass
     @ViewBuilder
-    private var searchControlsBar: some View {
+    private var iPadSearchControlsBar: some View {
         HStack(spacing: Theme.Spacing.md) {
             // Sort button with glass capsule
             Button {
@@ -444,7 +448,10 @@ struct SearchView: View {
                 if !trimmedQuery.isEmpty {
                     switch searchState {
                     case .results, .error:
-                        performSearch()
+                        // Add a small delay to ensure state is properly synchronized
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            performSearch()
+                        }
                     default:
                         break
                     }
@@ -539,6 +546,108 @@ struct SearchView: View {
         }
     }
     
+    // MARK: - iPhone Search Controls Bar - Compact Design
+    @ViewBuilder
+    private var iPhoneSearchControlsBar: some View {
+        HStack(spacing: Theme.Spacing.sm) {
+            // Compact sort button
+            Button {
+                showingSortOptions = true
+            } label: {
+                HStack(spacing: 3) {
+                    Image(systemName: sortOption.systemImage)
+                        .font(.caption)
+                    Text(sortOption.displayName)
+                        .font(.caption)
+                        .fontWeight(.medium)
+                    Image(systemName: "chevron.down")
+                        .font(.caption2)
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .foregroundStyle(.primary)
+                .background {
+                    Capsule()
+                        .fill(currentTheme.surfaceVariant)
+                        .overlay {
+                            Capsule()
+                                .strokeBorder(currentTheme.outline.opacity(0.2), lineWidth: 0.5)
+                        }
+                }
+            }
+            .accessibilityLabel("Sort by \(sortOption.displayName)")
+            
+            // Compact translations toggle
+            Button {
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    includeTranslations.toggle()
+                }
+                // Re-search with new setting
+                let trimmedQuery = searchQuery.trimmingCharacters(in: .whitespacesAndNewlines)
+                if !trimmedQuery.isEmpty {
+                    switch searchState {
+                    case .results, .error:
+                        // Add a small delay to ensure state is properly synchronized
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            performSearch()
+                        }
+                    default:
+                        break
+                    }
+                }
+            } label: {
+                HStack(spacing: 3) {
+                    Image(systemName: includeTranslations ? "globe" : "globe.badge.chevron.backward")
+                        .font(.caption)
+                    Text(includeTranslations ? "All" : "EN")
+                        .font(.caption)
+                        .fontWeight(.medium)
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .foregroundStyle(includeTranslations ? .white : .primary)
+                .background {
+                    Capsule()
+                        .fill(includeTranslations ? currentTheme.primary : currentTheme.surfaceVariant)
+                        .overlay {
+                            if !includeTranslations {
+                                Capsule()
+                                    .strokeBorder(currentTheme.outline.opacity(0.2), lineWidth: 0.5)
+                            }
+                        }
+                }
+            }
+            .accessibilityLabel(includeTranslations ? "Including all languages" : "English only")
+            
+            Spacer()
+            
+            // Compact results count
+            if case .results(let books) = searchState {
+                Text("\(books.count)")
+                    .font(.caption)
+                    .fontWeight(.medium)
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 3)
+                    .background {
+                        Capsule()
+                            .fill(currentTheme.surfaceVariant.opacity(0.5))
+                    }
+            }
+        }
+        .padding(.horizontal, Theme.Spacing.md)
+        .padding(.vertical, Theme.Spacing.sm)
+        .background {
+            Rectangle()
+                .fill(currentTheme.surface)
+                .overlay(alignment: .bottom) {
+                    Rectangle()
+                        .fill(currentTheme.outline.opacity(0.1))
+                        .frame(height: 0.5)
+                }
+        }
+    }
+    
     // MARK: - Sort Options Sheet
     @ViewBuilder
     private var sortOptionsSheet: some View {
@@ -562,16 +671,22 @@ struct SearchView: View {
                 LazyVStack(spacing: 0) {
                     ForEach(BookSearchService.SortOption.allCases) { option in
                         Button {
-                            sortOption = option
+                            // Update the sort option first with explicit state capture
+                            let newSortOption = option
+                            sortOption = newSortOption
                             showingSortOptions = false
+                            
                             HapticFeedbackManager.shared.mediumImpact()
                             
-                            // Re-search with new sort option - if we have a valid query and previous search attempt
+                            // Re-search with new sort option after ensuring state is set
                             let trimmedQuery = searchQuery.trimmingCharacters(in: .whitespacesAndNewlines)
                             if !trimmedQuery.isEmpty {
                                 switch searchState {
                                 case .results, .error:
-                                    performSearch()
+                                    // Ensure we use the captured option value
+                                    Task { @MainActor in
+                                        performSearch()
+                                    }
                                 default:
                                     break
                                 }
@@ -978,7 +1093,7 @@ struct SearchView: View {
         searchQuery = ""
         searchState = .idle
         sortOption = .relevance
-        includeTranslations = true
+        includeTranslations = false
         HapticFeedbackManager.shared.lightImpact()
     }
     

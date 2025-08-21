@@ -3,7 +3,7 @@ import SwiftData
 import SwiftUI
 
 @Model
-final class UserBook: Identifiable {
+final class UserBook: Identifiable, @unchecked Sendable {
     var id: UUID = UUID()
     var dateAdded: Date = Date()
     
@@ -22,6 +22,19 @@ final class UserBook: Identifiable {
         encoder.dateEncodingStrategy = .iso8601
         return encoder
     }()
+    
+    /// Background processing queue for large JSON operations
+    private static let jsonProcessingQueue = DispatchQueue(label: "userbook.json.processing", qos: .utility)
+    
+    /// Memory management: Clear JSON caches when memory pressure is detected
+    func clearJSONCaches() {
+        _cachedReadingSessions = nil
+        _sessionsCacheValid = false
+        _cachedNeedsUserInput = nil
+        _inputCacheValid = false
+        _cachedPersonalDataSources = nil
+        _dataSourcesCacheValid = false
+    }
     var dateStarted: Date?
     var dateCompleted: Date?
     var readingStatus: ReadingStatus = ReadingStatus.toRead {
@@ -165,88 +178,126 @@ final class UserBook: Identifiable {
         }
     }
     
-    // Cached JSON objects to prevent repeated parsing (Performance Optimization)
+    // Enhanced JSON caching with hash-based validation (Performance Optimization)
     @Transient private var _cachedReadingSessions: [ReadingSession]?
-    @Transient private var _lastReadingSessionsHash: String = ""
+    @Transient private var _lastReadingSessionsHash: Int = 0
+    @Transient private var _sessionsCacheValid: Bool = false
     
     // Use @Transient to exclude this computed property from SwiftData persistence
     @Transient
     var readingSessions: [ReadingSession] {
         get {
-            // Check if cache is still valid
-            if let cached = _cachedReadingSessions, _lastReadingSessionsHash == readingSessionsData {
+            // Fast hash-based cache validation
+            let currentHash = readingSessionsData.hashValue
+            if let cached = _cachedReadingSessions, _sessionsCacheValid && _lastReadingSessionsHash == currentHash {
                 return cached
             }
             
             // Cache miss - decode and cache
             guard !readingSessionsData.isEmpty else { 
                 _cachedReadingSessions = []
-                _lastReadingSessionsHash = readingSessionsData
+                _lastReadingSessionsHash = currentHash
+                _sessionsCacheValid = true
                 return [] 
             }
-            guard let data = readingSessionsData.data(using: .utf8) else { 
-                _cachedReadingSessions = []
-                _lastReadingSessionsHash = readingSessionsData
-                return [] 
+            
+            // Decode on background queue for large datasets
+            let result: [ReadingSession]
+            if readingSessionsData.count > 10000 {
+                // Large dataset - decode on background queue using DispatchQueue.sync for thread safety
+                let dataString = readingSessionsData  // Capture self.readingSessionsData explicitly
+                
+                result = Self.jsonProcessingQueue.sync {
+                    guard let data = dataString.data(using: .utf8) else { 
+                        return []
+                    }
+                    do {
+                        return try Self.jsonDecoder.decode([ReadingSession].self, from: data)
+                    } catch {
+                        return []
+                    }
+                }
+            } else {
+                // Small dataset - decode immediately
+                guard let data = readingSessionsData.data(using: .utf8) else { 
+                    _cachedReadingSessions = []
+                    _lastReadingSessionsHash = currentHash
+                    _sessionsCacheValid = true
+                    return [] 
+                }
+                do {
+                    result = try Self.jsonDecoder.decode([ReadingSession].self, from: data)
+                } catch {
+                    _cachedReadingSessions = []
+                    _lastReadingSessionsHash = currentHash
+                    _sessionsCacheValid = true
+                    return []
+                }
             }
-            do {
-                let decoded = try Self.jsonDecoder.decode([ReadingSession].self, from: data)
-                _cachedReadingSessions = decoded
-                _lastReadingSessionsHash = readingSessionsData
-                return decoded
-            } catch {
-                _cachedReadingSessions = []
-                _lastReadingSessionsHash = readingSessionsData
-                return []
-            }
+            
+            // Update cache
+            _cachedReadingSessions = result
+            _lastReadingSessionsHash = currentHash
+            _sessionsCacheValid = true
+            return result
         }
         set {
             do {
                 let data = try Self.jsonEncoder.encode(newValue)
                 readingSessionsData = String(data: data, encoding: .utf8) ?? ""
-                // Update cache immediately
+                // Update cache immediately with new hash
                 _cachedReadingSessions = newValue
-                _lastReadingSessionsHash = readingSessionsData
+                _lastReadingSessionsHash = readingSessionsData.hashValue
+                _sessionsCacheValid = true
             } catch {
                 readingSessionsData = ""
                 _cachedReadingSessions = []
-                _lastReadingSessionsHash = ""
+                _lastReadingSessionsHash = 0
+                _sessionsCacheValid = false
             }
         }
     }
     
-    // Cached JSON objects to prevent repeated parsing (Performance Optimization)
+    // Enhanced JSON caching for user input prompts (Performance Optimization)
     @Transient private var _cachedNeedsUserInput: [UserInputPrompt]?
-    @Transient private var _lastNeedsUserInputHash: String = ""
+    @Transient private var _lastNeedsUserInputHash: Int = 0
+    @Transient private var _inputCacheValid: Bool = false
     
     // Use @Transient to exclude this computed property from SwiftData persistence
     @Transient
     var needsUserInput: [UserInputPrompt] {
         get {
-            // Check if cache is still valid
-            if let cached = _cachedNeedsUserInput, _lastNeedsUserInputHash == needsUserInputString {
+            // Fast hash-based cache validation
+            let currentHash = needsUserInputString.hashValue
+            if let cached = _cachedNeedsUserInput, _inputCacheValid && _lastNeedsUserInputHash == currentHash {
                 return cached
             }
             
             // Cache miss - decode and cache
             guard !needsUserInputString.isEmpty, needsUserInputString != "[]" else { 
                 _cachedNeedsUserInput = []
-                _lastNeedsUserInputHash = needsUserInputString
+                _lastNeedsUserInputHash = currentHash
+                _inputCacheValid = true
                 return [] 
             }
+            
             guard let data = needsUserInputString.data(using: .utf8) else { 
                 _cachedNeedsUserInput = []
-                _lastNeedsUserInputHash = needsUserInputString
+                _lastNeedsUserInputHash = currentHash
+                _inputCacheValid = true
                 return [] 
             }
+            
             do {
                 let decoded = try Self.jsonDecoder.decode([UserInputPrompt].self, from: data)
                 _cachedNeedsUserInput = decoded
-                _lastNeedsUserInputHash = needsUserInputString
+                _lastNeedsUserInputHash = currentHash
+                _inputCacheValid = true
                 return decoded
             } catch {
                 _cachedNeedsUserInput = []
-                _lastNeedsUserInputHash = needsUserInputString
+                _lastNeedsUserInputHash = currentHash
+                _inputCacheValid = true
                 return []
             }
         }
@@ -254,49 +305,59 @@ final class UserBook: Identifiable {
             do {
                 let data = try Self.jsonEncoder.encode(newValue)
                 needsUserInputString = String(data: data, encoding: .utf8) ?? "[]"
-                // Update cache immediately
+                // Update cache immediately with new hash
                 _cachedNeedsUserInput = newValue
-                _lastNeedsUserInputHash = needsUserInputString
+                _lastNeedsUserInputHash = needsUserInputString.hashValue
+                _inputCacheValid = true
             } catch {
                 needsUserInputString = "[]"
                 _cachedNeedsUserInput = []
-                _lastNeedsUserInputHash = "[]"
+                _lastNeedsUserInputHash = "[]".hashValue
+                _inputCacheValid = false
             }
         }
     }
     
-    // Cached JSON objects to prevent repeated parsing (Performance Optimization)
+    // Enhanced JSON caching for personal data sources (Performance Optimization)
     @Transient private var _cachedPersonalDataSources: [String: DataSourceInfo]?
-    @Transient private var _lastPersonalDataSourcesHash: String = ""
+    @Transient private var _lastPersonalDataSourcesHash: Int = 0
+    @Transient private var _dataSourcesCacheValid: Bool = false
     
     // Use @Transient to exclude this computed property from SwiftData persistence
     @Transient
     var personalDataSources: [String: DataSourceInfo] {
         get {
-            // Check if cache is still valid
-            if let cached = _cachedPersonalDataSources, _lastPersonalDataSourcesHash == personalDataSourcesString {
+            // Fast hash-based cache validation
+            let currentHash = personalDataSourcesString.hashValue
+            if let cached = _cachedPersonalDataSources, _dataSourcesCacheValid && _lastPersonalDataSourcesHash == currentHash {
                 return cached
             }
             
             // Cache miss - decode and cache
             guard !personalDataSourcesString.isEmpty, personalDataSourcesString != "{}" else { 
                 _cachedPersonalDataSources = [:]
-                _lastPersonalDataSourcesHash = personalDataSourcesString
+                _lastPersonalDataSourcesHash = currentHash
+                _dataSourcesCacheValid = true
                 return [:] 
             }
+            
             guard let data = personalDataSourcesString.data(using: .utf8) else { 
                 _cachedPersonalDataSources = [:]
-                _lastPersonalDataSourcesHash = personalDataSourcesString
+                _lastPersonalDataSourcesHash = currentHash
+                _dataSourcesCacheValid = true
                 return [:] 
             }
+            
             do {
                 let decoded = try Self.jsonDecoder.decode([String: DataSourceInfo].self, from: data)
                 _cachedPersonalDataSources = decoded
-                _lastPersonalDataSourcesHash = personalDataSourcesString
+                _lastPersonalDataSourcesHash = currentHash
+                _dataSourcesCacheValid = true
                 return decoded
             } catch {
                 _cachedPersonalDataSources = [:]
-                _lastPersonalDataSourcesHash = personalDataSourcesString
+                _lastPersonalDataSourcesHash = currentHash
+                _dataSourcesCacheValid = true
                 return [:]
             }
         }
@@ -304,13 +365,15 @@ final class UserBook: Identifiable {
             do {
                 let data = try Self.jsonEncoder.encode(newValue)
                 personalDataSourcesString = String(data: data, encoding: .utf8) ?? "{}"
-                // Update cache immediately
+                // Update cache immediately with new hash
                 _cachedPersonalDataSources = newValue
-                _lastPersonalDataSourcesHash = personalDataSourcesString
+                _lastPersonalDataSourcesHash = personalDataSourcesString.hashValue
+                _dataSourcesCacheValid = true
             } catch {
                 personalDataSourcesString = "{}"
                 _cachedPersonalDataSources = [:]
-                _lastPersonalDataSourcesHash = "{}"
+                _lastPersonalDataSourcesHash = "{}".hashValue
+                _dataSourcesCacheValid = false
             }
         }
     }

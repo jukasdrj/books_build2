@@ -65,16 +65,39 @@ struct CulturalDiversityView: View {
             .padding(.bottom, Theme.Spacing.xl)
             }
         }
-        .background(
-            LinearGradient(
-                colors: [
-                    currentTheme.background,
-                    currentTheme.surface.opacity(0.6)
-                ],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-        )
+        .background {
+            // Immersive Liquid Glass background with cultural theme integration
+            ZStack {
+                // Base glass material
+                Color.clear
+                    .background(Material.regular)
+                
+                // Cultural diversity gradient that respects theme colors
+                LinearGradient(
+                    colors: [
+                        currentTheme.background.opacity(0.7),
+                        currentTheme.tertiary.opacity(0.15),
+                        currentTheme.primary.opacity(0.1),
+                        currentTheme.surface.opacity(0.4)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .blendMode(.overlay)
+                
+                // Subtle cultural pattern overlay
+                RadialGradient(
+                    colors: [
+                        currentTheme.secondary.opacity(0.08),
+                        Color.clear
+                    ],
+                    center: .topTrailing,
+                    startRadius: 50,
+                    endRadius: 300
+                )
+                .blendMode(.softLight)
+            }
+        }
         .navigationTitle("Cultural Diversity")
         .navigationBarTitleDisplayMode(.large)
         .toolbar {
@@ -84,6 +107,17 @@ struct CulturalDiversityView: View {
                 }
                 .foregroundColor(currentTheme.primary)
                 .fontWeight(.semibold)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background {
+                    Capsule()
+                        .fill(.regularMaterial)
+                        .overlay {
+                            Capsule()
+                                .strokeBorder(currentTheme.primary.opacity(0.2), lineWidth: 1)
+                        }
+                        .shadow(color: currentTheme.primary.opacity(0.1), radius: 4, x: 0, y: 2)
+                }
             }
         }
         .sheet(isPresented: $showingGoals) {

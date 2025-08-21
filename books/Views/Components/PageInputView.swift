@@ -55,10 +55,12 @@ struct PageInputView: View {
                 if let current = Int(currentPageText), let total = Int(totalPagesText), total > 0 {
                     Section("Progress") {
                         VStack(spacing: Theme.Spacing.sm) {
-                            ProgressView(value: Double(current) / Double(total))
+                            let progress = min(max(Double(current) / Double(total), 0.0), 1.0) // Clamp between 0.0 and 1.0
+                            
+                            ProgressView(value: progress)
                                 .progressViewStyle(.linear)
                             
-                            Text("\(Int(Double(current) / Double(total) * 100))% complete")
+                            Text("\(Int(progress * 100))% complete")
                                 .labelSmall()
                                 .foregroundColor(.secondary)
                         }

@@ -200,8 +200,8 @@ struct UniformGridLayoutView: View {
     var body: some View {
         let columns = createAdaptiveColumns()
         
-        // Use virtual scrolling for large datasets (2000+ books)
-        if books.count > 1500 {
+        // Use virtual scrolling for large datasets (500+ books for better performance)
+        if books.count > 500 {
             VirtualizedGridView(books: books, columns: columns)
                 .padding(adaptivePadding())
                 .onAppear {
@@ -274,7 +274,7 @@ struct ListLayoutView: View {
     
     var body: some View {
         // Use virtual scrolling for large datasets in list view too
-        if books.count > 1500 {
+        if books.count > 500 {
             VirtualizedListView(books: books)
                 .padding(.horizontal, Theme.Spacing.md)
         } else {
@@ -324,36 +324,105 @@ private extension LibraryView {
                     Circle()
                         .fill(currentTheme.primary)
                         .frame(width: 8, height: 8)
+                        .shadow(color: currentTheme.primary.opacity(0.3), radius: 2, x: 0, y: 1)
                     Text("Filtered")
                         .labelSmall()
                         .foregroundColor(currentTheme.primary)
+                }
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background {
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(.regularMaterial)
+                        .overlay {
+                            RoundedRectangle(cornerRadius: 12)
+                                .strokeBorder(currentTheme.primary.opacity(0.2), lineWidth: 1)
+                        }
+                        .shadow(color: .black.opacity(0.08), radius: 4, x: 0, y: 2)
                 }
             }
             
             Spacer()
             
-            Picker("Layout", selection: $selectedLayout) {
+            // Liquid Glass segmented control
+            HStack(spacing: 0) {
                 ForEach(LayoutType.allCases, id: \.self) { layout in
-                    Image(systemName: layout.icon).tag(layout)
+                    Button {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            selectedLayout = layout
+                        }
+                    } label: {
+                        Image(systemName: layout.icon)
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundStyle(selectedLayout == layout ? .white : currentTheme.onSurface)
+                            .frame(width: 44, height: 32)
+                    }
+                    .background {
+                        RoundedRectangle(cornerRadius: layout == .grid ? 8 : 8)
+                            .fill(selectedLayout == layout ? currentTheme.primary : Color.clear)
+                            .shadow(
+                                color: selectedLayout == layout ? currentTheme.primary.opacity(0.3) : .clear,
+                                radius: selectedLayout == layout ? 4 : 0,
+                                x: 0, y: selectedLayout == layout ? 2 : 0
+                            )
+                    }
                 }
             }
-            .pickerStyle(.segmented)
-            .frame(width: 120)
+            .background {
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(.regularMaterial)
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 10)
+                            .strokeBorder(currentTheme.outline.opacity(0.1), lineWidth: 1)
+                    }
+                    .shadow(color: .black.opacity(0.06), radius: 8, x: 0, y: 4)
+            }
         }
         .padding(.horizontal, Theme.Spacing.md)
         .padding(.vertical, Theme.Spacing.sm)
-        .background(currentTheme.surface)
+        .background {
+            Rectangle()
+                .fill(.ultraThinMaterial)
+                .overlay(alignment: .bottom) {
+                    Rectangle()
+                        .fill(currentTheme.outline.opacity(0.1))
+                        .frame(height: 0.5)
+                }
+        }
     }
     
     var contentSection: some View {
         VStack(spacing: 0) {
-            Divider()
+            // Subtle glass divider
+            Rectangle()
+                .fill(currentTheme.outline.opacity(0.1))
+                .frame(height: 0.5)
             
-            // Content section - Use stable filtered books
+            // Content section with glass background
             if stableFilteredBooks.isEmpty {
-                Text("No books to display")
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .padding()
+                VStack(spacing: Theme.Spacing.lg) {
+                    Image(systemName: "books.vertical")
+                        .font(.system(size: 64, weight: .light))
+                        .foregroundStyle(.secondary)
+                    
+                    Text("No books to display")
+                        .font(.title2)
+                        .fontWeight(.medium)
+                        .foregroundColor(.secondary)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background {
+                    // Glass background with theme integration
+                    LinearGradient(
+                        colors: [
+                            currentTheme.background.opacity(0.7),
+                            currentTheme.surface.opacity(0.3)
+                        ],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                    .background(.regularMaterial)
+                }
             } else {
                 ScrollView(.vertical) {
                     if selectedLayout == .grid {
@@ -361,6 +430,19 @@ private extension LibraryView {
                     } else {
                         ListLayoutView(books: stableFilteredBooks)
                     }
+                }
+                .background {
+                    // Immersive glass background that preserves theme colors
+                    LinearGradient(
+                        colors: [
+                            currentTheme.background.opacity(0.8),
+                            currentTheme.surface.opacity(0.4),
+                            currentTheme.surfaceVariant.opacity(0.2)
+                        ],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                    .background(.thinMaterial)
                 }
             }
         }
@@ -376,6 +458,7 @@ struct VirtualizedGridView: View {
     
     @State private var visibleRange: Range<Int> = 0..<50
     @State private var scrollOffset: CGFloat = 0
+    @State private var scrollDebounceTask: Task<Void, Never>?
     
     private let itemHeight: CGFloat = 300 // Approximate BookCardView height
     private let batchSize = 50
@@ -434,19 +517,29 @@ struct VirtualizedGridView: View {
     }
     
     private func updateVisibleRange(for offset: CGFloat, viewHeight: CGFloat) {
-        let rowHeight = itemHeight + Theme.Spacing.lg
-        let visibleStartRow = max(0, Int((-offset - viewHeight) / rowHeight))
-        let visibleEndRow = min(books.count / columnsPerRow, Int((-offset + viewHeight * 2) / rowHeight))
+        // Cancel previous debounce task
+        scrollDebounceTask?.cancel()
         
-        let newStart = max(0, visibleStartRow * columnsPerRow - batchSize)
-        let newEnd = min(books.count, (visibleEndRow + 1) * columnsPerRow + batchSize)
-        
-        let newRange = newStart..<newEnd
-        
-        // Only update if range changed significantly
-        if abs(newRange.lowerBound - visibleRange.lowerBound) > batchSize / 2 ||
-           abs(newRange.upperBound - visibleRange.upperBound) > batchSize / 2 {
-            visibleRange = newRange
+        // Debounce scroll updates to prevent excessive calculations
+        scrollDebounceTask = Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 16_000_000) // 16ms debounce (~60fps)
+            
+            guard !Task.isCancelled else { return }
+            
+            let rowHeight = itemHeight + Theme.Spacing.lg
+            let visibleStartRow = max(0, Int((-offset - viewHeight) / rowHeight))
+            let visibleEndRow = min(books.count / columnsPerRow, Int((-offset + viewHeight * 2) / rowHeight))
+            
+            let newStart = max(0, visibleStartRow * columnsPerRow - batchSize)
+            let newEnd = min(books.count, (visibleEndRow + 1) * columnsPerRow + batchSize)
+            
+            let newRange = newStart..<newEnd
+            
+            // Only update if range changed significantly
+            if abs(newRange.lowerBound - visibleRange.lowerBound) > batchSize / 2 ||
+               abs(newRange.upperBound - visibleRange.upperBound) > batchSize / 2 {
+                visibleRange = newRange
+            }
         }
     }
 }
@@ -456,6 +549,7 @@ struct VirtualizedListView: View {
     let books: [UserBook]
     
     @State private var visibleRange: Range<Int> = 0..<50
+    @State private var scrollDebounceTask: Task<Void, Never>?
     
     private let itemHeight: CGFloat = 80 // Approximate BookRowView height
     private let batchSize = 100
@@ -509,18 +603,28 @@ struct VirtualizedListView: View {
     }
     
     private func updateVisibleRange(for offset: CGFloat, viewHeight: CGFloat) {
-        let visibleStart = max(0, Int((-offset - viewHeight) / itemHeight))
-        let visibleEnd = min(books.count, Int((-offset + viewHeight * 2) / itemHeight))
+        // Cancel previous debounce task
+        scrollDebounceTask?.cancel()
         
-        let newStart = max(0, visibleStart - batchSize)
-        let newEnd = min(books.count, visibleEnd + batchSize)
-        
-        let newRange = newStart..<newEnd
-        
-        // Only update if range changed significantly
-        if abs(newRange.lowerBound - visibleRange.lowerBound) > batchSize / 2 ||
-           abs(newRange.upperBound - visibleRange.upperBound) > batchSize / 2 {
-            visibleRange = newRange
+        // Debounce scroll updates to prevent excessive calculations
+        scrollDebounceTask = Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 16_000_000) // 16ms debounce (~60fps)
+            
+            guard !Task.isCancelled else { return }
+            
+            let visibleStart = max(0, Int((-offset - viewHeight) / itemHeight))
+            let visibleEnd = min(books.count, Int((-offset + viewHeight * 2) / itemHeight))
+            
+            let newStart = max(0, visibleStart - batchSize)
+            let newEnd = min(books.count, visibleEnd + batchSize)
+            
+            let newRange = newStart..<newEnd
+            
+            // Only update if range changed significantly
+            if abs(newRange.lowerBound - visibleRange.lowerBound) > batchSize / 2 ||
+               abs(newRange.upperBound - visibleRange.upperBound) > batchSize / 2 {
+                visibleRange = newRange
+            }
         }
     }
 }

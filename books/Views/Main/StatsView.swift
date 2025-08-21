@@ -45,16 +45,26 @@ struct StatsView: View {
             .padding(.bottom, Theme.Spacing.xl)
             }
         }
-        .background(
-            LinearGradient(
-                colors: [
-                    currentTheme.background,
-                    currentTheme.surface.opacity(0.5)
-                ],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-        )
+        .background {
+            // Liquid Glass background with theme-aware colors
+            ZStack {
+                // Base glass material
+                Color.clear
+                    .background(Material.regular)
+                
+                // Theme-aware gradient overlay
+                LinearGradient(
+                    colors: [
+                        currentTheme.background.opacity(0.6),
+                        currentTheme.surface.opacity(0.3),
+                        currentTheme.surfaceVariant.opacity(0.2)
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .blendMode(.overlay)
+            }
+        }
         .navigationTitle("Reading Stats")
         .navigationBarTitleDisplayMode(.large)
     }
