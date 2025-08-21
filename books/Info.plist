@@ -2,6 +2,15 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array>
+		<string>com.books.readingtracker.csv-import</string>
+		<string>com.books.readingtracker.metadata-enrichment</string>
+	</array>
+	<key>GoogleBooksAPIKey</key>
+	<string>$(GOOGLE_BOOKS_API_KEY)</string>
+	<key>GoogleBooksAPIKeyFallback</key>
+	<string>$(GOOGLE_BOOKS_API_KEY_FALLBACK)</string>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsArbitraryLoads</key>
@@ -14,13 +23,9 @@
 		<true/>
 		<key>NSExceptionDomains</key>
 		<dict>
-			<key>www.googleapis.com</key>
+			<key>books-api-proxy.jukasdrj.workers.dev</key>
 			<dict>
 				<key>NSExceptionAllowsInsecureHTTPLoads</key>
-				<false/>
-				<key>NSExceptionMinimumTLSVersion</key>
-				<string>TLSv1.2</string>
-				<key>NSExceptionRequiresForwardSecrecy</key>
 				<true/>
 				<key>NSIncludesSubdomains</key>
 				<true/>
@@ -36,33 +41,29 @@
 				<key>NSIncludesSubdomains</key>
 				<true/>
 			</dict>
+			<key>www.googleapis.com</key>
+			<dict>
+				<key>NSExceptionAllowsInsecureHTTPLoads</key>
+				<false/>
+				<key>NSExceptionMinimumTLSVersion</key>
+				<string>TLSv1.2</string>
+				<key>NSExceptionRequiresForwardSecrecy</key>
+				<true/>
+				<key>NSIncludesSubdomains</key>
+				<true/>
+			</dict>
 		</dict>
 	</dict>
 	<key>UIApplicationSupportsMultipleScenes</key>
 	<true/>
-		<key>UIBackgroundModes</key>
-		<array>
-			<string>processing</string>
-			<string>fetch</string>
-		</array>
-		<key>BGTaskSchedulerPermittedIdentifiers</key>
-		<array>
-			<string>com.books.readingtracker.csv-import</string>
-			<string>com.books.readingtracker.metadata-enrichment</string>
-		</array>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>processing</string>
+		<string>fetch</string>
+	</array>
 	<key>UILaunchScreen</key>
 	<dict/>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
-	<key>CFBundleDisplayName</key>
-	<string>BooksTrack by oooe</string>
-	<key>CFBundleName</key>
-	<string>oooeBooksTracker</string>
-	<key>CFBundleIdentifier</key>
-	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
-	<key>GoogleBooksAPIKey</key>
-	<string>$(GOOGLE_BOOKS_API_KEY)</string>
-	<key>GoogleBooksAPIKeyFallback</key>
-	<string>$(GOOGLE_BOOKS_API_KEY_FALLBACK)</string>
 </dict>
 </plist>

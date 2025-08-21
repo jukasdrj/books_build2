@@ -21,21 +21,63 @@ class ImageCache: @unchecked Sendable {
     private let keysQueue = DispatchQueue(label: "cacheKeys", attributes: .concurrent)
     
     private init() {
-        // Configure cache limits
-        cache.countLimit = 200 // Maximum number of images
-        cache.totalCostLimit = 150 * 1024 * 1024 // 150MB limit
+        // Configure cache limits with device-appropriate sizing
+        configureMemoryLimits()
         
         // Configure operation queue
         operationQueue.maxConcurrentOperationCount = 4
         operationQueue.qualityOfService = .utility
         
-        // Listen for memory warnings
+        // Listen for memory warnings and app lifecycle events
         NotificationCenter.default.addObserver(
             self,
-            selector: #selector(clearCache),
+            selector: #selector(handleMemoryPressure),
             name: UIApplication.didReceiveMemoryWarningNotification,
             object: nil
         )
+        
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(applicationDidEnterBackground),
+            name: UIApplication.didEnterBackgroundNotification,
+            object: nil
+        )
+        
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(applicationWillTerminate),
+            name: UIApplication.willTerminateNotification,
+            object: nil
+        )
+    }
+    
+    /// Configure memory limits based on device capabilities
+    private func configureMemoryLimits() {
+        let physicalMemory = ProcessInfo.processInfo.physicalMemory
+        let availableMemory = physicalMemory / (1024 * 1024) // Convert to MB
+        
+        // Scale cache size based on available memory (iOS device considerations)
+        let maxCacheSize: Int
+        let maxImageCount: Int
+        
+        if availableMemory >= 6144 { // 6GB+ devices (Pro models)
+            maxCacheSize = 200 * 1024 * 1024 // 200MB
+            maxImageCount = 300
+        } else if availableMemory >= 4096 { // 4GB+ devices
+            maxCacheSize = 150 * 1024 * 1024 // 150MB  
+            maxImageCount = 200
+        } else if availableMemory >= 3072 { // 3GB+ devices
+            maxCacheSize = 100 * 1024 * 1024 // 100MB
+            maxImageCount = 150
+        } else { // Lower memory devices
+            maxCacheSize = 75 * 1024 * 1024 // 75MB
+            maxImageCount = 100
+        }
+        
+        cache.countLimit = maxImageCount
+        cache.totalCostLimit = maxCacheSize
+        
+        print("[ImageCache] Configured for device with \(availableMemory)MB RAM: \(maxImageCount) images, \(maxCacheSize / (1024*1024))MB limit")
     }
     
     deinit {
@@ -109,12 +151,59 @@ class ImageCache: @unchecked Sendable {
         }
     }
     
-    @objc private func clearCache() {
-        cache.removeAllObjects()
+    @objc private func handleMemoryPressure() {
+        print("[ImageCache] Memory pressure detected - performing aggressive cleanup")
+        
+        // Clear 75% of cache during memory pressure
+        let targetCount = cache.countLimit / 4 // Keep only 25%
+        
         keysQueue.async(flags: .barrier) { [weak self] in
-            self?.cacheKeys.removeAll()
+            guard let self = self else { return }
+            
+            // Get current keys and remove oldest 75%
+            let currentKeys = Array(self.cacheKeys)
+            let keysToRemove = currentKeys.dropLast(targetCount)
+            
+            for key in keysToRemove {
+                self.cache.removeObject(forKey: key as NSString)
+                self.cacheKeys.remove(key)
+            }
+            
+            print("[ImageCache] Cleared \(keysToRemove.count) images, \(self.cacheKeys.count) remaining")
         }
-        // Cleared all cached images due to memory warning
+    }
+    
+    @objc private func applicationDidEnterBackground() {
+        print("[ImageCache] App backgrounded - reducing cache size by 50%")
+        
+        // Reduce cache by 50% when app goes to background
+        let targetCount = cache.countLimit / 2
+        
+        keysQueue.async(flags: .barrier) { [weak self] in
+            guard let self = self else { return }
+            
+            let currentKeys = Array(self.cacheKeys)
+            if currentKeys.count > targetCount {
+                let keysToRemove = currentKeys.dropLast(targetCount)
+                
+                for key in keysToRemove {
+                    self.cache.removeObject(forKey: key as NSString)
+                    self.cacheKeys.remove(key)
+                }
+                
+                print("[ImageCache] Background cleanup: removed \(keysToRemove.count) images")
+            }
+        }
+    }
+    
+    @objc private func applicationWillTerminate() {
+        print("[ImageCache] App terminating - clearing all cached images")
+        clear()
+    }
+    
+    @objc private func clearCache() {
+        // Legacy method - redirect to new memory pressure handling
+        handleMemoryPressure()
     }
     
     /// Get cache statistics

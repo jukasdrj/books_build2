@@ -176,61 +176,6 @@ struct TagChip: View {
     }
 }
 
-// MARK: - Flow Layout for Tags
-struct FlowLayout: Layout {
-    let spacing: CGFloat
-    
-    init(spacing: CGFloat = 8) {
-        self.spacing = spacing
-    }
-    
-    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
-        let containerWidth = proposal.width ?? 0
-        var height: CGFloat = 0
-        var rowWidth: CGFloat = 0
-        var rowHeight: CGFloat = 0
-        
-        for subview in subviews {
-            let subviewSize = subview.sizeThatFits(.unspecified)
-            
-            if rowWidth + subviewSize.width + spacing > containerWidth && rowWidth > 0 {
-                height += rowHeight + spacing
-                rowWidth = subviewSize.width
-                rowHeight = subviewSize.height
-            } else {
-                rowWidth += subviewSize.width + (rowWidth > 0 ? spacing : 0)
-                rowHeight = max(rowHeight, subviewSize.height)
-            }
-        }
-        
-        height += rowHeight
-        return CGSize(width: containerWidth, height: height)
-    }
-    
-    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
-        var rowWidth: CGFloat = 0
-        var rowHeight: CGFloat = 0
-        var y: CGFloat = bounds.minY
-        
-        for subview in subviews {
-            let subviewSize = subview.sizeThatFits(.unspecified)
-            
-            if rowWidth + subviewSize.width + spacing > bounds.width && rowWidth > 0 {
-                y += rowHeight + spacing
-                rowWidth = 0
-                rowHeight = 0
-            }
-            
-            subview.place(
-                at: CGPoint(x: bounds.minX + rowWidth, y: y),
-                proposal: ProposedViewSize(subviewSize)
-            )
-            
-            rowWidth += subviewSize.width + spacing
-            rowHeight = max(rowHeight, subviewSize.height)
-        }
-    }
-}
 
 // MARK: - Header Section
 struct BookHeaderSection: View {

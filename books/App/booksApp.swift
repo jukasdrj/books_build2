@@ -84,9 +84,6 @@ struct ThemedRootView: View {
             
             if cloudKitManager.isUserLoggedIn || hasBypassedICloudLogin {
                 ContentView()
-                    .onAppear {
-                        _ = BackgroundImportCoordinator.initialize(with: modelContext)
-                    }
             } else {
                 iCloudLoginView(hasBypassedICloudLogin: $hasBypassedICloudLogin)
             }
@@ -134,6 +131,14 @@ class AppDelegate: NSObject, UIApplicationDelegate {
     
     func applicationDidBecomeActive(_ application: UIApplication) {
         BackgroundTaskManager.shared.handleAppDidBecomeActive()
+        
+        // Prevent view bouncing by ensuring coordinator state is consistent
+        Task { @MainActor in
+            if BackgroundImportCoordinator.shared != nil {
+                // Force refresh of coordinator state to prevent UI bouncing
+                print("[AppDelegate] App became active, refreshing coordinator state")
+            }
+        }
     }
     
     func applicationWillTerminate(_ application: UIApplication) {

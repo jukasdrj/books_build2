@@ -15,18 +15,44 @@ import SwiftData
 @Observable
 class BackgroundImportCoordinator {
     
-    // MARK: - Singleton
+    // MARK: - Singleton with Thread-Safe Initialization
     
-    static var shared: BackgroundImportCoordinator?
+    private static var _shared: BackgroundImportCoordinator?
+    private static let lockQueue = DispatchQueue(label: "backgroundImportCoordinator.lock")
     
     static func initialize(with modelContext: ModelContext) -> BackgroundImportCoordinator {
-        if let existing = shared {
-            return existing
+        return lockQueue.sync {
+            if let existing = _shared {
+                // Ensure the existing coordinator has the same model context
+                if existing.modelContext === modelContext {
+                    print("[BackgroundImportCoordinator] Using existing coordinator with same context")
+                    return existing
+                } else {
+                    print("[BackgroundImportCoordinator] Model context changed, creating new coordinator")
+                    existing.cleanupResources()
+                    _shared = nil
+                }
+            }
+            
+            let coordinator = BackgroundImportCoordinator(modelContext: modelContext)
+            _shared = coordinator
+            print("[BackgroundImportCoordinator] Initialized new coordinator")
+            return coordinator
         }
-        
-        let coordinator = BackgroundImportCoordinator(modelContext: modelContext)
-        shared = coordinator
-        return coordinator
+    }
+    
+    static var shared: BackgroundImportCoordinator? {
+        return lockQueue.sync {
+            return _shared
+        }
+    }
+    
+    /// Call this to properly clean up the singleton when no longer needed
+    static func cleanup() {
+        lockQueue.sync {
+            _shared?.cleanupResources()
+            _shared = nil
+        }
     }
     
     // MARK: - Import State
@@ -222,6 +248,25 @@ class BackgroundImportCoordinator {
     /// Clear user review items
     func clearReviewItems() {
         needsUserReview.removeAll()
+    }
+    
+    /// Clean up resources and cancel any ongoing operations
+    func cleanupResources() {
+        print("[BackgroundImportCoordinator] Cleaning up resources")
+        
+        // Cancel any ongoing imports
+        csvImportService.cancelImport()
+        
+        // Stop monitoring
+        isMonitoring = false
+        
+        // Clear state
+        currentImport = nil
+        currentProgress = nil
+        needsUserReview.removeAll()
+        
+        // Note: We don't clean up modelContext as it's owned by the caller
+        print("[BackgroundImportCoordinator] Resource cleanup completed")
     }
     
     // MARK: - Private Implementation

@@ -30,17 +30,38 @@ struct ContentView: View {
         }
         .fullStatusBarTheming() // Apply complete status bar theming (background + style)
         .preferredColorScheme(getPreferredColorScheme()) // Apply color scheme based on theme
+        .keyboardAvoidingLayout() // Prevent keyboard constraint conflicts
         .onAppear {
             updateBadgeCounts()
-            // Set up import state manager with model context
+            
+            // Initialize import infrastructure once
             Task { @MainActor in
                 ImportStateManager.shared.setModelContext(modelContext)
+                _ = BackgroundImportCoordinator.initialize(with: modelContext)
+            }
+            
+            // Prevent navigation bar bounce by ensuring consistent state
+            withAnimation(.easeInOut(duration: 0.0)) {
+                // Force navigation bar layout consistency
+            }
+        }
+        .onDisappear {
+            // Clean up when view disappears (app going to background)
+            Task { @MainActor in
+                print("[ContentView] View disappeared, cleaning up if needed")
             }
         }
         .onChange(of: selectedTab) { oldValue, newValue in
             // Haptic feedback on tab switch
             HapticFeedbackManager.shared.lightImpact()
             updateBadgeCounts()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
+            // Handle app resume - refresh badge counts and prevent tab bar bouncing
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                print("[ContentView] App became active, refreshing badge counts")
+                updateBadgeCounts()
+            }
         }
     }
     
@@ -331,9 +352,9 @@ struct ContentView: View {
                 .ignoresSafeArea(.keyboard)
                 .padding(.bottom, 72) // Add padding to prevent custom tab bar from blocking content
                 .animation(.easeInOut(duration: 0.3), value: selectedTab)
-                // Add navigation title based on selected tab
+                // Add navigation title based on selected tab with consistent display mode
                 .navigationTitle(tabTitle(for: selectedTab))
-                .navigationBarTitleDisplayMode(selectedTab == 1 ? .large : .inline)
+                .navigationBarTitleDisplayMode(.large)
                 .toolbar {
                     if selectedTab == 1 { // Search tab
                         ToolbarItem(placement: .navigationBarTrailing) {

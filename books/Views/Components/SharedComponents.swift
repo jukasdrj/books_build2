@@ -442,6 +442,260 @@ struct FormField: View {
     }
 }
 
+// MARK: - Consolidated StatCard Component
+/// Unified StatCard component that combines the liquid glass styling from LiquidGlassStatsView
+/// with the flexibility needed for BackgroundImportProgressIndicator
+struct StatCard: View {
+    let icon: String
+    let title: String
+    let value: String
+    let color: Color
+    let subtitle: String?
+    let material: LiquidGlassTheme.GlassMaterial?
+    
+    @Environment(\.appTheme) private var theme
+    @State private var isAnimated = false
+    
+    // Primary initializer for liquid glass style (used in LiquidGlassStatsView)
+    init(
+        icon: String,
+        title: String,
+        value: String,
+        subtitle: String,
+        color: Color,
+        material: LiquidGlassTheme.GlassMaterial
+    ) {
+        self.icon = icon
+        self.title = title
+        self.value = value
+        self.subtitle = subtitle
+        self.color = color
+        self.material = material
+    }
+    
+    // Simple initializer for basic style (used in BackgroundImportProgressIndicator)
+    init(
+        icon: String,
+        title: String,
+        value: String,
+        color: Color
+    ) {
+        self.icon = icon
+        self.title = title
+        self.value = value
+        self.subtitle = nil
+        self.color = color
+        self.material = nil
+    }
+    
+    var body: some View {
+        if let material = material, let subtitle = subtitle {
+            // Liquid glass enhanced style
+            liquidGlassStyle(subtitle: subtitle, material: material)
+        } else {
+            // Simple style
+            simpleStyle
+        }
+    }
+    
+    @ViewBuilder
+    private func liquidGlassStyle(subtitle: String, material: LiquidGlassTheme.GlassMaterial) -> some View {
+        VStack(spacing: 12) {
+            // Icon with enhanced styling
+            ZStack {
+                Circle()
+                    .fill(color.opacity(0.2))
+                    .frame(width: 50, height: 50)
+                    .overlay(.ultraThinMaterial.opacity(0.5))
+                
+                Image(systemName: icon)
+                    .font(.title2)
+                    .foregroundColor(color)
+                    .liquidGlassVibrancy(.prominent)
+            }
+            .scaleEffect(isAnimated ? 1.0 : 0.8)
+            .animation(
+                LiquidGlassTheme.FluidAnimation.smooth.springAnimation.delay(0.3),
+                value: isAnimated
+            )
+            
+            VStack(spacing: 4) {
+                // Value with counting animation
+                Text(value)
+                    .font(LiquidGlassTheme.typography.displaySmall)
+                    .fontWeight(.bold)
+                    .foregroundColor(theme.primaryText)
+                    .liquidGlassVibrancy(.maximum)
+                    .contentTransition(.numericText())
+                
+                Text(title)
+                    .font(LiquidGlassTheme.typography.titleSmall)
+                    .foregroundColor(color)
+                    .liquidGlassVibrancy(.prominent)
+                
+                Text(subtitle)
+                    .font(LiquidGlassTheme.typography.bodySmall)
+                    .foregroundColor(theme.secondaryText)
+                    .liquidGlassVibrancy(.medium)
+                    .multilineTextAlignment(.center)
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 20)
+        .padding(.horizontal, 12)
+        .background(material.fallbackMaterial.opacity(0.7))
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .shadow(
+            color: color.opacity(0.2),
+            radius: 8,
+            x: 0,
+            y: 4
+        )
+        .onAppear {
+            withAnimation(.spring(response: 0.8, dampingFraction: 0.7).delay(0.2)) {
+                isAnimated = true
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private var simpleStyle: some View {
+        VStack(spacing: Theme.Spacing.xs) {
+            Image(systemName: icon)
+                .font(.title2)
+                .foregroundColor(color)
+            
+            Text(value)
+                .titleMedium()
+                .fontWeight(.bold)
+                .foregroundColor(color)
+            
+            Text(title)
+                .labelSmall()
+                .foregroundColor(.secondary)
+        }
+    }
+}
+
+// MARK: - Consolidated CulturalGoalsView Component
+/// Unified CulturalGoalsView that combines both implementations
+struct CulturalGoalsView: View {
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.appTheme) private var theme
+    
+    var body: some View {
+        NavigationView {
+            ScrollView {
+                VStack(spacing: Theme.Spacing.lg) {
+                    // Header content
+                    VStack(spacing: Theme.Spacing.md) {
+                        Text("Cultural Reading Goals")
+                            .font(LiquidGlassTheme.typography.headlineLarge)
+                            .foregroundColor(theme.primaryText)
+                            .liquidGlassVibrancy(.maximum)
+                        
+                        Text("Set your cultural reading goals for this year")
+                            .bodyLarge()
+                            .foregroundColor(theme.secondaryText)
+                            .liquidGlassVibrancy(.medium)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, Theme.Spacing.md)
+                    }
+                    
+                    // Placeholder content
+                    Text("Cultural Goals Setup Coming Soon")
+                        .titleMedium()
+                        .foregroundColor(theme.secondaryText)
+                        .padding(Theme.Spacing.xl)
+                    
+                    Spacer()
+                }
+                .padding()
+            }
+            .navigationTitle("Cultural Goals")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Consolidated FlowLayout Component
+/// Unified FlowLayout implementation that combines both versions
+struct FlowLayout: Layout {
+    let spacing: CGFloat
+    
+    init(spacing: CGFloat = 8) {
+        self.spacing = spacing
+    }
+    
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let result = FlowResult(
+            in: proposal.replacingUnspecifiedDimensions().width,
+            subviews: subviews,
+            spacing: spacing
+        )
+        return result.size
+    }
+    
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        let result = FlowResult(
+            in: bounds.width,
+            subviews: subviews,
+            spacing: spacing
+        )
+        
+        for (index, subview) in subviews.enumerated() {
+            subview.place(at: result.positions[index], proposal: ProposedViewSize(result.sizes[index]))
+        }
+    }
+}
+
+/// FlowResult helper for FlowLayout calculations
+struct FlowResult {
+    let size: CGSize
+    let positions: [CGPoint]
+    let sizes: [CGSize]
+    
+    init(in maxWidth: CGFloat, subviews: LayoutSubviews, spacing: CGFloat) {
+        var sizes: [CGSize] = []
+        var positions: [CGPoint] = []
+        
+        var currentRowY: CGFloat = 0
+        var currentRowX: CGFloat = 0
+        var currentRowHeight: CGFloat = 0
+        
+        for subview in subviews {
+            let size = subview.sizeThatFits(.unspecified)
+            
+            if currentRowX + size.width > maxWidth && currentRowX > 0 {
+                // Start new row
+                currentRowY += currentRowHeight + spacing
+                currentRowX = 0
+                currentRowHeight = 0
+            }
+            
+            positions.append(CGPoint(x: currentRowX, y: currentRowY))
+            sizes.append(size)
+            
+            currentRowX += size.width + spacing
+            currentRowHeight = max(currentRowHeight, size.height)
+        }
+        
+        self.positions = positions
+        self.sizes = sizes
+        self.size = CGSize(
+            width: maxWidth,
+            height: currentRowY + currentRowHeight
+        )
+    }
+}
+
 #Preview {
     AddBookView()
         .modelContainer(for: [UserBook.self, BookMetadata.self], inMemory: true)

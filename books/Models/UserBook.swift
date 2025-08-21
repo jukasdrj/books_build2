@@ -6,6 +6,22 @@ import SwiftUI
 final class UserBook: Identifiable {
     var id: UUID = UUID()
     var dateAdded: Date = Date()
+    
+    // MARK: - Performance Optimization: Shared JSON Encoder/Decoder
+    
+    /// Shared JSON decoder for all UserBook instances to reduce allocation overhead
+    private static let jsonDecoder: JSONDecoder = {
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        return decoder
+    }()
+    
+    /// Shared JSON encoder for all UserBook instances to reduce allocation overhead
+    private static let jsonEncoder: JSONEncoder = {
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .iso8601
+        return encoder
+    }()
     var dateStarted: Date?
     var dateCompleted: Date?
     var readingStatus: ReadingStatus = ReadingStatus.toRead {
@@ -149,68 +165,152 @@ final class UserBook: Identifiable {
         }
     }
     
+    // Cached JSON objects to prevent repeated parsing (Performance Optimization)
+    @Transient private var _cachedReadingSessions: [ReadingSession]?
+    @Transient private var _lastReadingSessionsHash: String = ""
+    
     // Use @Transient to exclude this computed property from SwiftData persistence
     @Transient
     var readingSessions: [ReadingSession] {
         get {
-            guard !readingSessionsData.isEmpty else { return [] }
-            guard let data = readingSessionsData.data(using: .utf8) else { return [] }
+            // Check if cache is still valid
+            if let cached = _cachedReadingSessions, _lastReadingSessionsHash == readingSessionsData {
+                return cached
+            }
+            
+            // Cache miss - decode and cache
+            guard !readingSessionsData.isEmpty else { 
+                _cachedReadingSessions = []
+                _lastReadingSessionsHash = readingSessionsData
+                return [] 
+            }
+            guard let data = readingSessionsData.data(using: .utf8) else { 
+                _cachedReadingSessions = []
+                _lastReadingSessionsHash = readingSessionsData
+                return [] 
+            }
             do {
-                return try JSONDecoder().decode([ReadingSession].self, from: data)
+                let decoded = try Self.jsonDecoder.decode([ReadingSession].self, from: data)
+                _cachedReadingSessions = decoded
+                _lastReadingSessionsHash = readingSessionsData
+                return decoded
             } catch {
+                _cachedReadingSessions = []
+                _lastReadingSessionsHash = readingSessionsData
                 return []
             }
         }
         set {
             do {
-                let data = try JSONEncoder().encode(newValue)
+                let data = try Self.jsonEncoder.encode(newValue)
                 readingSessionsData = String(data: data, encoding: .utf8) ?? ""
+                // Update cache immediately
+                _cachedReadingSessions = newValue
+                _lastReadingSessionsHash = readingSessionsData
             } catch {
                 readingSessionsData = ""
+                _cachedReadingSessions = []
+                _lastReadingSessionsHash = ""
             }
         }
     }
+    
+    // Cached JSON objects to prevent repeated parsing (Performance Optimization)
+    @Transient private var _cachedNeedsUserInput: [UserInputPrompt]?
+    @Transient private var _lastNeedsUserInputHash: String = ""
     
     // Use @Transient to exclude this computed property from SwiftData persistence
     @Transient
     var needsUserInput: [UserInputPrompt] {
         get {
-            guard !needsUserInputString.isEmpty, needsUserInputString != "[]" else { return [] }
-            guard let data = needsUserInputString.data(using: .utf8) else { return [] }
+            // Check if cache is still valid
+            if let cached = _cachedNeedsUserInput, _lastNeedsUserInputHash == needsUserInputString {
+                return cached
+            }
+            
+            // Cache miss - decode and cache
+            guard !needsUserInputString.isEmpty, needsUserInputString != "[]" else { 
+                _cachedNeedsUserInput = []
+                _lastNeedsUserInputHash = needsUserInputString
+                return [] 
+            }
+            guard let data = needsUserInputString.data(using: .utf8) else { 
+                _cachedNeedsUserInput = []
+                _lastNeedsUserInputHash = needsUserInputString
+                return [] 
+            }
             do {
-                return try JSONDecoder().decode([UserInputPrompt].self, from: data)
+                let decoded = try Self.jsonDecoder.decode([UserInputPrompt].self, from: data)
+                _cachedNeedsUserInput = decoded
+                _lastNeedsUserInputHash = needsUserInputString
+                return decoded
             } catch {
+                _cachedNeedsUserInput = []
+                _lastNeedsUserInputHash = needsUserInputString
                 return []
             }
         }
         set {
             do {
-                let data = try JSONEncoder().encode(newValue)
+                let data = try Self.jsonEncoder.encode(newValue)
                 needsUserInputString = String(data: data, encoding: .utf8) ?? "[]"
+                // Update cache immediately
+                _cachedNeedsUserInput = newValue
+                _lastNeedsUserInputHash = needsUserInputString
             } catch {
                 needsUserInputString = "[]"
+                _cachedNeedsUserInput = []
+                _lastNeedsUserInputHash = "[]"
             }
         }
     }
+    
+    // Cached JSON objects to prevent repeated parsing (Performance Optimization)
+    @Transient private var _cachedPersonalDataSources: [String: DataSourceInfo]?
+    @Transient private var _lastPersonalDataSourcesHash: String = ""
     
     // Use @Transient to exclude this computed property from SwiftData persistence
     @Transient
     var personalDataSources: [String: DataSourceInfo] {
         get {
-            guard !personalDataSourcesString.isEmpty, personalDataSourcesString != "{}" else { return [:] }
-            guard let data = personalDataSourcesString.data(using: .utf8) else { return [:] }
+            // Check if cache is still valid
+            if let cached = _cachedPersonalDataSources, _lastPersonalDataSourcesHash == personalDataSourcesString {
+                return cached
+            }
+            
+            // Cache miss - decode and cache
+            guard !personalDataSourcesString.isEmpty, personalDataSourcesString != "{}" else { 
+                _cachedPersonalDataSources = [:]
+                _lastPersonalDataSourcesHash = personalDataSourcesString
+                return [:] 
+            }
+            guard let data = personalDataSourcesString.data(using: .utf8) else { 
+                _cachedPersonalDataSources = [:]
+                _lastPersonalDataSourcesHash = personalDataSourcesString
+                return [:] 
+            }
             do {
-                return try JSONDecoder().decode([String: DataSourceInfo].self, from: data)
+                let decoded = try Self.jsonDecoder.decode([String: DataSourceInfo].self, from: data)
+                _cachedPersonalDataSources = decoded
+                _lastPersonalDataSourcesHash = personalDataSourcesString
+                return decoded
             } catch {
+                _cachedPersonalDataSources = [:]
+                _lastPersonalDataSourcesHash = personalDataSourcesString
                 return [:]
             }
         }
         set {
             do {
-                let data = try JSONEncoder().encode(newValue)
+                let data = try Self.jsonEncoder.encode(newValue)
                 personalDataSourcesString = String(data: data, encoding: .utf8) ?? "{}"
+                // Update cache immediately
+                _cachedPersonalDataSources = newValue
+                _lastPersonalDataSourcesHash = personalDataSourcesString
             } catch {
                 personalDataSourcesString = "{}"
+                _cachedPersonalDataSources = [:]
+                _lastPersonalDataSourcesHash = "{}"
             }
         }
     }
@@ -403,6 +503,7 @@ struct ReadingSession: Codable, Identifiable {
 
 enum ReadingStatus: String, Codable, CaseIterable, Identifiable, Sendable {
     case toRead = "TBR - To Be Read"
+    case wantToRead = "Want to Read" // Alias for LiquidGlass compatibility
     case reading = "Reading"
     case read = "Read"
     case onHold = "On Hold"
@@ -412,7 +513,7 @@ enum ReadingStatus: String, Codable, CaseIterable, Identifiable, Sendable {
     
     func containerColor(theme: AppColorTheme) -> Color {
         switch self {
-        case .toRead: return theme.secondaryContainer
+        case .toRead, .wantToRead: return theme.secondaryContainer
         case .reading: return theme.tertiaryContainer
         case .read: return theme.success.opacity(0.15)
         case .onHold: return theme.warning.opacity(0.2)
@@ -422,11 +523,38 @@ enum ReadingStatus: String, Codable, CaseIterable, Identifiable, Sendable {
     
     func textColor(theme: AppColorTheme) -> Color {
         switch self {
-        case .toRead: return theme.onSecondaryContainer
+        case .toRead, .wantToRead: return theme.onSecondaryContainer
         case .reading: return theme.tertiary
         case .read: return theme.success
         case .onHold: return theme.warning
         case .dnf: return theme.error
+        }
+    }
+    
+    // MARK: - Additional Properties for LiquidGlass Compatibility
+    
+    var systemImage: String {
+        switch self {
+        case .toRead, .wantToRead: return "book"
+        case .reading: return "book.pages"
+        case .read: return "checkmark.circle.fill"
+        case .onHold: return "pause.circle"
+        case .dnf: return "xmark.circle"
+        }
+    }
+    
+    func color(theme: AppColorTheme) -> Color {
+        return textColor(theme: theme)
+    }
+    
+    var displayName: String {
+        switch self {
+        case .toRead: return "To Read"
+        case .wantToRead: return "Want to Read"
+        case .reading: return "Reading"
+        case .read: return "Read"
+        case .onHold: return "On Hold"
+        case .dnf: return "Did Not Finish"
         }
     }
     
@@ -435,7 +563,7 @@ enum ReadingStatus: String, Codable, CaseIterable, Identifiable, Sendable {
     /// Human-readable accessibility label for screen readers
     var accessibilityLabel: String {
         switch self {
-        case .toRead: return "Want to read"
+        case .toRead, .wantToRead: return "Want to read"
         case .reading: return "Currently reading"  
         case .read: return "Finished reading"
         case .onHold: return "On hold"

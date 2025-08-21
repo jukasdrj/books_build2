@@ -180,30 +180,6 @@ struct BackgroundImportDetailView: View {
     }
 }
 
-/// Small stat card for the detail view
-struct StatCard: View {
-    let icon: String
-    let title: String
-    let value: String
-    let color: Color
-    
-    var body: some View {
-        VStack(spacing: Theme.Spacing.xs) {
-            Image(systemName: icon)
-                .font(.title2)
-                .foregroundColor(color)
-            
-            Text(value)
-                .titleMedium()
-                .fontWeight(.bold)
-                .foregroundColor(color)
-            
-            Text(title)
-                .labelSmall()
-                .foregroundColor(.secondary)
-        }
-    }
-}
 
 #Preview {
     BackgroundImportProgressIndicator()
