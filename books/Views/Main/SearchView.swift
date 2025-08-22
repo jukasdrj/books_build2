@@ -10,7 +10,7 @@ struct SearchView: View {
     @State private var searchState: SearchState = .idle
     @State private var sortOption: BookSearchService.SortOption = .relevance
     @State private var showingSortOptions = false
-    @State private var includeTranslations = true
+    @State private var includeTranslations = false
     @State private var fromBarcodeScanner = false
     
 
@@ -400,7 +400,7 @@ struct SearchView: View {
         searchQuery = ""
         searchState = .idle
         sortOption = .relevance
-        includeTranslations = true
+        includeTranslations = false
         HapticFeedbackManager.shared.lightImpact()
     }
     
