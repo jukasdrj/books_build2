@@ -34,6 +34,8 @@ struct NavigationDestinations: ViewModifier {
             StatsView()
         case "Culture":
             CulturalDiversityView()
+        case "library-incomplete-books":
+            IncompleteBookListView()
         default:
             // Handle author names or other string destinations
             if destination.starts(with: "author:") {

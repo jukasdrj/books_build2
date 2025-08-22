@@ -318,9 +318,9 @@ struct ContentView: View {
                         case 1:
                             SearchView()
                         case 2:
-                            StatsView()
+                            LiquidGlassStatsView()
                         case 3:
-                            CulturalDiversityView()
+                            LiquidGlassCulturalDiversityView()
                         default:
                             LibraryView()
                         }
@@ -352,9 +352,9 @@ struct ContentView: View {
                     case 1:
                         SearchView()
                     case 2:
-                        StatsView()
+                        LiquidGlassStatsView()
                     case 3:
-                        CulturalDiversityView()
+                        LiquidGlassCulturalDiversityView()
                     default:
                         LibraryView()
                     }

@@ -201,16 +201,6 @@ struct SettingsView: View {
                     }
                     .buttonStyle(PlainButtonStyle())
                     
-                    settingsRow(
-                        icon: "square.and.arrow.up",
-                        title: "Export Your Data",
-                        subtitle: "Backup your reading library",
-                        action: {
-                            // TODO: Implement export functionality
-// print("Export data tapped")
-                            HapticFeedbackManager.shared.lightImpact()
-                        }
-                    )
                     
                     // Reset Library - Destructive action with proper iOS styling
                     Button {

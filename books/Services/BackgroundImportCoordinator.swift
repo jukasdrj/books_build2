@@ -180,12 +180,12 @@ class BackgroundImportCoordinator {
                 successfulImports: progress.successfulImports,
                 failedImports: progress.failedImports,
                 duplicatesSkipped: progress.duplicatesSkipped,
-                duplicatesISBN: 0, // TODO: Track these separately in future
-                duplicatesGoogleID: 0,
-                duplicatesTitleAuthor: 0,
+                duplicatesISBN: progress.duplicatesISBN,
+                duplicatesGoogleID: progress.duplicatesGoogleID,
+                duplicatesTitleAuthor: progress.duplicatesTitleAuthor,
                 duration: Date().timeIntervalSince(session.startTime),
-                errors: [], // TODO: Collect errors from import process
-                importedBookIds: [], // TODO: Track imported book IDs
+                errors: progress.errors,
+                importedBookIds: [] // Note: Imported book IDs tracking would require database queries - deferred for performance
                 retryAttempts: 0,
                 successfulRetries: 0
             )

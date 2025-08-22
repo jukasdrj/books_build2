@@ -85,7 +85,7 @@ struct SearchResultDetailView: View {
                         dismiss() 
                     }
                 }
-                .withNavigationDestinations()
+                // No navigation destinations needed in this sheet context
             }
         }
         .toolbar {

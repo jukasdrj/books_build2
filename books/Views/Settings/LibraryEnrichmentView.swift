@@ -155,8 +155,8 @@ struct LibraryEnrichmentView: View {
                 }
                 
                 if incompleteBooks.count > 5 {
-                    Button("View All \(incompleteBooks.count) Books") {
-                        // TODO: Navigate to full list view
+                    NavigationLink(value: "library-incomplete-books") {
+                        Text("View All \(incompleteBooks.count) Books")
                     }
                     .materialButton(style: .text)
                 }
@@ -503,6 +503,224 @@ struct StatPill: View {
         .padding(.vertical, Theme.Spacing.xs)
         .background(color.opacity(0.1))
         .cornerRadius(Theme.CornerRadius.small)
+    }
+}
+
+// MARK: - Incomplete Book List View
+
+// MARK: - Enhanced Incomplete Books List with Virtual Scrolling
+
+struct IncompleteBookListView: View {
+    @Environment(\.appTheme) private var theme
+    @Environment(\.modelContext) private var modelContext
+    
+    @State private var analyzer: IncompleteBookAnalyzer? = nil
+    @State private var searchText = ""
+    @State private var selectedSeverity: DataCompletenessLevel = .all
+    @State private var isInitialized = false
+    
+    private let pageSize = 50 // Virtual scrolling page size
+    
+    var body: some View {
+        Group {
+            if let analyzer = analyzer {
+                if analyzer.isLoading && analyzer.incompleteBooks.isEmpty {
+                    loadingView
+                } else if let errorMessage = analyzer.errorMessage {
+                    errorView(errorMessage)
+                } else if analyzer.incompleteBooks.isEmpty {
+                    emptyStateView
+                } else {
+                    contentView(analyzer)
+                }
+            } else {
+                loadingView
+            }
+        }
+        .navigationTitle("Incomplete Books")
+        .navigationBarTitleDisplayMode(.large)
+        .task {
+            await initializeAnalyzer()
+        }
+        .refreshable {
+            await analyzer?.forceRefresh()
+        }
+        .searchable(text: $searchText, prompt: "Search books...")
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                severityFilterMenu
+            }
+        }
+    }
+    
+    // MARK: - Content Views
+    
+    @ViewBuilder
+    private func contentView(_ analyzer: IncompleteBookAnalyzer) -> some View {
+        let filteredBooks = filteredIncompleteBooks(analyzer)
+        
+        List {
+            if analyzer.isLoading {
+                HStack {
+                    ProgressView()
+                        .scaleEffect(0.8)
+                    Text("Analyzing books...")
+                        .font(.caption)
+                        .foregroundColor(theme.secondaryText)
+                }
+                .listRowSeparator(.hidden)
+                .listRowBackground(Color.clear)
+            }
+            
+            Section {
+                ForEach(filteredBooks, id: \.id) { book in
+                    NavigationLink(value: book) {
+                        LiquidGlassBookRowView(
+                            userBook: book,
+                            analysisResult: analyzer.getAnalysisResult(for: book)
+                        )
+                    }
+                    .listRowBackground(Color.clear)
+                    .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
+                }
+            } header: {
+                if !filteredBooks.isEmpty {
+                    Text("\(filteredBooks.count) incomplete book\(filteredBooks.count == 1 ? "" : "s")")
+                        .font(.caption)
+                        .foregroundColor(theme.secondaryText)
+                        .textCase(.none)
+                }
+            }
+        }
+        .listStyle(.insetGrouped)
+    }
+    
+    
+    @ViewBuilder
+    private var loadingView: some View {
+        VStack(spacing: 16) {
+            ProgressView()
+                .scaleEffect(1.2)
+            Text("Analyzing book completeness...")
+                .font(.subheadline)
+                .foregroundColor(theme.secondaryText)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(theme.background)
+    }
+    
+    @ViewBuilder
+    private func errorView(_ message: String) -> some View {
+        VStack(spacing: 16) {
+            Image(systemName: "exclamationmark.triangle")
+                .font(.largeTitle)
+                .foregroundColor(theme.error)
+            
+            Text("Analysis Failed")
+                .font(.headline)
+                .foregroundColor(theme.primaryText)
+            
+            Text(message)
+                .font(.subheadline)
+                .foregroundColor(theme.secondaryText)
+                .multilineTextAlignment(.center)
+            
+            Button("Retry") {
+                Task {
+                    await analyzer?.forceRefresh()
+                }
+            }
+            .buttonStyle(.borderedProminent)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding()
+        .background(theme.background)
+    }
+    
+    @ViewBuilder
+    private var emptyStateView: some View {
+        VStack(spacing: 20) {
+            Image(systemName: "checkmark.circle.fill")
+                .font(.system(size: 60))
+                .foregroundColor(theme.primary)
+            
+            Text("All Books Complete!")
+                .font(.title2)
+                .fontWeight(.semibold)
+                .foregroundColor(theme.primaryText)
+            
+            Text("Your library has complete metadata for all books. Great job maintaining your collection!")
+                .font(.subheadline)
+                .foregroundColor(theme.secondaryText)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(theme.background)
+    }
+    
+    @ViewBuilder
+    private var severityFilterMenu: some View {
+        Menu {
+            ForEach(DataCompletenessLevel.allCases, id: \.rawValue) { level in
+                Button {
+                    selectedSeverity = level
+                } label: {
+                    HStack {
+                        Text(level.rawValue)
+                        if selectedSeverity == level {
+                            Image(systemName: "checkmark")
+                        }
+                    }
+                }
+            }
+        } label: {
+            Image(systemName: "line.3.horizontal.decrease")
+                .foregroundColor(theme.primary)
+        }
+    }
+    
+    // MARK: - Helper Methods
+    
+    private func initializeAnalyzer() async {
+        if !isInitialized {
+            analyzer = IncompleteBookAnalyzer(modelContext: modelContext)
+            await analyzer?.analyzeIncompleteBooks()
+            isInitialized = true
+        }
+    }
+    
+    private func filteredIncompleteBooks(_ analyzer: IncompleteBookAnalyzer) -> [UserBook] {
+        let books = analyzer.getIncompleteBooks(severity: selectedSeverity)
+        
+        if searchText.isEmpty {
+            return books
+        }
+        
+        return books.filter { book in
+            let title = book.metadata?.title ?? ""
+            let authors = book.metadata?.authors.joined(separator: " ") ?? ""
+            let searchableText = "\(title) \(authors)".lowercased()
+            return searchableText.contains(searchText.lowercased())
+        }
+    }
+    
+    private func completionColor(_ score: Double) -> Color {
+        switch score {
+        case 0.8...: return theme.primary
+        case 0.6..<0.8: return Color.orange
+        case 0.4..<0.6: return Color.yellow
+        default: return theme.error
+        }
+    }
+    
+    private func priorityColor(_ priority: AnalysisPriority) -> Color {
+        switch priority {
+        case .critical: return theme.error
+        case .high: return Color.orange
+        case .medium: return Color.yellow
+        case .low: return theme.outline
+        }
     }
 }
 

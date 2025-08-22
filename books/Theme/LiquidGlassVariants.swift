@@ -193,14 +193,23 @@ struct VibrancyColor {
     let dark: Color
     let vibrancy: Double // 0.0 - 1.0, controls material vibrancy
     
-    @Environment(\.colorScheme) private var colorScheme
-    
+    // Default adaptive behavior (uses light color as fallback)
     var adaptive: Color {
+        // Return light color as default when not in a View context
+        // In actual Views, use adaptiveColor(for:) method instead
+        light
+    }
+    
+    func adaptive(for colorScheme: ColorScheme) -> Color {
         colorScheme == .dark ? dark : light
     }
     
     func withVibrancy(_ level: Double = 1.0) -> Color {
         adaptive.opacity(vibrancy * level)
+    }
+    
+    func withVibrancy(_ level: Double = 1.0, for colorScheme: ColorScheme) -> Color {
+        adaptive(for: colorScheme).opacity(vibrancy * level)
     }
 }
 
