@@ -6,6 +6,8 @@
 !*.xcodeproj/project.xcworkspace/contents.xcworkspacedata
 !*.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
 xcuserdata/
+# Explicit rule for UserInterfaceState files
+**/UserInterfaceState.xcuserstate
 
 # Swift Package Manager
 .swiftpm/
