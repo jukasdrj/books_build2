@@ -3,7 +3,7 @@ import SwiftData
 import SwiftUI
 
 @Model
-final class UserBook: Identifiable, @unchecked Sendable {
+final class UserBook: Identifiable {
     var id: UUID = UUID()
     var dateAdded: Date = Date()
     
@@ -684,3 +684,6 @@ enum UserInputPrompt: String, Codable, CaseIterable, Sendable {
         }
     }
 }
+
+// MARK: - Sendable Conformance
+extension UserBook: @unchecked Sendable {}

@@ -3,7 +3,7 @@ import SwiftData
 import SwiftUI
 
 @Model
-final class BookMetadata: Identifiable, Hashable, @unchecked Sendable {
+final class BookMetadata: Identifiable, Hashable {
     // FIXED: Removed .unique constraint for CloudKit compatibility
     // Note: You'll need to handle duplicates manually in your business logic
     var googleBooksID: String = ""
@@ -452,6 +452,5 @@ struct DataSourceInfo: Codable, Sendable {
     }
 }
 
-// MARK: - Note: Sendable Conformance
-// BookMetadata automatically conforms to Sendable via @Model macro in Swift 6
-// No explicit conformance needed - SwiftData handles thread safety internally
+// MARK: - Sendable Conformance
+extension BookMetadata: @unchecked Sendable {}
