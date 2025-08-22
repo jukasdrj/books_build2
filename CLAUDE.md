@@ -27,14 +27,15 @@ This is a SwiftUI iOS book reading tracker app with cultural diversity tracking 
 - Three targets: `books` (main app), `booksTests`, `booksUITests`
 
 ### Search Infrastructure
-The app uses a **CloudFlare Workers proxy** for book search functionality:
+The app uses an **optimized CloudFlare Workers proxy** for book search functionality:
 
 1. **Proxy Service**: CloudFlare Workers proxy at `https://books-api-proxy.jukasdrj.workers.dev`
-2. **No API Keys Required**: The proxy handles all external API integration securely
-3. **Caching**: Hybrid R2 + KV caching for optimal performance
-4. **Search Service**: Uses `BookSearchService` for all search operations
+2. **Security Enhanced**: Advanced rate limiting, input validation, and checksum verification
+3. **Caching**: Intelligent hybrid R2 + KV caching with cache promotion and metadata tracking
+4. **Provider Fallback**: Google Books API → ISBNdb → Open Library with graceful degradation
+5. **Search Service**: Uses `BookSearchService` for all search operations
 
-**Architecture**: The app communicates only with the CloudFlare proxy, which handles Google Books API integration behind the scenes.
+**Architecture**: The app communicates only with the CloudFlare proxy, which handles multiple API provider integration with security best practices and performance optimizations.
 
 ## Architecture
 
@@ -50,7 +51,7 @@ The app uses a **CloudFlare Workers proxy** for book search functionality:
 - **Design Philosophy**: Primary focus on iPhone excellence, secondary focus on best-in-class iPad experiences
 
 ### Key Services
-- **BookSearchService**: CloudFlare Workers proxy integration with async/await
+- **BookSearchService**: Optimized CloudFlare Workers proxy integration with enhanced security and performance
 - **CSVImportService**: Goodreads CSV import with smart fallback strategies and Phase 3A data validation
 - **BackgroundImportCoordinator**: Singleton coordinator for managing background imports without UI bouncing
 - **DataValidationService**: ISBN checksum verification, date parsing, and data quality scoring
@@ -99,6 +100,8 @@ The app uses a **CloudFlare Workers proxy** for book search functionality:
 - **Data Protection**: SwiftData encryption support for sensitive user information
 - **Network Security**: HTTPS-only API calls with proper certificate validation
 - **Input Validation**: Comprehensive data validation for CSV imports and user input
+- **CloudFlare Proxy Security**: Enhanced rate limiting, ISBN checksum validation, and protocol injection prevention
+- **Request Validation**: Request size limits, timeout protection, and structured error logging
 
 ### Import System
 - 5-step CSV import flow: Select → Preview → Map → Import → Complete
@@ -162,6 +165,173 @@ This app has a strong focus on tracking cultural diversity in reading:
 - **CSV IMPORT**: ✅ ISBN cleaning logic fixed - removes leading `=` characters from Goodreads exports
 - **SECURITY**: ✅ KeychainService implementation for secure API key storage
 - **PRODUCTION READY**: ✅ Comprehensive test coverage with 35+ test files
+- **CLOUDFLARE OPTIMIZED**: ✅ Enhanced proxy security, intelligent caching, and multi-provider fallback
+
+## CloudFlare Workers Proxy Infrastructure
+
+### Core Proxy Features (✅ OPTIMIZED - August 2025)
+
+The book search infrastructure is powered by a sophisticated CloudFlare Workers proxy that provides secure, high-performance access to multiple book APIs.
+
+#### **Security Enhancements**
+- **Advanced Rate Limiting**: Multi-factor rate limiting with user fingerprinting
+  - 100 requests/hour for standard users
+  - 20 requests/hour for suspicious traffic (minimal user agents, bot patterns)
+  - 1000 requests/hour for authenticated API key users
+  - User fingerprinting combines IP, User-Agent, and CF-Ray for granular control
+- **Input Validation & Sanitization**: 
+  - ISBN checksum verification for both ISBN-10 and ISBN-13
+  - Protocol injection prevention (removes `javascript:`, `data:`, `vbscript:`)
+  - Request size limits (1MB maximum)
+  - Enhanced character sanitization and control character removal
+- **Security Headers**: XSS protection, frame options, and content type validation
+
+#### **Performance Optimizations**
+- **Intelligent Cache Tiering**:
+  - **Hot Cache (KV)**: Frequently accessed data with 24-hour TTL
+  - **Cold Cache (R2)**: Long-term storage (30 days for searches, 1 year for ISBN lookups)
+  - **Cache Promotion**: Automatic promotion from R2 to KV for popular content
+  - **Cache Metadata**: Timestamps and TTL tracking for intelligent cache management
+- **Provider Timeout Management**:
+  - Google Books API: 10 seconds
+  - ISBNdb API: 15 seconds
+  - Open Library: 20 seconds
+- **Response Enrichment**: Cache status, age, provider source, and request tracking
+
+#### **Provider Integration & Fallback**
+- **Primary**: Google Books API (comprehensive data, fast responses)
+- **Secondary**: ISBNdb API (specialized ISBN lookups, commercial-grade reliability)
+- **Tertiary**: Open Library (free fallback, extensive catalog)
+- **Graceful Degradation**: Automatic failover with detailed error logging
+- **Provider-Specific Optimization**: Tailored timeout and retry strategies
+
+#### **Monitoring & Observability**
+- **Health Endpoint**: `/health` provides comprehensive system status
+- **Structured Logging**: Error tracking with request context and provider status
+- **Performance Metrics**: Response times, cache hit rates, and provider distribution
+- **Rate Limit Headers**: Client feedback on quota usage and reset times
+
+#### **API Endpoints**
+```
+GET /search?q={query}&maxResults={n}&orderBy={sort}&langRestrict={lang}&provider={provider}
+GET /isbn?isbn={isbn}&provider={provider}
+GET /health
+```
+
+#### **Provider-Specific Routing**
+The proxy supports targeting specific providers for different use cases:
+
+**URL Parameter Method**:
+- `?provider=google` - Force Google Books API
+- `?provider=isbndb` - Force ISBNdb API  
+- `?provider=openlibrary` - Force Open Library API
+- No parameter - Use automatic fallback chain
+
+**Client-Side Implementation in BookSearchService**:
+```swift
+// In BookSearchService.swift - Add provider parameter support
+
+enum APIProvider: String, CaseIterable {
+    case google = "google"
+    case isbndb = "isbndb" 
+    case openLibrary = "openlibrary"
+    case auto = "" // Use automatic fallback
+}
+
+// Enhanced search methods with provider routing
+func searchBooks(query: String, maxResults: Int = 20, provider: APIProvider = .auto) async throws -> [BookMetadata] {
+    var urlComponents = URLComponents(string: "\(baseURL)/search")!
+    var queryItems = [
+        URLQueryItem(name: "q", value: query),
+        URLQueryItem(name: "maxResults", value: "\(maxResults)")
+    ]
+    
+    // Add provider parameter if specified
+    if provider != .auto {
+        queryItems.append(URLQueryItem(name: "provider", value: provider.rawValue))
+    }
+    
+    urlComponents.queryItems = queryItems
+    // ... rest of implementation
+}
+
+func lookupISBN(_ isbn: String, provider: APIProvider = .auto) async throws -> BookMetadata? {
+    var urlComponents = URLComponents(string: "\(baseURL)/isbn")!
+    var queryItems = [URLQueryItem(name: "isbn", value: isbn)]
+    
+    // Add provider parameter if specified
+    if provider != .auto {
+        queryItems.append(URLQueryItem(name: "provider", value: provider.rawValue))
+    }
+    
+    urlComponents.queryItems = queryItems
+    // ... rest of implementation
+}
+
+// Usage in different contexts:
+
+// 1. CSV Import Service - Use ISBNdb for better metadata quality
+func importFromCSV(books: [CSVBookData]) async {
+    for csvBook in books {
+        if let isbn = csvBook.isbn {
+            // Force ISBNdb for CSV imports - better metadata
+            let bookData = try await bookSearchService.lookupISBN(isbn, provider: .isbndb)
+        }
+    }
+}
+
+// 2. User Search Interface - Use Google Books for speed
+func performUserSearch(query: String) async {
+    // Force Google Books for user searches - faster responses
+    let results = try await bookSearchService.searchBooks(query: query, provider: .google)
+}
+
+// 3. Fallback/Free Usage - Use Open Library
+func searchWithFreeProvider(query: String) async {
+    // Use Open Library when quota is exhausted
+    let results = try await bookSearchService.searchBooks(query: query, provider: .openLibrary)
+}
+
+// 4. Author-specific search - Use Google Books
+func searchByAuthor(authorName: String) async {
+    let query = "inauthor:\(authorName)"
+    let results = try await bookSearchService.searchBooks(query: query, provider: .google)
+}
+```
+
+**Use Case Mapping**:
+- **CSV Imports** → ISBNdb (best metadata quality, reliable ISBN lookups)
+- **User Search** → Google Books (fastest, most comprehensive)
+- **Author Search** → Google Books (best author query support)
+- **Free Tier** → Open Library (no API key required)
+- **Fallback** → Automatic provider chain (when no preference specified)
+
+#### **Response Headers**
+```
+X-Cache: HIT-KV-HOT | HIT-R2-COLD | MISS
+X-Cache-Age: {seconds}
+X-Provider: google-books | isbndb | open-library
+X-Request-ID: {uuid}
+X-Rate-Limit-Remaining: {count}
+X-Cache-System: R2+KV-Hybrid
+```
+
+#### **Infrastructure Components**
+- **Worker**: `books-api-proxy` (optimized v2.0)
+- **KV Namespace**: `BOOKS_CACHE` (hot cache, 24hr TTL)
+- **R2 Bucket**: `books-cache` (cold storage, extended TTL)
+- **Environment Variables**: API keys for Google Books and ISBNdb
+
+### Implementation Files
+- **Enhanced Routing Code**: `proxy-enhanced-routing.js` (CloudFlare Workers v2.1 with provider routing)
+- **Optimized Code**: `proxy-optimized.js` (CloudFlare Workers v2.0 baseline)
+- **Documentation**: `PROXY_OPTIMIZATION_SUMMARY.md` (detailed implementation guide)
+- **Current Deployment**: `https://books-api-proxy.jukasdrj.workers.dev`
+
+### Deployment Options
+1. **Full Enhancement**: Deploy `proxy-enhanced-routing.js` for provider-specific routing
+2. **Current Optimized**: Use `proxy-optimized.js` for current best practices
+3. **Gradual Migration**: Test enhanced routing on preview subdomain first
 
 ## Background Processing Implementation
 
