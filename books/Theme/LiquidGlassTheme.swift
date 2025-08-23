@@ -6,15 +6,15 @@ import SwiftUI
 
 struct LiquidGlassTheme {
     
-    // MARK: - Material System
+    // MARK: - Material System (Apple's Liquid Glass Aligned)
     enum GlassMaterial: CaseIterable {
         case ultraThin      // Most transparent, subtle depth
         case thin           // Light transparency with slight blur
-        case regular        // Standard glass effect with moderate blur
+        case regular        // Standard adaptive glass (Apple's "Regular" variant)
         case thick          // Enhanced blur with stronger depth
         case chrome         // Metallic reflection with high vibrancy
+        case clear          // Apple's "Clear" variant - more transparent, content-rich
         
-        @available(iOS 26.0, *)
         var material: Material {
             switch self {
             case .ultraThin:
@@ -22,27 +22,37 @@ struct LiquidGlassTheme {
             case .thin:
                 return .thinMaterial
             case .regular:
-                return .regularMaterial
+                return .regularMaterial  // Apple's adaptive "Regular" variant
             case .thick:
                 return .thickMaterial
             case .chrome:
-                return .regularMaterial // Fallback for now
+                return .regularMaterial
+            case .clear:
+                return .ultraThinMaterial  // Apple's "Clear" variant - more transparent
             }
         }
         
-        // Fallback for iOS < 26
-        var fallbackMaterial: Material {
+        // Content adaptability factor (Apple's key principle)
+        var adaptivityFactor: Double {
             switch self {
-            case .ultraThin:
-                return .ultraThinMaterial
-            case .thin:
-                return .thinMaterial
-            case .regular:
-                return .regularMaterial
-            case .thick:
-                return .thickMaterial
-            case .chrome:
-                return .regularMaterial // Fallback
+            case .ultraThin: return 0.3
+            case .thin: return 0.5
+            case .regular: return 0.8  // High adaptivity - Apple's recommendation
+            case .thick: return 0.6
+            case .chrome: return 0.9
+            case .clear: return 0.2    // Low adaptivity to show content richness
+            }
+        }
+        
+        // Performance-optimized blur radius (Apple recommends lighter effects)
+        var blurRadius: CGFloat {
+            switch self {
+            case .ultraThin: return 0.5
+            case .thin: return 1.0
+            case .regular: return 2.0   // Optimized for performance
+            case .thick: return 3.0
+            case .chrome: return 2.5
+            case .clear: return 0.0     // No blur for content clarity
             }
         }
     }
@@ -116,7 +126,7 @@ struct LiquidGlassTheme {
         }
     }
     
-    // MARK: - Vibrancy & Color Enhancement
+    // MARK: - Vibrancy & Color Enhancement (Apple's Performance-Optimized)
     enum VibrancyLevel {
         case subtle         // Light vibrancy for text/icons
         case medium         // Standard vibrancy for interactive elements  
@@ -129,6 +139,35 @@ struct LiquidGlassTheme {
             case .medium: return 0.8
             case .prominent: return 0.9
             case .maximum: return 1.0
+            }
+        }
+        
+        // Performance-optimized blur (Apple recommendation: lighter effects)
+        var blurRadius: CGFloat {
+            switch self {
+            case .subtle: return 0.2
+            case .medium: return 0.5   // Reduced from heavy blur
+            case .prominent: return 0.8
+            case .maximum: return 1.0  // Kept reasonable for performance
+            }
+        }
+        
+        // Content richness enhancement (Apple's key principle)
+        var saturationBoost: Double {
+            switch self {
+            case .subtle: return 1.05
+            case .medium: return 1.1
+            case .prominent: return 1.15
+            case .maximum: return 1.2
+            }
+        }
+        
+        var brightnessAdjustment: Double {
+            switch self {
+            case .subtle: return 0.02
+            case .medium: return 0.05
+            case .prominent: return 0.08
+            case .maximum: return 0.1
             }
         }
     }
@@ -193,7 +232,11 @@ struct LiquidGlassCardModifier: ViewModifier {
         content
             .background(
                 RoundedRectangle(cornerRadius: radius.value)
-                    .fill(.regularMaterial.opacity(vibrancy.opacity))
+                    .fill(
+                        accessibleMaterial.material
+                            .opacity(adaptiveOpacity)
+                    )
+                    .blur(radius: accessibleMaterial.blurRadius)
                     .shadow(
                         color: .black.opacity(depth.shadowOpacity),
                         radius: depth.shadowRadius,
@@ -202,6 +245,16 @@ struct LiquidGlassCardModifier: ViewModifier {
                     )
             )
             .clipShape(RoundedRectangle(cornerRadius: radius.value))
+    }
+    
+    // Apple's accessibility-aware material selection
+    @MainActor private var accessibleMaterial: LiquidGlassTheme.GlassMaterial {
+        LiquidGlassTheme.accessibleMaterial(material)
+    }
+    
+    // Content-adaptive opacity combining material and vibrancy
+    private var adaptiveOpacity: Double {
+        material.adaptivityFactor * vibrancy.opacity
     }
 }
 
@@ -237,6 +290,12 @@ struct LiquidGlassButtonModifier: ViewModifier {
             return .thinMaterial
         case .tertiary:
             return .ultraThinMaterial
+        case .glass:
+            return .regularMaterial  // Apple's glass style - adaptive regular material
+        case .floating:
+            return .thinMaterial     // Lighter for floating effect
+        case .adaptive:
+            return .regularMaterial  // Content-adaptive material
         }
     }
     
@@ -248,6 +307,12 @@ struct LiquidGlassButtonModifier: ViewModifier {
             return theme.secondaryText
         case .tertiary:
             return theme.primaryText.opacity(0.8)
+        case .glass:
+            return theme.primaryText.opacity(0.9)  // Apple's glass style
+        case .floating:
+            return theme.primaryText
+        case .adaptive:
+            return theme.primaryText.opacity(0.85) // Content-adaptive opacity
         }
     }
     
@@ -258,8 +323,11 @@ struct LiquidGlassButtonModifier: ViewModifier {
 
 enum LiquidGlassButtonStyle {
     case primary
-    case secondary
+    case secondary  
     case tertiary
+    case glass      // Apple's official .glass button style equivalent
+    case floating   // Enhanced floating glass button
+    case adaptive   // Content-adaptive button (Apple principle)
 }
 
 // MARK: - View Extensions for Liquid Glass
@@ -293,12 +361,27 @@ extension View {
         self.animation(animation.springAnimation, value: UUID())
     }
     
-    // Enhanced vibrancy effect
+    // Apple-aligned vibrancy effect (performance optimized)
     func liquidGlassVibrancy(_ level: LiquidGlassTheme.VibrancyLevel = .medium) -> some View {
         self
             .opacity(level.opacity)
-            .blur(radius: 0.5)
-            .brightness(0.1)
+            .blur(radius: level.blurRadius) // Performance-optimized blur
+            .brightness(level.brightnessAdjustment)
+            .saturation(level.saturationBoost) // Content richness enhancement
+    }
+    
+    // Apple's glass effect equivalent
+    func glassEffect(
+        material: LiquidGlassTheme.GlassMaterial = .regular,
+        vibrancy: LiquidGlassTheme.VibrancyLevel = .medium
+    ) -> some View {
+        self
+            .background(
+                material.material
+                    .opacity(material.adaptivityFactor * vibrancy.opacity)
+            )
+            .blur(radius: material.blurRadius)
+            .brightness(vibrancy.brightnessAdjustment * 0.5)
     }
 }
 
@@ -343,7 +426,7 @@ struct LiquidGlassTabView: View {
     }
 }
 
-// MARK: - Accessibility Enhancements
+// MARK: - Accessibility Enhancements (Apple's Inclusive Design)
 
 extension LiquidGlassTheme {
     @MainActor static func respectingAccessibility<T>(_ value: T, reducedMotion: T) -> T {
@@ -352,5 +435,41 @@ extension LiquidGlassTheme {
         #else
         return value
         #endif
+    }
+    
+    // Accessibility-aware material selection
+    @MainActor static func accessibleMaterial(_ material: GlassMaterial) -> GlassMaterial {
+        #if os(iOS)
+        if UIAccessibility.isReduceTransparencyEnabled {
+            return .thick  // More opaque for better visibility
+        }
+        if UIAccessibility.isInvertColorsEnabled {
+            return .regular  // More predictable for inverted colors
+        }
+        #endif
+        return material
+    }
+    
+    // High contrast vibrancy when needed
+    @MainActor static func accessibleVibrancy(_ level: VibrancyLevel) -> VibrancyLevel {
+        #if os(iOS)
+        if UIAccessibility.isDarkerSystemColorsEnabled {
+            return .maximum  // Boost vibrancy for better contrast
+        }
+        #endif
+        return level
+    }
+    
+    // Content-adaptive animation respecting user preferences
+    @MainActor static func respectingUserPreferences(_ animation: FluidAnimation) -> FluidAnimation {
+        #if os(iOS)
+        if UIAccessibility.isReduceMotionEnabled {
+            return .instant  // No animation for reduce motion
+        }
+        if UIAccessibility.isReduceTransparencyEnabled {
+            return .quick    // Faster animations with reduced transparency
+        }
+        #endif
+        return animation
     }
 }

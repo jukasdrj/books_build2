@@ -7,7 +7,6 @@ struct LiquidGlassBookCardView: View {
     let book: UserBook
     @Environment(\.appTheme) private var theme
     @Environment(\.colorScheme) private var colorScheme
-    @State private var isPressed = false
     @State private var hoverIntensity: CGFloat = 0
     
     var body: some View {
@@ -20,23 +19,11 @@ struct LiquidGlassBookCardView: View {
         }
         .liquidGlassCard(
             material: .regular,
-            depth: isPressed ? .floating : .elevated,
+            depth: .elevated,
             radius: .comfortable,
             vibrancy: .medium
         )
-        .scaleEffect(isPressed ? 0.98 : 1.0)
         .brightness(hoverIntensity * 0.1)
-        .onTapGesture {
-            withAnimation(LiquidGlassTheme.FluidAnimation.quick.springAnimation) {
-                isPressed = true
-            }
-            
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                withAnimation(LiquidGlassTheme.FluidAnimation.smooth.springAnimation) {
-                    isPressed = false
-                }
-            }
-        }
         .onHover { hovering in
             withAnimation(LiquidGlassTheme.FluidAnimation.smooth.springAnimation) {
                 hoverIntensity = hovering ? 1.0 : 0.0
@@ -62,13 +49,12 @@ struct LiquidGlassBookCardView: View {
                 endPoint: .bottomTrailing
             )
             
-            // Enhanced book cover with vibrancy
+            // Enhanced book cover (removed blur for image clarity)
             LiquidGlassBookCoverView(
                 imageURL: book.metadata?.imageURL?.absoluteString,
                 width: 120,
                 height: 180
             )
-            .liquidGlassVibrancy(.prominent)
             
             // Status overlay with liquid glass effect
             if book.readingStatus != .wantToRead && book.readingStatus != .toRead {
@@ -96,21 +82,19 @@ struct LiquidGlassBookCardView: View {
     @ViewBuilder
     private var bookInfoSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            // Title with enhanced typography
+            // Title with enhanced typography (removed blur for readability)
             Text(book.metadata?.title ?? "Unknown Title")
                 .font(LiquidGlassTheme.typography.titleMedium)
                 .foregroundColor(theme.primaryText)
-                .liquidGlassVibrancy(.maximum)
                 .lineLimit(2)
                 .minimumScaleFactor(0.9)
                 .multilineTextAlignment(.leading)
             
-            // Authors with subtle vibrancy
+            // Authors (removed blur for readability)
             if let authors = book.metadata?.authors, !authors.isEmpty {
                 Text(authors.joined(separator: ", "))
                     .font(LiquidGlassTheme.typography.bodySmall)
                     .foregroundColor(theme.secondaryText)
-                    .liquidGlassVibrancy(.medium)
                     .lineLimit(1)
             }
             
@@ -187,7 +171,6 @@ struct LiquidGlassBookCardView: View {
             Text("\(Int(progress))%")
                 .font(LiquidGlassTheme.typography.labelSmall)
                 .foregroundColor(theme.primary)
-                .liquidGlassVibrancy(.medium)
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 4)
@@ -204,7 +187,6 @@ struct LiquidGlassBookCardView: View {
             Text(region.shortName)
                 .font(LiquidGlassTheme.typography.labelSmall)
                 .foregroundColor(region.color(theme: theme))
-                .liquidGlassVibrancy(.medium)
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 4)
@@ -273,7 +255,6 @@ struct LiquidGlassBookCoverView: View {
                             image
                                 .resizable()
                                 .aspectRatio(contentMode: .fill)
-                                .liquidGlassVibrancy(.maximum)
                         case .failure(_):
                             bookPlaceholder
                         case .empty:

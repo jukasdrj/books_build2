@@ -14,6 +14,9 @@ struct ContentView: View {
     @State private var completedBooksCount = 0
     @State private var currentlyReadingCount = 0
     
+    // NavigationSplitView selection state
+    @State private var selectedBook: UserBook?
+    
     // Barcode scanning
     @State private var showingBarcodeScanner = false
     
@@ -178,7 +181,7 @@ struct ContentView: View {
     
     @ViewBuilder
     private var iPadLayout: some View {
-        NavigationSplitView {
+        NavigationSplitView(columnVisibility: .constant(.all)) {
             // Enhanced sidebar for iPad with badges and animations
             VStack(spacing: 0) {
                 // Header with enhanced boho styling
@@ -219,13 +222,19 @@ struct ContentView: View {
                     Divider()
                         .background(theme.outline.opacity(0.2))
                 }
-                .background(
+                .background {
+                    // Unified sidebar glass background that flows to content column
                     LinearGradient(
-                        colors: [theme.surface, theme.background],
-                        startPoint: .top,
-                        endPoint: .bottom
+                        colors: [
+                            theme.surface.opacity(0.98),
+                            theme.background.opacity(0.95),
+                            theme.surfaceVariant.opacity(0.6)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
                     )
-                )
+                    .background(.thinMaterial)
+                }
                 
                 // Enhanced Navigation Items with badges and animations
                 List {
@@ -307,34 +316,80 @@ struct ContentView: View {
             }
             .frame(minWidth: 280)
             .navigationSplitViewColumnWidth(min: 280, ideal: 320, max: 400)
-            .background(theme.background)
+            .background {
+                // Sidebar root background with glass depth
+                LinearGradient(
+                    colors: [
+                        theme.background.opacity(0.98),
+                        theme.surface.opacity(0.9)
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .background(.ultraThinMaterial)
+            }
+        } content: {
+            ZStack(alignment: .top) {
+                Group {
+                    switch selectedTab {
+                    case 0:
+                        LibraryViewForSplitView(selectedBook: $selectedBook)
+                    case 1:
+                        SearchView()
+                    case 2:
+                        LiquidGlassStatsView()
+                    case 3:
+                        LiquidGlassCulturalDiversityView()
+                    default:
+                        LibraryViewForSplitView(selectedBook: $selectedBook)
+                    }
+                }
+                
+                // Import completion notification banner (iPad)
+                ImportCompletionBanner()
+            }
+            .navigationSplitViewColumnWidth(min: 400, ideal: 600, max: 800)
+            .background {
+                // Content column glass background that bridges sidebar and detail
+                LinearGradient(
+                    colors: [
+                        theme.background.opacity(0.92),
+                        theme.surface.opacity(0.7),
+                        theme.surfaceVariant.opacity(0.3)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .background(.regularMaterial)
+            }
         } detail: {
             NavigationStack {
-                ZStack(alignment: .top) {
-                    Group {
-                        switch selectedTab {
-                        case 0:
-                            LibraryView()
-                        case 1:
-                            SearchView()
-                        case 2:
-                            LiquidGlassStatsView()
-                        case 3:
-                            LiquidGlassCulturalDiversityView()
-                        default:
-                            LibraryView()
-                        }
-                    }
-                    
-                    // Import completion notification banner (iPad)
-                    ImportCompletionBanner()
+                if let selectedBook = selectedBook {
+                    BookDetailsView(book: selectedBook)
+                        .navigationBarTitleDisplayMode(.large)
+                } else {
+                    LiquidGlassDetailPlaceholder()
+                        .navigationBarTitleDisplayMode(.large)
                 }
             }
-            .withNavigationDestinations() // Apply navigation destinations inside NavigationStack
-            .background(theme.background)
+            .withNavigationDestinations()
+            .background {
+                // Cohesive glass background that matches the content column
+                LinearGradient(
+                    colors: [
+                        theme.background.opacity(0.95),
+                        theme.surface.opacity(0.8),
+                        theme.surfaceVariant.opacity(0.4)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .background(.regularMaterial)
+            }
         }
         .navigationSplitViewStyle(.balanced)
         .tint(theme.primary)
+        .liquidGlassNavigationSplitView()
     }
     
     // MARK: - Enhanced iPhone Layout with Custom Tab Bar
@@ -495,13 +550,23 @@ struct EnhancedTabBar: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            // Animated selection indicator line
+            // Apple's enhanced liquid glass selection indicator
             HStack {
                 ForEach(0..<tabItems.count, id: \.self) { index in
-                    Rectangle()
+                    RoundedRectangle(cornerRadius: 1)
                         .fill(selectedTab == index ? theme.primary : Color.clear)
-                        .frame(height: 2)
-                        .animation(.spring(response: 0.4, dampingFraction: 0.8), value: selectedTab)
+                        .liquidGlassVibrancy(selectedTab == index ? .maximum : .subtle)
+                        .frame(height: 3)
+                        .shadow(
+                            color: theme.primary.opacity(selectedTab == index ? 0.3 : 0),
+                            radius: selectedTab == index ? 2 : 0,
+                            x: 0,
+                            y: 1
+                        )
+                        .animation(
+                            LiquidGlassTheme.respectingUserPreferences(.flowing).springAnimation,
+                            value: selectedTab
+                        )
                 }
             }
             
@@ -523,24 +588,12 @@ struct EnhancedTabBar: View {
             }
             .padding(.horizontal, Theme.Spacing.md)
             .padding(.vertical, 12) // Increased for better thumb accessibility
-            .background {
-                ZStack {
-                    // Liquid Glass base
-                    Color.clear
-                        .background(.regularMaterial)
-                    
-                    // Theme-aware tint with subtle depth
-                    LinearGradient(
-                        colors: [
-                            theme.surface.opacity(0.5),
-                            theme.surfaceVariant.opacity(0.2)
-                        ],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                    .blendMode(.overlay)
-                }
-            }
+            .liquidGlassCard(
+                material: .regular,
+                depth: .floating,
+                radius: .minimal,
+                vibrancy: .medium
+            )
             .overlay(
                 Rectangle()
                     .frame(height: 0.5)
@@ -586,23 +639,37 @@ struct EnhancedTabBarButton: View {
         }) {
             VStack(spacing: 6) { // Increased spacing for better thumb targets
                 ZStack {
-                    // Enhanced background with glass effect for selected state
+                    // Apple's Liquid Glass button background with adaptive behavior
                     Circle()
-                        .fill(.thinMaterial)
+                        .fill(Color.clear)
+                        .background {
+                            if isSelected {
+                                Circle()
+                                    .fill(.regularMaterial)
+                            }
+                        }
                         .overlay {
                             Circle()
-                                .fill(theme.primaryContainer.opacity(isSelected ? 0.3 : 0.0))
+                                .fill(theme.primaryContainer.opacity(isSelected ? 0.4 : 0.0))
+                                .blur(radius: 0.5) // Apple's performance-optimized blur
                         }
-                        .frame(width: 36, height: 36) // Larger target for thumb accessibility
-                        .scaleEffect(isSelected ? 1.0 : 0.8)
-                        .animation(.spring(response: 0.3, dampingFraction: 0.8), value: isSelected)
+                        .frame(width: 40, height: 40) // Apple's recommended touch target
+                        .scaleEffect(isSelected ? 1.05 : 0.85)
+                        .animation(
+                            LiquidGlassTheme.respectingUserPreferences(.smooth).springAnimation,
+                            value: isSelected
+                        )
                     
-                    // Icon
+                    // Icon with Apple's enhanced vibrancy
                     Image(systemName: isSelected ? item.selectedIcon : item.icon)
                         .font(.system(size: 18, weight: .medium))
                         .foregroundColor(isSelected ? theme.primary : theme.onSurfaceVariant)
-                        .scaleEffect(isSelected ? 1.05 : 1.0)
-                        .animation(.spring(response: 0.3, dampingFraction: 0.8), value: isSelected)
+                        .liquidGlassVibrancy(isSelected ? .prominent : .medium)
+                        .scaleEffect(isSelected ? 1.08 : 1.0)
+                        .animation(
+                            LiquidGlassTheme.respectingUserPreferences(.quick).springAnimation,
+                            value: isSelected
+                        )
                     
                     // Badge
                     if let badge = badge, badge > 0 {
@@ -615,7 +682,8 @@ struct EnhancedTabBarButton: View {
                             .background(
                                 Capsule()
                                     .fill(theme.error)
-                                    .shadow(color: theme.error.opacity(0.3), radius: 2, x: 0, y: 1)
+                                    .liquidGlassVibrancy(.maximum)
+                                    .shadow(color: theme.error.opacity(0.4), radius: 3, x: 0, y: 2)
                             )
                             .offset(x: 10, y: -10)
                             .scaleEffect(isSelected ? 1.05 : 1.0)
@@ -662,6 +730,154 @@ struct AuthorSearchRequest: Hashable, Identifiable {
 }
 
 // MARK: - Conditional Modifier Extension
+// MARK: - Liquid Glass Detail Placeholder
+struct LiquidGlassDetailPlaceholder: View {
+    @Environment(\.appTheme) private var theme
+    
+    var body: some View {
+        VStack(spacing: Theme.Spacing.xxl) {
+            Spacer()
+            
+            // Glass book icon with depth
+            ZStack {
+                Circle()
+                    .fill(.ultraThinMaterial)
+                    .frame(width: 120, height: 120)
+                    .overlay {
+                        Circle()
+                            .fill(
+                                LinearGradient(
+                                    colors: [
+                                        theme.primary.opacity(0.1),
+                                        theme.secondary.opacity(0.05)
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                    }
+                    .shadow(
+                        color: theme.primary.opacity(0.15),
+                        radius: 20,
+                        x: 0,
+                        y: 8
+                    )
+                
+                Image(systemName: "book.closed.fill")
+                    .font(.system(size: 48, weight: .light))
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [theme.primary.opacity(0.9), theme.secondary.opacity(0.7)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+            }
+            
+            // Title and subtitle with liquid glass styling
+            VStack(spacing: Theme.Spacing.md) {
+                Text("Select a Book")
+                    .font(.system(size: 28, weight: .medium, design: .rounded))
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [theme.onSurface, theme.onSurface.opacity(0.8)],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                
+                Text("Choose a book from your library to explore its details, track your progress, and discover cultural insights")
+                    .font(.system(size: 16, weight: .regular))
+                    .foregroundColor(theme.onSurfaceVariant.opacity(0.8))
+                    .multilineTextAlignment(.center)
+                    .lineSpacing(4)
+                    .padding(.horizontal, Theme.Spacing.xl)
+            }
+            
+            Spacer()
+            
+            // Subtle glass card showing available features
+            HStack(spacing: Theme.Spacing.lg) {
+                FeatureHint(
+                    icon: "chart.line.uptrend.xyaxis",
+                    title: "Track Progress",
+                    theme: theme
+                )
+                
+                FeatureHint(
+                    icon: "star.fill",
+                    title: "Rate & Review",
+                    theme: theme
+                )
+                
+                FeatureHint(
+                    icon: "globe.americas.fill",
+                    title: "Cultural Insights",
+                    theme: theme
+                )
+            }
+            .padding(.horizontal, Theme.Spacing.xl)
+            .padding(.bottom, Theme.Spacing.xxl)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background {
+            // Immersive glass background with subtle animation
+            Rectangle()
+                .fill(.clear)
+        }
+    }
+}
+
+struct FeatureHint: View {
+    let icon: String
+    let title: String
+    let theme: AppColorTheme
+    
+    var body: some View {
+        VStack(spacing: Theme.Spacing.sm) {
+            Image(systemName: icon)
+                .font(.system(size: 20, weight: .medium))
+                .foregroundStyle(
+                    LinearGradient(
+                        colors: [theme.primary.opacity(0.8), theme.secondary.opacity(0.6)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+            
+            Text(title)
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(theme.onSurfaceVariant.opacity(0.9))
+                .multilineTextAlignment(.center)
+        }
+        .frame(width: 80, height: 60)
+        .background {
+            RoundedRectangle(cornerRadius: 16)
+                .fill(.ultraThinMaterial)
+                .overlay {
+                    RoundedRectangle(cornerRadius: 16)
+                        .strokeBorder(
+                            LinearGradient(
+                                colors: [
+                                    theme.outline.opacity(0.1),
+                                    theme.outline.opacity(0.05)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 1
+                        )
+                }
+                .shadow(
+                    color: .black.opacity(0.06),
+                    radius: 8,
+                    x: 0,
+                    y: 4
+                )
+        }
+    }
+}
+
 extension View {
     @ViewBuilder
     func `if`<Transform: View>(_ condition: Bool, transform: (Self) -> Transform) -> some View {
@@ -670,6 +886,426 @@ extension View {
         } else {
             self
         }
+    }
+    
+    /// Applies Liquid Glass styling and proper navigation behavior to NavigationSplitView
+    func liquidGlassNavigationSplitView() -> some View {
+        self.modifier(LiquidGlassNavigationSplitViewModifier())
+    }
+}
+
+struct LiquidGlassNavigationSplitViewModifier: ViewModifier {
+    @Environment(\.appTheme) private var theme
+    
+    func body(content: Content) -> some View {
+        content
+            .preferredColorScheme(nil) // Let system decide based on theme
+            .background {
+                // Global glass foundation that unifies all columns
+                LinearGradient(
+                    colors: [
+                        theme.background.opacity(0.95),
+                        theme.surface.opacity(0.8)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .background(.ultraThinMaterial)
+                .ignoresSafeArea()
+            }
+    }
+}
+
+// MARK: - LibraryView for NavigationSplitView
+struct LibraryViewForSplitView: View {
+    @Binding var selectedBook: UserBook?
+    @Environment(\.modelContext) private var modelContext
+    @Environment(\.appTheme) private var currentTheme
+    @State private var searchText: String = ""
+    @State private var selectedLayout: LayoutType = .grid
+    @State private var showingFilters = false
+    @State private var showingSettings = false
+    @State private var showingEnhancement = false
+    @State private var libraryFilter = LibraryFilter.all
+    
+    @Query private var allBooks: [UserBook]
+    @State private var stableFilteredBooks: [UserBook] = []
+    @State private var bookCount: Int = 0
+    
+    enum LayoutType: String, CaseIterable {
+        case grid = "Grid"
+        case list = "List"
+        
+        var icon: String {
+            switch self {
+            case .grid: return "square.grid.2x2"
+            case .list: return "list.bullet"
+            }
+        }
+    }
+    
+    init(selectedBook: Binding<UserBook?>, filter: LibraryFilter? = nil) {
+        self._selectedBook = selectedBook
+        if let filter = filter {
+            _libraryFilter = State(initialValue: filter)
+        }
+        _allBooks = Query(sort: \UserBook.dateAdded, order: .reverse)
+    }
+    
+    private func computeFilteredBooks() -> [UserBook] {
+        let filteredBooks = allBooks.lazy
+            .filter { book in
+                let matchesSearch = searchText.isEmpty || {
+                    let title = book.metadata?.title ?? ""
+                    let authors = book.metadata?.authors.joined(separator: " ") ?? ""
+                    return title.localizedCaseInsensitiveContains(searchText) ||
+                           authors.localizedCaseInsensitiveContains(searchText)
+                }()
+                
+                let matchesStatus = libraryFilter.readingStatus.contains(book.readingStatus)
+                let matchesWishlist = !libraryFilter.showWishlistOnly || book.onWishlist
+                let matchesOwned = !libraryFilter.showOwnedOnly || book.owned
+                let matchesFavorites = !libraryFilter.showFavoritesOnly || book.isFavorited
+                
+                return matchesSearch && matchesStatus && matchesWishlist && matchesOwned && matchesFavorites
+            }
+            .reduce(into: [UserBook]()) { result, book in
+                result.append(book)
+            }
+        
+        return sortBooks(filteredBooks, by: libraryFilter.sortBy, ascending: libraryFilter.sortAscending)
+    }
+    
+    private func sortBooks(_ books: [UserBook], by sortOption: LibrarySortOption, ascending: Bool) -> [UserBook] {
+        let sorted = books.sorted { book1, book2 in
+            let result: Bool
+            
+            switch sortOption {
+            case .dateAdded:
+                result = book1.dateAdded < book2.dateAdded
+            case .title:
+                let title1 = book1.metadata?.title ?? ""
+                let title2 = book2.metadata?.title ?? ""
+                result = title1.localizedStandardCompare(title2) == .orderedAscending
+            case .author:
+                let author1 = book1.metadata?.authors.first ?? ""
+                let author2 = book2.metadata?.authors.first ?? ""
+                result = author1.localizedStandardCompare(author2) == .orderedAscending
+            case .completeness:
+                let completeness1 = DataCompletenessService.calculateBookCompleteness(book1)
+                let completeness2 = DataCompletenessService.calculateBookCompleteness(book2)
+                result = completeness1 < completeness2
+            case .rating:
+                let rating1 = book1.rating ?? 0
+                let rating2 = book2.rating ?? 0
+                result = rating1 < rating2
+            }
+            
+            return ascending ? result : !result
+        }
+        
+        return sorted
+    }
+    
+    private func updateStableBooks() {
+        let newBooks = computeFilteredBooks()
+        let newCount = newBooks.count
+        
+        if stableFilteredBooks.count != newCount || stableFilteredBooks != newBooks {
+            let shouldAnimate = newCount > stableFilteredBooks.count && newCount - stableFilteredBooks.count <= 5
+            
+            if shouldAnimate {
+                withAnimation(.easeInOut(duration: 0.4)) {
+                    stableFilteredBooks = newBooks
+                    bookCount = newCount
+                }
+            } else {
+                withAnimation(.none) {
+                    stableFilteredBooks = newBooks
+                    bookCount = newCount
+                }
+            }
+        }
+    }
+    
+    var body: some View {
+        VStack(spacing: 0) {
+            // Header section (same as LibraryView)
+            VStack(spacing: 0) {
+                ImportStatusBanner()
+                QuickFilterBar(filter: $libraryFilter) { }
+                Divider()
+                layoutToggleSection
+            }
+            
+            // Content section with button actions instead of NavigationLinks
+            if stableFilteredBooks.isEmpty {
+                VStack(spacing: Theme.Spacing.lg) {
+                    Image(systemName: "books.vertical")
+                        .font(.system(size: 64, weight: .light))
+                        .foregroundStyle(.secondary)
+                    
+                    Text("No books to display")
+                        .font(.title2)
+                        .fontWeight(.medium)
+                        .foregroundColor(.secondary)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background {
+                    LinearGradient(
+                        colors: [
+                            currentTheme.background.opacity(0.7),
+                            currentTheme.surface.opacity(0.3)
+                        ],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                    .background(.regularMaterial)
+                }
+            } else {
+                ScrollView(.vertical) {
+                    if selectedLayout == .grid {
+                        SplitViewGridLayout(books: stableFilteredBooks, selectedBook: $selectedBook)
+                    } else {
+                        SplitViewListLayout(books: stableFilteredBooks, selectedBook: $selectedBook)
+                    }
+                }
+                .background {
+                    LinearGradient(
+                        colors: [
+                            currentTheme.background.opacity(0.8),
+                            currentTheme.surface.opacity(0.4),
+                            currentTheme.surfaceVariant.opacity(0.2)
+                        ],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                    .background(.thinMaterial)
+                }
+            }
+        }
+        .navigationTitle(libraryFilter.showWishlistOnly ? "Wishlist (\(bookCount))" : "Library (\(bookCount))")
+        .navigationBarTitleDisplayMode(.large)
+        .searchable(text: $searchText, prompt: "Search by title or author...")
+        .sheet(isPresented: $showingFilters) {
+            LibraryFilterView(filter: $libraryFilter)
+        }
+        .sheet(isPresented: $showingSettings) {
+            SettingsView()
+        }
+        .sheet(isPresented: $showingEnhancement) {
+            LibraryEnhancementView()
+        }
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                HStack(spacing: Theme.Spacing.md) {
+                    BackgroundImportProgressIndicator()
+                    
+                    Button { showingEnhancement.toggle() } label: {
+                        ZStack(alignment: .topTrailing) {
+                            Image(systemName: "chart.line.uptrend.xyaxis")
+                                .foregroundColor(currentTheme.primary)
+                            
+                            let qualityReport = DataCompletenessService.analyzeLibraryQuality(allBooks)
+                            let booksNeedingAttention = qualityReport.booksNeedingAttention
+                            
+                            if booksNeedingAttention > 0 {
+                                Text("\(booksNeedingAttention)")
+                                    .font(.caption2)
+                                    .foregroundColor(.white)
+                                    .background(
+                                        Circle()
+                                            .fill(Color.red)
+                                            .frame(width: 16, height: 16)
+                                    )
+                                    .offset(x: 8, y: -4)
+                            }
+                        }
+                    }
+                    
+                    Button { showingFilters.toggle() } label: {
+                        Image(systemName: libraryFilter.isActive ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle")
+                            .foregroundColor(libraryFilter.isActive ? currentTheme.primary : Color.primary)
+                    }
+                    
+                    Button { showingSettings.toggle() } label: {
+                        Image(systemName: "gearshape")
+                    }
+                }
+            }
+        }
+        .onAppear {
+            updateStableBooks()
+        }
+        .onChange(of: allBooks) { _, _ in
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                updateStableBooks()
+            }
+        }
+        .onChange(of: searchText) { _, _ in
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                updateStableBooks()
+            }
+        }
+        .onChange(of: libraryFilter) { _, _ in
+            updateStableBooks()
+        }
+    }
+    
+    var layoutToggleSection: some View {
+        HStack {
+            if libraryFilter.isActive {
+                HStack(spacing: Theme.Spacing.xs) {
+                    Circle()
+                        .fill(currentTheme.primary)
+                        .frame(width: 8, height: 8)
+                        .shadow(color: currentTheme.primary.opacity(0.3), radius: 2, x: 0, y: 1)
+                    Text("Filtered")
+                        .labelSmall()
+                        .foregroundColor(currentTheme.primary)
+                }
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background {
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(.regularMaterial)
+                        .overlay {
+                            RoundedRectangle(cornerRadius: 12)
+                                .strokeBorder(currentTheme.primary.opacity(0.2), lineWidth: 1)
+                        }
+                        .shadow(color: .black.opacity(0.08), radius: 4, x: 0, y: 2)
+                }
+            }
+            
+            Spacer()
+            
+            HStack(spacing: 0) {
+                ForEach(LayoutType.allCases, id: \.self) { layout in
+                    Button {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            selectedLayout = layout
+                        }
+                    } label: {
+                        Image(systemName: layout.icon)
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundStyle(selectedLayout == layout ? .white : currentTheme.onSurface)
+                            .frame(width: 44, height: 32)
+                    }
+                    .background {
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(selectedLayout == layout ? currentTheme.primary : Color.clear)
+                            .shadow(
+                                color: selectedLayout == layout ? currentTheme.primary.opacity(0.3) : .clear,
+                                radius: selectedLayout == layout ? 4 : 0,
+                                x: 0, y: selectedLayout == layout ? 2 : 0
+                            )
+                    }
+                }
+            }
+            .background {
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(.regularMaterial)
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 10)
+                            .strokeBorder(currentTheme.outline.opacity(0.1), lineWidth: 1)
+                    }
+                    .shadow(color: .black.opacity(0.06), radius: 8, x: 0, y: 4)
+            }
+        }
+        .padding(.horizontal, Theme.Spacing.md)
+        .padding(.vertical, Theme.Spacing.sm)
+        .background {
+            Rectangle()
+                .fill(.ultraThinMaterial)
+                .overlay(alignment: .bottom) {
+                    Rectangle()
+                        .fill(currentTheme.outline.opacity(0.1))
+                        .frame(height: 0.5)
+                }
+        }
+    }
+}
+
+// MARK: - Split View Layout Components
+struct SplitViewGridLayout: View {
+    let books: [UserBook]
+    @Binding var selectedBook: UserBook?
+    @Environment(\.appTheme) private var theme
+    
+    var body: some View {
+        let columns = [GridItem(.adaptive(minimum: 140, maximum: 160), spacing: Theme.Spacing.lg)]
+        
+        LazyVGrid(columns: columns, spacing: Theme.Spacing.xl) {
+            ForEach(books) { book in
+                Button {
+                    withAnimation(.easeInOut(duration: 0.3)) {
+                        selectedBook = book
+                    }
+                    HapticFeedbackManager.shared.lightImpact()
+                    
+                    #if DEBUG
+                    print("[SplitView] Selected book: \(book.metadata?.title ?? "Unknown")")
+                    #endif
+                } label: {
+                    LiquidGlassBookCardView(book: book)
+                }
+                .contentShape(Rectangle())
+                .buttonStyle(PlainButtonStyle())
+                .accessibilityLabel("View details for \(book.metadata?.title ?? "Unknown Title")")
+                .background {
+                    RoundedRectangle(cornerRadius: 16)
+                        .strokeBorder(
+                            selectedBook?.id == book.id ? theme.primary.opacity(0.5) : Color.clear,
+                            lineWidth: 2
+                        )
+                        .animation(.easeInOut(duration: 0.2), value: selectedBook?.id)
+                }
+            }
+        }
+        .padding(EdgeInsets(
+            top: Theme.Spacing.xl, 
+            leading: Theme.Spacing.xxl, 
+            bottom: Theme.Spacing.xl, 
+            trailing: Theme.Spacing.xxl
+        ))
+    }
+}
+
+struct SplitViewListLayout: View {
+    let books: [UserBook]
+    @Binding var selectedBook: UserBook?
+    @Environment(\.appTheme) private var theme
+    
+    var body: some View {
+        LazyVStack(spacing: 12) {
+            ForEach(books) { book in
+                Button {
+                    withAnimation(.easeInOut(duration: 0.3)) {
+                        selectedBook = book
+                    }
+                    HapticFeedbackManager.shared.lightImpact()
+                    
+                    #if DEBUG
+                    print("[SplitView] Selected book: \(book.metadata?.title ?? "Unknown")")
+                    #endif
+                } label: {
+                    LiquidGlassBookRowView(book: book)
+                }
+                .contentShape(Rectangle())
+                .buttonStyle(PlainButtonStyle())
+                .accessibilityLabel("View details for \(book.metadata?.title ?? "Unknown Title")")
+                .background {
+                    RoundedRectangle(cornerRadius: 16)
+                        .strokeBorder(
+                            selectedBook?.id == book.id ? theme.primary.opacity(0.5) : Color.clear,
+                            lineWidth: 2
+                        )
+                        .animation(.easeInOut(duration: 0.2), value: selectedBook?.id)
+                }
+            }
+        }
+        .padding(.horizontal, Theme.Spacing.md)
+        .padding(.vertical, Theme.Spacing.sm)
     }
 }
 

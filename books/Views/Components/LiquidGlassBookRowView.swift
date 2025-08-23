@@ -14,7 +14,6 @@ struct LiquidGlassBookRowView: View {
     let book: UserBook
     @Environment(\.appTheme) private var theme
     @Environment(\.colorScheme) private var colorScheme
-    @State private var isPressed = false
     @State private var hoverIntensity: CGFloat = 0
     
     var body: some View {
@@ -161,24 +160,11 @@ struct LiquidGlassBookRowView: View {
         .padding(.vertical, 12)
         .liquidGlassCard(
             material: .regular,
-            depth: isPressed ? .floating : .elevated,
+            depth: .elevated,
             radius: .comfortable,
             vibrancy: .medium
         )
-        .scaleEffect(isPressed ? 0.98 : 1.0)
         .brightness(hoverIntensity * 0.05)
-        .onTapGesture {
-            // Consistent interaction with card
-            withAnimation(LiquidGlassTheme.FluidAnimation.quick.springAnimation) {
-                isPressed = true
-            }
-            
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                withAnimation(LiquidGlassTheme.FluidAnimation.smooth.springAnimation) {
-                    isPressed = false
-                }
-            }
-        }
         .onHover { hovering in
             withAnimation(LiquidGlassTheme.FluidAnimation.smooth.springAnimation) {
                 hoverIntensity = hovering ? 1.0 : 0.0
@@ -258,7 +244,6 @@ struct LiquidGlassRowBookCover: View {
                             image
                                 .resizable()
                                 .aspectRatio(contentMode: .fill)
-                                .liquidGlassVibrancy(.maximum)
                         case .failure(_):
                             bookPlaceholder
                         case .empty:

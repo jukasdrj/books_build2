@@ -543,7 +543,7 @@ struct StatCard: View {
         .frame(maxWidth: .infinity)
         .padding(.vertical, 20)
         .padding(.horizontal, 12)
-        .background(material.fallbackMaterial.opacity(0.7))
+        .background(material.material.opacity(0.7))
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         .shadow(
             color: color.opacity(0.2),
