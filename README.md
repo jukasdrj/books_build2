@@ -264,3 +264,4 @@ This project is licensed under the a private license.
 **Last Updated**: August 2024
 **Minimum iOS**: 16.0
 
+# Auto-versioning enabled
