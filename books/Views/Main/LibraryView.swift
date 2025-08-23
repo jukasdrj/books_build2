@@ -11,6 +11,10 @@ struct LibraryView: View {
     @State private var showingEnhancement = false
     @State private var libraryFilter = LibraryFilter.all
     
+    // iPad sheet presentation
+    @State private var showingBookDetailSheet = false
+    @State private var selectedBookForSheet: UserBook?
+    
     
     @Query private var allBooks: [UserBook]
     
@@ -116,6 +120,13 @@ struct LibraryView: View {
         }
         .sheet(isPresented: $showingEnhancement) {
             LibraryEnhancementView()
+        }
+        .sheet(isPresented: $showingBookDetailSheet) {
+            if let selectedBook = selectedBookForSheet {
+                NavigationStack {
+                    BookDetailsView(book: selectedBook)
+                }
+            }
         }
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
@@ -246,6 +257,8 @@ struct LibraryView: View {
 
 struct UniformGridLayoutView: View {
     let books: [UserBook]
+    @Binding var selectedBookForSheet: UserBook?
+    @Binding var showingBookDetailSheet: Bool
     
     /// Performance optimization: Virtual scrolling for large datasets
     @State private var isLargeDataset: Bool = false
@@ -255,7 +268,12 @@ struct UniformGridLayoutView: View {
         
         // Use virtual scrolling for large datasets (500+ books for better performance)
         if books.count > 500 {
-            VirtualizedGridView(books: books, columns: columns)
+            VirtualizedGridView(
+                books: books, 
+                columns: columns, 
+                selectedBookForSheet: $selectedBookForSheet, 
+                showingBookDetailSheet: $showingBookDetailSheet
+            )
                 .padding(adaptivePadding())
                 .onAppear {
                     isLargeDataset = true
@@ -263,12 +281,31 @@ struct UniformGridLayoutView: View {
         } else {
             LazyVGrid(columns: columns, spacing: adaptiveSpacing()) {
                 ForEach(books) { book in
+                    #if os(iOS)
+                    if UIDevice.current.userInterfaceIdiom == .pad {
+                        Button {
+                            selectedBookForSheet = book
+                            showingBookDetailSheet = true
+                            HapticFeedbackManager.shared.lightImpact()
+                        } label: {
+                            LiquidGlassBookCardView(book: book)
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        .accessibilityLabel("View details for \(book.metadata?.title ?? "Unknown Title")")
+                    } else {
+                        NavigationLink(value: book) {
+                            LiquidGlassBookCardView(book: book)
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        .accessibilityLabel("View details for \(book.metadata?.title ?? "Unknown Title")")
+                    }
+                    #else
                     NavigationLink(value: book) {
                         LiquidGlassBookCardView(book: book)
                     }
                     .buttonStyle(PlainButtonStyle())
                     .accessibilityLabel("View details for \(book.metadata?.title ?? "Unknown Title")")
-                    .accessibilityHint("Opens book details screen")
+                    #endif
                 }
             }
             .padding(adaptivePadding())
@@ -324,20 +361,46 @@ struct UniformGridLayoutView: View {
 
 struct ListLayoutView: View {
     let books: [UserBook]
+    @Binding var selectedBookForSheet: UserBook?
+    @Binding var showingBookDetailSheet: Bool
     
     var body: some View {
         // Use virtual scrolling for large datasets in list view too
         if books.count > 500 {
-            VirtualizedListView(books: books)
+            VirtualizedListView(
+                books: books, 
+                selectedBookForSheet: $selectedBookForSheet, 
+                showingBookDetailSheet: $showingBookDetailSheet
+            )
                 .padding(.horizontal, Theme.Spacing.md)
         } else {
             LazyVStack(spacing: 12) {
                 ForEach(books) { book in
+                    #if os(iOS)
+                    if UIDevice.current.userInterfaceIdiom == .pad {
+                        Button {
+                            selectedBookForSheet = book
+                            showingBookDetailSheet = true
+                            HapticFeedbackManager.shared.lightImpact()
+                        } label: {
+                            LiquidGlassBookRowView(book: book)
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        .accessibilityLabel("View details for \(book.metadata?.title ?? "Unknown Title")")
+                    } else {
+                        NavigationLink(value: book) {
+                            LiquidGlassBookRowView(book: book)
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        .accessibilityLabel("View details for \(book.metadata?.title ?? "Unknown Title")")
+                    }
+                    #else
                     NavigationLink(value: book) {
                         LiquidGlassBookRowView(book: book)
                     }
                     .buttonStyle(PlainButtonStyle())
                     .accessibilityLabel("View details for \(book.metadata?.title ?? "Unknown Title")")
+                    #endif
                 }
             }
             .padding(.horizontal, Theme.Spacing.md)
@@ -475,9 +538,17 @@ private extension LibraryView {
             } else {
                 ScrollView(.vertical) {
                     if selectedLayout == .grid {
-                        UniformGridLayoutView(books: stableFilteredBooks)
+                        UniformGridLayoutView(
+                            books: stableFilteredBooks,
+                            selectedBookForSheet: $selectedBookForSheet,
+                            showingBookDetailSheet: $showingBookDetailSheet
+                        )
                     } else {
-                        ListLayoutView(books: stableFilteredBooks)
+                        ListLayoutView(
+                            books: stableFilteredBooks,
+                            selectedBookForSheet: $selectedBookForSheet,
+                            showingBookDetailSheet: $showingBookDetailSheet
+                        )
                     }
                 }
                 .background {
@@ -504,6 +575,8 @@ private extension LibraryView {
 struct VirtualizedGridView: View {
     let books: [UserBook]
     let columns: [GridItem]
+    @Binding var selectedBookForSheet: UserBook?
+    @Binding var showingBookDetailSheet: Bool
     
     @State private var visibleRange: Range<Int> = 0..<50
     @State private var scrollOffset: CGFloat = 0
@@ -528,12 +601,34 @@ struct VirtualizedGridView: View {
                         let visibleBooks = Array(books[visibleRange])
                         LazyVGrid(columns: columns, spacing: Theme.Spacing.lg) {
                             ForEach(visibleBooks) { book in
+                                #if os(iOS)
+                                if UIDevice.current.userInterfaceIdiom == .pad {
+                                    Button {
+                                        selectedBookForSheet = book
+                                        showingBookDetailSheet = true
+                                        HapticFeedbackManager.shared.lightImpact()
+                                    } label: {
+                                        LiquidGlassBookCardView(book: book)
+                                    }
+                                    .buttonStyle(PlainButtonStyle())
+                                    .accessibilityLabel("View details for \(book.metadata?.title ?? "Unknown Title")")
+                                    .id(book.id)
+                                } else {
+                                    NavigationLink(value: book) {
+                                        LiquidGlassBookCardView(book: book)
+                                    }
+                                    .buttonStyle(PlainButtonStyle())
+                                    .accessibilityLabel("View details for \(book.metadata?.title ?? "Unknown Title")")
+                                    .id(book.id)
+                                }
+                                #else
                                 NavigationLink(value: book) {
                                     LiquidGlassBookCardView(book: book)
                                 }
                                 .buttonStyle(PlainButtonStyle())
                                 .accessibilityLabel("View details for \(book.metadata?.title ?? "Unknown Title")")
                                 .id(book.id)
+                                #endif
                             }
                         }
                         
@@ -596,6 +691,8 @@ struct VirtualizedGridView: View {
 /// High-performance list view for large datasets using virtual scrolling
 struct VirtualizedListView: View {
     let books: [UserBook]
+    @Binding var selectedBookForSheet: UserBook?
+    @Binding var showingBookDetailSheet: Bool
     
     @State private var visibleRange: Range<Int> = 0..<50
     @State private var scrollDebounceTask: Task<Void, Never>?
@@ -616,12 +713,34 @@ struct VirtualizedListView: View {
                     // Visible items
                     let visibleBooks = Array(books[visibleRange])
                     ForEach(visibleBooks) { book in
+                        #if os(iOS)
+                        if UIDevice.current.userInterfaceIdiom == .pad {
+                            Button {
+                                selectedBookForSheet = book
+                                showingBookDetailSheet = true
+                                HapticFeedbackManager.shared.lightImpact()
+                            } label: {
+                                LiquidGlassBookRowView(book: book)
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                            .accessibilityLabel("View details for \(book.metadata?.title ?? "Unknown Title")")
+                            .id(book.id)
+                        } else {
+                            NavigationLink(value: book) {
+                                LiquidGlassBookRowView(book: book)
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                            .accessibilityLabel("View details for \(book.metadata?.title ?? "Unknown Title")")
+                            .id(book.id)
+                        }
+                        #else
                         NavigationLink(value: book) {
                             LiquidGlassBookRowView(book: book)
                         }
                         .buttonStyle(PlainButtonStyle())
                         .accessibilityLabel("View details for \(book.metadata?.title ?? "Unknown Title")")
                         .id(book.id)
+                        #endif
                         
                         if book.id != visibleBooks.last?.id {
                             Spacer()

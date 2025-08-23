@@ -14,6 +14,10 @@ struct SearchView: View {
     @State private var fromBarcodeScanner = false
     @FocusState private var isSearchFieldFocused: Bool
     
+    // iPad sheet presentation
+    @State private var showingBookDetailSheet = false
+    @State private var selectedBookForSheet: BookMetadata?
+    
 
     enum SearchState: Equatable {
         case idle
@@ -105,6 +109,16 @@ struct SearchView: View {
             }
             .sheet(isPresented: $showingSortOptions) {
                 sortOptionsSheet
+            }
+            .sheet(isPresented: $showingBookDetailSheet) {
+                if let selectedBook = selectedBookForSheet {
+                    NavigationStack {
+                        SearchResultDetailView(
+                            bookMetadata: selectedBook,
+                            fromBarcodeScanner: fromBarcodeScanner
+                        )
+                    }
+                }
             }
             .onReceive(NotificationCenter.default.publisher(for: .barcodeSearchCompleted)) { notification in
                 handleBarcodeSearchCompleted(notification)
@@ -771,8 +785,11 @@ struct SearchView: View {
     // MARK: - Search Results List
     @ViewBuilder
     private func searchResultsList(books: [BookMetadata]) -> some View {
-        // Use iPhone layout for now (working implementation)
-        iPhoneSearchResultsList(books: books)
+        if UIDevice.current.userInterfaceIdiom == .pad {
+            iPadSearchResultsGrid(books: books)
+        } else {
+            iPhoneSearchResultsList(books: books)
+        }
     }
     
     // MARK: - iPad Grid Layout
@@ -786,7 +803,11 @@ struct SearchView: View {
                 spacing: Theme.Spacing.md
             ) {
                 ForEach(books) { book in
-                    NavigationLink(value: book) {
+                    Button {
+                        selectedBookForSheet = book
+                        showingBookDetailSheet = true
+                        HapticFeedbackManager.shared.lightImpact()
+                    } label: {
                         iPadSearchResultCard(book: book)
                     }
                     .buttonStyle(.plain)
