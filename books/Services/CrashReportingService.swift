@@ -126,11 +126,13 @@ class CrashReportingService {
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            self?.reportCriticalIssue(
-                "Memory warning received",
-                area: "Memory",
-                metadata: ["availableMemory": ProcessInfo.processInfo.physicalMemory]
-            )
+            Task { @MainActor in
+                self?.reportCriticalIssue(
+                    "Memory warning received",
+                    area: "Memory",
+                    metadata: ["availableMemory": ProcessInfo.processInfo.physicalMemory]
+                )
+            }
         }
         
         // Monitor for app state changes
@@ -139,7 +141,9 @@ class CrashReportingService {
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            self?.flushPendingReports()
+            Task { @MainActor in
+                self?.flushPendingReports()
+            }
         }
     }
     

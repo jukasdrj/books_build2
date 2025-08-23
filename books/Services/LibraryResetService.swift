@@ -211,7 +211,14 @@ class LibraryResetService: ObservableObject {
             let tags = book.tags.joined(separator: ";").csvEscaped
             let genre = book.metadata?.genre.first?.csvEscaped ?? ""
             
-            let row = [
+            // Break up complex expression to avoid compiler timeout
+            let publisher = book.metadata?.publisher?.csvEscaped ?? ""
+            let publishedDate = book.metadata?.publishedDate?.csvEscaped ?? ""
+            let pageCount = book.metadata?.pageCount.map(String.init) ?? ""
+            let authorNationality = book.metadata?.authorNationality?.csvEscaped ?? ""
+            let originalLanguage = book.metadata?.originalLanguage?.csvEscaped ?? ""
+            
+            let rowElements = [
                 title,
                 author,
                 isbn,
@@ -223,12 +230,13 @@ class LibraryResetService: ObservableObject {
                 notes,
                 tags,
                 genre,
-                book.metadata?.publisher?.csvEscaped ?? "",
-                book.metadata?.publishedDate?.csvEscaped ?? "",
-                book.metadata?.pageCount.map(String.init) ?? "",
-                book.metadata?.authorNationality?.csvEscaped ?? "",
-                book.metadata?.originalLanguage?.csvEscaped ?? ""
-            ].joined(separator: ",")
+                publisher,
+                publishedDate,
+                pageCount,
+                authorNationality,
+                originalLanguage
+            ]
+            let row = rowElements.joined(separator: ",")
             
             csvContent += row + "\n"
         }

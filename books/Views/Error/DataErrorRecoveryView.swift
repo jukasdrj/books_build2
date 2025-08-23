@@ -52,12 +52,12 @@ struct DataErrorRecoveryView: View {
                     Text("Data Initialization Failed")
                         .font(.title2)
                         .fontWeight(.semibold)
-                        .foregroundColor(themeStore.appTheme.onBackground)
+                        .foregroundColor(themeStore.appTheme.primaryText)
                         .multilineTextAlignment(.center)
                     
                     Text("We're unable to start the app with your data. This might be a temporary issue.")
                         .font(.body)
-                        .foregroundColor(themeStore.appTheme.onBackground.opacity(0.8))
+                        .foregroundColor(themeStore.appTheme.primaryText.opacity(0.8))
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 32)
                 }
@@ -99,7 +99,7 @@ struct DataErrorRecoveryView: View {
                             showingTechnicalDetails.toggle()
                         }
                     }
-                    .foregroundColor(themeStore.appTheme.onBackground.opacity(0.6))
+                    .foregroundColor(themeStore.appTheme.primaryText.opacity(0.6))
                     .font(.caption)
                 }
                 
@@ -108,12 +108,12 @@ struct DataErrorRecoveryView: View {
                         Text("Technical Information:")
                             .font(.caption)
                             .fontWeight(.medium)
-                            .foregroundColor(themeStore.appTheme.onBackground.opacity(0.8))
+                            .foregroundColor(themeStore.appTheme.primaryText.opacity(0.8))
                         
                         ScrollView {
                             Text(errorDescription)
                                 .font(.system(.caption, design: .monospaced))
-                                .foregroundColor(themeStore.appTheme.onBackground.opacity(0.6))
+                                .foregroundColor(themeStore.appTheme.primaryText.opacity(0.6))
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .padding(12)
                                 .background(themeStore.appTheme.surface.opacity(0.5))
@@ -132,11 +132,11 @@ struct DataErrorRecoveryView: View {
                     Text("PaperTracks")
                         .font(.caption)
                         .fontWeight(.medium)
-                        .foregroundColor(themeStore.appTheme.onBackground.opacity(0.6))
+                        .foregroundColor(themeStore.appTheme.primaryText.opacity(0.6))
                     
                     Text("Version \(appVersion)")
                         .font(.caption2)
-                        .foregroundColor(themeStore.appTheme.onBackground.opacity(0.4))
+                        .foregroundColor(themeStore.appTheme.primaryText.opacity(0.4))
                 }
             }
             .padding(.vertical, 32)
