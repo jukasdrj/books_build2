@@ -51,7 +51,9 @@ class ReadingGoalsManager: ObservableObject {
     // MARK: - Progress Calculation
     func getDailyProgress(from books: [UserBook]) -> (current: Int, goal: Int, percentage: Double) {
         let today = Calendar.current.startOfDay(for: Date())
-        let tomorrow = Calendar.current.date(byAdding: .day, value: 1, to: today)!
+        guard let tomorrow = Calendar.current.date(byAdding: .day, value: 1, to: today) else {
+            return (current: 0, goal: dailyGoalMinutes, percentage: 0.0)
+        }
         
         let todaySessions = books.flatMap { book in
             book.readingSessions.filter { session in
@@ -79,7 +81,9 @@ class ReadingGoalsManager: ObservableObject {
         let calendar = Calendar.current
         let now = Date()
         let weekStart = calendar.dateInterval(of: .weekOfYear, for: now)?.start ?? now
-        let weekEnd = calendar.date(byAdding: .day, value: 7, to: weekStart)!
+        guard let weekEnd = calendar.date(byAdding: .day, value: 7, to: weekStart) else {
+            return (current: 0, goal: weeklyGoalMinutes, percentage: 0.0)
+        }
         
         let weekSessions = books.flatMap { book in
             book.readingSessions.filter { session in

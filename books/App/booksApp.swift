@@ -8,6 +8,7 @@ struct booksApp: App {
     @State private var themeStore = ThemeStore()
     @Environment(\.colorScheme) private var colorScheme
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+    @State private var dataInitializationError: Error? = nil
     
     private var adaptiveBackground: Color {
         // Force dependency on colorScheme to ensure updates on light/dark mode changes
@@ -15,7 +16,11 @@ struct booksApp: App {
         return themeStore.appTheme.background
     }
     
-    var sharedModelContainer: ModelContainer = {
+    private var sharedModelContainer: ModelContainer? {
+        createModelContainer()
+    }
+    
+    private func createModelContainer() -> ModelContainer? {
         // FIXED: CloudKit unique constraint issue resolved
         
         // Try simple in-memory container first to test model validity
@@ -51,20 +56,34 @@ struct booksApp: App {
             } catch {
                 print("❌ All ModelContainer creation attempts failed: \(error)")
                 print("❌ This indicates a fundamental issue with the SwiftData models")
-                
-                // Instead of fatal error, try to identify the specific issue
                 print("❌ SwiftData Error Details: \(error)")
                 
-                fatalError("Critical: Unable to create ModelContainer. Error: \(error)")
+                // Store error for graceful handling instead of crashing
+                dataInitializationError = error
+                return nil
             }
         }
-    }()
+    }
 
     var body: some Scene {
         WindowGroup {
-            ThemedRootView(themeStore: themeStore)
+            Group {
+                if let container = sharedModelContainer {
+                    ThemedRootView(themeStore: themeStore)
+                        .modelContainer(container)
+                } else {
+                    // Show error recovery screen instead of crashing
+                    DataErrorRecoveryView(
+                        error: dataInitializationError,
+                        themeStore: themeStore,
+                        onRetry: {
+                            // Reset error and attempt retry
+                            dataInitializationError = nil
+                        }
+                    )
+                }
+            }
         }
-        .modelContainer(sharedModelContainer)
     }
 }
 

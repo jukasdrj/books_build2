@@ -340,30 +340,44 @@ class BookSearchService: ObservableObject {
     
     private func executeProxyRequest<T>(
         url: URL,
-        decoder: @escaping (Data) throws -> T
+        decoder: @escaping (Data) throws -> T,
+        retryCount: Int = 0
     ) async -> Result<T, BookError> {
         
         do {
             let configuration = URLSessionConfiguration.default
-            configuration.timeoutIntervalForRequest = 30.0
-            configuration.timeoutIntervalForResource = 60.0
+            configuration.timeoutIntervalForRequest = 20.0  // Reduced timeout for better UX
+            configuration.timeoutIntervalForResource = 40.0
             configuration.waitsForConnectivity = true
             let session = URLSession(configuration: configuration)
             
             var request = URLRequest(url: url)
             request.setValue("BooksTrack-iOS/1.0", forHTTPHeaderField: "User-Agent")
+            request.cachePolicy = .reloadIgnoringLocalCacheData // Force fresh requests for search
             
             let (data, response) = try await session.data(for: request)
             
             // Check HTTP response
             if let httpResponse = response as? HTTPURLResponse {
                 guard 200...299 ~= httpResponse.statusCode else {
-                    // Handle specific error cases
-                    if httpResponse.statusCode == 429 {
+                    // Handle specific error cases with retry logic
+                    switch httpResponse.statusCode {
+                    case 429:
                         let retryAfter = httpResponse.value(forHTTPHeaderField: "Retry-After") ?? "60"
-                        return .failure(.proxyError("Rate limit exceeded. Please try again in \(retryAfter) seconds."))
+                        return .failure(.proxyError("Too many requests. Please wait \(retryAfter) seconds before trying again."))
+                    case 500...599:
+                        // Server error - retry if we haven't exceeded limit
+                        if retryCount < 2 {
+                            let delay = pow(2.0, Double(retryCount)) // Exponential backoff
+                            try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+                            return await executeProxyRequest(url: url, decoder: decoder, retryCount: retryCount + 1)
+                        }
+                        return .failure(.networkError("Server temporarily unavailable. Please try again later."))
+                    case 404:
+                        return .failure(.noData)
+                    default:
+                        return .failure(.networkError("Unable to connect to book database (Error \(httpResponse.statusCode))"))
                     }
-                    return .failure(.networkError("HTTP \(httpResponse.statusCode)"))
                 }
                 
                 // Log cache status for debugging
@@ -379,11 +393,26 @@ class BookSearchService: ObservableObject {
             return .success(result)
             
         } catch let error as URLError {
-            return .failure(.networkError(error.localizedDescription))
+            // Handle network-specific errors with user-friendly messages
+            switch error.code {
+            case .notConnectedToInternet, .networkConnectionLost:
+                return .failure(.networkError("No internet connection. Please check your network and try again."))
+            case .timedOut:
+                if retryCount < 1 {
+                    return await executeProxyRequest(url: url, decoder: decoder, retryCount: retryCount + 1)
+                }
+                return .failure(.networkError("Request timed out. Please try again."))
+            case .cannotConnectToHost, .cannotFindHost:
+                return .failure(.networkError("Unable to connect to book database. Please try again later."))
+            case .secureConnectionFailed:
+                return .failure(.networkError("Secure connection failed. Please check your internet connection."))
+            default:
+                return .failure(.networkError("Network error occurred. Please check your connection and try again."))
+            }
         } catch let error as ProxyError {
             return .failure(.proxyError(error.localizedDescription))
         } catch {
-            return .failure(.decodingError(error.localizedDescription))
+            return .failure(.decodingError("Unable to process response from book database. Please try again."))
         }
     }
     

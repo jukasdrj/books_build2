@@ -46,7 +46,12 @@ class BackgroundTaskManager: NSObject, ObservableObject {
             forTaskWithIdentifier: Self.csvImportTaskIdentifier,
             using: nil
         ) { [weak self] task in
-            self?.handleCSVImportBackgroundTask(task as! BGProcessingTask)
+            guard let processingTask = task as? BGProcessingTask else {
+                print("❌ [BackgroundTaskManager] Expected BGProcessingTask for CSV import, got \(type(of: task))")
+                task.setTaskCompleted(success: false)
+                return
+            }
+            self?.handleCSVImportBackgroundTask(processingTask)
         }
         
         // Register background processing task for metadata enrichment
@@ -54,7 +59,12 @@ class BackgroundTaskManager: NSObject, ObservableObject {
             forTaskWithIdentifier: Self.enrichmentTaskIdentifier,
             using: nil
         ) { [weak self] task in
-            self?.handleEnrichmentBackgroundTask(task as! BGProcessingTask)
+            guard let processingTask = task as? BGProcessingTask else {
+                print("❌ [BackgroundTaskManager] Expected BGProcessingTask for enrichment, got \(type(of: task))")
+                task.setTaskCompleted(success: false)
+                return
+            }
+            self?.handleEnrichmentBackgroundTask(processingTask)
         }
         
         print("[BackgroundTaskManager] Registered background tasks: \(Self.csvImportTaskIdentifier), \(Self.enrichmentTaskIdentifier)")

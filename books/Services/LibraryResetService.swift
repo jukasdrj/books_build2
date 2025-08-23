@@ -225,7 +225,7 @@ class LibraryResetService: ObservableObject {
                 genre,
                 book.metadata?.publisher?.csvEscaped ?? "",
                 book.metadata?.publishedDate?.csvEscaped ?? "",
-                book.metadata?.pageCount != nil ? "\(book.metadata!.pageCount!)" : "",
+                book.metadata?.pageCount.map(String.init) ?? "",
                 book.metadata?.authorNationality?.csvEscaped ?? "",
                 book.metadata?.originalLanguage?.csvEscaped ?? ""
             ].joined(separator: ",")

@@ -742,7 +742,9 @@ extension ModelContainer {
             )
             return container
         } catch {
-            fatalError("Failed to create preview container: \(error)")
+            print("⚠️ Failed to create preview container: \(error)")
+            // Return a fallback container for preview purposes
+            return try! ModelContainer(for: UserBook.self, BookMetadata.self, configurations: [])
         }
     }
 }
