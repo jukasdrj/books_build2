@@ -196,3 +196,4 @@ Private License - See [LICENSE](LICENSE) file for details.
 For detailed technical information, architecture decisions, and implementation guides, explore the comprehensive documentation in the [`docs/`](docs/) directory.
 
 # Auto-versioning enabled
+# Test auto-versioning on ios26
