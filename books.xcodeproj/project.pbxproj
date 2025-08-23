@@ -35,8 +35,8 @@
 		0718D7482E347EFE00421DCB /* booksUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = booksUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		0718D7792E35ECCC00421DCB /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.5.sdk/System/Library/Frameworks/UIKit.framework; sourceTree = DEVELOPER_DIR; };
 		0727225B2E4BB14A0000EF6D /* CloudKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CloudKit.framework; path = System/Library/Frameworks/CloudKit.framework; sourceTree = SDKROOT; };
-		0727225D2E4BB14A0000EF6E /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
-		07272AED2E4D602F0000EF6D /* Config.test.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.test.xcconfig; sourceTree = "<group>"; };
+		0727225D2E4BB14A0000EF6E /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = config/Config.xcconfig; sourceTree = "<group>"; };
+		07272AED2E4D602F0000EF6D /* Config.test.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = config/Config.test.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */

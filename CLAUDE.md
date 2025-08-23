@@ -529,7 +529,7 @@ X-Cache-System: R2+KV-Hybrid
 - Cloud sync capabilities
 
 ### Phase 4: Import System Enhancements (📋 Planned)
-**Detailed roadmap**: See [IMPORT_ROADMAP.md](IMPORT_ROADMAP.md) for comprehensive enhancement plan
+**Detailed roadmap**: See [Feature Roadmap](docs/project/feature-roadmap.md) for comprehensive enhancement plan
 - Enhanced error management with detailed logging and retry functionality
 - Persistent import history and session management
 - Manual book editor for problematic imports

@@ -1,5 +1,11 @@
 # Books Reading Tracker - System Architecture
 
+> Comprehensive technical architecture for the iOS 26 Liquid Glass book tracking application
+
+**📖 [Documentation Index](../README.md)** | **🎨 [iOS 26 Design](ios26-liquid-glass.md)** | **⚙️ [Background Processing](background-processing.md)**
+
+---
+
 ## Table of Contents
 
 1. [Executive Summary](#executive-summary)
@@ -22,10 +28,11 @@ The Books Reading Tracker is a sophisticated SwiftUI application built with mode
 
 ### Key Architectural Achievements
 
+- **iOS 26 Liquid Glass Design**: Complete implementation with 5 material variants and fluid animations
 - **Swift 6 Compliant**: Full concurrency safety with actor-based design
 - **Background Processing**: Robust CSV import system with state persistence
-- **Live Activities Integration**: Real-time progress in Dynamic Island and Lock Screen
-- **High Performance**: 5x improvement through concurrent processing
+- **CloudFlare Workers Integration**: Optimized proxy with batch API support
+- **High Performance**: 4x improvement with batch processing and intelligent caching
 - **Resilient Design**: Complete recovery from crashes and interruptions
 - **Scalable Architecture**: Modular design supporting future enhancements
 
@@ -946,7 +953,21 @@ The architecture provides a solid foundation for the application's continued evo
 
 ---
 
-**Architecture Version**: 2.0 (Phase 2 Complete)  
-**Last Updated**: August 2024  
+## 🔗 **Related Documentation**
+
+- **🎨 [iOS 26 Liquid Glass Design](ios26-liquid-glass.md)** - Complete design system implementation
+- **⚙️ [Background Processing](background-processing.md)** - CSV import and background tasks
+- **🛠️ [Development Setup](../development/CLAUDE.md)** - Complete development guide
+- **📊 [Feature Implementation](../features/)** - Specific feature documentation
+
+## 📋 **Document Information**
+
+**Architecture Version**: 3.0 (iOS 26 Liquid Glass Complete)  
+**Last Updated**: December 2024  
 **Swift Version**: 6.0  
+**iOS Compatibility**: 16.0+ (iOS 26 features require iOS 26+)  
+
+---
+
+**📖 [← Documentation Index](../README.md)** | **🏗️ [System Architecture](#)** | **🎨 [iOS 26 Design →](ios26-liquid-glass.md)**
 **iOS Deployment Target**: 16.0 (16.1 for Live Activities)
