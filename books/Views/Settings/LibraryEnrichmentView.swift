@@ -575,10 +575,7 @@ struct IncompleteBookListView: View {
             Section {
                 ForEach(filteredBooks, id: \.id) { book in
                     NavigationLink(value: book) {
-                        LiquidGlassBookRowView(
-                            userBook: book,
-                            analysisResult: analyzer.getAnalysisResult(for: book)
-                        )
+                        LiquidGlassBookRowView(book: book)
                     }
                     .listRowBackground(Color.clear)
                     .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))

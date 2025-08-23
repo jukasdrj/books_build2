@@ -2,321 +2,316 @@
 //  LiquidGlassBookRowView.swift
 //  books
 //
-//  iOS 26 Liquid Glass book row component
-//  Enhanced design with glass materials, depth, and fluid interactions
+//  iOS 26 Liquid Glass book row component - Unified with card design
+//  Clean, focused display component matching LiquidGlassBookCardView aesthetic
 //
 
 import SwiftUI
 
+// MARK: - Simplified Liquid Glass Book Row View
+
 struct LiquidGlassBookRowView: View {
+    let book: UserBook
     @Environment(\.appTheme) private var theme
-    @Environment(\.modelContext) private var modelContext
-    let userBook: UserBook
-    let analysisResult: AnalysisResult?
-    let onStatusChange: ((ReadingStatus) -> Void)?
-    let onEdit: (() -> Void)?
-    let onDelete: (() -> Void)?
-    
-    @State private var showingDeleteAlert = false
-    @State private var showingStatusPicker = false
-    
-    init(
-        userBook: UserBook,
-        analysisResult: AnalysisResult? = nil,
-        onStatusChange: ((ReadingStatus) -> Void)? = nil,
-        onEdit: (() -> Void)? = nil,
-        onDelete: (() -> Void)? = nil
-    ) {
-        self.userBook = userBook
-        self.analysisResult = analysisResult
-        self.onStatusChange = onStatusChange
-        self.onEdit = onEdit
-        self.onDelete = onDelete
-    }
+    @Environment(\.colorScheme) private var colorScheme
+    @State private var isPressed = false
+    @State private var hoverIntensity: CGFloat = 0
     
     var body: some View {
-        buildRowContent()
-    }
-    
-    @ViewBuilder
-    private func buildRowContent() -> some View {
-        HStack(spacing: Theme.Spacing.md) {
-            // Enhanced book cover with glass materials
-            LiquidGlassRowBookCoverView(
-                imageURL: userBook.metadata?.imageURL?.absoluteString,
-                width: 50,
-                height: 75,
-                style: .row
+        HStack(spacing: 16) {
+            // Enhanced book cover with glass materials - consistent with card
+            LiquidGlassRowBookCover(
+                imageURL: book.metadata?.imageURL?.absoluteString,
+                width: 60,
+                height: 90
             )
             
-            // Book information with enhanced typography
-            VStack(alignment: .leading, spacing: 6) {
-                // Title with iOS 26 typography
-                Text(userBook.metadata?.title ?? "Unknown Title")
-                    .font(LiquidGlassTheme.typography.titleSmall)
+            // Book information section - matches card hierarchy
+            VStack(alignment: .leading, spacing: 8) {
+                // Title with iOS 26 typography - consistent with card
+                Text(book.metadata?.title ?? "Unknown Title")
+                    .font(LiquidGlassTheme.typography.titleMedium)
                     .foregroundColor(theme.primaryText)
+                    .liquidGlassVibrancy(.maximum)
                     .lineLimit(2)
                     .multilineTextAlignment(.leading)
                 
-                // Authors with secondary typography
-                if let authors = userBook.metadata?.authors, !authors.isEmpty {
+                // Authors with subtle vibrancy - consistent with card
+                if let authors = book.metadata?.authors, !authors.isEmpty {
                     Text("by \(authors.joined(separator: ", "))")
                         .font(LiquidGlassTheme.typography.bodySmall)
                         .foregroundColor(theme.secondaryText)
+                        .liquidGlassVibrancy(.medium)
                         .lineLimit(1)
                 }
                 
-                // Enhanced metadata row with glass capsules
-                HStack(spacing: 8) {
-                    // Reading status with glass styling
-                    if userBook.readingStatus != .toRead {
-                        Text(userBook.readingStatus.displayName)
-                            .font(LiquidGlassTheme.typography.labelSmall)
-                            .fontWeight(.medium)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 3)
-                            .background(
-                                Capsule()
-                                    .fill(.regularMaterial)
-                                    .overlay(
-                                        Capsule()
-                                            .stroke(statusColor.opacity(0.3), lineWidth: 0.5)
-                                    )
-                            )
-                            .foregroundColor(statusColor)
+                // Metadata row with unified glass styling
+                HStack(spacing: 12) {
+                    // Rating with vibrancy - matches card design
+                    if let rating = book.rating, rating > 0 {
+                        HStack(spacing: 3) {
+                            ForEach(1...5, id: \.self) { star in
+                                Image(systemName: star <= Int(rating) ? "star.fill" : "star")
+                                    .font(.caption)
+                                    .fontWeight(.medium)
+                                    .foregroundColor(star <= Int(rating) ? .amber : .secondary.opacity(0.4))
+                                    .liquidGlassVibrancy(.prominent)
+                            }
+                        }
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(.thinMaterial.opacity(0.7))
+                        .clipShape(Capsule())
                     }
                     
-                    // Completion percentage if available
-                    if let result = analysisResult {
-                        Text("\(result.completionPercentage)% complete")
-                            .font(LiquidGlassTheme.typography.labelSmall)
-                            .fontWeight(.medium)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 3)
-                            .background(
-                                Capsule()
-                                    .fill(.thinMaterial)
-                                    .overlay(
-                                        Capsule()
-                                            .stroke(completionColor(result.completionScore).opacity(0.3), lineWidth: 0.5)
-                                    )
-                            )
-                            .foregroundColor(completionColor(result.completionScore))
+                    // Reading progress with liquid glass styling - matches card
+                    if book.readingProgress > 0 && book.readingStatus == .reading {
+                        HStack(spacing: 6) {
+                            ProgressView(value: book.readingProgress / 100.0)
+                                .progressViewStyle(LinearProgressViewStyle())
+                                .frame(width: 50)
+                                .tint(theme.primary)
+                            
+                            Text("\(Int(book.readingProgress))%")
+                                .font(LiquidGlassTheme.typography.labelSmall)
+                                .foregroundColor(theme.primary)
+                                .liquidGlassVibrancy(.medium)
+                        }
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 5)
+                        .background(.regularMaterial.opacity(0.6))
+                        .clipShape(Capsule())
                     }
                     
                     Spacer()
                 }
-                
-                // Progress bar for currently reading books
-                if userBook.readingStatus == .reading && userBook.readingProgress > 0 {
-                    ProgressView(value: userBook.readingProgress)
-                        .progressViewStyle(LiquidGlassProgressStyle())
-                        .frame(height: 4)
-                }
             }
             
-            // Trailing info section
+            // Trailing section - status and cultural info
             VStack(alignment: .trailing, spacing: 8) {
-                // Rating with enhanced star design
-                if let rating = userBook.rating {
-                    LiquidGlassStarRating(rating: Double(rating), size: .compact)
+                // Status indicator with glass styling - consistent with card
+                if book.readingStatus != .toRead && book.readingStatus != .wantToRead {
+                    HStack(spacing: 4) {
+                        Image(systemName: book.readingStatus.systemImage)
+                            .font(.caption2)
+                            .foregroundColor(statusColor)
+                        
+                        Text(book.readingStatus.displayName)
+                            .font(LiquidGlassTheme.typography.labelSmall)
+                            .foregroundColor(statusColor)
+                            .liquidGlassVibrancy(.medium)
+                    }
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(
+                        statusColor.opacity(0.1)
+                            .overlay(.ultraThinMaterial.opacity(0.5))
+                    )
+                    .clipShape(Capsule())
                 }
                 
-                // Cultural language indicator with glass styling
-                if let language = userBook.metadata?.language, language != "en" {
-                    LiquidGlassLanguageIndicator(language: language)
+                // Cultural language indicator - matches card design
+                if let language = book.metadata?.language, language != "en" {
+                    Text(language.uppercased())
+                        .font(LiquidGlassTheme.typography.labelSmall)
+                        .fontWeight(.bold)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(
+                            theme.primary.opacity(0.1)
+                                .overlay(.ultraThinMaterial.opacity(0.5))
+                        )
+                        .foregroundColor(theme.primary)
+                        .liquidGlassVibrancy(.prominent)
+                        .clipShape(Capsule())
+                }
+                
+                // Cultural region indicator if available
+                if let region = book.metadata?.culturalRegion {
+                    HStack(spacing: 4) {
+                        Text(region.emoji)
+                            .font(.caption2)
+                        
+                        Text(region.shortName)
+                            .font(LiquidGlassTheme.typography.labelSmall)
+                            .foregroundColor(region.color(theme: theme))
+                            .liquidGlassVibrancy(.medium)
+                    }
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(
+                        region.color(theme: theme).opacity(0.1)
+                            .overlay(.ultraThinMaterial.opacity(0.5))
+                    )
+                    .clipShape(Capsule())
                 }
                 
                 Spacer()
                 
-                // Navigation chevron with vibrancy
+                // Navigation chevron with subtle vibrancy
                 Image(systemName: "chevron.right")
                     .font(.caption)
                     .fontWeight(.medium)
-                    .foregroundColor(theme.outline)
+                    .foregroundColor(theme.outline.opacity(0.6))
                     .liquidGlassVibrancy(.subtle)
             }
         }
-        .modifier(RowBaseModifier())
-        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-            trailingSwipeActions
-        }
-        .swipeActions(edge: .leading, allowsFullSwipe: true) {
-            leadingSwipeActions
-        }
-        .contextMenu {
-            contextMenuItems
-        }
-        .modifier(RowPresentationModifier(
-            showingDeleteAlert: $showingDeleteAlert,
-            showingStatusPicker: $showingStatusPicker,
-            userBook: userBook,
-            onStatusChange: onStatusChange,
-            onDelete: onDelete
-        ))
-        .modifier(RowAccessibilityModifier(
-            userBook: userBook,
-            analysisResult: analysisResult,
-            onEdit: onEdit,
-            onToggleStatus: toggleReadingStatus,
-            onShowDeleteAlert: { showingDeleteAlert = true }
-        ))
-    }
-    
-    // MARK: - Computed Properties
-    
-    @ViewBuilder
-    private var trailingSwipeActions: some View {
-        // Delete action
-        Button(role: .destructive) {
-            showingDeleteAlert = true
-        } label: {
-            Label("Delete", systemImage: "trash")
-        }
-        .tint(.red)
-        
-        // Edit action
-        Button {
-            onEdit?()
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
-        } label: {
-            Label("Edit", systemImage: "pencil")
-        }
-        .tint(.orange)
-    }
-    
-    @ViewBuilder
-    private var leadingSwipeActions: some View {
-        // Quick status change action
-        Button {
-            toggleReadingStatus()
-            UINotificationFeedbackGenerator().notificationOccurred(.success)
-        } label: {
-            Label(quickStatusActionLabel, systemImage: quickStatusActionIcon)
-        }
-        .tint(quickStatusActionColor)
-    }
-    
-    @ViewBuilder
-    private var deleteAlert: some View {
-        Button("Cancel", role: .cancel) { }
-        Button("Delete", role: .destructive) {
-            onDelete?()
-            UINotificationFeedbackGenerator().notificationOccurred(.success)
-        }
-    }
-    
-    // MARK: - Computed Properties
-    
-    private var statusColor: Color {
-        switch userBook.readingStatus {
-        case .reading: return theme.primary
-        case .read: return Color.green
-        case .wantToRead: return Color.orange
-        case .dnf: return theme.error
-        case .toRead: return theme.outline
-        case .onHold: return Color.yellow
-        }
-    }
-    
-    private func completionColor(_ score: Double) -> Color {
-        switch score {
-        case 0.8...: return theme.primary
-        case 0.6..<0.8: return Color.orange
-        case 0.4..<0.6: return Color.yellow
-        default: return theme.error
-        }
-    }
-    
-    // MARK: - Swipe Action Properties
-    
-    private var quickStatusActionLabel: String {
-        switch userBook.readingStatus {
-        case .toRead, .wantToRead: return "Mark as Reading"
-        case .reading: return "Mark as Read"
-        case .read: return "Mark as Reading"
-        case .dnf, .onHold: return "Mark as Reading"
-        }
-    }
-    
-    private var quickStatusActionIcon: String {
-        switch userBook.readingStatus {
-        case .toRead, .wantToRead: return "play.fill"
-        case .reading: return "checkmark.circle.fill"
-        case .read: return "arrow.clockwise"
-        case .dnf, .onHold: return "play.fill"
-        }
-    }
-    
-    private var quickStatusActionColor: Color {
-        switch userBook.readingStatus {
-        case .toRead, .wantToRead: return .blue
-        case .reading: return .green
-        case .read: return .orange
-        case .dnf, .onHold: return .blue
-        }
-    }
-    
-    // MARK: - Context Menu
-    
-    @ViewBuilder
-    private var contextMenuItems: some View {
-        // Reading status options
-        Section("Reading Status") {
-            ForEach(ReadingStatus.allCases, id: \.self) { status in
-                Button {
-                    onStatusChange?(status)
-                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                } label: {
-                    HStack {
-                        Text(status.displayName)
-                        if userBook.readingStatus == status {
-                            Image(systemName: "checkmark")
-                        }
-                    }
+        .frame(minHeight: 100)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .liquidGlassCard(
+            material: .regular,
+            depth: isPressed ? .floating : .elevated,
+            radius: .comfortable,
+            vibrancy: .medium
+        )
+        .scaleEffect(isPressed ? 0.98 : 1.0)
+        .brightness(hoverIntensity * 0.05)
+        .onTapGesture {
+            // Consistent interaction with card
+            withAnimation(LiquidGlassTheme.FluidAnimation.quick.springAnimation) {
+                isPressed = true
+            }
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                withAnimation(LiquidGlassTheme.FluidAnimation.smooth.springAnimation) {
+                    isPressed = false
                 }
             }
         }
-        
-        Divider()
-        
-        // Quick actions
-        Button {
-            onEdit?()
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
-        } label: {
-            Label("Edit Book", systemImage: "pencil")
+        .onHover { hovering in
+            withAnimation(LiquidGlassTheme.FluidAnimation.smooth.springAnimation) {
+                hoverIntensity = hovering ? 1.0 : 0.0
+            }
         }
-        
-        Button {
-            showingStatusPicker = true
-        } label: {
-            Label("Change Status", systemImage: "arrow.up.arrow.down")
-        }
-        
-        Divider()
-        
-        // Destructive action
-        Button(role: .destructive) {
-            showingDeleteAlert = true
-        } label: {
-            Label("Delete Book", systemImage: "trash")
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(accessibilityLabel)
+        .accessibilityHint("Double tap to view book details")
+    }
+    
+    // MARK: - Helper Properties
+    
+    private var statusColor: Color {
+        switch book.readingStatus {
+        case .reading: return theme.primary
+        case .read: return .green
+        case .wantToRead: return .orange
+        case .dnf: return theme.error
+        case .toRead: return theme.outline
+        case .onHold: return .yellow
         }
     }
     
-    // MARK: - Helper Methods
-    
-    private func toggleReadingStatus() {
-        let newStatus: ReadingStatus
-        switch userBook.readingStatus {
-        case .toRead, .wantToRead, .dnf, .onHold:
-            newStatus = .reading
-        case .reading:
-            newStatus = .read
-        case .read:
-            newStatus = .reading
+    private var accessibilityLabel: String {
+        var label = book.metadata?.title ?? "Unknown Title"
+        
+        if let authors = book.metadata?.authors, !authors.isEmpty {
+            label += ", by \(authors.joined(separator: ", "))"
         }
-        onStatusChange?(newStatus)
+        
+        if let rating = book.rating, rating > 0 {
+            label += ", rated \(rating) out of 5 stars"
+        }
+        
+        if book.readingProgress > 0 {
+            label += ", \(Int(book.readingProgress))% complete"
+        }
+        
+        label += ", status: \(book.readingStatus.displayName)"
+        
+        return label
+    }
+}
+
+// MARK: - Enhanced Book Cover for Row Layout
+
+struct LiquidGlassRowBookCover: View {
+    let imageURL: String?
+    let width: CGFloat
+    let height: CGFloat
+    
+    @State private var isLoading = true
+    @State private var loadError = false
+    
+    var body: some View {
+        ZStack {
+            // Background with liquid glass effect - consistent with card
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .fill(.regularMaterial)
+                .overlay(
+                    LinearGradient(
+                        colors: [
+                            Color.primary.opacity(0.1),
+                            Color.primary.opacity(0.05)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+            
+            // Book cover image or placeholder
+            Group {
+                if let urlString = imageURL, let url = URL(string: urlString), !loadError {
+                    AsyncImage(url: url) { phase in
+                        switch phase {
+                        case .success(let image):
+                            image
+                                .resizable()
+                                .aspectRatio(contentMode: .fill)
+                                .liquidGlassVibrancy(.maximum)
+                        case .failure(_):
+                            bookPlaceholder
+                        case .empty:
+                            loadingPlaceholder
+                        @unknown default:
+                            loadingPlaceholder
+                        }
+                    }
+                } else {
+                    bookPlaceholder
+                }
+            }
+        }
+        .frame(width: width, height: height)
+        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .shadow(
+            color: .black.opacity(0.08),
+            radius: 4,
+            x: 0,
+            y: 2
+        )
+    }
+    
+    @ViewBuilder
+    private var loadingPlaceholder: some View {
+        ZStack {
+            Color.secondary.opacity(0.1)
+            
+            ProgressView()
+                .progressViewStyle(CircularProgressViewStyle(tint: .primary))
+                .scaleEffect(0.7)
+                .liquidGlassVibrancy(.medium)
+        }
+        .redacted(reason: .placeholder)
+    }
+    
+    @ViewBuilder
+    private var bookPlaceholder: some View {
+        ZStack {
+            LinearGradient(
+                colors: [
+                    Color.primary.opacity(0.15),
+                    Color.primary.opacity(0.08)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            
+            Image(systemName: "book.fill")
+                .font(.title3)
+                .foregroundColor(.primary.opacity(0.5))
+                .liquidGlassVibrancy(.subtle)
+        }
     }
 }
 

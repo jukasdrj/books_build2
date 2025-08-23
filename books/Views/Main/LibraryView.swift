@@ -80,7 +80,7 @@ struct LibraryView: View {
             SettingsView()
         }
         .sheet(isPresented: $showingEnhancement) {
-            LibraryEnrichmentView(modelContext: modelContext)
+            LibraryEnhancementView()
         }
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
@@ -88,13 +88,31 @@ struct LibraryView: View {
                     // Background import progress indicator (subtle)
                     BackgroundImportProgressIndicator()
                     
-                    // Library enhancement insights button
+                    // Library enhancement insights button with badge
                     Button { showingEnhancement.toggle() } label: {
-                        Image(systemName: "chart.line.uptrend.xyaxis")
-                            .foregroundColor(currentTheme.primary)
+                        ZStack(alignment: .topTrailing) {
+                            Image(systemName: "chart.line.uptrend.xyaxis")
+                                .foregroundColor(currentTheme.primary)
+                            
+                            // Badge showing books needing attention
+                            let qualityReport = DataCompletenessService.analyzeLibraryQuality(allBooks)
+                            let booksNeedingAttention = qualityReport.booksNeedingAttention
+                            
+                            if booksNeedingAttention > 0 {
+                                Text("\(booksNeedingAttention)")
+                                    .font(.caption2)
+                                    .foregroundColor(.white)
+                                    .background(
+                                        Circle()
+                                            .fill(Color.red)
+                                            .frame(width: 16, height: 16)
+                                    )
+                                    .offset(x: 8, y: -4)
+                            }
+                        }
                     }
                     .accessibilityLabel("Library insights")
-                    .accessibilityHint("View data quality and enhancement recommendations")
+                    .accessibilityHint("View data quality and enhancement recommendations. \(DataCompletenessService.analyzeLibraryQuality(allBooks).booksNeedingAttention) books need attention")
                     
                     Button { showingFilters.toggle() } label: {
                         Image(systemName: libraryFilter.isActive ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle")
@@ -211,7 +229,7 @@ struct UniformGridLayoutView: View {
             LazyVGrid(columns: columns, spacing: adaptiveSpacing()) {
                 ForEach(books) { book in
                     NavigationLink(value: book) {
-                        BookCardView(book: book)
+                        LiquidGlassBookCardView(book: book)
                     }
                     .buttonStyle(PlainButtonStyle())
                     .accessibilityLabel("View details for \(book.metadata?.title ?? "Unknown Title")")
@@ -278,21 +296,17 @@ struct ListLayoutView: View {
             VirtualizedListView(books: books)
                 .padding(.horizontal, Theme.Spacing.md)
         } else {
-            LazyVStack(spacing: 0) {
+            LazyVStack(spacing: 12) {
                 ForEach(books) { book in
                     NavigationLink(value: book) {
-                        BookRowView(userBook: book)
+                        LiquidGlassBookRowView(book: book)
                     }
                     .buttonStyle(PlainButtonStyle())
                     .accessibilityLabel("View details for \(book.metadata?.title ?? "Unknown Title")")
-                    
-                    if book.id != books.last?.id {
-                        Divider()
-                            .padding(.leading, 80) // Align with text
-                    }
                 }
             }
             .padding(.horizontal, Theme.Spacing.md)
+            .padding(.vertical, Theme.Spacing.sm)
         }
     }
 }
@@ -480,7 +494,7 @@ struct VirtualizedGridView: View {
                         LazyVGrid(columns: columns, spacing: Theme.Spacing.lg) {
                             ForEach(visibleBooks) { book in
                                 NavigationLink(value: book) {
-                                    BookCardView(book: book)
+                                    LiquidGlassBookCardView(book: book)
                                 }
                                 .buttonStyle(PlainButtonStyle())
                                 .accessibilityLabel("View details for \(book.metadata?.title ?? "Unknown Title")")
@@ -568,15 +582,15 @@ struct VirtualizedListView: View {
                     let visibleBooks = Array(books[visibleRange])
                     ForEach(visibleBooks) { book in
                         NavigationLink(value: book) {
-                            BookRowView(userBook: book)
+                            LiquidGlassBookRowView(book: book)
                         }
                         .buttonStyle(PlainButtonStyle())
                         .accessibilityLabel("View details for \(book.metadata?.title ?? "Unknown Title")")
                         .id(book.id)
                         
                         if book.id != visibleBooks.last?.id {
-                            Divider()
-                                .padding(.leading, 80)
+                            Spacer()
+                                .frame(height: 12)
                         }
                     }
                     
