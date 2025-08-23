@@ -12,13 +12,19 @@ struct BookCardView: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-            // Book cover with unified design
-            UnifiedBookCoverView(
-                imageURL: book.metadata?.imageURL?.absoluteString,
-                width: 120,
-                height: 180,
-                style: .card
-            )
+            // Book cover with unified design and completeness indicator
+            ZStack(alignment: .topTrailing) {
+                UnifiedBookCoverView(
+                    imageURL: book.metadata?.imageURL?.absoluteString,
+                    width: 120,
+                    height: 180,
+                    style: .card
+                )
+                
+                // Data completeness indicator
+                DataCompletenessIndicator(book: book)
+                    .offset(x: -4, y: 4)
+            }
             .accessibilityHidden(true) // Cover is decorative, info is in text
             
             // Book information with standardized layout

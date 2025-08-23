@@ -17,6 +17,7 @@ struct LibraryEnhancementView: View {
     @State private var showingBookDetails = false
     @State private var selectedPromptType: UserInputPrompt?
     @State private var booksForPromptType: [UserBook] = []
+    @State private var showingOnboarding = false
     
     private var qualityReport: LibraryQualityReport {
         DataCompletenessService.analyzeLibraryQuality(allBooks)
@@ -61,6 +62,18 @@ struct LibraryEnhancementView: View {
                     promptType: promptType,
                     books: booksForPromptType
                 )
+            }
+        }
+        .sheet(isPresented: $showingOnboarding) {
+            DataQualityOnboardingView {
+                UserDefaults.standard.hasSeenDataQualityOnboarding = true
+            }
+        }
+        .onAppear {
+            if !UserDefaults.standard.hasSeenDataQualityOnboarding {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    showingOnboarding = true
+                }
             }
         }
     }

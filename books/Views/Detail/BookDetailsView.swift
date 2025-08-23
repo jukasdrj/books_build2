@@ -15,6 +15,9 @@ struct BookDetailsView: View {
             VStack(alignment: .leading, spacing: Theme.Spacing.xl) {
                 BookHeaderSection(book: book)
                 
+                // Smart data quality prompts
+                SmartPromptsSection(book: book, modelContext: modelContext)
+                
                 RatingSection(rating: $book.rating)
                 
                 // NEW: Reading Progress Section

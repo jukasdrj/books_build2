@@ -40,10 +40,10 @@ struct LibraryView: View {
         }
     }
     
-    /// Optimized filtering with lazy evaluation (without state modification during view update)
+    /// Optimized filtering and sorting with lazy evaluation
     private func computeFilteredBooks() -> [UserBook] {
         // Perform optimized filtering with single-pass approach
-        return allBooks.lazy
+        let filteredBooks = allBooks.lazy
             .filter { book in
                 // Combined filtering logic in single pass
                 let matchesSearch = searchText.isEmpty || {
@@ -63,6 +63,41 @@ struct LibraryView: View {
             .reduce(into: [UserBook]()) { result, book in
                 result.append(book)
             }
+        
+        // Apply sorting
+        return sortBooks(filteredBooks, by: libraryFilter.sortBy, ascending: libraryFilter.sortAscending)
+    }
+    
+    /// Sort books based on the selected option
+    private func sortBooks(_ books: [UserBook], by sortOption: LibrarySortOption, ascending: Bool) -> [UserBook] {
+        let sorted = books.sorted { book1, book2 in
+            let result: Bool
+            
+            switch sortOption {
+            case .dateAdded:
+                result = book1.dateAdded < book2.dateAdded
+            case .title:
+                let title1 = book1.metadata?.title ?? ""
+                let title2 = book2.metadata?.title ?? ""
+                result = title1.localizedStandardCompare(title2) == .orderedAscending
+            case .author:
+                let author1 = book1.metadata?.authors.first ?? ""
+                let author2 = book2.metadata?.authors.first ?? ""
+                result = author1.localizedStandardCompare(author2) == .orderedAscending
+            case .completeness:
+                let completeness1 = DataCompletenessService.calculateBookCompleteness(book1)
+                let completeness2 = DataCompletenessService.calculateBookCompleteness(book2)
+                result = completeness1 < completeness2
+            case .rating:
+                let rating1 = book1.rating ?? 0
+                let rating2 = book2.rating ?? 0
+                result = rating1 < rating2
+            }
+            
+            return ascending ? result : !result
+        }
+        
+        return sorted
     }
     
     var body: some View {

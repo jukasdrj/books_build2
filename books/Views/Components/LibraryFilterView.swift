@@ -1,16 +1,47 @@
 import SwiftUI
 
+enum LibrarySortOption: String, CaseIterable, Codable {
+    case dateAdded = "date_added"
+    case title = "title"
+    case author = "author"
+    case completeness = "completeness"
+    case rating = "rating"
+    
+    var displayName: String {
+        switch self {
+        case .dateAdded: return "Date Added"
+        case .title: return "Title"
+        case .author: return "Author"
+        case .completeness: return "Data Completeness"
+        case .rating: return "Rating"
+        }
+    }
+    
+    var icon: String {
+        switch self {
+        case .dateAdded: return "calendar.badge.plus"
+        case .title: return "textformat.abc"
+        case .author: return "person"
+        case .completeness: return "chart.bar.doc.horizontal"
+        case .rating: return "star.fill"
+        }
+    }
+}
+
 struct LibraryFilter: Codable, Equatable {
     var readingStatus: Set<ReadingStatus> = Set(ReadingStatus.allCases)
     var showWishlistOnly: Bool = false
     var showOwnedOnly: Bool = false
     var showFavoritesOnly: Bool = false
+    var sortBy: LibrarySortOption = .dateAdded
+    var sortAscending: Bool = false
     
     var isActive: Bool {
         return readingStatus != Set(ReadingStatus.allCases) ||
                showWishlistOnly ||
                showOwnedOnly ||
-               showFavoritesOnly
+               showFavoritesOnly ||
+               sortBy != .dateAdded
     }
     
     static let all = LibraryFilter()
@@ -28,6 +59,9 @@ struct LibraryFilterView: View {
                 VStack(spacing: Theme.Spacing.xl) {
                     // Quick Filter Options
                     quickFiltersSection
+                    
+                    // Sorting Section
+                    sortingSection
                     
                     // Reading Status Section
                     readingStatusSection
@@ -109,6 +143,65 @@ struct LibraryFilterView: View {
                         filter.showFavoritesOnly.toggle()
                     }
                     HapticFeedbackManager.shared.lightImpact()
+                }
+            }
+        }
+        .padding(Theme.Spacing.lg)
+        .nativeCard()
+    }
+    
+    @ViewBuilder
+    private var sortingSection: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.md) {
+            Text("Sort By")
+                .titleMedium()
+                .foregroundColor(currentTheme.primaryText)
+            
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: Theme.Spacing.sm), count: 2), spacing: Theme.Spacing.sm) {
+                ForEach(LibrarySortOption.allCases, id: \.self) { option in
+                    Button(action: {
+                        withAnimation(.smooth) {
+                            if filter.sortBy == option {
+                                // Toggle sort direction if same option selected
+                                filter.sortAscending.toggle()
+                            } else {
+                                filter.sortBy = option
+                                // Set default direction for each option
+                                filter.sortAscending = (option == .title || option == .author)
+                            }
+                        }
+                        HapticFeedbackManager.shared.lightImpact()
+                    }) {
+                        HStack(spacing: Theme.Spacing.sm) {
+                            Image(systemName: option.icon)
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundColor(filter.sortBy == option ? currentTheme.onPrimary : currentTheme.primary)
+                            
+                            Text(option.displayName)
+                                .labelMedium()
+                                .foregroundColor(filter.sortBy == option ? currentTheme.onPrimary : currentTheme.primaryText)
+                                .multilineTextAlignment(.leading)
+                            
+                            Spacer()
+                            
+                            if filter.sortBy == option {
+                                Image(systemName: filter.sortAscending ? "chevron.up" : "chevron.down")
+                                    .font(.caption)
+                                    .foregroundColor(currentTheme.onPrimary)
+                            }
+                        }
+                        .padding(.horizontal, Theme.Spacing.sm)
+                        .padding(.vertical, Theme.Spacing.xs)
+                        .background(
+                            RoundedRectangle(cornerRadius: Theme.CornerRadius.medium)
+                                .fill(filter.sortBy == option ? currentTheme.primary : currentTheme.surfaceVariant)
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: Theme.CornerRadius.medium)
+                                .stroke(filter.sortBy == option ? currentTheme.primary : currentTheme.outline.opacity(0.3), lineWidth: 1)
+                        )
+                    }
+                    .buttonStyle(.plain)
                 }
             }
         }

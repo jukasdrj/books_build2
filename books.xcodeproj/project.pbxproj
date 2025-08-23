@@ -35,8 +35,8 @@
 		0718D7482E347EFE00421DCB /* booksUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = booksUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		0718D7792E35ECCC00421DCB /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.5.sdk/System/Library/Frameworks/UIKit.framework; sourceTree = DEVELOPER_DIR; };
 		0727225B2E4BB14A0000EF6D /* CloudKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CloudKit.framework; path = System/Library/Frameworks/CloudKit.framework; sourceTree = SDKROOT; };
-		0727225D2E4BB14A0000EF6E /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = config/Config.xcconfig; sourceTree = "<group>"; };
-		07272AED2E4D602F0000EF6D /* Config.test.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = config/Config.test.xcconfig; sourceTree = "<group>"; };
+		0727225D2E4BB14A0000EF6E /* config/Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = config/Config.xcconfig; sourceTree = "<group>"; };
+		07272AED2E4D602F0000EF6D /* config/Config.test.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = config/Config.test.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -101,13 +101,13 @@
 		0718D7252E347EFD00421DCB = {
 			isa = PBXGroup;
 			children = (
-				0727225D2E4BB14A0000EF6E /* Config.xcconfig */,
+				0727225D2E4BB14A0000EF6E /* config/Config.xcconfig */,
 				0718D7302E347EFD00421DCB /* books */,
 				0718D7412E347EFE00421DCB /* booksTests */,
 				0718D74B2E347EFE00421DCB /* booksUITests */,
 				0718D7782E35ECCC00421DCB /* Frameworks */,
 				0718D72F2E347EFD00421DCB /* Products */,
-				07272AED2E4D602F0000EF6D /* Config.test.xcconfig */,
+				07272AED2E4D602F0000EF6D /* config/Config.test.xcconfig */,
 			);
 			sourceTree = "<group>";
 		};
@@ -313,7 +313,7 @@
 /* Begin XCBuildConfiguration section */
 		0718D7502E347EFE00421DCB /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 07272AED2E4D602F0000EF6D /* Config.test.xcconfig */;
+			baseConfigurationReference = 07272AED2E4D602F0000EF6D /* config/Config.test.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -384,7 +384,7 @@
 		};
 		0718D7512E347EFE00421DCB /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 0727225D2E4BB14A0000EF6E /* Config.xcconfig */;
+			baseConfigurationReference = 0727225D2E4BB14A0000EF6E /* config/Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
