@@ -194,3 +194,5 @@ Private License - See [LICENSE](LICENSE) file for details.
 **Note**: Live Activities (ActivityKit) infrastructure is present but temporarily disabled for initial App Store release. All other features are fully functional and production-ready.
 
 For detailed technical information, architecture decisions, and implementation guides, explore the comprehensive documentation in the [`docs/`](docs/) directory.
+
+# Auto-versioning enabled
