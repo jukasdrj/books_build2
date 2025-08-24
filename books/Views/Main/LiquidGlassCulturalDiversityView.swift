@@ -5,7 +5,7 @@ import Charts
 // MARK: - Liquid Glass Cultural Diversity View
 // Enhanced cultural diversity tracking with immersive visualizations
 
-struct LiquidGlassCulturalDiversityView: View {
+struct CulturalDiversityView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.appTheme) private var theme
     @Query private var allBooks: [UserBook]
@@ -765,7 +765,7 @@ extension CulturalRegion {
 
 #Preview {
     NavigationStack {
-        LiquidGlassCulturalDiversityView()
+        CulturalDiversityView()
             .navigationTitle("Cultural Diversity")
             .navigationBarTitleDisplayMode(.large)
     }

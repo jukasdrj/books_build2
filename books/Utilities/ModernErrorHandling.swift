@@ -102,7 +102,7 @@ class ModernErrorHandler: ObservableObject {
             "error_type": String(describing: type(of: error.originalError)),
             "context": error.context,
             "is_critical": isCritical,
-            "stack_frame_count": error.backtrace.addresses.count,
+            "stack_frame_count": error.callStack.count,
             "timestamp": error.timestamp.timeIntervalSince1970
         ]
         

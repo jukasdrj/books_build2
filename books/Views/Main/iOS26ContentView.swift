@@ -67,7 +67,7 @@ struct iOS26ContentView: View {
             
             // Stats Tab
             NavigationStack {
-                LiquidGlassStatsView()
+                StatsView()
                     .withNavigationDestinations()
                     .navigationTitle("Reading Stats")
                     .navigationBarTitleDisplayMode(.large)
@@ -80,7 +80,7 @@ struct iOS26ContentView: View {
             
             // Culture Tab
             NavigationStack {
-                LiquidGlassCulturalDiversityView()
+                CulturalDiversityView()
                     .withNavigationDestinations()
                     .navigationTitle("Cultural Diversity")
                     .navigationBarTitleDisplayMode(.large)
@@ -307,9 +307,9 @@ struct iOS26iPadContentView: View {
                     case 1:
                         SearchView()
                     case 2:
-                        LiquidGlassStatsView()
+                        StatsView()
                     case 3:
-                        LiquidGlassCulturalDiversityView()
+                        CulturalDiversityView()
                     default:
                         LibraryView()
                     }

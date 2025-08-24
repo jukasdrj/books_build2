@@ -232,8 +232,10 @@ struct EnhancedAccessibilityBook: View {
     private var statusSymbol: String {
         switch book.readingStatus {
         case .toRead: return "book.closed"
+        case .wantToRead: return "book.closed"
         case .reading: return "book"
         case .read: return "checkmark.circle.fill"
+        case .onHold: return "pause.circle"
         case .dnf: return "xmark.circle"
         }
     }
@@ -241,8 +243,10 @@ struct EnhancedAccessibilityBook: View {
     private var statusColor: Color {
         switch book.readingStatus {
         case .toRead: return .gray
+        case .wantToRead: return .gray
         case .reading: return .blue
         case .read: return .green
+        case .onHold: return .orange
         case .dnf: return .red
         }
     }
@@ -250,8 +254,10 @@ struct EnhancedAccessibilityBook: View {
     private var accessibilityStatusText: String {
         switch book.readingStatus {
         case .toRead: return "To read"
+        case .wantToRead: return "Want to read"
         case .reading: return "Currently reading"
         case .read: return "Finished reading"
+        case .onHold: return "On hold"
         case .dnf: return "Did not finish"
         }
     }
@@ -319,6 +325,7 @@ class ModernPerformanceMonitor: ObservableObject {
 // MARK: - Memory Usage Monitor
 
 @available(iOS 26.0, *)
+@MainActor
 class MemoryMonitor: ObservableObject {
     static let shared = MemoryMonitor()
     
@@ -331,7 +338,9 @@ class MemoryMonitor: ObservableObject {
     
     private func startMonitoring() {
         timer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) { _ in
-            self.updateMemoryUsage()
+            Task { @MainActor in
+                self.updateMemoryUsage()
+            }
         }
     }
     
@@ -360,7 +369,7 @@ class MemoryMonitor: ObservableObject {
     }
     
     deinit {
-        timer?.invalidate()
+        // Cannot safely invalidate timer from deinit in MainActor class
     }
 }
 

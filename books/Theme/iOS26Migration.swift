@@ -165,8 +165,8 @@ enum MigrationPhase {
 
 // MARK: - Specific Migration Implementations
 
-extension BookCardView {
-    // Migration example for BookCardView
+extension LiquidGlassBookCardView {
+    // Migration example for LiquidGlassBookCardView
     var liquidGlassMigration: some View {
         VStack(alignment: .leading, spacing: 12) {
             // Book cover with enhanced vibrancy

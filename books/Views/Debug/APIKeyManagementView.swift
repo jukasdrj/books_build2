@@ -9,12 +9,18 @@ struct APIKeyManagementView: View {
     @State private var newAPIKey = ""
     @State private var showingAPIKeyInput = false
     
+    private var keyStatusEntries: [(String, Bool)] {
+        let status = keychainService.keyStatus()
+        let entries = status.map { ($0.key, $0.value) }
+        return entries.sorted { $0.0 < $1.0 }
+    }
+    
     var body: some View {
         NavigationStack {
             List {
                 // API Key Status Section
                 Section("API Key Status") {
-                    ForEach(Array(keychainService.keyStatus().keys.sorted()), id: \.self) { service in
+                    ForEach(keyStatusEntries, id: \.0) { service, isConfigured in
                         HStack {
                             Text(service)
                                 .bodyLarge()
@@ -22,7 +28,7 @@ struct APIKeyManagementView: View {
                             Spacer()
                             
                             HStack(spacing: Theme.Spacing.xs) {
-                                if keychainService.keyStatus()[service] == true {
+                                if isConfigured {
                                     Image(systemName: "checkmark.shield.fill")
                                         .foregroundColor(.green)
                                     Text("Configured")

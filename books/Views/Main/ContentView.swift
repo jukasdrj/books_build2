@@ -337,9 +337,9 @@ struct ContentView: View {
                     case 1:
                         SearchView()
                     case 2:
-                        LiquidGlassStatsView()
+                        StatsView()
                     case 3:
-                        LiquidGlassCulturalDiversityView()
+                        CulturalDiversityView()
                     default:
                         LibraryViewForSplitView(selectedBook: $selectedBook)
                     }
@@ -407,9 +407,9 @@ struct ContentView: View {
                     case 1:
                         SearchView()
                     case 2:
-                        LiquidGlassStatsView()
+                        StatsView()
                     case 3:
-                        LiquidGlassCulturalDiversityView()
+                        CulturalDiversityView()
                     default:
                         LibraryView()
                     }

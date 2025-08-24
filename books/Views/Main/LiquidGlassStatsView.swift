@@ -5,7 +5,7 @@ import Charts
 // MARK: - Liquid Glass Stats View
 // Enhanced reading statistics with translucent materials and fluid animations
 
-struct LiquidGlassStatsView: View {
+struct StatsView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.appTheme) private var theme
     @Query private var allBooks: [UserBook]
@@ -600,7 +600,7 @@ struct MonthlyProgress {
 
 #Preview {
     NavigationStack {
-        LiquidGlassStatsView()
+        StatsView()
             .navigationTitle("Reading Stats")
             .navigationBarTitleDisplayMode(.large)
     }

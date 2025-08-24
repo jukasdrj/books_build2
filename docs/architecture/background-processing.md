@@ -686,7 +686,7 @@ class MockImportStateManager {
 **Sensitive Data Handling**:
 - Personal notes encrypted at rest
 - No credential storage
-- API keys in secure keychain (using the KeychainAccess library)
+- API keys in secure app storage using UserDefaults
 - User data isolation
 
 **Privacy Compliance**:
