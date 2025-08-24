@@ -31,22 +31,20 @@ struct LiquidGlassBookRowView: View {
                 Text(book.metadata?.title ?? "Unknown Title")
                     .font(LiquidGlassTheme.typography.titleMedium)
                     .foregroundColor(theme.primaryText)
-                    .liquidGlassVibrancy(.maximum)
                     .lineLimit(2)
                     .multilineTextAlignment(.leading)
                 
-                // Authors with subtle vibrancy - consistent with card
+                // Authors - consistent with card
                 if let authors = book.metadata?.authors, !authors.isEmpty {
                     Text("by \(authors.joined(separator: ", "))")
                         .font(LiquidGlassTheme.typography.bodySmall)
                         .foregroundColor(theme.secondaryText)
-                        .liquidGlassVibrancy(.medium)
                         .lineLimit(1)
                 }
                 
                 // Metadata row with unified glass styling
                 HStack(spacing: 12) {
-                    // Rating with vibrancy - matches card design
+                    // Rating - matches card design
                     if let rating = book.rating, rating > 0 {
                         HStack(spacing: 3) {
                             ForEach(1...5, id: \.self) { star in
@@ -54,16 +52,15 @@ struct LiquidGlassBookRowView: View {
                                     .font(.caption)
                                     .fontWeight(.medium)
                                     .foregroundColor(star <= Int(rating) ? .amber : .secondary.opacity(0.4))
-                                    .liquidGlassVibrancy(.prominent)
                             }
                         }
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
-                        .background(.thinMaterial.opacity(0.7))
+                        .background(Color.primary.opacity(0.05))
                         .clipShape(Capsule())
                     }
                     
-                    // Reading progress with liquid glass styling - matches card
+                    // Reading progress - matches card
                     if book.readingProgress > 0 && book.readingStatus == .reading {
                         HStack(spacing: 6) {
                             ProgressView(value: book.readingProgress / 100.0)
@@ -74,11 +71,10 @@ struct LiquidGlassBookRowView: View {
                             Text("\(Int(book.readingProgress))%")
                                 .font(LiquidGlassTheme.typography.labelSmall)
                                 .foregroundColor(theme.primary)
-                                .liquidGlassVibrancy(.medium)
                         }
                         .padding(.horizontal, 10)
                         .padding(.vertical, 5)
-                        .background(.regularMaterial.opacity(0.6))
+                        .background(theme.primary.opacity(0.1))
                         .clipShape(Capsule())
                     }
                     
@@ -88,7 +84,7 @@ struct LiquidGlassBookRowView: View {
             
             // Trailing section - status and cultural info
             VStack(alignment: .trailing, spacing: 8) {
-                // Status indicator with glass styling - consistent with card
+                // Status indicator - consistent with card
                 if book.readingStatus != .toRead && book.readingStatus != .wantToRead {
                     HStack(spacing: 4) {
                         Image(systemName: book.readingStatus.systemImage)
@@ -98,14 +94,10 @@ struct LiquidGlassBookRowView: View {
                         Text(book.readingStatus.displayName)
                             .font(LiquidGlassTheme.typography.labelSmall)
                             .foregroundColor(statusColor)
-                            .liquidGlassVibrancy(.medium)
                     }
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
-                    .background(
-                        statusColor.opacity(0.1)
-                            .overlay(.ultraThinMaterial.opacity(0.5))
-                    )
+                    .background(statusColor.opacity(0.15))
                     .clipShape(Capsule())
                 }
                 
@@ -116,12 +108,8 @@ struct LiquidGlassBookRowView: View {
                         .fontWeight(.bold)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
-                        .background(
-                            theme.primary.opacity(0.1)
-                                .overlay(.ultraThinMaterial.opacity(0.5))
-                        )
+                        .background(theme.primary.opacity(0.15))
                         .foregroundColor(theme.primary)
-                        .liquidGlassVibrancy(.prominent)
                         .clipShape(Capsule())
                 }
                 
@@ -134,35 +122,29 @@ struct LiquidGlassBookRowView: View {
                         Text(region.shortName)
                             .font(LiquidGlassTheme.typography.labelSmall)
                             .foregroundColor(region.color(theme: theme))
-                            .liquidGlassVibrancy(.medium)
                     }
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
-                    .background(
-                        region.color(theme: theme).opacity(0.1)
-                            .overlay(.ultraThinMaterial.opacity(0.5))
-                    )
+                    .background(region.color(theme: theme).opacity(0.15))
                     .clipShape(Capsule())
                 }
                 
                 Spacer()
                 
-                // Navigation chevron with subtle vibrancy
+                // Navigation chevron
                 Image(systemName: "chevron.right")
                     .font(.caption)
                     .fontWeight(.medium)
                     .foregroundColor(theme.outline.opacity(0.6))
-                    .liquidGlassVibrancy(.subtle)
             }
         }
         .frame(minHeight: 100)
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
-        .liquidGlassCard(
-            material: .regular,
-            depth: .elevated,
-            radius: .comfortable,
-            vibrancy: .medium
+        .background(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(Color.primary.opacity(colorScheme == .dark ? 0.05 : 0.03))
+                .stroke(Color.primary.opacity(0.1), lineWidth: 0.5)
         )
         .brightness(hoverIntensity * 0.05)
         .onHover { hovering in
@@ -275,7 +257,6 @@ struct LiquidGlassRowBookCover: View {
             ProgressView()
                 .progressViewStyle(CircularProgressViewStyle(tint: .primary))
                 .scaleEffect(0.7)
-                .liquidGlassVibrancy(.medium)
         }
         .redacted(reason: .placeholder)
     }
@@ -295,7 +276,6 @@ struct LiquidGlassRowBookCover: View {
             Image(systemName: "book.fill")
                 .font(.title3)
                 .foregroundColor(.primary.opacity(0.5))
-                .liquidGlassVibrancy(.subtle)
         }
     }
 }
@@ -475,7 +455,6 @@ struct LiquidGlassRowBookCoverView: View {
                 Image(systemName: "book.closed")
                     .foregroundColor(.secondary)
                     .font(.title3)
-                    .liquidGlassVibrancy(.subtle)
             }
         }
         .frame(width: width, height: height)
@@ -520,7 +499,6 @@ struct LiquidGlassStarRating: View {
                     .font(size.fontSize)
                     .fontWeight(.medium)
                     .foregroundColor(star <= Int(rating) ? .amber : .secondary)
-                    .liquidGlassVibrancy(.medium)
             }
         }
     }
@@ -545,7 +523,6 @@ struct LiquidGlassLanguageIndicator: View {
                     )
             )
             .foregroundColor(theme.primary)
-            .liquidGlassVibrancy(.prominent)
     }
 }
 
@@ -566,7 +543,6 @@ struct LiquidGlassProgressStyle: ProgressViewStyle {
             Capsule()
                 .fill(theme.primary.gradient)
                 .scaleEffect(x: configuration.fractionCompleted ?? 0, y: 1, anchor: .leading)
-                .liquidGlassVibrancy(.prominent)
         }
         .animation(.spring(response: 0.5, dampingFraction: 0.8), value: configuration.fractionCompleted)
     }

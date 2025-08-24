@@ -1,0 +1,85 @@
+# Fastfile for automated versioning and deployment
+
+default_platform(:ios)
+
+platform :ios do
+  
+  desc "Increment build number and commit"
+  lane :bump_build do
+    # Auto-increment build number
+    increment_build_number(
+      xcodeproj: "books.xcodeproj"
+    )
+    
+    # Get the new build number
+    build_number = get_build_number(xcodeproj: "books.xcodeproj")
+    
+    # Commit the change
+    git_add(path: "books.xcodeproj/project.pbxproj")
+    git_commit(
+      path: ["books.xcodeproj/project.pbxproj"],
+      message: "🤖 Bump build number to #{build_number} [skip ci]"
+    )
+    
+    puts "✅ Build number incremented to #{build_number}"
+  end
+  
+  desc "Increment version number (patch)"
+  lane :bump_patch do
+    increment_version_number(
+      xcodeproj: "books.xcodeproj",
+      bump_type: "patch"
+    )
+    bump_build
+  end
+  
+  desc "Increment version number (minor)"
+  lane :bump_minor do
+    increment_version_number(
+      xcodeproj: "books.xcodeproj", 
+      bump_type: "minor"
+    )
+    bump_build
+  end
+  
+  desc "Increment version number (major)"
+  lane :bump_major do
+    increment_version_number(
+      xcodeproj: "books.xcodeproj",
+      bump_type: "major" 
+    )
+    bump_build
+  end
+  
+  desc "Build and deploy to TestFlight"
+  lane :deploy_testflight do
+    bump_build
+    
+    # Build the app
+    build_app(
+      scheme: "books",
+      export_method: "app-store"
+    )
+    
+    # Upload to TestFlight
+    upload_to_testflight(
+      skip_waiting_for_build_processing: true
+    )
+  end
+  
+  desc "Deploy to App Store"
+  lane :deploy_appstore do
+    bump_minor  # Increment version for App Store release
+    
+    build_app(
+      scheme: "books", 
+      export_method: "app-store"
+    )
+    
+    upload_to_app_store(
+      force: true,
+      submit_for_review: false
+    )
+  end
+  
+end

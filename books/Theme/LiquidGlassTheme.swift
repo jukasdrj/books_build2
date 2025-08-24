@@ -228,7 +228,20 @@ struct LiquidGlassCardModifier: ViewModifier {
     let radius: LiquidGlassTheme.GlassRadius
     let vibrancy: LiquidGlassTheme.VibrancyLevel
     
+    init(
+        material: LiquidGlassTheme.GlassMaterial,
+        depth: LiquidGlassTheme.GlassDepth,
+        radius: LiquidGlassTheme.GlassRadius,
+        vibrancy: LiquidGlassTheme.VibrancyLevel
+    ) {
+        self.material = material
+        self.depth = depth
+        self.radius = radius
+        self.vibrancy = vibrancy
+    }
+    
     func body(content: Content) -> some View {
+        // Always use standard SwiftUI effects (Metal acceleration disabled to prevent texture validation errors)
         content
             .background(
                 RoundedRectangle(cornerRadius: radius.value)
@@ -359,6 +372,16 @@ extension View {
     
     func liquidGlassAnimation(_ animation: LiquidGlassTheme.FluidAnimation) -> some View {
         self.animation(animation.springAnimation, value: UUID())
+    }
+    
+    // Standard SwiftUI flowing glass animation (Metal acceleration disabled)
+    func liquidGlassFlowing(
+        flowSpeed: Float = 1.0,
+        waveAmplitude: Float = 0.02,
+        enabled: Bool = true
+    ) -> some View {
+        // Always use standard SwiftUI effects
+        return AnyView(self)
     }
     
     // Apple-aligned vibrancy effect (performance optimized)

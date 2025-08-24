@@ -417,6 +417,21 @@ struct AppColorTheme {
     var cultureOceania: Color { adaptiveColor(light: .cyan, dark: .cyan) }
     var cultureMiddleEast: Color { adaptiveColor(light: .purple, dark: .purple) }
     var cultureIndigenous: Color { adaptiveColor(light: .orange, dark: .orange) }
+    
+    // MARK: - Helper Method for Color Adaptation
+    
+    private func adaptiveColor(light: UIColor, dark: UIColor) -> Color {
+        return Color(UIColor { traitCollection in
+            switch traitCollection.userInterfaceStyle {
+            case .dark:
+                return dark
+            case .light, .unspecified:
+                return light
+            @unknown default:
+                return light
+            }
+        })
+    }
 }
 
 // MARK: - UIColor to Color Conversion Helper

@@ -20,6 +20,34 @@ class BookSearchService: ObservableObject {
         #endif
     }
     
+    // MARK: - API Provider Selection
+    enum APIProvider: String, CaseIterable, Identifiable {
+        case auto = "auto"           // ISBNdb → Google Books → Open Library (default)
+        case isbndb = "isbndb"       // Force ISBNdb only
+        case google = "google"       // Force Google Books only
+        case openlibrary = "openlibrary" // Force Open Library only
+        
+        var id: String { rawValue }
+        
+        var displayName: String {
+            switch self {
+            case .auto: return "Smart Fallback (ISBNdb First)"
+            case .isbndb: return "ISBNdb (Premium)"
+            case .google: return "Google Books"
+            case .openlibrary: return "Open Library (Free)"
+            }
+        }
+        
+        var systemImage: String {
+            switch self {
+            case .auto: return "wand.and.stars"
+            case .isbndb: return "crown.fill"
+            case .google: return "globe"
+            case .openlibrary: return "books.vertical"
+            }
+        }
+    }
+    
     enum SortOption: String, CaseIterable, Identifiable {
         case relevance = "relevance"
         case newest = "newest"
@@ -73,7 +101,8 @@ class BookSearchService: ObservableObject {
         query: String, 
         sortBy: SortOption = .relevance,
         maxResults: Int = 40,
-        includeTranslations: Bool = false
+        includeTranslations: Bool = false,
+        provider: APIProvider = .auto
     ) async -> Result<[BookMetadata], BookError> {
         // Handle empty queries
         let trimmedQuery = query.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -90,6 +119,7 @@ class BookSearchService: ObservableObject {
         var queryItems = [
             URLQueryItem(name: "q", value: optimizeQuery(trimmedQuery)),
             URLQueryItem(name: "maxResults", value: String(maxResults)),
+            URLQueryItem(name: "provider", value: provider.rawValue)
         ]
         
         // Add sorting parameter
@@ -182,7 +212,7 @@ class BookSearchService: ObservableObject {
     }
     
     /// Specialized search for ISBN lookups with automatic ISBNDB fallback
-    func searchByISBN(_ isbn: String) async -> Result<BookMetadata?, BookError> {
+    func searchByISBN(_ isbn: String, provider: APIProvider = .auto) async -> Result<BookMetadata?, BookError> {
         let cleanedISBN = isbn.replacingOccurrences(of: "=", with: "")
             .replacingOccurrences(of: "-", with: "")
             .trimmingCharacters(in: .whitespacesAndNewlines)
@@ -191,12 +221,13 @@ class BookSearchService: ObservableObject {
             return .success(nil)
         }
         
-        // First try: Google Books via search endpoint (more reliable for ISBN)
+        // First try: Search by ISBN with specified provider
         let searchResult = await search(
             query: "isbn:\(cleanedISBN)",
             sortBy: .relevance,
             maxResults: 1,
-            includeTranslations: false
+            includeTranslations: false,
+            provider: provider
         )
         
         switch searchResult {
@@ -204,12 +235,12 @@ class BookSearchService: ObservableObject {
             if let book = books.first {
                 return .success(book)
             }
-            // If Google Books fails, try ISBNDB fallback
-            return await searchByISBNWithISBNDBFallback(cleanedISBN)
+            // If primary provider fails, try direct ISBN lookup with same provider
+            return await searchByISBNWithISBNDBFallback(cleanedISBN, provider: provider)
             
         case .failure:
-            // If Google Books fails, try ISBNDB fallback
-            return await searchByISBNWithISBNDBFallback(cleanedISBN)
+            // If primary provider fails, try direct ISBN lookup with same provider
+            return await searchByISBNWithISBNDBFallback(cleanedISBN, provider: provider)
         }
     }
     
@@ -218,14 +249,16 @@ class BookSearchService: ObservableObject {
         query: String,
         sortBy: SortOption = .relevance,
         maxResults: Int = 40,
-        includeTranslations: Bool = false
+        includeTranslations: Bool = false,
+        provider: APIProvider = .auto
     ) async -> Result<[BookMetadata], BookError> {
-        // First try Google Books
+        // First try with specified provider
         let primaryResult = await search(
             query: query,
             sortBy: sortBy,
             maxResults: maxResults,
-            includeTranslations: includeTranslations
+            includeTranslations: includeTranslations,
+            provider: provider
         )
         
         switch primaryResult {
@@ -263,8 +296,7 @@ class BookSearchService: ObservableObject {
         var queryItems = [
             URLQueryItem(name: "q", value: optimizeQuery(query)),
             URLQueryItem(name: "maxResults", value: String(maxResults)),
-            URLQueryItem(name: "provider", value: "isbndb"), // Force ISBNDB
-            URLQueryItem(name: "fallback", value: "true")    // Enable fallback mode
+            URLQueryItem(name: "provider", value: "auto") // Use ISBNdb → Google Books → Open Library fallback chain
         ]
         
         // Add sorting parameter
@@ -306,15 +338,14 @@ class BookSearchService: ObservableObject {
     }
     
     /// Direct ISBNDB fallback for ISBN lookups when Google Books fails
-    private func searchByISBNWithISBNDBFallback(_ isbn: String) async -> Result<BookMetadata?, BookError> {
+    private func searchByISBNWithISBNDBFallback(_ isbn: String, provider: APIProvider = .auto) async -> Result<BookMetadata?, BookError> {
         guard var components = URLComponents(string: "\(proxyBaseURL)/isbn") else {
             return .failure(.invalidURL)
         }
         
         components.queryItems = [
             URLQueryItem(name: "isbn", value: isbn),
-            URLQueryItem(name: "provider", value: "isbndb"), // Force ISBNDB
-            URLQueryItem(name: "fallback", value: "true")    // Enable fallback mode
+            URLQueryItem(name: "provider", value: provider.rawValue)
         ]
         
         guard let url = components.url else {

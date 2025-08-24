@@ -101,7 +101,7 @@ struct iOS26MigrationGuide {
     ]
     
     static let performanceOptimizations = [
-        "Efficient material rendering with Metal shaders",
+        "Efficient material rendering with SwiftUI materials",
         "Optimized vibrancy calculations",
         "Reduced overdraw with translucent layers",
         "Smart animation batching for smooth 120Hz displays",
