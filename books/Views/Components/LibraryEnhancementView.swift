@@ -24,7 +24,7 @@ struct LibraryEnhancementView: View {
     }
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ScrollView {
                 LazyVStack(spacing: Theme.Spacing.lg) {
                     // Hero Section
@@ -624,7 +624,7 @@ struct BooksForPromptView: View {
     let books: [UserBook]
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             List {
                 Section {
                     ForEach(books, id: \.id) { book in
@@ -652,6 +652,9 @@ struct BooksForPromptView: View {
                 }
             }
         }
+        .navigationDestination(for: UserBook.self) { book in
+            BookDetailsView(book: book)
+        }
     }
 }
 
@@ -661,36 +664,38 @@ struct BookRowForPrompt: View {
     let promptType: UserInputPrompt
     
     var body: some View {
-        HStack(spacing: Theme.Spacing.md) {
-            BookCoverImage(
-                imageURL: book.metadata?.imageURL?.absoluteString,
-                width: 50,
-                height: 75
-            )
-            
-            VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
-                Text(book.metadata?.title ?? "Unknown Title")
-                    .bodyMedium()
-                    .fontWeight(.medium)
-                    .foregroundColor(theme.primaryText)
-                    .lineLimit(2)
+        NavigationLink(value: book) {
+            HStack(spacing: Theme.Spacing.md) {
+                BookCoverImage(
+                    imageURL: book.metadata?.imageURL?.absoluteString,
+                    width: 50,
+                    height: 75
+                )
                 
-                Text(book.metadata?.authors.joined(separator: ", ") ?? "Unknown Author")
-                    .labelMedium()
-                    .foregroundColor(theme.secondaryText)
-                    .lineLimit(1)
+                VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+                    Text(book.metadata?.title ?? "Unknown Title")
+                        .bodyMedium()
+                        .fontWeight(.medium)
+                        .foregroundColor(theme.primaryText)
+                        .lineLimit(2)
+                    
+                    Text(book.metadata?.authors.joined(separator: ", ") ?? "Unknown Author")
+                        .labelMedium()
+                        .foregroundColor(theme.secondaryText)
+                        .lineLimit(1)
+                    
+                    // Show specific prompt context
+                    Text(promptContextText)
+                        .labelSmall()
+                        .foregroundColor(theme.warning)
+                }
                 
-                // Show specific prompt context
-                Text(promptContextText)
-                    .labelSmall()
-                    .foregroundColor(theme.warning)
+                Spacer()
+                
+                Image(systemName: "chevron.right")
+                    .foregroundColor(theme.outline)
+                    .font(.caption)
             }
-            
-            Spacer()
-            
-            Image(systemName: "chevron.right")
-                .foregroundColor(theme.outline)
-                .font(.caption)
         }
     }
     

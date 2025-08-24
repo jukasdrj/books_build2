@@ -724,7 +724,7 @@ struct IncompleteBookListView: View {
 // MARK: - Preview
 
 #Preview {
-    NavigationView {
+    NavigationStack {
         LibraryEnrichmentView(modelContext: ModelContext(try! ModelContainer(for: UserBook.self, BookMetadata.self)))
             .environment(\.appTheme, AppColorTheme(variant: .purpleBoho))
     }

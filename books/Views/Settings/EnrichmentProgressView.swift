@@ -14,7 +14,7 @@ struct EnrichmentProgressView: View {
     @ObservedObject var enrichmentService: MetadataEnrichmentService
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ScrollView {
                 VStack(spacing: Theme.Spacing.lg) {
                     if let progress = enrichmentService.enrichmentProgress {

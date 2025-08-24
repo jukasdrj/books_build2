@@ -17,7 +17,7 @@ struct BarcodeScannerView: View {
     @State private var cameraPreview: CameraPreviewView?
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ZStack {
                 // Boho gradient background for areas outside camera
                 LinearGradient(

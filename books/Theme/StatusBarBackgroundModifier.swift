@@ -73,7 +73,7 @@ extension View {
     }
     
     /// Applies navigation-specific status bar theming
-    /// Use this on NavigationStack or NavigationView root views
+    /// Use this on NavigationStack root views
     func navigationThemedStatusBar() -> some View {
         modifier(NavigationStatusBarBackgroundModifier())
     }

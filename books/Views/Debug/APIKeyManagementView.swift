@@ -10,7 +10,7 @@ struct APIKeyManagementView: View {
     @State private var showingAPIKeyInput = false
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             List {
                 // API Key Status Section
                 Section("API Key Status") {
@@ -248,7 +248,7 @@ private struct APIKeyInputView: View {
     @FocusState private var isKeyFieldFocused: Bool
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             VStack(spacing: Theme.Spacing.lg) {
                 VStack(alignment: .leading, spacing: Theme.Spacing.md) {
                     Text("Google Books API Key")

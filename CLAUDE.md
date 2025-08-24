@@ -46,7 +46,7 @@ The app uses an **optimized CloudFlare Workers proxy** for book search functiona
 
 ### App Structure
 - **Main Entry**: `booksApp.swift` - Configures SwiftData ModelContainer with migration handling
-- **Root View**: `ContentView.swift` - 4-tab TabView (Library, Search, Stats, Culture) with consolidated NavigationStack
+- **Root View**: `ContentView.swift` - 4-tab TabView (Library, Search, Stats, Culture) with modern NavigationStack architecture
 - **Theme System**: iOS 26 Liquid Glass design system with 5 variants (Purple Boho, Forest Sage, Ocean Blues, Sunset Warmth, Monochrome)
 - **Design Philosophy**: Primary focus on iPhone excellence, secondary focus on best-in-class iPad experiences
 
@@ -60,17 +60,20 @@ The app uses an **optimized CloudFlare Workers proxy** for book search functiona
 - **KeychainService**: Secure storage for sensitive data like API keys
 
 ### Navigation Pattern
-- Uses NavigationStack with consolidated `navigationDestination` declarations at ContentView level
-- Navigation uses value-based routing: `NavigationLink(value: book)` → `navigationDestination(for: UserBook.self)`
-- Eliminates multiple navigationDestination warnings by centralizing routing
+- **Modern NavigationStack Architecture**: All views use `NavigationStack` with centralized navigation destinations
+- **Value-Based Routing**: `NavigationLink(value: book)` → `navigationDestination(for: UserBook.self)`
+- **Centralized Destinations**: Uses `.withNavigationDestinations()` modifier to eliminate warnings and ensure consistent routing
+- **Legacy-Free**: Completely migrated from deprecated `NavigationView` to modern `NavigationStack`
 
 ## Development Patterns
 
-### Swift 6 Concurrency Architecture
+### Swift 6.2 Concurrency Architecture ✅
 - **Data Models**: Use `@unchecked Sendable` for SwiftData models (thread safety handled by SwiftData)
 - **UI Classes**: `@MainActor` isolation for ObservableObject types (ThemeStore)
 - **Service Layer**: Proper async/await patterns with structured concurrency
-- **Error Handling**: Comprehensive error propagation with typed error enums
+- **Error Handling**: Modern typed throws with Swift Backtrace API integration
+- **Actor System**: Enhanced BookAnalyticsActor with Sendable conformance
+- **Performance Monitoring**: Actor-based performance tracking with backtrace capture
 - **Background Tasks**: Safe Task.detached usage to avoid actor isolation issues
 
 ### iOS 26 Liquid Glass Design System ✅
@@ -606,6 +609,25 @@ X-Cache-System: R2+KV-Hybrid
 - **Added**: Import state cleanup in LibraryResetService to prevent orphaned import operations
 - **Fixed**: Complete reset functionality that handles background import coordination
 - **Improved**: Reset process ensures no lingering progress indicators or import artifacts
+
+### Navigation Architecture Modernization (August 2024)
+- **Complete Migration**: Updated all 9 instances of deprecated `NavigationView` to modern `NavigationStack`
+- **Files Updated**: APIKeyManagementView, LibraryEnhancementView, SharedComponents, PageInputView, EnrichmentProgressView, BarcodeScanner, LiquidGlassBookRowView
+- **Eliminated Warnings**: Resolved all "navigationDestination modifier will be ignored" warnings
+- **Enhanced Functionality**: Fixed smart recommendation book navigation and all modal sheet navigation
+- **Documentation Updated**: Modernized all navigation pattern documentation and code comments
+- **Clean Architecture**: Achieved 100% modern NavigationStack adoption across the entire codebase
+
+### iOS 26 & Swift 6.2 Modernization (August 2024)
+- **Enhanced Error Handling**: Created `ModernErrorHandling.swift` with call stack tracking and unified error handling
+- **Modern Error Types**: Implemented `ModernBookError` with improved error descriptions and Sendable conformance
+- **Enhanced Debug Info**: BookSearchService and ModelContainer creation now capture detailed error context with call stacks
+- **Analytics Actor**: BookAnalyticsActor with modern Swift concurrency and Sendable conformance  
+- **Performance Monitoring**: Added performance tracking with ModernPerformanceMonitor for slow operation detection
+- **Memory Monitoring**: Simplified memory usage tracking using available iOS 16+ APIs
+- **Accessibility Enhancements**: iOS 26 accessibility features with shape differentiation and enhanced VoiceOver
+- **ISBN Validation**: Modern ISBN validator with proper error handling and regex patterns
+- **Actor Improvements**: Enhanced concurrency patterns with full Sendable conformance and proper actor isolation
 
 # important-instruction-reminders
 Do what has been asked; nothing more, nothing less.

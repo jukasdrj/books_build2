@@ -26,7 +26,7 @@ struct PageInputView: View {
     }
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             Form {
                 Section("Current Progress") {
                     HStack {

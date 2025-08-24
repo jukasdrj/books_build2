@@ -289,7 +289,7 @@ struct StatusPickerSheet: View {
     let onStatusChange: (ReadingStatus) -> Void
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             VStack(spacing: 20) {
                 // Book info header
                 HStack(spacing: 12) {

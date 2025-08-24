@@ -410,10 +410,25 @@ class BookSearchService: ObservableObject {
             return .success(result)
             
         } catch let error as URLError {
+            ErrorHandler.shared.handle(
+                error,
+                context: "BookSearchService HTTP Request",
+                userInfo: ["url": url.absoluteString, "method": "GET"]
+            )
             return .failure(.networkError(error.localizedDescription))
         } catch let error as ProxyError {
+            ErrorHandler.shared.handle(
+                error,
+                context: "BookSearchService Proxy Error",
+                userInfo: ["url": url.absoluteString, "proxy": proxyBaseURL]
+            )
             return .failure(.proxyError(error.localizedDescription))
         } catch {
+            ErrorHandler.shared.handle(
+                error,
+                context: "BookSearchService JSON Decoding",
+                userInfo: ["url": url.absoluteString, "expected_type": String(describing: T.self)]
+            )
             return .failure(.decodingError(error.localizedDescription))
         }
     }

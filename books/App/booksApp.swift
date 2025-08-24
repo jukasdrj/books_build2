@@ -40,6 +40,11 @@ struct booksApp: App {
             print("✅ Local-only ModelContainer created successfully (no CloudKit)")
             return container
         } catch {
+            ErrorHandler.shared.handle(
+                error,
+                context: "SwiftData Local ModelContainer Creation",
+                userInfo: ["schema_types": schema.entities.map { $0.name }]
+            )
             print("❌ Local container failed: \(error)")
             
             // Fallback: Try in-memory only
@@ -49,13 +54,15 @@ struct booksApp: App {
                 print("✅ In-memory ModelContainer created successfully")
                 return container
             } catch {
-                print("❌ All ModelContainer creation attempts failed: \(error)")
-                print("❌ This indicates a fundamental issue with the SwiftData models")
-                
-                // Instead of fatal error, try to identify the specific issue
-                print("❌ SwiftData Error Details: \(error)")
-                
-                fatalError("Critical: Unable to create ModelContainer. Error: \(error)")
+                ErrorHandler.shared.handleCritical(
+                    error,
+                    context: "SwiftData Critical - All ModelContainer Creation Failed",
+                    userInfo: [
+                        "attempted_configs": ["local", "in-memory"],
+                        "schema_types": schema.entities.map { $0.name },
+                        "swiftdata_version": "iOS 26.0+"
+                    ]
+                )
             }
         }
     }()
