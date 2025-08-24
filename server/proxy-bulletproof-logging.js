@@ -1,6 +1,6 @@
-// Enhanced Cloudflare Worker - Auth Fixed for ISBNdb Integration
-// Priority: ISBNdb → Google Books → Open Library
-// Fixes: Environment variable access, API authentication, timeout handling
+// Production-Ready CloudFlare Worker with Enhanced Logging
+// ISBNdb Primary → Google Books → Open Library
+// All bulletproof features + detailed cache analytics
 
 export default {
   async fetch(request, env, ctx) {
@@ -9,14 +9,24 @@ export default {
     }
     
     try {
+      validateEnvironment(env);
       const url = new URL(request.url);
       const path = url.pathname;
+      
+      // Enhanced request logging
+      console.log(`📥 REQUEST: ${request.method} ${url.pathname}${url.search}`, {
+        userAgent: request.headers.get('User-Agent')?.slice(0, 50),
+        cfRay: request.headers.get('CF-Ray'),
+        clientIP: request.headers.get('CF-Connecting-IP'),
+        timestamp: new Date().toISOString()
+      });
       
       if (path === "/search") {
         return await handleBookSearch(request, env, ctx);
       } else if (path === "/isbn") {
         return await handleISBNLookup(request, env, ctx);
       } else if (path === "/health") {
+        console.log(`💓 HEALTH CHECK: healthy`);
         return new Response(JSON.stringify({
           status: "healthy",
           timestamp: (new Date()).toISOString(),
@@ -36,13 +46,20 @@ export default {
           headers: getCORSHeaders("application/json")
         });
       } else {
+        console.log(`❌ UNKNOWN ENDPOINT: ${path}`);
         return new Response(JSON.stringify({ error: "Endpoint not found" }), {
           status: 404,
           headers: getCORSHeaders("application/json")
         });
       }
     } catch (error) {
-      console.error("Worker error:", error);
+      console.error("🚨 WORKER ERROR:", {
+        message: error.message,
+        stack: error.stack,
+        url: request.url,
+        method: request.method,
+        timestamp: new Date().toISOString()
+      });
       return new Response(JSON.stringify({
         error: "Internal server error",
         message: error.message
@@ -54,13 +71,25 @@ export default {
   }
 };
 
+// Environment validation
+function validateEnvironment(env) {
+  if (!env || typeof env !== 'object') {
+    throw new Error('Environment not available');
+  }
+  return true;
+}
+
+// Enhanced CORS headers with security
 function getCORSHeaders(contentType = "application/json") {
   return {
     "Content-Type": contentType,
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With",
-    "Access-Control-Max-Age": "86400"
+    "Access-Control-Max-Age": "86400",
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "DENY",
+    "X-XSS-Protection": "1; mode=block"
   };
 }
 
@@ -183,81 +212,142 @@ async function checkRateLimitEnhanced(request, env) {
     maxRequests = 20;
   }
   
-  const current = await env.BOOKS_CACHE?.get(rateLimitKey);
-  const count = current ? parseInt(current) : 0;
-  
-  if (count >= maxRequests) {
+  try {
+    const current = await env.BOOKS_CACHE?.get(rateLimitKey);
+    const count = current ? parseInt(current) : 0;
+    
+    if (count >= maxRequests) {
+      console.log(`🚫 RATE LIMIT EXCEEDED: ${clientIP} (${count}/${maxRequests})`);
+      return {
+        allowed: false,
+        retryAfter: windowSize,
+        reason: "Rate limit exceeded"
+      };
+    }
+    
+    const newCount = count + 1;
+    await env.BOOKS_CACHE?.put(rateLimitKey, newCount.toString(), { expirationTtl: windowSize });
+    
+    console.log(`✅ RATE LIMIT OK: ${clientIP} (${newCount}/${maxRequests})`);
     return {
-      allowed: false,
-      retryAfter: windowSize,
-      reason: "Rate limit exceeded"
+      allowed: true,
+      count: newCount,
+      remaining: maxRequests - newCount
     };
+  } catch (error) {
+    console.warn('Rate limiting unavailable, allowing request:', error.message);
+    return { allowed: true, count: 0, remaining: 100 };
   }
-  
-  const newCount = count + 1;
-  await env.BOOKS_CACHE?.put(rateLimitKey, newCount.toString(), { expirationTtl: windowSize });
-  
-  return {
-    allowed: true,
-    count: newCount,
-    remaining: maxRequests - newCount
-  };
 }
 
-const CACHE_KEYS = {
-  search: (query, maxResults, sortBy, translations, provider) => 
-    `search/${btoa(query).replace(/[/+=]/g, "_")}/${maxResults}/${sortBy}/${translations}/${provider}.json`,
-  isbn: (isbn, provider) => `isbn/${isbn}/${provider}.json`
-};
+// Crypto-based cache key generation to prevent collisions
+async function generateCacheKey(type, ...params) {
+  const input = JSON.stringify({ type, params, timestamp: Math.floor(Date.now() / 86400000) }); // Daily rotation
+  const encoder = new TextEncoder();
+  const data = encoder.encode(input);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  return `${type}/${hashHex.slice(0, 24)}.json`;
+}
 
+// ENHANCED CACHE FUNCTIONS WITH DETAILED LOGGING
 async function getCachedData(cacheKey, env) {
+  const startTime = Date.now();
+  
   try {
     // Check KV (hot cache) first
     const kvData = await env.BOOKS_CACHE?.get(cacheKey);
     if (kvData) {
-      return {
-        data: JSON.parse(kvData),
-        source: "KV-HOT"
-      };
+      try {
+        const parsedData = JSON.parse(kvData);
+        const duration = Date.now() - startTime;
+        
+        console.log(`🔥 CACHE HIT (KV-HOT): ${cacheKey}`, {
+          duration: `${duration}ms`,
+          size: `${kvData.length} bytes`,
+          timestamp: new Date().toISOString()
+        });
+        
+        return {
+          data: parsedData,
+          source: "KV-HOT",
+          duration
+        };
+      } catch (parseError) {
+        console.warn(`💥 KV CACHE PARSE ERROR: ${cacheKey}`, parseError.message);
+        await env.BOOKS_CACHE?.delete(cacheKey);
+      }
     }
     
     // Check R2 (cold cache) if available
     if (env.BOOKS_R2) {
       const r2Object = await env.BOOKS_R2.get(cacheKey);
       if (r2Object) {
-        const jsonData = await r2Object.text();
-        const data = JSON.parse(jsonData);
-        
-        // Check TTL
-        const metadata = r2Object.customMetadata;
-        if (metadata?.ttl && Date.now() > parseInt(metadata.ttl)) {
+        try {
+          const jsonData = await r2Object.text();
+          const data = JSON.parse(jsonData);
+          const duration = Date.now() - startTime;
+          
+          // Check TTL
+          const metadata = r2Object.customMetadata;
+          if (metadata?.ttl) {
+            const ttl = parseInt(metadata.ttl);
+            if (!isNaN(ttl) && Date.now() > ttl) {
+              console.log(`⏰ R2 CACHE EXPIRED: ${cacheKey}`);
+              await env.BOOKS_R2.delete(cacheKey);
+              return null;
+            }
+          }
+          
+          console.log(`❄️ CACHE HIT (R2-COLD): ${cacheKey}`, {
+            duration: `${duration}ms`,
+            size: `${jsonData.length} bytes`,
+            promoted: true,
+            timestamp: new Date().toISOString()
+          });
+          
+          // Promote to KV cache
+          const promoteData = JSON.stringify(data);
+          env.waitUntil(env.BOOKS_CACHE?.put(cacheKey, promoteData, { expirationTtl: 86400 }));
+          
+          return {
+            data,
+            source: "R2-COLD",
+            duration
+          };
+        } catch (parseError) {
+          console.warn(`💥 R2 CACHE PARSE ERROR: ${cacheKey}`, parseError.message);
           await env.BOOKS_R2.delete(cacheKey);
-          return null;
         }
-        
-        // Promote to KV cache
-        const promoteData = JSON.stringify(data);
-        env.waitUntil(env.BOOKS_CACHE?.put(cacheKey, promoteData, { expirationTtl: 86400 }));
-        
-        return {
-          data,
-          source: "R2-COLD"
-        };
       }
     }
     
+    const duration = Date.now() - startTime;
+    console.log(`❌ CACHE MISS: ${cacheKey}`, {
+      duration: `${duration}ms`,
+      timestamp: new Date().toISOString()
+    });
+    
     return null;
   } catch (error) {
-    console.warn(`Cache read error for key ${cacheKey}:`, error.message);
+    const duration = Date.now() - startTime;
+    console.warn(`🚨 CACHE ERROR: ${cacheKey}`, {
+      error: error.message,
+      duration: `${duration}ms`,
+      timestamp: new Date().toISOString()
+    });
     return null;
   }
 }
 
 async function setCachedData(cacheKey, data, ttlSeconds, env, ctx) {
-  const jsonData = JSON.stringify(data);
-  const promises = [];
+  const startTime = Date.now();
   
   try {
+    const jsonData = JSON.stringify(data);
+    const promises = [];
+    
     // Store in R2 if available
     if (env.BOOKS_R2) {
       promises.push(
@@ -286,17 +376,74 @@ async function setCachedData(cacheKey, data, ttlSeconds, env, ctx) {
     } else {
       await Promise.all(promises.filter(Boolean));
     }
+    
+    const duration = Date.now() - startTime;
+    console.log(`💾 CACHE SET: ${cacheKey}`, {
+      duration: `${duration}ms`,
+      size: `${jsonData.length} bytes`,
+      ttl: `${ttlSeconds}s`,
+      stores: env.BOOKS_R2 ? 'R2+KV' : 'KV',
+      timestamp: new Date().toISOString()
+    });
   } catch (error) {
-    console.warn(`Cache write error for key ${cacheKey}:`, error.message);
+    const duration = Date.now() - startTime;
+    console.warn(`🚨 CACHE SET ERROR: ${cacheKey}`, {
+      error: error.message,
+      duration: `${duration}ms`,
+      timestamp: new Date().toISOString()
+    });
   }
 }
 
-// Enhanced search handler with robust error handling
+// Production-safe result validation
+function isValidResult(result) {
+  return result && 
+         result.items && 
+         Array.isArray(result.items) && 
+         result.items.length > 0 &&
+         result.items.some(item => 
+           item && 
+           item.volumeInfo && 
+           item.volumeInfo.title && 
+           typeof item.volumeInfo.title === 'string' &&
+           item.volumeInfo.title.trim().length > 0
+         );
+}
+
+// Memory-safe fetch with size limits
+const MAX_RESPONSE_SIZE = 5 * 1024 * 1024; // 5MB
+
+async function safeFetch(url, options = {}) {
+  const response = await fetch(url, options);
+  
+  if (!response.ok) {
+    throw new Error(`API error: ${response.status} - ${response.statusText}`);
+  }
+  
+  const contentLength = response.headers.get('content-length');
+  if (contentLength && parseInt(contentLength) > MAX_RESPONSE_SIZE) {
+    throw new Error('Response too large');
+  }
+  
+  const text = await response.text();
+  if (text.length > MAX_RESPONSE_SIZE) {
+    throw new Error('Response too large');
+  }
+  
+  try {
+    return JSON.parse(text);
+  } catch (parseError) {
+    throw new Error(`Invalid JSON response: ${parseError.message}`);
+  }
+}
+
+// Enhanced search handler with detailed logging
 async function handleBookSearch(request, env, ctx) {
   const url = new URL(request.url);
   const validation = validateSearchParams(url);
   
   if (validation.errors.length > 0) {
+    console.log(`❌ SEARCH VALIDATION ERROR:`, validation.errors);
     return new Response(JSON.stringify({
       error: "Invalid parameters",
       details: validation.errors
@@ -307,6 +454,14 @@ async function handleBookSearch(request, env, ctx) {
   }
   
   const { query, maxResults, sortBy, includeTranslations, provider } = validation.sanitized;
+  
+  console.log(`🔍 SEARCH REQUEST:`, {
+    query: query.slice(0, 50),
+    maxResults,
+    sortBy,
+    provider,
+    timestamp: new Date().toISOString()
+  });
   
   const rateLimitResult = await checkRateLimitEnhanced(request, env);
   if (!rateLimitResult.allowed) {
@@ -322,14 +477,16 @@ async function handleBookSearch(request, env, ctx) {
     });
   }
   
-  const cacheKey = CACHE_KEYS.search(query, maxResults, sortBy, includeTranslations, provider);
+  // Use crypto-based cache key generation
+  const cacheKey = await generateCacheKey("search", query, maxResults, sortBy, includeTranslations, provider);
   const cached = await getCachedData(cacheKey, env);
   if (cached) {
     return new Response(JSON.stringify(cached.data), {
       headers: {
         ...getCORSHeaders(),
         "X-Cache": `HIT-${cached.source}`,
-        "X-Cache-Source": cached.source
+        "X-Cache-Source": cached.source,
+        "X-Cache-Duration": `${cached.duration}ms`
       }
     });
   }
@@ -338,75 +495,112 @@ async function handleBookSearch(request, env, ctx) {
   let usedProvider = null;
   let errors = [];
   
-  // Provider routing logic with detailed error tracking
+  // Provider routing logic with enhanced logging
   if (provider === "isbndb") {
     // Force ISBNdb only
     try {
+      console.log(`🎯 FORCED PROVIDER: ISBNdb`);
       result = await searchISBNdb(query, maxResults, env);
-      usedProvider = "isbndb";
+      if (isValidResult(result)) {
+        usedProvider = "isbndb";
+        console.log(`✅ ISBNdb SUCCESS: ${result.items?.length || 0} results`);
+      } else {
+        throw new Error("ISBNdb returned invalid results");
+      }
     } catch (error) {
-      console.error("Forced ISBNdb search failed:", error.message);
+      console.error(`❌ ISBNdb FAILED:`, error.message);
       errors.push(`ISBNdb: ${error.message}`);
     }
   } else if (provider === "google") {
     // Force Google Books only
     try {
+      console.log(`🎯 FORCED PROVIDER: Google Books`);
       result = await searchGoogleBooks(query, maxResults, sortBy, includeTranslations, env);
-      usedProvider = "google-books";
+      if (isValidResult(result)) {
+        usedProvider = "google-books";
+        console.log(`✅ Google Books SUCCESS: ${result.items?.length || 0} results`);
+      } else {
+        throw new Error("Google Books returned invalid results");
+      }
     } catch (error) {
-      console.error("Forced Google Books search failed:", error.message);
+      console.error(`❌ Google Books FAILED:`, error.message);
       errors.push(`Google Books: ${error.message}`);
     }
   } else if (provider === "openlibrary") {
     // Force Open Library only
     try {
+      console.log(`🎯 FORCED PROVIDER: Open Library`);
       result = await searchOpenLibrary(query, maxResults, env);
-      usedProvider = "open-library";
+      if (isValidResult(result)) {
+        usedProvider = "open-library";
+        console.log(`✅ Open Library SUCCESS: ${result.items?.length || 0} results`);
+      } else {
+        throw new Error("Open Library returned invalid results");
+      }
     } catch (error) {
-      console.error("Forced Open Library search failed:", error.message);
+      console.error(`❌ Open Library FAILED:`, error.message);
       errors.push(`Open Library: ${error.message}`);
     }
   } else {
-    // Auto mode: ISBNdb → Google Books → Open Library
+    // Auto mode: ISBNdb → Google Books → Open Library with enhanced logging
     
     // 1. Try ISBNdb FIRST
+    console.log(`🔄 AUTO MODE: Trying ISBNdb first`);
     try {
       result = await searchISBNdb(query, maxResults, env);
-      usedProvider = "isbndb";
-      console.log("✅ ISBNdb search successful");
+      if (isValidResult(result)) {
+        usedProvider = "isbndb";
+        console.log(`✅ ISBNdb SUCCESS: ${result.items?.length || 0} results`);
+      } else {
+        throw new Error("ISBNdb returned empty/invalid results");
+      }
     } catch (error) {
-      console.error("ISBNdb failed:", error.message);
+      console.error(`❌ ISBNdb FAILED:`, error.message);
       errors.push(`ISBNdb: ${error.message}`);
+      result = null;
     }
     
-    // 2. Fallback to Google Books if ISBNdb failed or returned no results
-    if (!result || result.items?.length === 0) {
+    // 2. Fallback to Google Books if ISBNdb failed
+    if (!isValidResult(result)) {
+      console.log(`🔄 FALLBACK: Trying Google Books`);
       try {
         result = await searchGoogleBooks(query, maxResults, sortBy, includeTranslations, env);
-        usedProvider = "google-books";
-        console.log("📚 Google Books fallback used");
+        if (isValidResult(result)) {
+          usedProvider = "google-books";
+          console.log(`✅ Google Books SUCCESS: ${result.items?.length || 0} results`);
+        } else {
+          throw new Error("Google Books returned empty/invalid results");
+        }
       } catch (error) {
-        console.error("Google Books failed:", error.message);
+        console.error(`❌ Google Books FAILED:`, error.message);
         errors.push(`Google Books: ${error.message}`);
+        result = null;
       }
     }
     
     // 3. Final fallback to Open Library
-    if (!result || result.items?.length === 0) {
+    if (!isValidResult(result)) {
+      console.log(`🔄 FALLBACK: Trying Open Library`);
       try {
         result = await searchOpenLibrary(query, maxResults, env);
-        usedProvider = "open-library";
-        console.log("📖 Open Library fallback used");
+        if (isValidResult(result)) {
+          usedProvider = "open-library";
+          console.log(`✅ Open Library SUCCESS: ${result.items?.length || 0} results`);
+        } else {
+          throw new Error("Open Library returned empty/invalid results");
+        }
       } catch (error) {
-        console.error("Open Library failed:", error.message);
+        console.error(`❌ Open Library FAILED:`, error.message);
         errors.push(`Open Library: ${error.message}`);
+        result = null;
       }
     }
   }
   
-  if (!result) {
+  if (!isValidResult(result)) {
+    console.log(`💀 ALL PROVIDERS FAILED:`, errors);
     return new Response(JSON.stringify({
-      error: "All book providers failed",
+      error: "All book providers failed or returned no valid results",
       details: errors,
       items: []
     }), {
@@ -421,9 +615,14 @@ async function handleBookSearch(request, env, ctx) {
   const response = JSON.stringify(result);
   
   // Cache successful results
-  if (result.items?.length > 0) {
-    setCachedData(cacheKey, result, 2592000, env, ctx); // 30 days
-  }
+  setCachedData(cacheKey, result, 2592000, env, ctx); // 30 days
+  
+  console.log(`🎉 SEARCH SUCCESS:`, {
+    provider: usedProvider,
+    results: result.items?.length || 0,
+    cached: false,
+    timestamp: new Date().toISOString()
+  });
   
   return new Response(response, {
     headers: {
@@ -432,7 +631,8 @@ async function handleBookSearch(request, env, ctx) {
       "X-Provider": usedProvider,
       "X-Cache-System": env.BOOKS_R2 ? "R2+KV-Hybrid" : "KV-Only",
       "X-Rate-Limit-Remaining": rateLimitResult.remaining.toString(),
-      "X-Debug-Errors": errors.length > 0 ? errors.join("; ") : "none"
+      "X-Debug-Errors": errors.length > 0 ? errors.join("; ") : "none",
+      "X-Results-Count": result.items?.length?.toString() || "0"
     }
   });
 }
@@ -445,6 +645,7 @@ async function handleISBNLookup(request, env, ctx) {
   
   const validation = validateISBN(rawISBN);
   if (validation.error) {
+    console.log(`❌ ISBN VALIDATION ERROR: ${validation.error}`);
     return new Response(JSON.stringify({
       error: validation.error
     }), {
@@ -454,14 +655,18 @@ async function handleISBNLookup(request, env, ctx) {
   }
   
   const isbn = validation.sanitized;
-  const cacheKey = CACHE_KEYS.isbn(isbn, provider);
+  console.log(`📖 ISBN LOOKUP: ${isbn} (provider: ${provider})`);
+  
+  // Use crypto-based cache key generation
+  const cacheKey = await generateCacheKey("isbn", isbn, provider);
   const cached = await getCachedData(cacheKey, env);
   if (cached) {
     return new Response(JSON.stringify(cached.data), {
       headers: {
         ...getCORSHeaders(),
         "X-Cache": `HIT-${cached.source}`,
-        "X-Cache-Source": cached.source
+        "X-Cache-Source": cached.source,
+        "X-Cache-Duration": `${cached.duration}ms`
       }
     });
   }
@@ -470,73 +675,86 @@ async function handleISBNLookup(request, env, ctx) {
   let usedProvider = null;
   let errors = [];
   
-  // Provider routing for ISBN lookup with error tracking
+  // Provider routing for ISBN lookup with enhanced logging
   if (provider === "isbndb") {
     // Force ISBNdb only
     try {
+      console.log(`🎯 FORCED ISBN PROVIDER: ISBNdb`);
       result = await lookupISBNISBNdb(isbn, env);
       usedProvider = "isbndb";
     } catch (error) {
-      console.error("Forced ISBNdb ISBN lookup failed:", error.message);
+      console.error(`❌ ISBNdb ISBN FAILED:`, error.message);
       errors.push(`ISBNdb: ${error.message}`);
     }
   } else if (provider === "google") {
     // Force Google Books only
     try {
+      console.log(`🎯 FORCED ISBN PROVIDER: Google Books`);
       result = await lookupISBNGoogle(isbn, env);
       usedProvider = "google-books";
     } catch (error) {
-      console.error("Forced Google Books ISBN lookup failed:", error.message);
+      console.error(`❌ Google Books ISBN FAILED:`, error.message);
       errors.push(`Google Books: ${error.message}`);
     }
   } else if (provider === "openlibrary") {
     // Force Open Library only
     try {
+      console.log(`🎯 FORCED ISBN PROVIDER: Open Library`);
       result = await lookupISBNOpenLibrary(isbn, env);
       usedProvider = "open-library";
     } catch (error) {
-      console.error("Forced Open Library ISBN lookup failed:", error.message);
+      console.error(`❌ Open Library ISBN FAILED:`, error.message);
       errors.push(`Open Library: ${error.message}`);
     }
   } else {
     // Auto mode: ISBNdb → Google Books → Open Library
     
     // 1. Try ISBNdb FIRST
+    console.log(`🔄 AUTO ISBN MODE: Trying ISBNdb first`);
     try {
       result = await lookupISBNISBNdb(isbn, env);
-      usedProvider = "isbndb";
-      console.log("✅ ISBNdb ISBN lookup successful");
+      if (result) {
+        usedProvider = "isbndb";
+        console.log(`✅ ISBNdb ISBN SUCCESS: ${result.volumeInfo?.title || 'unknown'}`);
+      }
     } catch (error) {
-      console.error("ISBNdb ISBN lookup failed:", error.message);
+      console.error(`❌ ISBNdb ISBN FAILED:`, error.message);
       errors.push(`ISBNdb: ${error.message}`);
     }
     
     // 2. Fallback to Google Books
     if (!result) {
+      console.log(`🔄 ISBN FALLBACK: Trying Google Books`);
       try {
         result = await lookupISBNGoogle(isbn, env);
-        usedProvider = "google-books";
-        console.log("📚 Google Books ISBN fallback used");
+        if (result) {
+          usedProvider = "google-books";
+          console.log(`✅ Google Books ISBN SUCCESS: ${result.volumeInfo?.title || 'unknown'}`);
+        }
       } catch (error) {
-        console.error("Google Books ISBN lookup failed:", error.message);
+        console.error(`❌ Google Books ISBN FAILED:`, error.message);
         errors.push(`Google Books: ${error.message}`);
       }
     }
     
     // 3. Final fallback to Open Library
     if (!result) {
+      console.log(`🔄 ISBN FALLBACK: Trying Open Library`);
       try {
         result = await lookupISBNOpenLibrary(isbn, env);
-        usedProvider = "open-library";
-        console.log("📖 Open Library ISBN fallback used");
+        if (result) {
+          usedProvider = "open-library";
+          console.log(`✅ Open Library ISBN SUCCESS: ${result.volumeInfo?.title || 'unknown'}`);
+        }
       } catch (error) {
-        console.error("Open Library ISBN lookup failed:", error.message);
+        console.error(`❌ Open Library ISBN FAILED:`, error.message);
         errors.push(`Open Library: ${error.message}`);
       }
     }
   }
   
   if (!result) {
+    console.log(`💀 ISBN NOT FOUND: ${isbn}`, errors);
     return new Response(JSON.stringify({
       error: "ISBN not found in any provider",
       isbn,
@@ -555,6 +773,13 @@ async function handleISBNLookup(request, env, ctx) {
   const response = JSON.stringify(result);
   setCachedData(cacheKey, result, 31536000, env, ctx); // 1 year for ISBN lookups
   
+  console.log(`🎉 ISBN SUCCESS:`, {
+    isbn,
+    provider: usedProvider,
+    title: result.volumeInfo?.title || 'unknown',
+    timestamp: new Date().toISOString()
+  });
+  
   return new Response(response, {
     headers: {
       ...getCORSHeaders(),
@@ -565,31 +790,46 @@ async function handleISBNLookup(request, env, ctx) {
   });
 }
 
-// Provider Functions with improved authentication and error handling
-
-// Rate limiter for ISBNdb (1 request per second)
-let lastISBNdbRequest = 0;
-async function waitForISBNdbRateLimit() {
+// Production-ready ISBNdb rate limiting with distributed KV storage
+async function waitForISBNdbRateLimit(env) {
+  const rateLimitKey = "isbndb:last_request";
   const now = Date.now();
-  const timeSinceLastRequest = now - lastISBNdbRequest;
-  if (timeSinceLastRequest < 1000) {
-    const waitTime = 1000 - timeSinceLastRequest;
-    await new Promise(resolve => setTimeout(resolve, waitTime));
+  
+  try {
+    const lastRequest = await env.BOOKS_CACHE?.get(rateLimitKey);
+    const lastRequestTime = lastRequest ? parseInt(lastRequest) : 0;
+    
+    const timeSinceLastRequest = now - lastRequestTime;
+    if (timeSinceLastRequest < 1000) {
+      const waitTime = 1000 - timeSinceLastRequest + 50; // Add 50ms buffer
+      console.log(`⏳ ISBNdb RATE LIMIT: Waiting ${waitTime}ms`);
+      await new Promise(resolve => setTimeout(resolve, waitTime));
+    }
+    
+    // Update last request time atomically
+    const updatedTime = Date.now();
+    await env.BOOKS_CACHE?.put(rateLimitKey, updatedTime.toString(), { expirationTtl: 3600 });
+    
+    return true;
+  } catch (error) {
+    console.warn('ISBNdb rate limiting unavailable:', error.message);
+    // Fallback to local delay if KV is unavailable
+    await new Promise(resolve => setTimeout(resolve, 1100));
+    return false;
   }
-  lastISBNdbRequest = Date.now();
 }
 
-// ISBNdb Search (PRIMARY PROVIDER) - Fixed authentication with rate limiting
+// ISBNdb Search (PRIMARY PROVIDER) - Production hardened with logging
 async function searchISBNdb(query, maxResults, env) {
   const apiKey = env.ISBNdb1;
   if (!apiKey) {
     throw new Error("ISBNdb API key not configured (env.ISBNdb1)");
   }
   
-  // Wait for rate limit compliance (1 request per second)
-  await waitForISBNdbRateLimit();
+  // Use distributed KV-based rate limiting
+  await waitForISBNdbRateLimit(env);
   
-  console.log("ISBNdb search attempt with query:", query);
+  console.log(`🔍 ISBNdb SEARCH: ${query.slice(0, 50)}`);
   
   const baseUrl = "https://api2.isbndb.com";
   let endpoint;
@@ -604,66 +844,114 @@ async function searchISBNdb(query, maxResults, env) {
   }
   
   const params = new URLSearchParams({
-    pageSize: Math.min(maxResults, 1000).toString(), // ISBNdb supports up to 1000
+    pageSize: Math.min(maxResults, 1000).toString(),
     page: "1"
   });
   
   const url = `${baseUrl}${endpoint}?${params}`;
-  console.log("ISBNdb request URL:", url);
   
-  // Create fetch request with proper headers (ISBNdb uses Authorization header)
-  const response = await fetch(url, {
-    method: 'GET',
-    headers: {
-      "Authorization": apiKey,
-      "Content-Type": "application/json",
-      "User-Agent": "CloudflareWorker/BooksProxy"
-    },
-    // Add abort signal for timeout
-    signal: AbortSignal.timeout(15000)
-  });
-  
-  console.log("ISBNdb response status:", response.status);
-  
-  if (!response.ok) {
-    const errorText = await response.text().catch(() => "Unknown error");
-    console.error("ISBNdb API error response:", errorText);
+  // Use safeFetch with memory protection
+  try {
+    const data = await safeFetch(url, {
+      method: 'GET',
+      headers: {
+        "Authorization": apiKey,
+        "Content-Type": "application/json",
+        "User-Agent": "CloudflareWorker/BooksProxy"
+      },
+      signal: AbortSignal.timeout(15000)
+    });
     
-    if (response.status === 401) {
+    // Handle both single book and multiple books responses
+    let books = [];
+    if (data.book) {
+      // Single book response (direct ISBN lookup)
+      books = [data.book];
+    } else if (data.books && Array.isArray(data.books)) {
+      // Multiple books response (search)
+      books = data.books;
+    } else {
+      console.log(`⚠️ ISBNdb UNEXPECTED FORMAT:`, Object.keys(data));
+      books = [];
+    }
+    
+    console.log(`📊 ISBNdb FOUND: ${books.length} books`);
+    
+    return {
+      kind: "books#volumes",
+      totalItems: data.total || books.length,
+      items: books.map((book) => ({
+        kind: "books#volume",
+        id: book.isbn13 || book.isbn || book.title?.substring(0, 20) || "unknown",
+        volumeInfo: {
+          title: book.title || "",
+          authors: book.authors ? book.authors.filter(Boolean) : [],
+          publishedDate: book.date_published || "",
+          publisher: book.publisher || "",
+          description: book.overview || book.synopsis || "",
+          industryIdentifiers: [
+            book.isbn13 && { type: "ISBN_13", identifier: book.isbn13 },
+            book.isbn && { type: "ISBN_10", identifier: book.isbn }
+          ].filter(Boolean),
+          pageCount: book.pages ? parseInt(book.pages) : null,
+          categories: book.subjects || [],
+          imageLinks: book.image ? {
+            thumbnail: book.image,
+            smallThumbnail: book.image
+          } : null,
+          language: book.language || "en",
+          previewLink: `https://isbndb.com/book/${book.isbn13 || book.isbn}`,
+          infoLink: `https://isbndb.com/book/${book.isbn13 || book.isbn}`
+        }
+      }))
+    };
+  } catch (error) {
+    if (error.message.includes('401')) {
       throw new Error("ISBNdb authentication failed - check API key");
-    } else if (response.status === 403) {
+    } else if (error.message.includes('403')) {
       throw new Error("ISBNdb access forbidden - check API permissions");
-    } else if (response.status === 429) {
+    } else if (error.message.includes('429')) {
       throw new Error("ISBNdb rate limit exceeded");
     } else {
-      throw new Error(`ISBNdb API error: ${response.status} - ${errorText}`);
+      throw new Error(`ISBNdb API error: ${error.message}`);
     }
   }
-  
-  const data = await response.json();
-  console.log("ISBNdb response data structure:", Object.keys(data));
-  
-  // Handle both single book and multiple books responses
-  let books = [];
-  if (data.book) {
-    // Single book response (direct ISBN lookup)
-    books = [data.book];
-  } else if (data.books && Array.isArray(data.books)) {
-    // Multiple books response (search)
-    books = data.books;
-  } else {
-    console.log("Unexpected ISBNdb response format:", data);
-    books = [];
+}
+
+// ISBNdb ISBN Lookup (PRIMARY PROVIDER) - Production hardened with logging
+async function lookupISBNISBNdb(isbn, env) {
+  const apiKey = env.ISBNdb1;
+  if (!apiKey) {
+    throw new Error("ISBNdb API key not configured (env.ISBNdb1)");
   }
   
-  console.log(`ISBNdb found ${books.length} books`);
+  // Use distributed KV-based rate limiting
+  await waitForISBNdbRateLimit(env);
   
-  return {
-    kind: "books#volumes",
-    totalItems: data.total || books.length,
-    items: books.map((book) => ({
+  console.log(`🔍 ISBNdb ISBN: ${isbn}`);
+  
+  try {
+    const data = await safeFetch(`https://api2.isbndb.com/book/${isbn}`, {
+      method: 'GET',
+      headers: {
+        "Authorization": apiKey,
+        "Content-Type": "application/json",
+        "User-Agent": "CloudflareWorker/BooksProxy"
+      },
+      signal: AbortSignal.timeout(15000)
+    });
+    
+    const book = data.book;
+    if (!book) {
+      console.log(`❌ ISBNdb ISBN NOT FOUND: ${isbn}`);
+      return null;
+    }
+    
+    console.log(`📖 ISBNdb ISBN FOUND: ${book.title || 'unknown'}`);
+    
+    return {
       kind: "books#volume",
-      id: book.isbn13 || book.isbn || book.title?.substring(0, 20) || "unknown",
+      id: book.isbn13 || book.isbn || "",
       volumeInfo: {
         title: book.title || "",
         authors: book.authors ? book.authors.filter(Boolean) : [],
@@ -684,89 +972,29 @@ async function searchISBNdb(query, maxResults, env) {
         previewLink: `https://isbndb.com/book/${book.isbn13 || book.isbn}`,
         infoLink: `https://isbndb.com/book/${book.isbn13 || book.isbn}`
       }
-    }))
-  };
-}
-
-// ISBNdb ISBN Lookup (PRIMARY PROVIDER) - Fixed authentication with rate limiting
-async function lookupISBNISBNdb(isbn, env) {
-  const apiKey = env.ISBNdb1;
-  if (!apiKey) {
-    throw new Error("ISBNdb API key not configured (env.ISBNdb1)");
-  }
-  
-  // Wait for rate limit compliance (1 request per second)
-  await waitForISBNdbRateLimit();
-  
-  console.log("ISBNdb ISBN lookup attempt for:", isbn);
-  
-  const response = await fetch(`https://api2.isbndb.com/book/${isbn}`, {
-    method: 'GET',
-    headers: {
-      "Authorization": apiKey,
-      "Content-Type": "application/json",
-      "User-Agent": "CloudflareWorker/BooksProxy"
-    },
-    signal: AbortSignal.timeout(15000)
-  });
-  
-  console.log("ISBNdb ISBN response status:", response.status);
-  
-  if (!response.ok) {
-    if (response.status === 404) {
+    };
+  } catch (error) {
+    if (error.message.includes('404')) {
+      console.log(`❌ ISBNdb ISBN NOT FOUND: ${isbn}`);
       return null; // ISBN not found
-    }
-    
-    const errorText = await response.text().catch(() => "Unknown error");
-    console.error("ISBNdb ISBN API error response:", errorText);
-    
-    if (response.status === 401) {
+    } else if (error.message.includes('401')) {
       throw new Error("ISBNdb authentication failed - check API key");
-    } else if (response.status === 403) {
+    } else if (error.message.includes('403')) {
       throw new Error("ISBNdb access forbidden - check API permissions");
     } else {
-      throw new Error(`ISBNdb ISBN API error: ${response.status} - ${errorText}`);
+      throw new Error(`ISBNdb ISBN API error: ${error.message}`);
     }
   }
-  
-  const data = await response.json();
-  const book = data.book;
-  if (!book) {
-    return null;
-  }
-  
-  return {
-    kind: "books#volume",
-    id: book.isbn13 || book.isbn || "",
-    volumeInfo: {
-      title: book.title || "",
-      authors: book.authors ? book.authors.filter(Boolean) : [],
-      publishedDate: book.date_published || "",
-      publisher: book.publisher || "",
-      description: book.overview || book.synopsis || "",
-      industryIdentifiers: [
-        book.isbn13 && { type: "ISBN_13", identifier: book.isbn13 },
-        book.isbn && { type: "ISBN_10", identifier: book.isbn }
-      ].filter(Boolean),
-      pageCount: book.pages ? parseInt(book.pages) : null,
-      categories: book.subjects || [],
-      imageLinks: book.image ? {
-        thumbnail: book.image,
-        smallThumbnail: book.image
-      } : null,
-      language: book.language || "en",
-      previewLink: `https://isbndb.com/book/${book.isbn13 || book.isbn}`,
-      infoLink: `https://isbndb.com/book/${book.isbn13 || book.isbn}`
-    }
-  };
 }
 
-// Google Books Search (SECONDARY PROVIDER) - No changes needed
+// Google Books Search (SECONDARY PROVIDER) - Memory protected with logging
 async function searchGoogleBooks(query, maxResults, sortBy, includeTranslations, env) {
   const apiKey = env.google1 || env.google2;
   if (!apiKey) {
     throw new Error("Google Books API key not configured");
   }
+  
+  console.log(`🔍 Google Books SEARCH: ${query.slice(0, 50)}`);
   
   const params = new URLSearchParams({
     q: query,
@@ -781,23 +1009,22 @@ async function searchGoogleBooks(query, maxResults, sortBy, includeTranslations,
     params.append("langRestrict", "en");
   }
   
-  const response = await fetch(`https://www.googleapis.com/books/v1/volumes?${params}`, {
+  const data = await safeFetch(`https://www.googleapis.com/books/v1/volumes?${params}`, {
     signal: AbortSignal.timeout(10000)
   });
   
-  if (!response.ok) {
-    throw new Error(`Google Books API error: ${response.status}`);
-  }
-  
-  return await response.json();
+  console.log(`📊 Google Books FOUND: ${data.items?.length || 0} books`);
+  return data;
 }
 
-// Google Books ISBN Lookup (SECONDARY PROVIDER) - No changes needed
+// Google Books ISBN Lookup (SECONDARY PROVIDER) - Memory protected with logging
 async function lookupISBNGoogle(isbn, env) {
   const apiKey = env.google1 || env.google2;
   if (!apiKey) {
     throw new Error("Google Books API key not configured");
   }
+  
+  console.log(`🔍 Google Books ISBN: ${isbn}`);
   
   const params = new URLSearchParams({
     q: `isbn:${isbn}`,
@@ -807,20 +1034,20 @@ async function lookupISBNGoogle(isbn, env) {
     key: apiKey
   });
   
-  const response = await fetch(`https://www.googleapis.com/books/v1/volumes?${params}`, {
+  const data = await safeFetch(`https://www.googleapis.com/books/v1/volumes?${params}`, {
     signal: AbortSignal.timeout(10000)
   });
   
-  if (!response.ok) {
-    throw new Error(`Google Books ISBN API error: ${response.status}`);
-  }
+  const result = data.items?.[0] || null;
+  console.log(`📖 Google Books ISBN: ${result ? result.volumeInfo?.title || 'found' : 'not found'}`);
   
-  const data = await response.json();
-  return data.items?.[0] || null;
+  return result;
 }
 
-// Open Library Search (TERTIARY PROVIDER) - No changes needed
+// Open Library Search (TERTIARY PROVIDER) - Memory protected with logging
 async function searchOpenLibrary(query, maxResults, env) {
+  console.log(`🔍 Open Library SEARCH: ${query.slice(0, 50)}`);
+  
   const params = new URLSearchParams({
     q: query,
     limit: maxResults.toString(),
@@ -828,15 +1055,11 @@ async function searchOpenLibrary(query, maxResults, env) {
     format: "json"
   });
   
-  const response = await fetch(`https://openlibrary.org/search.json?${params}`, {
+  const data = await safeFetch(`https://openlibrary.org/search.json?${params}`, {
     signal: AbortSignal.timeout(20000)
   });
   
-  if (!response.ok) {
-    throw new Error(`Open Library API error: ${response.status}`);
-  }
-  
-  const data = await response.json();
+  console.log(`📊 Open Library FOUND: ${data.docs?.length || 0} books`);
   
   return {
     kind: "books#volumes",
@@ -868,21 +1091,21 @@ async function searchOpenLibrary(query, maxResults, env) {
   };
 }
 
-// Open Library ISBN Lookup (TERTIARY PROVIDER) - No changes needed
+// Open Library ISBN Lookup (TERTIARY PROVIDER) - Memory protected with logging
 async function lookupISBNOpenLibrary(isbn, env) {
-  const response = await fetch(`https://openlibrary.org/api/books?bibkeys=ISBN:${isbn}&format=json&jscmd=data`, {
+  console.log(`🔍 Open Library ISBN: ${isbn}`);
+  
+  const data = await safeFetch(`https://openlibrary.org/api/books?bibkeys=ISBN:${isbn}&format=json&jscmd=data`, {
     signal: AbortSignal.timeout(20000)
   });
   
-  if (!response.ok) {
-    throw new Error(`Open Library ISBN API error: ${response.status}`);
-  }
-  
-  const data = await response.json();
   const bookData = data[`ISBN:${isbn}`];
   if (!bookData) {
+    console.log(`❌ Open Library ISBN NOT FOUND: ${isbn}`);
     return null;
   }
+  
+  console.log(`📖 Open Library ISBN FOUND: ${bookData.title || 'unknown'}`);
   
   return {
     kind: "books#volume",

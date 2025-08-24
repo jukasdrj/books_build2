@@ -1,0 +1,26 @@
+# Wrangler configuration for books-proxy-tail-worker
+
+name = "books-proxy-tail-worker"
+main = "books-proxy-tail-worker.js"
+compatibility_date = "2024-08-24"
+compatibility_flags = ["nodejs_compat"]
+
+# Environment variables for the tail worker
+[env.production.vars]
+# Optional: External analytics endpoint
+# ANALYTICS_ENDPOINT = "https://your-analytics-service.com/webhook"
+# ANALYTICS_API_KEY = "your-analytics-api-key"
+
+# KV Namespace for storing analytics (same as proxy worker)
+[[env.production.kv_namespaces]]
+binding = "BOOKS_CACHE"
+id = "your-kv-namespace-id"
+preview_id = "your-preview-kv-namespace-id"
+
+# Development environment
+[env.development]
+vars = { }
+
+[[env.development.kv_namespaces]]
+binding = "BOOKS_CACHE"
+id = "your-dev-kv-namespace-id"

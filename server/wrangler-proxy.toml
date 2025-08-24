@@ -1,0 +1,42 @@
+# Wrangler configuration for books-api-proxy with Tail Worker integration
+
+name = "books-api-proxy"
+main = "proxy-bulletproof-logging.js"
+compatibility_date = "2024-08-24"
+compatibility_flags = ["nodejs_compat"]
+
+# Tail Worker integration for cache analytics
+tail_consumers = [
+  { service = "books-proxy-tail-worker" }
+]
+
+# Environment variables
+[env.production.vars]
+# Add your API keys here (use wrangler secret put for sensitive values)
+# ISBNdb1 = "your-isbndb-key"
+# google1 = "your-google-books-key"
+# ANALYTICS_ENDPOINT = "https://your-analytics-endpoint.com/webhook"
+
+# KV Namespace for caching
+[[env.production.kv_namespaces]]
+binding = "BOOKS_CACHE"
+id = "your-kv-namespace-id"
+preview_id = "your-preview-kv-namespace-id"
+
+# R2 Bucket for cold storage
+[[env.production.r2_buckets]]
+binding = "BOOKS_R2"
+bucket_name = "books-cache"
+preview_bucket_name = "books-cache-preview"
+
+# Development environment
+[env.development]
+vars = { }
+
+[[env.development.kv_namespaces]]
+binding = "BOOKS_CACHE"
+id = "your-dev-kv-namespace-id"
+
+[[env.development.r2_buckets]]
+binding = "BOOKS_R2"
+bucket_name = "books-cache-dev"
