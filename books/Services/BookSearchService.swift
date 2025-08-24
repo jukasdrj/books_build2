@@ -20,6 +20,34 @@ class BookSearchService: ObservableObject {
         #endif
     }
     
+    // MARK: - API Provider Selection
+    enum APIProvider: String, CaseIterable, Identifiable {
+        case auto = "auto"           // ISBNdb → Google Books → Open Library (default)
+        case isbndb = "isbndb"       // Force ISBNdb only
+        case google = "google"       // Force Google Books only
+        case openlibrary = "openlibrary" // Force Open Library only
+        
+        var id: String { rawValue }
+        
+        var displayName: String {
+            switch self {
+            case .auto: return "Smart Fallback (ISBNdb First)"
+            case .isbndb: return "ISBNdb (Premium)"
+            case .google: return "Google Books"
+            case .openlibrary: return "Open Library (Free)"
+            }
+        }
+        
+        var systemImage: String {
+            switch self {
+            case .auto: return "wand.and.stars"
+            case .isbndb: return "crown.fill"
+            case .google: return "globe"
+            case .openlibrary: return "books.vertical"
+            }
+        }
+    }
+    
     enum SortOption: String, CaseIterable, Identifiable {
         case relevance = "relevance"
         case newest = "newest"
@@ -73,7 +101,8 @@ class BookSearchService: ObservableObject {
         query: String, 
         sortBy: SortOption = .relevance,
         maxResults: Int = 40,
-        includeTranslations: Bool = false
+        includeTranslations: Bool = false,
+        provider: APIProvider = .auto
     ) async -> Result<[BookMetadata], BookError> {
         // Handle empty queries
         let trimmedQuery = query.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -90,6 +119,7 @@ class BookSearchService: ObservableObject {
         var queryItems = [
             URLQueryItem(name: "q", value: optimizeQuery(trimmedQuery)),
             URLQueryItem(name: "maxResults", value: String(maxResults)),
+            URLQueryItem(name: "provider", value: provider.rawValue)
         ]
         
         // Add sorting parameter
@@ -182,7 +212,7 @@ class BookSearchService: ObservableObject {
     }
     
     /// Specialized search for ISBN lookups with automatic ISBNDB fallback
-    func searchByISBN(_ isbn: String) async -> Result<BookMetadata?, BookError> {
+    func searchByISBN(_ isbn: String, provider: APIProvider = .auto) async -> Result<BookMetadata?, BookError> {
         let cleanedISBN = isbn.replacingOccurrences(of: "=", with: "")
             .replacingOccurrences(of: "-", with: "")
             .trimmingCharacters(in: .whitespacesAndNewlines)
@@ -191,12 +221,13 @@ class BookSearchService: ObservableObject {
             return .success(nil)
         }
         
-        // First try: Google Books via search endpoint (more reliable for ISBN)
+        // First try: Search by ISBN with specified provider
         let searchResult = await search(
             query: "isbn:\(cleanedISBN)",
             sortBy: .relevance,
             maxResults: 1,
-            includeTranslations: false
+            includeTranslations: false,
+            provider: provider
         )
         
         switch searchResult {
@@ -204,12 +235,12 @@ class BookSearchService: ObservableObject {
             if let book = books.first {
                 return .success(book)
             }
-            // If Google Books fails, try ISBNDB fallback
-            return await searchByISBNWithISBNDBFallback(cleanedISBN)
+            // If primary provider fails, try direct ISBN lookup with same provider
+            return await searchByISBNWithISBNDBFallback(cleanedISBN, provider: provider)
             
         case .failure:
-            // If Google Books fails, try ISBNDB fallback
-            return await searchByISBNWithISBNDBFallback(cleanedISBN)
+            // If primary provider fails, try direct ISBN lookup with same provider
+            return await searchByISBNWithISBNDBFallback(cleanedISBN, provider: provider)
         }
     }
     
@@ -218,14 +249,16 @@ class BookSearchService: ObservableObject {
         query: String,
         sortBy: SortOption = .relevance,
         maxResults: Int = 40,
-        includeTranslations: Bool = false
+        includeTranslations: Bool = false,
+        provider: APIProvider = .auto
     ) async -> Result<[BookMetadata], BookError> {
-        // First try Google Books
+        // First try with specified provider
         let primaryResult = await search(
             query: query,
             sortBy: sortBy,
             maxResults: maxResults,
-            includeTranslations: includeTranslations
+            includeTranslations: includeTranslations,
+            provider: provider
         )
         
         switch primaryResult {
@@ -263,8 +296,7 @@ class BookSearchService: ObservableObject {
         var queryItems = [
             URLQueryItem(name: "q", value: optimizeQuery(query)),
             URLQueryItem(name: "maxResults", value: String(maxResults)),
-            URLQueryItem(name: "provider", value: "isbndb"), // Force ISBNDB
-            URLQueryItem(name: "fallback", value: "true")    // Enable fallback mode
+            URLQueryItem(name: "provider", value: "auto") // Use ISBNdb → Google Books → Open Library fallback chain
         ]
         
         // Add sorting parameter
@@ -306,15 +338,14 @@ class BookSearchService: ObservableObject {
     }
     
     /// Direct ISBNDB fallback for ISBN lookups when Google Books fails
-    private func searchByISBNWithISBNDBFallback(_ isbn: String) async -> Result<BookMetadata?, BookError> {
+    private func searchByISBNWithISBNDBFallback(_ isbn: String, provider: APIProvider = .auto) async -> Result<BookMetadata?, BookError> {
         guard var components = URLComponents(string: "\(proxyBaseURL)/isbn") else {
             return .failure(.invalidURL)
         }
         
         components.queryItems = [
             URLQueryItem(name: "isbn", value: isbn),
-            URLQueryItem(name: "provider", value: "isbndb"), // Force ISBNDB
-            URLQueryItem(name: "fallback", value: "true")    // Enable fallback mode
+            URLQueryItem(name: "provider", value: provider.rawValue)
         ]
         
         guard let url = components.url else {
@@ -340,44 +371,30 @@ class BookSearchService: ObservableObject {
     
     private func executeProxyRequest<T>(
         url: URL,
-        decoder: @escaping (Data) throws -> T,
-        retryCount: Int = 0
+        decoder: @escaping (Data) throws -> T
     ) async -> Result<T, BookError> {
         
         do {
             let configuration = URLSessionConfiguration.default
-            configuration.timeoutIntervalForRequest = 20.0  // Reduced timeout for better UX
-            configuration.timeoutIntervalForResource = 40.0
+            configuration.timeoutIntervalForRequest = 30.0
+            configuration.timeoutIntervalForResource = 60.0
             configuration.waitsForConnectivity = true
             let session = URLSession(configuration: configuration)
             
             var request = URLRequest(url: url)
             request.setValue("BooksTrack-iOS/1.0", forHTTPHeaderField: "User-Agent")
-            request.cachePolicy = .reloadIgnoringLocalCacheData // Force fresh requests for search
             
             let (data, response) = try await session.data(for: request)
             
             // Check HTTP response
             if let httpResponse = response as? HTTPURLResponse {
                 guard 200...299 ~= httpResponse.statusCode else {
-                    // Handle specific error cases with retry logic
-                    switch httpResponse.statusCode {
-                    case 429:
+                    // Handle specific error cases
+                    if httpResponse.statusCode == 429 {
                         let retryAfter = httpResponse.value(forHTTPHeaderField: "Retry-After") ?? "60"
-                        return .failure(.proxyError("Too many requests. Please wait \(retryAfter) seconds before trying again."))
-                    case 500...599:
-                        // Server error - retry if we haven't exceeded limit
-                        if retryCount < 2 {
-                            let delay = pow(2.0, Double(retryCount)) // Exponential backoff
-                            try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
-                            return await executeProxyRequest(url: url, decoder: decoder, retryCount: retryCount + 1)
-                        }
-                        return .failure(.networkError("Server temporarily unavailable. Please try again later."))
-                    case 404:
-                        return .failure(.noData)
-                    default:
-                        return .failure(.networkError("Unable to connect to book database (Error \(httpResponse.statusCode))"))
+                        return .failure(.proxyError("Rate limit exceeded. Please try again in \(retryAfter) seconds."))
                     }
+                    return .failure(.networkError("HTTP \(httpResponse.statusCode)"))
                 }
                 
                 // Log cache status for debugging
@@ -393,26 +410,11 @@ class BookSearchService: ObservableObject {
             return .success(result)
             
         } catch let error as URLError {
-            // Handle network-specific errors with user-friendly messages
-            switch error.code {
-            case .notConnectedToInternet, .networkConnectionLost:
-                return .failure(.networkError("No internet connection. Please check your network and try again."))
-            case .timedOut:
-                if retryCount < 1 {
-                    return await executeProxyRequest(url: url, decoder: decoder, retryCount: retryCount + 1)
-                }
-                return .failure(.networkError("Request timed out. Please try again."))
-            case .cannotConnectToHost, .cannotFindHost:
-                return .failure(.networkError("Unable to connect to book database. Please try again later."))
-            case .secureConnectionFailed:
-                return .failure(.networkError("Secure connection failed. Please check your internet connection."))
-            default:
-                return .failure(.networkError("Network error occurred. Please check your connection and try again."))
-            }
+            return .failure(.networkError(error.localizedDescription))
         } catch let error as ProxyError {
             return .failure(.proxyError(error.localizedDescription))
         } catch {
-            return .failure(.decodingError("Unable to process response from book database. Please try again."))
+            return .failure(.decodingError(error.localizedDescription))
         }
     }
     
