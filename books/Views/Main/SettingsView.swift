@@ -77,6 +77,67 @@ struct SettingsView: View {
                         .padding(.vertical, Theme.Spacing.xs)
                     }
                     .buttonStyle(PlainButtonStyle())
+                    // Appearance Preference Selection
+                    Button {
+                        cycleAppearancePreference()
+                        HapticFeedbackManager.shared.lightImpact()
+                    } label: {
+                        HStack(spacing: Theme.Spacing.md) {
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(
+                                        LinearGradient(
+                                            colors: [
+                                                .blue,
+                                                .purple
+                                            ],
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        )
+                                    )
+                                    .frame(width: 36, height: 36)
+                                
+                                Image(systemName: themeStore.appearancePreference.icon)
+                                    .foregroundColor(.white)
+                                    .font(.system(size: 18, weight: .medium))
+                            }
+                            .shadow(color: Color.blue.opacity(0.3), radius: 4, x: 0, y: 2)
+                            
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("App Appearance")
+                                    .font(.headline)
+                                    .foregroundColor(currentTheme.primaryText)
+                                
+                                HStack(spacing: Theme.Spacing.xs) {
+                                    Image(systemName: themeStore.appearancePreference.icon)
+                                        .font(.title3)
+                                        .foregroundColor(currentTheme.primary)
+                                    
+                                    Text(themeStore.appearancePreference.displayName)
+                                        .font(.subheadline)
+                                        .foregroundColor(currentTheme.secondaryText)
+                                    
+                                    Text("•")
+                                        .foregroundColor(currentTheme.outline)
+                                        .font(.caption)
+                                    
+                                    Text("Light, Dark, or Auto")
+                                        .font(.caption)
+                                        .foregroundColor(.blue)
+                                        .fontWeight(.medium)
+                                }
+                            }
+                            
+                            Spacer()
+                            
+                            Image(systemName: "chevron.right")
+                                .foregroundColor(currentTheme.outline)
+                                .font(.footnote)
+                                .fontWeight(.semibold)
+                        }
+                        .padding(.vertical, Theme.Spacing.xs)
+                    }
+                    .buttonStyle(PlainButtonStyle())
                 } header: {
                     Text("Personalization")
                         .font(.subheadline)
@@ -332,5 +393,15 @@ struct SettingsView: View {
             .padding(.vertical, Theme.Spacing.xs)
         }
         .buttonStyle(PlainButtonStyle())
+    }
+    
+    /// Cycles through appearance preferences (system -> light -> dark -> system)
+    private func cycleAppearancePreference() {
+        let allPreferences = AppearancePreference.allCases
+        let currentIndex = allPreferences.firstIndex(of: themeStore.appearancePreference) ?? 0
+        let nextIndex = (currentIndex + 1) % allPreferences.count
+        let nextPreference = allPreferences[nextIndex]
+        
+        themeStore.setAppearance(nextPreference)
     }
 }

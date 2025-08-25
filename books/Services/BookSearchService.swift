@@ -22,7 +22,7 @@ class BookSearchService: ObservableObject {
     
     // MARK: - API Provider Selection
     enum APIProvider: String, CaseIterable, Identifiable {
-        case auto = "auto"           // ISBNdb → Google Books → Open Library (default)
+        case auto = "auto"           // Smart fallback with query translation (Google → ISBNdb → Open Library)
         case isbndb = "isbndb"       // Force ISBNdb only
         case google = "google"       // Force Google Books only
         case openlibrary = "openlibrary" // Force Open Library only
@@ -31,9 +31,9 @@ class BookSearchService: ObservableObject {
         
         var displayName: String {
             switch self {
-            case .auto: return "Smart Fallback (ISBNdb First)"
+            case .auto: return "Smart Fallback (Enhanced)"
             case .isbndb: return "ISBNdb (Premium)"
-            case .google: return "Google Books"
+            case .google: return "Google Books (Fast)"
             case .openlibrary: return "Open Library (Free)"
             }
         }
@@ -44,6 +44,15 @@ class BookSearchService: ObservableObject {
             case .isbndb: return "crown.fill"
             case .google: return "globe"
             case .openlibrary: return "books.vertical"
+            }
+        }
+        
+        var description: String {
+            switch self {
+            case .auto: return "Uses intelligent query translation and provider fallback for best results"
+            case .isbndb: return "Premium database with comprehensive metadata, best for author/title searches"
+            case .google: return "Fast and comprehensive, supports advanced search operators"
+            case .openlibrary: return "Free and open source, good fallback option"
             }
         }
     }
@@ -95,6 +104,17 @@ class BookSearchService: ObservableObject {
         }
     }
 
+    // MARK: - Search Tips and Help
+    
+    static let searchTips: [String] = [
+        "📖 Try author names like \"Stephen King\" or \"J.K. Rowling\"",
+        "🔍 Use quotes for exact titles like \"Harry Potter\"",
+        "👤 Search \"books by [author name]\" for author-specific results",
+        "🔢 Enter ISBN numbers (with or without hyphens) for precise lookups",
+        "🎯 Use \"inauthor:\" or \"intitle:\" for advanced searches",
+        "🌐 The Enhanced provider uses smart query translation for better results"
+    ]
+    
     // MARK: - Search Methods
     
     func search(
@@ -436,12 +456,12 @@ class BookSearchService: ObservableObject {
     private func optimizeQuery(_ query: String) -> String {
         let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
         
-        // Check if it's already an ISBN query
-        if trimmed.hasPrefix("isbn:") {
+        // Check if it's already an operator query
+        if trimmed.hasPrefix("isbn:") || trimmed.hasPrefix("inauthor:") || trimmed.hasPrefix("intitle:") {
             return trimmed
         }
         
-        // Handle ISBN searches
+        // Handle ISBN searches (both direct and with isbn: prefix)
         if isISBN(trimmed) {
             return "isbn:\(trimmed.replacingOccurrences(of: "=", with: "").replacingOccurrences(of: "-", with: ""))"
         }
@@ -450,17 +470,44 @@ class BookSearchService: ObservableObject {
         if trimmed.lowercased().contains("by ") {
             let parts = trimmed.components(separatedBy: " by ")
             if parts.count == 2 {
-                return "intitle:\"\(parts[0])\" inauthor:\"\(parts[1])\""
+                return "intitle:\"\(parts[0].trimmingCharacters(in: .whitespacesAndNewlines))\" inauthor:\"\(parts[1].trimmingCharacters(in: .whitespacesAndNewlines))\""
             }
         }
         
-        // Handle title searches with quotes
-        if trimmed.contains("\"") {
-            return trimmed // Keep exact phrase searches as-is
+        // Handle title searches with quotes - but be more conservative
+        if trimmed.contains("\"") && trimmed.count > 3 {
+            return "intitle:\(trimmed)" // Treat quoted searches as title searches
         }
         
-        // For general searches, boost title and author matches
-        return "intitle:\(trimmed) OR inauthor:\(trimmed) OR \(trimmed)"
+        // NEW: Enhanced query optimization for the improved proxy
+        // The proxy now has query translation, so we can be more intelligent
+        
+        // Check if it looks like an author name (2-4 words, no numbers, proper case)
+        let words = trimmed.components(separatedBy: " ").filter { !$0.isEmpty }
+        let looksLikeAuthor = words.count >= 2 && 
+                             words.count <= 4 && 
+                             words.allSatisfy { word in
+                                 word.first?.isUppercase == true && 
+                                 !word.contains(where: { $0.isNumber }) &&
+                                 word.count > 1
+                             } &&
+                             !trimmed.lowercased().contains("the ")
+        
+        if looksLikeAuthor {
+            return "inauthor:\"\(trimmed)\""
+        }
+        
+        // Check if it looks like a book title (longer phrases, contains common title words)
+        let titleIndicators = ["a ", "an ", "the ", "of ", "in ", "on ", "for ", "with ", "and ", "or "]
+        let containsTitleWords = titleIndicators.contains { trimmed.lowercased().contains($0) }
+        
+        if containsTitleWords || words.count > 4 {
+            return "intitle:\"\(trimmed)\""
+        }
+        
+        // For short general searches, let the proxy decide the best strategy
+        // Don't use complex OR queries - the proxy's translation layer handles this better
+        return trimmed
     }
     
     private func isISBN(_ string: String) -> Bool {
@@ -496,19 +543,82 @@ class BookSearchService: ObservableObject {
         var uniqueResults: [BookMetadata] = []
         
         for result in results {
-            let isDuplicate = uniqueResults.contains { existing in
+            // Check if this is a duplicate (ISBN match takes priority)
+            if let existingIndex = uniqueResults.firstIndex(where: { existing in
+                // First check ISBN match (most reliable)
+                if let resultISBN = result.isbn,
+                   let existingISBN = existing.isbn,
+                   !resultISBN.isEmpty && !existingISBN.isEmpty {
+                    return cleanISBN(resultISBN) == cleanISBN(existingISBN)
+                }
+                
+                // Fall back to title/author similarity
                 let titleSimilarity = stringSimilarity(result.title, existing.title)
                 let authorSimilarity = authorsSimilarity(result.authors, existing.authors)
-                
                 return titleSimilarity > 0.85 && authorSimilarity > 0.8
-            }
-            
-            if !isDuplicate {
+            }) {
+                // Merge data from both results, keeping the most complete information
+                uniqueResults[existingIndex] = mergeBookMetadata(primary: uniqueResults[existingIndex], secondary: result)
+            } else {
                 uniqueResults.append(result)
             }
         }
         
         return uniqueResults
+    }
+    
+    /// Clean ISBN for comparison (remove hyphens, spaces, etc.)
+    private func cleanISBN(_ isbn: String) -> String {
+        return isbn.replacingOccurrences(of: "-", with: "")
+                  .replacingOccurrences(of: " ", with: "")
+                  .replacingOccurrences(of: "=", with: "")
+                  .trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+    
+    /// Merge two BookMetadata objects, keeping the most complete information
+    private func mergeBookMetadata(primary: BookMetadata, secondary: BookMetadata) -> BookMetadata {
+        // Update primary with missing data from secondary
+        if primary.title.isEmpty && !secondary.title.isEmpty {
+            primary.title = secondary.title
+        }
+        
+        if primary.authors.isEmpty && !secondary.authors.isEmpty {
+            primary.authors = secondary.authors
+        }
+        
+        if primary.pageCount == nil && secondary.pageCount != nil {
+            primary.pageCount = secondary.pageCount
+        }
+        
+        if primary.publishedDate == nil && secondary.publishedDate != nil {
+            primary.publishedDate = secondary.publishedDate
+        }
+        
+        if primary.imageURL == nil && secondary.imageURL != nil {
+            primary.imageURL = secondary.imageURL
+        }
+        
+        if primary.bookDescription == nil && secondary.bookDescription != nil {
+            primary.bookDescription = secondary.bookDescription
+        }
+        
+        if primary.publisher == nil && secondary.publisher != nil {
+            primary.publisher = secondary.publisher
+        }
+        
+        if primary.language == nil && secondary.language != nil {
+            primary.language = secondary.language
+        }
+        
+        if primary.isbn == nil && secondary.isbn != nil {
+            primary.isbn = secondary.isbn
+        }
+        
+        if primary.genre.isEmpty && !secondary.genre.isEmpty {
+            primary.genre = secondary.genre
+        }
+        
+        return primary
     }
     
     private func sortResults(_ results: [BookMetadata], by sortOption: SortOption, originalQuery: String) -> [BookMetadata] {

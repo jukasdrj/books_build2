@@ -212,9 +212,32 @@ extension EnvironmentValues {
 }
 
 // Helper to create adaptive colors for light/dark mode
+// iOS 26 Native Color Adaptation - Uses SwiftUI's environment-based color system
+extension Color {
+    static func adaptive(light: Color, dark: Color) -> Color {
+        // Use Asset Catalog approach for proper SwiftUI adaptation
+        Color(UIColor { traitCollection in
+            switch traitCollection.userInterfaceStyle {
+            case .dark:
+                return UIColor(dark)
+            default:
+                return UIColor(light)
+            }
+        })
+    }
+}
+
+// Temporary helper to bridge old API during migration
 private func adaptiveColor(light: UIColor, dark: UIColor) -> Color {
     return Color(UIColor { traitCollection in
-        traitCollection.userInterfaceStyle == .dark ? dark : light
+        switch traitCollection.userInterfaceStyle {
+        case .dark:
+            return dark
+        case .light, .unspecified:
+            return light
+        @unknown default:
+            return light
+        }
     })
 }
 
@@ -231,7 +254,10 @@ struct AppColorTheme {
     
     // MARK: - Primary Colors
     var primary: Color {
-        adaptiveColor(light: colorDef.primary.light, dark: colorDef.primary.dark)
+        Color.adaptive(
+            light: Color(colorDef.primary.light), 
+            dark: Color(colorDef.primary.dark)
+        )
     }
     
     var onPrimary: Color {
@@ -284,7 +310,8 @@ struct AppColorTheme {
     
     // MARK: - Surface Colors
     var surface: Color {
-        adaptiveColor(light: colorDef.surface.light, dark: colorDef.surface.dark)
+        // Use iOS system secondary background that adapts
+        Color(UIColor.secondarySystemBackground)
     }
     
     var onSurface: Color {
@@ -303,7 +330,8 @@ struct AppColorTheme {
     }
     
     var background: Color {
-        adaptiveColor(light: colorDef.background.light, dark: colorDef.background.dark)
+        // Use iOS system background color that automatically adapts
+        Color(UIColor.systemBackground)
     }
     
     // MARK: - Semantic Colors
@@ -351,24 +379,18 @@ struct AppColorTheme {
     
     // MARK: - Text Colors (Dynamic based on theme)
     var primaryText: Color {
-        adaptiveColor(
-            light: UIColor(white: 0.12, alpha: 1.0),   // near-black for light mode
-            dark: UIColor(white: 0.95, alpha: 1.0)     // near-white for dark mode
-        )
+        // Use iOS system label color that adapts
+        Color(UIColor.label)
     }
     
     var secondaryText: Color {
-        adaptiveColor(
-            light: UIColor(white: 0.12, alpha: 0.70),  // 70% black
-            dark: UIColor(white: 1.00, alpha: 0.70)    // 70% white
-        )
+        // Use iOS system secondary label color
+        Color(UIColor.secondaryLabel)
     }
     
     var outline: Color {
-        adaptiveColor(
-            light: UIColor(white: 0.0, alpha: 0.12),    // subtle neutral outline
-            dark: UIColor(white: 1.0, alpha: 0.12)
-        )
+        // Use iOS system separator color
+        Color(UIColor.separator)
     }
     
     // MARK: - State Colors
@@ -419,19 +441,6 @@ struct AppColorTheme {
     var cultureIndigenous: Color { adaptiveColor(light: .orange, dark: .orange) }
     
     // MARK: - Helper Method for Color Adaptation
-    
-    private func adaptiveColor(light: UIColor, dark: UIColor) -> Color {
-        return Color(UIColor { traitCollection in
-            switch traitCollection.userInterfaceStyle {
-            case .dark:
-                return dark
-            case .light, .unspecified:
-                return light
-            @unknown default:
-                return light
-            }
-        })
-    }
 }
 
 // MARK: - UIColor to Color Conversion Helper

@@ -90,7 +90,7 @@ struct ThemedRootView: View {
                 .ignoresSafeArea()
             
             if cloudKitManager.isUserLoggedIn || hasBypassedICloudLogin {
-                ContentView()
+                iOS26ContentViewWrapper()
             } else {
                 iCloudLoginView(hasBypassedICloudLogin: $hasBypassedICloudLogin)
             }
@@ -104,7 +104,6 @@ struct ThemedRootView: View {
             // No longer needed with new theming system
         }
         .statusBarHidden(false)
-        .preferredColorScheme(nil)
         .onAppear {
             // Set up import state manager with model context
             Task { @MainActor in
