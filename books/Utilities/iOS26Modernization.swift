@@ -346,25 +346,18 @@ class MemoryMonitor: ObservableObject {
     
     private func updateMemoryUsage() {
         // Use os_proc_available_memory for iOS 16+ compatibility
-        if #available(iOS 16.0, *) {
-            let availableMemory = os_proc_available_memory()
-            let usageMB = Double(availableMemory) / 1024 / 1024
+        let availableMemory = os_proc_available_memory()
+        let usageMB = Double(availableMemory) / 1024 / 1024
+        
+        Task { @MainActor in
+            // This is available memory, not used memory, so we estimate usage
+            self.memoryUsageMB = max(0, 500 - usageMB) // Rough estimate for demo
             
-            Task { @MainActor in
-                // This is available memory, not used memory, so we estimate usage
-                self.memoryUsageMB = max(0, 500 - usageMB) // Rough estimate for demo
-                
-                #if DEBUG
-                if self.memoryUsageMB > 200 { // Warn if over 200MB
-                    print("⚠️ High memory usage estimate: \(String(format: "%.1f", self.memoryUsageMB))MB")
-                }
-                #endif
+            #if DEBUG
+            if self.memoryUsageMB > 200 { // Warn if over 200MB
+                print("⚠️ High memory usage estimate: \(String(format: "%.1f", self.memoryUsageMB))MB")
             }
-        } else {
-            // Fallback for older iOS versions
-            Task { @MainActor in
-                self.memoryUsageMB = 0
-            }
+            #endif
         }
     }
     

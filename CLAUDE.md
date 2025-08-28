@@ -7,9 +7,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 This is a SwiftUI iOS book reading tracker app with cultural diversity tracking features. The app uses SwiftData for persistence and is transitioning from Material Design 3 to iOS 26 Liquid Glass design patterns. **Phase 1 of iOS 26 migration is COMPLETE** with enhanced iPad search interface and Liquid Glass foundation. The main project is located in `books_build2/`.
 
 ### Current Status (August 2025)
+- ✅ **Build Status**: Successfully builds and runs on iOS Simulator (iPhone 16 Pro, iOS 26.0)
 - ✅ **iOS 26 Migration Phase 1**: Complete Liquid Glass foundation with enhanced search interface
 - ✅ **Critical Bug Fixes**: Search criteria state management resolved
 - ✅ **Performance Ready**: JSON optimization, memory management, and virtual scrolling implemented
+- ✅ **Recent Fixes (August 28, 2025)**: 
+  - AppearancePreference system implemented with Light/Dark/System modes
+  - iOS26Modernization.swift warning resolved
+  - ThemeStore enhanced with appearance preference persistence
+  - All build errors resolved and project compiles successfully
 - 🔄 **Next Phase**: Complete Material Design 3 → Liquid Glass migration across all views
 
 ## Development Commands
@@ -48,6 +54,7 @@ The app uses an **optimized CloudFlare Workers proxy** for book search functiona
 - **Main Entry**: `booksApp.swift` - Configures SwiftData ModelContainer with migration handling
 - **Root View**: `ContentView.swift` - 4-tab TabView (Library, Search, Stats, Culture) with modern NavigationStack architecture
 - **Theme System**: iOS 26 Liquid Glass design system with 5 variants (Purple Boho, Forest Sage, Ocean Blues, Sunset Warmth, Monochrome)
+- **Appearance Preferences**: Full Light/Dark/System mode support with persistence and smooth transitions
 - **Design Philosophy**: Primary focus on iPhone excellence, secondary focus on best-in-class iPad experiences
 
 ### Key Services
@@ -58,6 +65,7 @@ The app uses an **optimized CloudFlare Workers proxy** for book search functiona
 - **ImageCache**: In-memory book cover caching
 - **HapticFeedbackManager**: Tactile feedback for user interactions
 - **KeychainService**: Secure storage for sensitive data like API keys
+- **ThemeStore**: Complete theme and appearance management with persistence
 
 ### Navigation Pattern
 - **Modern NavigationStack Architecture**: All views use `NavigationStack` with centralized navigation destinations
@@ -120,17 +128,25 @@ The app uses an **optimized CloudFlare Workers proxy** for book search functiona
 ## File Organization
 
 ### Views Hierarchy
-- `Views/Main/`: Primary app screens (ContentView, LibraryView, SearchView, StatsView)
+- `Views/Main/`: Primary app screens (ContentView, LibraryView, SearchView, StatsView, SettingsView)
 - `Views/Detail/`: Detail screens (BookDetailsView, EditBookView, SearchResultDetailView)
-- `Views/Components/`: Reusable UI components (BookCardView, BookCoverImage, filters)
-- `Views/Import/`: CSV import flow screens
+- `Views/Components/`: Reusable UI components (BookCardView, BookCoverImage, filters, progress indicators)
+- `Views/Import/`: CSV import flow screens (CSVImportView, ColumnMappingView, ImportPreviewView)
+- `Views/Debug/`: Debug and development tools (APIKeyManagementView)
+- `Views/Navigation/`: Navigation destination handling
+- `Views/Onboarding/`: User onboarding flows
+- `Views/Settings/`: Settings and configuration views
 
 ### Supporting Code
 - `Models/`: SwiftData models and import data structures
-- `Services/`: API integration, caching, import services
-- `Theme/`: Comprehensive theming system with variants
-- `Utilities/`: Helper functions, CSV parsing, duplicate detection
+- `Services/`: API integration, caching, import services, background processing
+- `Stores/`: State management (ThemeStore with appearance preferences)
+- `Theme/`: Comprehensive theming system with iOS 26 Liquid Glass variants
+- `Utilities/`: Helper functions, CSV parsing, validation, error handling
 - `Extensions/`: Color extensions and utility extensions
+- `Managers/`: Specialized managers (ReadingGoalsManager)
+- `ViewModels/`: View model classes for complex views
+- `Charts/`: Chart components for analytics views
 
 ## Testing Strategy
 
@@ -158,7 +174,7 @@ This app has a strong focus on tracking cultural diversity in reading:
 - Smart import system with multiple fallback strategies for book data
 - Consolidated navigation architecture to eliminate warnings
 - Multi-theme system with instant switching and persistence
-- **BUILD STATUS**: ✅ Successfully builds for iPad Pro 13-inch (M4) with iOS 26 compatibility
+- **BUILD STATUS**: ✅ Successfully builds for iPhone 16 Pro and iPad Pro 13-inch (M4) with iOS 26 compatibility
 - **SWIFT 6 COMPLIANCE**: ✅ Full Swift 6 concurrency model with Sendable conformance
 - **THREAD SAFETY**: All data models properly isolated with `@unchecked Sendable`
 - **CONCURRENCY**: Modern async/await patterns throughout with proper actor isolation
