@@ -29,6 +29,13 @@ This directory contains documentation for the main features implemented in the b
 - Provider fallback with structured error logging
 - Performance monitoring and health checks
 
+### [iOS 26 Liquid Glass Components](../QUICK-START.md)
+**Status**: ✅ Phase 2 Complete
+- Complete component library with 6+ interactive components
+- Performance optimization with adaptive complexity
+- Bridge system maintaining Material Design 3 compatibility
+- Ready for gradual view migration
+
 ## Future Enhancements 🔄
 
 ### [Batch Processing Strategy](batch-processing.md)
