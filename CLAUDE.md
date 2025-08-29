@@ -32,6 +32,18 @@ This is a SwiftUI iOS book reading tracker app with cultural diversity tracking 
 - Scheme: `books.xcscheme` (configured for Debug/Release builds)
 - Three targets: `books` (main app), `booksTests`, `booksUITests`
 
+### SwiftLens Development Tools ✅
+- **SwiftLens Setup**: Fully configured and verified Swift intelligence system
+- **Environment**: Swift 6.1.2 + Xcode 16.4 with sourcekit-lsp integration
+- **Project Analysis**: 135 Swift files indexed and ready for semantic analysis
+- **Core Capabilities**:
+  - `swift_get_symbols_overview` - Quick file structure scanning
+  - `swift_analyze_files` - Comprehensive symbol analysis with hierarchies
+  - `swift_find_symbol_references_files` - Cross-file symbol references
+  - `swift_replace_symbol_body` - Targeted code modifications
+  - `swift_validate_file` - Syntax validation after changes
+- **Usage Pattern**: Use symbols overview → targeted analysis → modify → validate workflow
+
 ### Search Infrastructure
 The app uses an **optimized CloudFlare Workers proxy** for book search functionality:
 

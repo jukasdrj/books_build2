@@ -1,8 +1,17 @@
-# Batch Implementation Strategy Guide
+# Batch Processing Strategy - Future Enhancement Plan
+
+## ⚠️ Implementation Status
+
+**This document describes a PLANNED ENHANCEMENT, not current functionality.**
+
+The current system uses:
+- **Database Batching**: ✅ Implemented (saves books in batches to SwiftData)
+- **Concurrent Processing**: ✅ Implemented (10-20 concurrent API requests)
+- **API Batching**: ❌ Not implemented (individual API requests only)
 
 ## Overview
 
-This guide documents the complete batch implementation strategy for optimizing CSV imports using ISBNdb's batch API capabilities. The implementation supports ISBNdb plans that allow up to **100 ISBNs per batch request**.
+This guide documents a potential batch implementation strategy for optimizing CSV imports using ISBNdb's batch API capabilities. The implementation would support ISBNdb plans that allow up to **100 ISBNs per batch request**.
 
 ## Architecture Summary
 
@@ -113,11 +122,11 @@ func importBooksWithBatchOptimization(
 
 ### Expected Performance Improvements
 
-| Import Size | Before (Individual) | After (Batch) | Improvement |
-|-------------|-------------------|---------------|-------------|
-| 100 books   | ~120 seconds      | ~30 seconds   | 4x faster   |
-| 500 books   | ~600 seconds      | ~150 seconds  | 4x faster   |
-| 1000 books  | ~1200 seconds     | ~300 seconds  | 4x faster   |
+| Import Size | Current (Individual) | Batch (Projected) | Improvement |
+|-------------|---------------------|-------------------|-------------|
+| 100 books   | ~120 seconds        | ~30 seconds       | 4x faster   |
+| 500 books   | ~600 seconds        | ~150 seconds      | 4x faster   |
+| 1000 books  | ~1200 seconds       | ~300 seconds      | 4x faster   |
 
 ### Factors Affecting Performance
 - **ISBN Coverage**: Higher percentage of valid ISBNs = better performance
@@ -136,9 +145,9 @@ Quota Savings: Up to 99% reduction in API calls
 
 ### Caching Strategy
 1. **KV Hot Cache**: Frequently accessed books (fast retrieval)
-2. **R2 Cold Storage**: Long-term storage for all book metadata
+2. **R2 Archive Storage**: Long-term storage for all book metadata
 3. **Cache Promotion**: Popular books moved from R2 to KV automatically
-4. **Batch Cache Check**: All ISBNs checked against cache before API calls
+4. **Batch Cache Check**: All ISBNs verified against cache systems
 
 ## Error Handling & Fallbacks
 
@@ -235,8 +244,8 @@ struct BatchStatistics: Codable {
 
 ### ISBNdb API Usage (Premium Plan)
 ```
-Before: 1,000 books = 1,000 API calls
-After:  1,000 books = 10 batch calls (100 ISBNs each)
+Current: 1,000 books = 1,000 API calls
+Batch:   1,000 books = 10 batch calls (100 ISBNs each)
 Savings: 99% reduction in API usage
 ```
 
