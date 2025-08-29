@@ -5,14 +5,14 @@ import UIKit
 
 @main
 struct booksApp: App {
-    @State private var themeStore = ThemeStore()
+    @State private var unifiedThemeStore = UnifiedThemeStore()
     @Environment(\.colorScheme) private var colorScheme
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     
     private var adaptiveBackground: Color {
         // Force dependency on colorScheme to ensure updates on light/dark mode changes
         let _ = colorScheme
-        return themeStore.appTheme.background
+        return unifiedThemeStore.appTheme.background
     }
     
     var sharedModelContainer: ModelContainer = {
@@ -69,15 +69,15 @@ struct booksApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ThemedRootView(themeStore: themeStore)
+            ThemedRootView(unifiedThemeStore: unifiedThemeStore)
         }
         .modelContainer(sharedModelContainer)
     }
 }
 
-/// Wrapper view that observes ThemeStore and provides reactive theme environment
+/// Wrapper view that observes UnifiedThemeStore and provides reactive theme environment
 struct ThemedRootView: View {
-    @ObservedObject var themeStore: ThemeStore
+    @ObservedObject var unifiedThemeStore: UnifiedThemeStore
     @StateObject private var cloudKitManager = CloudKitManager()
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.modelContext) private var modelContext
@@ -86,7 +86,7 @@ struct ThemedRootView: View {
     var body: some View {
         ZStack {
             // Status bar background color layer
-            themeStore.appTheme.background
+            unifiedThemeStore.appTheme.background
                 .ignoresSafeArea()
             
             if cloudKitManager.isUserLoggedIn || hasBypassedICloudLogin {
@@ -96,9 +96,9 @@ struct ThemedRootView: View {
             }
         }
         .onAppear(perform: cloudKitManager.checkAccountStatus)
-        // Integrate environment-based theme system with reactive updates
-        .environment(\.themeStore, themeStore)
-        .environment(\.appTheme, themeStore.appTheme)
+        // Integrate unified theme system with reactive updates
+        .environment(\.unifiedThemeStore, unifiedThemeStore)
+        .environment(\.appTheme, unifiedThemeStore.appTheme)
         .onChange(of: colorScheme) { _, _ in
             // Force refresh system UI when color scheme changes
             // No longer needed with new theming system

@@ -2,8 +2,7 @@ import SwiftUI
 
 struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
-    @Environment(\.appTheme) private var currentTheme
-    @Environment(\.themeStore) private var themeStore
+    @Environment(\.unifiedThemeStore) private var unifiedThemeStore
     @Environment(\.modelContext) private var modelContext
     @State private var showingThemePicker = false
     @State private var showingCSVImport = false
@@ -14,327 +13,10 @@ struct SettingsView: View {
     
     var body: some View {
         NavigationStack {
-            List {
-                // Theme Section - Enhanced for App Store appeal
-                Section {
-                    Button {
-                        showingThemePicker = true
-                        HapticFeedbackManager.shared.lightImpact()
-                    } label: {
-                        HStack(spacing: Theme.Spacing.md) {
-                            // Beautiful gradient icon background
-                            ZStack {
-                                RoundedRectangle(cornerRadius: 8)
-                                    .fill(
-                                        LinearGradient(
-                                            colors: [
-                                                currentTheme.primary,
-                                                currentTheme.secondary
-                                            ],
-                                            startPoint: .topLeading,
-                                            endPoint: .bottomTrailing
-                                        )
-                                    )
-                                    .frame(width: 36, height: 36)
-                                
-                                Image(systemName: "paintbrush.fill")
-                                    .foregroundColor(.white)
-                                    .font(.system(size: 18, weight: .medium))
-                            }
-                            .shadow(color: currentTheme.primary.opacity(0.3), radius: 4, x: 0, y: 2)
-                            
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("Choose Your Theme")
-                                    .font(.headline)
-                                    .foregroundColor(currentTheme.primaryText)
-                                
-                                HStack(spacing: Theme.Spacing.xs) {
-                                    Text(themeStore.currentTheme.emoji)
-                                        .font(.title3)
-                                    
-                                    Text(themeStore.currentTheme.displayName)
-                                        .font(.subheadline)
-                                        .foregroundColor(currentTheme.secondaryText)
-                                    
-                                    Text("•")
-                                        .foregroundColor(currentTheme.outline)
-                                        .font(.caption)
-                                    
-                                    Text("5 Beautiful Options")
-                                        .font(.caption)
-                                        .foregroundColor(currentTheme.primary)
-                                        .fontWeight(.medium)
-                                }
-                            }
-                            
-                            Spacer()
-                            
-                            Image(systemName: "chevron.right")
-                                .foregroundColor(currentTheme.outline)
-                                .font(.footnote)
-                                .fontWeight(.semibold)
-                        }
-                        .padding(.vertical, Theme.Spacing.xs)
-                    }
-                    .buttonStyle(PlainButtonStyle())
-                    // Appearance Preference Selection
-                    Button {
-                        cycleAppearancePreference()
-                        HapticFeedbackManager.shared.lightImpact()
-                    } label: {
-                        HStack(spacing: Theme.Spacing.md) {
-                            ZStack {
-                                RoundedRectangle(cornerRadius: 8)
-                                    .fill(
-                                        LinearGradient(
-                                            colors: [
-                                                .blue,
-                                                .purple
-                                            ],
-                                            startPoint: .topLeading,
-                                            endPoint: .bottomTrailing
-                                        )
-                                    )
-                                    .frame(width: 36, height: 36)
-                                
-                                Image(systemName: themeStore.appearancePreference.icon)
-                                    .foregroundColor(.white)
-                                    .font(.system(size: 18, weight: .medium))
-                            }
-                            .shadow(color: Color.blue.opacity(0.3), radius: 4, x: 0, y: 2)
-                            
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("App Appearance")
-                                    .font(.headline)
-                                    .foregroundColor(currentTheme.primaryText)
-                                
-                                HStack(spacing: Theme.Spacing.xs) {
-                                    Image(systemName: themeStore.appearancePreference.icon)
-                                        .font(.title3)
-                                        .foregroundColor(currentTheme.primary)
-                                    
-                                    Text(themeStore.appearancePreference.displayName)
-                                        .font(.subheadline)
-                                        .foregroundColor(currentTheme.secondaryText)
-                                    
-                                    Text("•")
-                                        .foregroundColor(currentTheme.outline)
-                                        .font(.caption)
-                                    
-                                    Text("Light, Dark, or Auto")
-                                        .font(.caption)
-                                        .foregroundColor(.blue)
-                                        .fontWeight(.medium)
-                                }
-                            }
-                            
-                            Spacer()
-                            
-                            Image(systemName: "chevron.right")
-                                .foregroundColor(currentTheme.outline)
-                                .font(.footnote)
-                                .fontWeight(.semibold)
-                        }
-                        .padding(.vertical, Theme.Spacing.xs)
-                    }
-                    .buttonStyle(PlainButtonStyle())
-                } header: {
-                    Text("Personalization")
-                        .font(.subheadline)
-                        .fontWeight(.semibold)
-                        .foregroundColor(currentTheme.primaryText)
-                }
-                
-                // Reading Goals Section - Enhanced
-                Section {
-                    Button {
-                        showingGoalSettings = true
-                        HapticFeedbackManager.shared.lightImpact()
-                    } label: {
-                        HStack(spacing: Theme.Spacing.md) {
-                            // Beautiful gradient icon background
-                            ZStack {
-                                RoundedRectangle(cornerRadius: 8)
-                                    .fill(
-                                        LinearGradient(
-                                            colors: [
-                                                .orange,
-                                                .red
-                                            ],
-                                            startPoint: .topLeading,
-                                            endPoint: .bottomTrailing
-                                        )
-                                    )
-                                    .frame(width: 36, height: 36)
-                                
-                                Image(systemName: "target")
-                                    .foregroundColor(.white)
-                                    .font(.system(size: 18, weight: .medium))
-                            }
-                            .shadow(color: Color.orange.opacity(0.3), radius: 4, x: 0, y: 2)
-                            
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("Reading Goals")
-                                    .font(.headline)
-                                    .foregroundColor(currentTheme.primaryText)
-                                
-                                HStack(spacing: Theme.Spacing.xs) {
-                                    Text("📊")
-                                        .font(.title3)
-                                    
-                                    Text("Set daily & weekly targets")
-                                        .font(.subheadline)
-                                        .foregroundColor(currentTheme.secondaryText)
-                                    
-                                    Text("•")
-                                        .foregroundColor(currentTheme.outline)
-                                        .font(.caption)
-                                    
-                                    Text("Track Your Progress")
-                                        .font(.caption)
-                                        .foregroundColor(.orange)
-                                }
-                            }
-                            
-                            Spacer()
-                            
-                            // Subtle iOS-style disclosure indicator
-                            Image(systemName: "chevron.right")
-                                .font(.caption)
-                                .fontWeight(.medium)
-                                .foregroundColor(currentTheme.outline)
-                        }
-                    }
-                    .buttonStyle(.plain)
-                } header: {
-                    Text("Reading Goals")
-                        .font(.subheadline)
-                        .fontWeight(.semibold)
-                        .foregroundColor(currentTheme.primaryText)
-                }
-                
-                // Data Section - Enhanced for CSV import prominence
-                Section {
-                    Button {
-                        showingCSVImport = true
-                        HapticFeedbackManager.shared.lightImpact()
-                    } label: {
-                        HStack(spacing: Theme.Spacing.md) {
-                            ZStack {
-                                RoundedRectangle(cornerRadius: 8)
-                                    .fill(currentTheme.tertiary.opacity(0.15))
-                                    .frame(width: 36, height: 36)
-                                
-                                Image(systemName: "square.and.arrow.down.fill")
-                                    .foregroundColor(currentTheme.tertiary)
-                                    .font(.system(size: 18, weight: .medium))
-                            }
-                            
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("Import Your Books")
-                                    .font(.headline)
-                                    .foregroundColor(currentTheme.primaryText)
-                                
-                                HStack(spacing: Theme.Spacing.xs) {
-                                    Text("From Goodreads CSV")
-                                        .font(.subheadline)
-                                        .foregroundColor(currentTheme.secondaryText)
-                                    
-                                    Text("•")
-                                        .foregroundColor(currentTheme.outline)
-                                        .font(.caption)
-                                    
-                                    Text("Quick Setup")
-                                        .font(.caption)
-                                        .foregroundColor(currentTheme.tertiary)
-                                        .fontWeight(.medium)
-                                }
-                            }
-                            
-                            Spacer()
-                            
-                            Image(systemName: "chevron.right")
-                                .foregroundColor(currentTheme.outline)
-                                .font(.footnote)
-                                .fontWeight(.semibold)
-                        }
-                        .padding(.vertical, Theme.Spacing.xs)
-                    }
-                    .buttonStyle(PlainButtonStyle())
-                    
-                    
-                    // Reset Library - Destructive action with proper iOS styling
-                    Button {
-                        showingLibraryReset = true
-                        HapticFeedbackManager.shared.warning()
-                    } label: {
-                        HStack(spacing: Theme.Spacing.md) {
-                            ZStack {
-                                RoundedRectangle(cornerRadius: 8)
-                                    .fill(Color.red.opacity(0.15))
-                                    .frame(width: 36, height: 36)
-                                
-                                Image(systemName: "trash.fill")
-                                    .foregroundColor(.red)
-                                    .font(.system(size: 18, weight: .medium))
-                            }
-                            
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("Reset Library")
-                                    .font(.body)
-                                    .foregroundColor(.red)
-                                
-                                Text("Delete all books and data")
-                                    .font(.caption)
-                                    .foregroundColor(currentTheme.secondaryText)
-                            }
-                            
-                            Spacer()
-                            
-                            Image(systemName: "chevron.right")
-                                .foregroundColor(.red.opacity(0.6))
-                                .font(.footnote)
-                                .fontWeight(.semibold)
-                        }
-                        .padding(.vertical, Theme.Spacing.xs)
-                    }
-                    .buttonStyle(PlainButtonStyle())
-                } header: {
-                    Text("Your Library")
-                        .font(.subheadline)
-                        .fontWeight(.semibold)
-                        .foregroundColor(currentTheme.primaryText)
-                }
-                
-                // About Section
-                Section {
-                    settingsRow(
-                        icon: "info.circle",
-                        title: "About Books Tracker",
-                        subtitle: "Version 1.0.0 • Made with 💜",
-                        action: {
-                            showingAbout = true
-                            HapticFeedbackManager.shared.lightImpact()
-                        }
-                    )
-                } header: {
-                    Text("Information")
-                        .font(.subheadline)
-                        .fontWeight(.semibold)
-                        .foregroundColor(currentTheme.primaryText)
-                }
-            }
-            .navigationTitle("Settings")
-            .navigationBarTitleDisplayMode(.large)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
-                        dismiss()
-                        HapticFeedbackManager.shared.lightImpact()
-                    }
-                    .foregroundColor(currentTheme.primary)
-                    .fontWeight(.semibold)
-                }
+            if unifiedThemeStore.currentTheme.isLiquidGlass {
+                liquidGlassContent
+            } else {
+                materialDesignContent
             }
         }
         .sheet(isPresented: $showingThemePicker) {
@@ -355,6 +37,301 @@ struct SettingsView: View {
     }
     
     @ViewBuilder
+    private var liquidGlassContent: some View {
+        ScrollView {
+            LazyVStack(spacing: 20) {
+                VStack(spacing: 12) {
+                    LiquidGlassButton("Choose Your Theme", style: .glass) {
+                        showingThemePicker = true
+                        Task { @MainActor in
+                            HapticFeedbackManager.shared.lightImpact()
+                        }
+                    }
+                    
+                    LiquidGlassSegmentedControl(
+                        selection: Binding(
+                            get: { unifiedThemeStore.appearancePreference },
+                            set: { unifiedThemeStore.setAppearance($0) }
+                        ),
+                        options: AppearancePreference.allCases,
+                        displayName: { $0.displayName }
+                    )
+                }
+                .liquidGlassSection {
+                    Label("Personalization", systemImage: "paintbrush.fill")
+                }
+                
+                VStack(spacing: 12) {
+                    LiquidGlassButton("Reading Goals", style: .primary) {
+                        showingGoalSettings = true
+                        Task { @MainActor in
+                            HapticFeedbackManager.shared.lightImpact()
+                        }
+                    }
+                }
+                .liquidGlassSection {
+                    Label("Reading Goals", systemImage: "target")
+                }
+                
+                VStack(spacing: 12) {
+                    LiquidGlassButton("Import Your Books", style: .secondary) {
+                        showingCSVImport = true
+                        Task { @MainActor in
+                            HapticFeedbackManager.shared.lightImpact()
+                        }
+                    }
+                    
+                    LiquidGlassButton("Reset Library", style: .glass) {
+                        showingLibraryReset = true
+                        Task { @MainActor in
+                            HapticFeedbackManager.shared.warning()
+                        }
+                    }
+                }
+                .liquidGlassSection {
+                    Label("Your Library", systemImage: "books.vertical")
+                }
+                
+                VStack(spacing: 12) {
+                    LiquidGlassButton("About Books Tracker", style: .glass) {
+                        showingAbout = true
+                        Task { @MainActor in
+                            HapticFeedbackManager.shared.lightImpact()
+                        }
+                    }
+                }
+                .liquidGlassSection {
+                    Label("Information", systemImage: "info.circle")
+                }
+            }
+            .padding(.horizontal, 16)
+        }
+        .liquidGlassBackground(material: .ultraThin, vibrancy: .subtle)
+        .navigationTitle("Settings")
+        .navigationBarTitleDisplayMode(.large)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                LiquidGlassButton("Done", style: .secondary) {
+                    dismiss()
+                    Task { @MainActor in
+                        HapticFeedbackManager.shared.lightImpact()
+                    }
+                }
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private var materialDesignContent: some View {
+        List {
+            // Theme Section
+            Section("Personalization") {
+                Button {
+                    showingThemePicker = true
+                    Task { @MainActor in
+                        HapticFeedbackManager.shared.lightImpact()
+                    }
+                } label: {
+                    HStack(spacing: 16) {
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(
+                                    LinearGradient(
+                                        colors: [
+                                            unifiedThemeStore.appTheme.primary,
+                                            unifiedThemeStore.appTheme.secondary
+                                        ],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .frame(width: 36, height: 36)
+                            
+                            Image(systemName: "paintbrush.fill")
+                                .foregroundColor(.white)
+                                .font(.system(size: 18, weight: .medium))
+                        }
+                        .shadow(color: unifiedThemeStore.appTheme.primary.opacity(0.3), radius: 4, x: 0, y: 2)
+                        
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Choose Your Theme")
+                                .font(.headline)
+                                .foregroundColor(unifiedThemeStore.appTheme.primaryText)
+                            
+                            HStack(spacing: 8) {
+                                Text(unifiedThemeStore.currentTheme.emoji)
+                                    .font(.title3)
+                                
+                                Text(unifiedThemeStore.currentTheme.displayName)
+                                    .font(.subheadline)
+                                    .foregroundColor(unifiedThemeStore.appTheme.secondaryText)
+                            }
+                        }
+                        
+                        Spacer()
+                        
+                        Image(systemName: "chevron.right")
+                            .foregroundColor(unifiedThemeStore.appTheme.outline)
+                            .font(.footnote)
+                            .fontWeight(.semibold)
+                    }
+                    .padding(.vertical, 8)
+                }
+                .buttonStyle(PlainButtonStyle())
+                
+                // Appearance Preference Selection
+                Button {
+                    cycleAppearancePreference()
+                    Task { @MainActor in
+                        HapticFeedbackManager.shared.lightImpact()
+                    }
+                } label: {
+                    HStack(spacing: 16) {
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(
+                                    LinearGradient(
+                                        colors: [.blue, .purple],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .frame(width: 36, height: 36)
+                            
+                            Image(systemName: unifiedThemeStore.appearancePreference.icon)
+                                .foregroundColor(.white)
+                                .font(.system(size: 18, weight: .medium))
+                        }
+                        .shadow(color: Color.blue.opacity(0.3), radius: 4, x: 0, y: 2)
+                        
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("App Appearance")
+                                .font(.headline)
+                                .foregroundColor(unifiedThemeStore.appTheme.primaryText)
+                            
+                            HStack(spacing: 8) {
+                                Image(systemName: unifiedThemeStore.appearancePreference.icon)
+                                    .font(.title3)
+                                    .foregroundColor(unifiedThemeStore.appTheme.primary)
+                                
+                                Text(unifiedThemeStore.appearancePreference.displayName)
+                                    .font(.subheadline)
+                                    .foregroundColor(unifiedThemeStore.appTheme.secondaryText)
+                            }
+                        }
+                        
+                        Spacer()
+                        
+                        Image(systemName: "chevron.right")
+                            .foregroundColor(unifiedThemeStore.appTheme.outline)
+                            .font(.footnote)
+                            .fontWeight(.semibold)
+                    }
+                    .padding(.vertical, 8)
+                }
+                .buttonStyle(PlainButtonStyle())
+            }
+            
+            // Reading Goals Section
+            Section("Reading Goals") {
+                settingsRow(
+                    icon: "target",
+                    title: "Reading Goals",
+                    subtitle: "Set daily & weekly targets",
+                    action: {
+                        showingGoalSettings = true
+                        Task { @MainActor in
+                            HapticFeedbackManager.shared.lightImpact()
+                        }
+                    }
+                )
+            }
+            
+            // Your Library Section
+            Section("Your Library") {
+                settingsRow(
+                    icon: "square.and.arrow.down.fill",
+                    title: "Import Your Books",
+                    subtitle: "From Goodreads CSV",
+                    action: {
+                        showingCSVImport = true
+                        Task { @MainActor in
+                            HapticFeedbackManager.shared.lightImpact()
+                        }
+                    }
+                )
+                
+                Button {
+                    showingLibraryReset = true
+                    Task { @MainActor in
+                        HapticFeedbackManager.shared.warning()
+                    }
+                } label: {
+                    HStack(spacing: 16) {
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(Color.red.opacity(0.15))
+                                .frame(width: 36, height: 36)
+                            
+                            Image(systemName: "trash.fill")
+                                .foregroundColor(.red)
+                                .font(.system(size: 18, weight: .medium))
+                        }
+                        
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Reset Library")
+                                .font(.body)
+                                .foregroundColor(.red)
+                            
+                            Text("Delete all books and data")
+                                .font(.caption)
+                                .foregroundColor(unifiedThemeStore.appTheme.secondaryText)
+                        }
+                        
+                        Spacer()
+                        
+                        Image(systemName: "chevron.right")
+                            .foregroundColor(.red.opacity(0.6))
+                            .font(.footnote)
+                            .fontWeight(.semibold)
+                    }
+                    .padding(.vertical, 8)
+                }
+                .buttonStyle(PlainButtonStyle())
+            }
+            
+            // Information Section
+            Section("Information") {
+                settingsRow(
+                    icon: "info.circle",
+                    title: "About Books Tracker",
+                    subtitle: "Version 1.0.0 • Made with 💜",
+                    action: {
+                        showingAbout = true
+                        Task { @MainActor in
+                            HapticFeedbackManager.shared.lightImpact()
+                        }
+                    }
+                )
+            }
+        }
+        .navigationTitle("Settings")
+        .navigationBarTitleDisplayMode(.large)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button("Done") {
+                    dismiss()
+                    Task { @MainActor in
+                        HapticFeedbackManager.shared.lightImpact()
+                    }
+                }
+                .foregroundColor(unifiedThemeStore.appTheme.primary)
+                .fontWeight(.semibold)
+            }
+        }
+    }
+    
+    @ViewBuilder
     private func settingsRow(
         icon: String,
         title: String,
@@ -362,35 +339,35 @@ struct SettingsView: View {
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
-            HStack(spacing: Theme.Spacing.md) {
+            HStack(spacing: 16) {
                 ZStack {
                     RoundedRectangle(cornerRadius: 8)
-                        .fill(currentTheme.primary.opacity(0.1))
+                        .fill(unifiedThemeStore.appTheme.primary.opacity(0.1))
                         .frame(width: 36, height: 36)
                     
                     Image(systemName: icon)
-                        .foregroundColor(currentTheme.primary)
+                        .foregroundColor(unifiedThemeStore.appTheme.primary)
                         .font(.system(size: 18, weight: .medium))
                 }
                 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(title)
                         .font(.body)
-                        .foregroundColor(currentTheme.primaryText)
+                        .foregroundColor(unifiedThemeStore.appTheme.primaryText)
                     
                     Text(subtitle)
                         .font(.caption)
-                        .foregroundColor(currentTheme.secondaryText)
+                        .foregroundColor(unifiedThemeStore.appTheme.secondaryText)
                 }
                 
                 Spacer()
                 
                 Image(systemName: "chevron.right")
-                    .foregroundColor(currentTheme.outline)
+                    .foregroundColor(unifiedThemeStore.appTheme.outline)
                     .font(.footnote)
                     .fontWeight(.semibold)
             }
-            .padding(.vertical, Theme.Spacing.xs)
+            .padding(.vertical, 8)
         }
         .buttonStyle(PlainButtonStyle())
     }
@@ -398,10 +375,10 @@ struct SettingsView: View {
     /// Cycles through appearance preferences (system -> light -> dark -> system)
     private func cycleAppearancePreference() {
         let allPreferences = AppearancePreference.allCases
-        let currentIndex = allPreferences.firstIndex(of: themeStore.appearancePreference) ?? 0
+        let currentIndex = allPreferences.firstIndex(of: unifiedThemeStore.appearancePreference) ?? 0
         let nextIndex = (currentIndex + 1) % allPreferences.count
         let nextPreference = allPreferences[nextIndex]
         
-        themeStore.setAppearance(nextPreference)
+        unifiedThemeStore.setAppearance(nextPreference)
     }
 }
