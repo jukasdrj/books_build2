@@ -6,17 +6,20 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a SwiftUI iOS book reading tracker app with cultural diversity tracking features. The app uses SwiftData for persistence and is transitioning from Material Design 3 to iOS 26 Liquid Glass design patterns. **Phase 1 of iOS 26 migration is COMPLETE** with enhanced iPad search interface and Liquid Glass foundation. The main project is located in `books_build2/`.
 
-### Current Status (August 2025)
-- ✅ **Build Status**: Successfully builds and runs on iOS Simulator (iPhone 16 Pro, iOS 26.0)
+### Current Status (August 29, 2025)
+- ✅ **Build Status**: Successfully builds and runs on iOS Simulator (iPhone 16 Pro, iOS 18.0)
 - ✅ **iOS 26 Migration Phase 1**: Complete Liquid Glass foundation with enhanced search interface
-- ✅ **Critical Bug Fixes**: Search criteria state management resolved
+- ✅ **Theme System Bridge Phase**: **COMPLETE** - UnifiedThemeStore successfully integrated
+- ✅ **Critical Infrastructure**: 
+  - Fixed iOS deployment target: 26.0 → 18.0 (resolves build failures)
+  - ThemeSystemBridge.swift implemented with MD3 ↔ Liquid Glass unification
+  - UnifiedThemeStore replaces legacy ThemeStore in app initialization
+  - Backward compatibility validated - all existing views continue working
+- ✅ **Build & Runtime Validated**: App successfully launches with unified theme system
 - ✅ **Performance Ready**: JSON optimization, memory management, and virtual scrolling implemented
-- ✅ **Recent Fixes (August 28, 2025)**: 
-  - AppearancePreference system implemented with Light/Dark/System modes
-  - iOS26Modernization.swift warning resolved
-  - ThemeStore enhanced with appearance preference persistence
-  - All build errors resolved and project compiles successfully
-- 🔄 **Next Phase**: Complete Material Design 3 → Liquid Glass migration across all views
+- 🚀 **Next Phase**: Begin individual view migration to Liquid Glass design system
+
+### **READY FOR PHASE 2**: The bridge architecture is complete and validated. Next developer can safely begin migrating individual views to Liquid Glass.
 
 ## Development Commands
 
@@ -65,7 +68,10 @@ The app uses an **optimized CloudFlare Workers proxy** for book search functiona
 ### App Structure
 - **Main Entry**: `booksApp.swift` - Configures SwiftData ModelContainer with migration handling
 - **Root View**: `ContentView.swift` - 4-tab TabView (Library, Search, Stats, Culture) with modern NavigationStack architecture
-- **Theme System**: iOS 26 Liquid Glass design system with 5 variants (Purple Boho, Forest Sage, Ocean Blues, Sunset Warmth, Monochrome)
+- **Theme System**: **UnifiedThemeStore** bridges Material Design 3 and iOS 26 Liquid Glass systems
+  - **MD3 Themes**: Purple Boho, Forest Sage, Ocean Blues, Sunset Warmth, Monochrome (active/working)
+  - **Liquid Glass Themes**: Crystal Clear, Aurora Glow, Deep Ocean, Forest Mist, Sunset Bloom, Shadow Elegance (ready for adoption)
+  - **Bridge Architecture**: Safe migration path with zero breaking changes
 - **Appearance Preferences**: Full Light/Dark/System mode support with persistence and smooth transitions
 - **Design Philosophy**: Primary focus on iPhone excellence, secondary focus on best-in-class iPad experiences
 
@@ -77,7 +83,7 @@ The app uses an **optimized CloudFlare Workers proxy** for book search functiona
 - **ImageCache**: In-memory book cover caching
 - **HapticFeedbackManager**: Tactile feedback for user interactions
 - **KeychainService**: Secure storage for sensitive data like API keys
-- **ThemeStore**: Complete theme and appearance management with persistence
+- **UnifiedThemeStore**: Complete theme system bridging MD3 and Liquid Glass with appearance management
 
 ### Navigation Pattern
 - **Modern NavigationStack Architecture**: All views use `NavigationStack` with centralized navigation destinations
@@ -89,7 +95,7 @@ The app uses an **optimized CloudFlare Workers proxy** for book search functiona
 
 ### Swift 6.2 Concurrency Architecture ✅
 - **Data Models**: Use `@unchecked Sendable` for SwiftData models (thread safety handled by SwiftData)
-- **UI Classes**: `@MainActor` isolation for ObservableObject types (ThemeStore)
+- **UI Classes**: `@MainActor` isolation for ObservableObject types (UnifiedThemeStore)
 - **Service Layer**: Proper async/await patterns with structured concurrency
 - **Error Handling**: Modern typed throws with Swift Backtrace API integration
 - **Actor System**: Enhanced BookAnalyticsActor with Sendable conformance
@@ -569,20 +575,27 @@ X-Cache-System: R2+KV-Hybrid
 
 ## iOS 26 Liquid Glass Migration Documentation
 
-### **📋 MIGRATION PLAN CREATED (August 29, 2025)**
+### **🌉 THEME SYSTEM BRIDGE COMPLETE (August 29, 2025)**
+- **Status**: **PHASE 1 COMPLETE** - UnifiedThemeStore successfully integrated and validated
+- **Bridge Architecture**: `books/Theme/ThemeSystemBridge.swift` - Unifies MD3 and Liquid Glass systems
+- **Integration Guide**: `THEME-BRIDGE-INTEGRATION.md` - Complete implementation documentation
+- **Runtime Validated**: ✅ App builds and launches successfully with unified theme system
+- **Backward Compatible**: ✅ All existing Material Design 3 themes continue working unchanged
+- **Forward Ready**: ✅ Liquid Glass themes ready for adoption in individual views
+
+### **📋 MIGRATION PLAN DOCUMENTS (August 29, 2025)**
 - **Primary Document**: `docs/iOS26-LIQUID-GLASS-MIGRATION-PLAN.md` - Complete 5-week migration strategy
 - **Developer Guide**: `docs/DEVELOPER-HANDOFF-GUIDE.md` - Quick start and implementation guide
-- **Critical Finding**: LiquidGlassVariant themes exist but are **completely unused** - app still runs on Material Design 3
-- **Risk Assessment**: Theme system modification without proper bridge will break entire app theming
-- **Recommendation**: Follow phased migration plan strictly to avoid functionality regression
+- **Bridge Integration**: `THEME-BRIDGE-INTEGRATION.md` - Phase 1 implementation guide
 
-### **🚨 CRITICAL MIGRATION STATUS**
+### **🚀 READY FOR PHASE 2 MIGRATION**
 - ✅ **SearchView**: Already migrated to iOS 26 Liquid Glass  
-- ❌ **Theme System**: Dual system exists (active MD3 + unused LiquidGlass) - needs unification bridge
-- ❌ **Settings, Library, Stats, Culture**: All still Material Design 3 - require complete migration
-- ❌ **38 Swift files** still contain Material Design references
+- ✅ **Theme System Bridge**: **COMPLETE** - UnifiedThemeStore safely bridges MD3 and Liquid Glass
+- ✅ **Infrastructure**: Deployment target fixed, build validated, runtime verified
+- 🔄 **Ready for Migration**: Settings, Library, Stats, Culture views ready for individual Liquid Glass adoption
+- 📋 **38 Swift files** ready for gradual migration using bridge architecture
 
-**Next Steps**: Implement ThemeSystemBridge before any theme modifications to prevent breaking existing functionality.
+**Phase 2 Ready**: Next developer can safely begin migrating individual views to Liquid Glass using `unifiedThemeStore.currentTheme.isLiquidGlass` detection.
 
 ## Recent Updates (August 2025)
 
