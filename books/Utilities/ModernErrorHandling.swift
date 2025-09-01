@@ -96,7 +96,7 @@ class ModernErrorHandler: ObservableObject {
     }
     
     private func logToAnalytics(_ error: EnhancedError, isCritical: Bool = false) {
-        // Placeholder for analytics integration (Firebase, etc.)
+        // Placeholder for analytics integration
         // In production, you would send this to your analytics service
         let eventData: [String: Any] = [
             "error_type": String(describing: type(of: error.originalError)),
