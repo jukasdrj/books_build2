@@ -108,9 +108,7 @@ struct ContentView: View {
         case 1:
             return "Search Books"
         case 2:
-            return "Stats"
-        case 3:
-            return "Culture"
+            return "Reading Insights"
         default:
             return "PaperTracks"
         }
@@ -281,30 +279,12 @@ struct ContentView: View {
                         HapticFeedbackManager.shared.lightImpact()
                     }) {
                         EnhancedNavItem(
-                            title: "Stats",
-                            icon: "chart.bar",
-                            selectedIcon: "chart.bar.fill",
+                            title: "Insights",
+                            icon: "chart.line.uptrend.xyaxis",
+                            selectedIcon: "chart.line.uptrend.xyaxis.fill",
                             badge: completedBooksCount,
                             isSelected: selectedTab == 2,
                             tag: 2
-                        )
-                    }
-                    .listRowBackground(Color.clear)
-                    .buttonStyle(.plain)
-                    
-                    Button(action: { 
-                        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-                            selectedTab = 3
-                        }
-                        HapticFeedbackManager.shared.lightImpact()
-                    }) {
-                        EnhancedNavItem(
-                            title: "Culture",
-                            icon: "globe",
-                            selectedIcon: "globe.americas.fill",
-                            badge: nil,
-                            isSelected: selectedTab == 3,
-                            tag: 3
                         )
                     }
                     .listRowBackground(Color.clear)
@@ -337,9 +317,7 @@ struct ContentView: View {
                     case 1:
                         SearchView()
                     case 2:
-                        StatsView()
-                    case 3:
-                        CulturalDiversityView()
+                        ReadingInsightsView()
                     default:
                         LibraryViewForSplitView(selectedBook: $selectedBook)
                     }
@@ -407,9 +385,7 @@ struct ContentView: View {
                     case 1:
                         SearchView()
                     case 2:
-                        StatsView()
-                    case 3:
-                        CulturalDiversityView()
+                        ReadingInsightsView()
                     default:
                         LibraryView()
                     }
@@ -544,8 +520,7 @@ struct EnhancedTabBar: View {
     private let tabItems: [TabBarItem] = [
         TabBarItem(title: "Library", icon: "books.vertical", selectedIcon: "books.vertical.fill"),
         TabBarItem(title: "Search", icon: "magnifyingglass", selectedIcon: "magnifyingglass"),
-        TabBarItem(title: "Stats", icon: "chart.bar", selectedIcon: "chart.bar.fill"),
-        TabBarItem(title: "Culture", icon: "globe", selectedIcon: "globe.americas.fill")
+        TabBarItem(title: "Insights", icon: "chart.line.uptrend.xyaxis", selectedIcon: "chart.line.uptrend.xyaxis.fill")
     ]
     
     var body: some View {
@@ -712,7 +687,7 @@ struct EnhancedTabBarButton: View {
     }
     
     private var badgeTitle: String {
-        if let badge = badge, badge > 0 && (item.title == "Library" || item.title == "Stats") {
+        if let badge = badge, badge > 0 && (item.title == "Library" || item.title == "Insights") {
             return "\(item.title) (\(badge))"
         }
         return item.title

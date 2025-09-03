@@ -31,9 +31,9 @@ struct NavigationDestinations: ViewModifier {
         case "Search":
             SearchView()
         case "Stats":
-            StatsView()
+            ReadingInsightsView()
         case "Culture":
-            CulturalDiversityView()
+            SettingsView()
         case "library-incomplete-books":
             IncompleteBookListView()
         default:

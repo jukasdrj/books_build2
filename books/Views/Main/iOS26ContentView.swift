@@ -65,30 +65,18 @@ struct iOS26ContentView: View {
             }
             .tag(1)
             
-            // Stats Tab
+            // Reading Insights Tab
             NavigationStack {
-                StatsView()
+                ReadingInsightsView()
                     .withNavigationDestinations()
-                    .navigationTitle("Reading Stats")
+                    .navigationTitle("Reading Insights")
                     .navigationBarTitleDisplayMode(.large)
             }
             .tabItem {
-                Label("Stats", systemImage: "chart.bar")
+                Label("Insights", systemImage: "chart.line.uptrend.xyaxis")
             }
             .badge(completedBooksCount > 0 ? completedBooksCount : 0)
             .tag(2)
-            
-            // Culture Tab
-            NavigationStack {
-                CulturalDiversityView()
-                    .withNavigationDestinations()
-                    .navigationTitle("Cultural Diversity")
-                    .navigationBarTitleDisplayMode(.large)
-            }
-            .tabItem {
-                Label("Culture", systemImage: "globe.americas")
-            }
-            .tag(3)
         }
         .tabViewStyle(.automatic) // Fallback for compatibility
         .tint(theme.primary)
@@ -307,9 +295,7 @@ struct iOS26iPadContentView: View {
                     case 1:
                         SearchView()
                     case 2:
-                        StatsView()
-                    case 3:
-                        CulturalDiversityView()
+                        ReadingInsightsView()
                     default:
                         LibraryView()
                     }

@@ -443,7 +443,7 @@ struct FormField: View {
 }
 
 // MARK: - Consolidated StatCard Component
-/// Unified StatCard component that combines the liquid glass styling from LiquidGlassStatsView
+/// Unified StatCard component that combines the liquid glass styling from ReadingInsightsView
 /// with the flexibility needed for BackgroundImportProgressIndicator
 struct StatCard: View {
     let icon: String
@@ -456,7 +456,7 @@ struct StatCard: View {
     @Environment(\.appTheme) private var theme
     @State private var isAnimated = false
     
-    // Primary initializer for liquid glass style (used in LiquidGlassStatsView)
+    // Primary initializer for liquid glass style (used in ReadingInsightsView)
     init(
         icon: String,
         title: String,
@@ -504,12 +504,13 @@ struct StatCard: View {
             // Icon with enhanced styling
             ZStack {
                 Circle()
-                    .fill(color.opacity(0.2))
+                    .fill(color.opacity(0.15))
                     .frame(width: 50, height: 50)
-                    .overlay(.ultraThinMaterial.opacity(0.5))
+                    .overlay(.ultraThinMaterial.opacity(0.3))
                 
                 Image(systemName: icon)
                     .font(.title2)
+                    .fontWeight(.semibold)
                     .foregroundColor(color)
                     .liquidGlassVibrancy(.prominent)
             }
@@ -520,22 +521,27 @@ struct StatCard: View {
             )
             
             VStack(spacing: 4) {
-                // Value with counting animation
+                // Value with counting animation - enhanced legibility
                 Text(value)
                     .font(LiquidGlassTheme.typography.displaySmall)
                     .fontWeight(.bold)
                     .foregroundColor(theme.primaryText)
+                    .shadow(color: theme.surface.opacity(0.5), radius: 1, x: 0, y: 1)
                     .liquidGlassVibrancy(.maximum)
                     .contentTransition(.numericText())
                 
                 Text(title)
                     .font(LiquidGlassTheme.typography.titleSmall)
+                    .fontWeight(.semibold)
                     .foregroundColor(color)
+                    .shadow(color: theme.surface.opacity(0.3), radius: 0.5, x: 0, y: 0.5)
                     .liquidGlassVibrancy(.prominent)
                 
                 Text(subtitle)
                     .font(LiquidGlassTheme.typography.bodySmall)
+                    .fontWeight(.medium)
                     .foregroundColor(theme.secondaryText)
+                    .shadow(color: theme.surface.opacity(0.2), radius: 0.5, x: 0, y: 0.5)
                     .liquidGlassVibrancy(.medium)
                     .multilineTextAlignment(.center)
             }
@@ -543,13 +549,37 @@ struct StatCard: View {
         .frame(maxWidth: .infinity)
         .padding(.vertical, 20)
         .padding(.horizontal, 12)
-        .background(material.material.opacity(0.7))
-        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .background {
+            // Improved legibility with reduced material opacity and better layering
+            ZStack {
+                // Base color layer for contrast
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(theme.surface.opacity(0.85))
+                
+                // Glass material layer with reduced opacity
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(material.material.opacity(0.4))
+                
+                // Subtle border for definition
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .strokeBorder(
+                        LinearGradient(
+                            colors: [
+                                color.opacity(0.3),
+                                color.opacity(0.1)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 1
+                    )
+            }
+        }
         .shadow(
-            color: color.opacity(0.2),
-            radius: 8,
+            color: color.opacity(0.15),
+            radius: 12,
             x: 0,
-            y: 4
+            y: 6
         )
         .onAppear {
             withAnimation(.spring(response: 0.8, dampingFraction: 0.7).delay(0.2)) {

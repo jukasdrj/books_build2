@@ -431,18 +431,12 @@ struct LiquidGlassTabView: View {
                 }
                 .tag(1)
             
-            StatsView()
+            ReadingInsightsView()
                 .tabItem {
-                    Label("Stats", systemImage: "chart.bar")
+                    Label("Insights", systemImage: "chart.line.uptrend.xyaxis")
                 }
                 .badge(completedBooksCount > 0 ? completedBooksCount : 0)
                 .tag(2)
-            
-            CulturalDiversityView()
-                .tabItem {
-                    Label("Culture", systemImage: "globe.americas")
-                }
-                .tag(3)
         }
         .tabViewStyle(.automatic) // Fallback to automatic style
         .tint(.primary)
