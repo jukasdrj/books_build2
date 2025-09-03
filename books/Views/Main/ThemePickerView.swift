@@ -1,10 +1,13 @@
 import SwiftUI
 
+// MARK: - iOS 26 Migration Status: ✅ FULLY MIGRATED
+// Uses UnifiedThemeStore bridge pattern with dual-theme category display
+
 struct ThemePickerView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.appTheme) private var theme
-    @Environment(\.themeStore) private var themeStore
-    @State private var selectedTheme: ThemeVariant
+    @Environment(\.unifiedThemeStore) private var unifiedThemeStore
+    @State private var selectedTheme: UnifiedThemeVariant
     
     init() {
         // Will be updated in onAppear to sync with store
@@ -51,7 +54,7 @@ struct ThemePickerView: View {
                                 .foregroundColor(theme.primaryText)
                                 .multilineTextAlignment(.center)
                             
-                            Text("Each theme creates a unique reading sanctuary tailored to your mood and style.")
+                            Text("Experience both iOS 26 Liquid Glass and Material Design 3 themes, each creating a unique reading sanctuary tailored to your style.")
                                 .font(.body)
                                 .foregroundColor(theme.secondaryText)
                                 .multilineTextAlignment(.center)
@@ -59,24 +62,111 @@ struct ThemePickerView: View {
                         }
                     }
                     
-                    // Theme cards with enhanced presentation
-                    VStack(spacing: Theme.Spacing.lg) {
-                        ForEach(ThemeStore.availableThemes) { theme in
-                            ThemePreviewCard(
-                                theme: theme,
-                                isSelected: selectedTheme == theme,
-                                onSelect: {
-                                    selectTheme(theme)
+                    // Theme sections with enhanced presentation
+                    VStack(spacing: Theme.Spacing.xl) {
+                        
+                        // iOS 26 Liquid Glass Themes Section
+                        if !UnifiedThemeStore.liquidGlassThemes.isEmpty {
+                            VStack(spacing: Theme.Spacing.md) {
+                                HStack {
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        HStack(spacing: 8) {
+                                            Image(systemName: "sparkles")
+                                                .font(.title2)
+                                                .foregroundStyle(
+                                                    LinearGradient(
+                                                        colors: [Color.blue, Color.purple],
+                                                        startPoint: .leading,
+                                                        endPoint: .trailing
+                                                    )
+                                                )
+                                            
+                                            Text("iOS 26 Liquid Glass")
+                                                .font(.title2)
+                                                .fontWeight(.bold)
+                                                .foregroundColor(theme.primaryText)
+                                        }
+                                        
+                                        Text("Modern glass materials with depth and translucency")
+                                            .font(.caption)
+                                            .foregroundColor(theme.secondaryText)
+                                    }
+                                    Spacer()
                                 }
-                            )
-                            .shadow(
-                                color: selectedTheme == theme ? 
-                                    theme.colorDefinition.primary.light.toColor().opacity(0.3) : 
-                                    Color.black.opacity(0.05),
-                                radius: selectedTheme == theme ? 12 : 4,
-                                x: 0,
-                                y: selectedTheme == theme ? 8 : 2
-                            )
+                                .padding(.horizontal, 4)
+                                
+                                VStack(spacing: Theme.Spacing.lg) {
+                                    ForEach(UnifiedThemeStore.liquidGlassThemes) { themeVariant in
+                                        UnifiedThemePreviewCard(
+                                            theme: themeVariant,
+                                            isSelected: selectedTheme == themeVariant,
+                                            onSelect: {
+                                                selectTheme(themeVariant)
+                                            }
+                                        )
+                                        .shadow(
+                                            color: selectedTheme == themeVariant ? 
+                                                Color.blue.opacity(0.3) : 
+                                                Color.black.opacity(0.05),
+                                            radius: selectedTheme == themeVariant ? 12 : 4,
+                                            x: 0,
+                                            y: selectedTheme == themeVariant ? 8 : 2
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                        
+                        // Material Design 3 Themes Section
+                        if !UnifiedThemeStore.legacyThemes.isEmpty {
+                            VStack(spacing: Theme.Spacing.md) {
+                                HStack {
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        HStack(spacing: 8) {
+                                            Image(systemName: "rectangle.3.group.fill")
+                                                .font(.title2)
+                                                .foregroundStyle(
+                                                    LinearGradient(
+                                                        colors: [Color.green, Color.teal],
+                                                        startPoint: .leading,
+                                                        endPoint: .trailing
+                                                    )
+                                                )
+                                            
+                                            Text("Material Design 3")
+                                                .font(.title2)
+                                                .fontWeight(.bold)
+                                                .foregroundColor(theme.primaryText)
+                                        }
+                                        
+                                        Text("Classic material design with rich colors and shadows")
+                                            .font(.caption)
+                                            .foregroundColor(theme.secondaryText)
+                                    }
+                                    Spacer()
+                                }
+                                .padding(.horizontal, 4)
+                                
+                                VStack(spacing: Theme.Spacing.lg) {
+                                    ForEach(UnifiedThemeStore.legacyThemes) { themeVariant in
+                                        UnifiedThemePreviewCard(
+                                            theme: themeVariant,
+                                            isSelected: selectedTheme == themeVariant,
+                                            onSelect: {
+                                                selectTheme(themeVariant)
+                                            }
+                                        )
+                                        .shadow(
+                                            color: selectedTheme == themeVariant ? 
+                                                Color.blue.opacity(0.3) : 
+                                                Color.black.opacity(0.05),
+                                            radius: selectedTheme == themeVariant ? 12 : 4,
+                                            x: 0,
+                                            y: selectedTheme == themeVariant ? 8 : 2
+                                        )
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -107,16 +197,16 @@ struct ThemePickerView: View {
             }
             .onAppear {
                 // Sync selected theme with store on appear
-                selectedTheme = themeStore.currentTheme
+                selectedTheme = unifiedThemeStore.currentTheme
             }
         }
     }
     
-    private func selectTheme(_ theme: ThemeVariant) {
+    private func selectTheme(_ theme: UnifiedThemeVariant) {
         selectedTheme = theme
         
-        // Update the theme store with the new selection
-        themeStore.setTheme(theme)
+        // Update the unified theme store with the new selection
+        unifiedThemeStore.setTheme(theme)
         
         // Automatically dismiss after a shorter delay to show the selection
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {

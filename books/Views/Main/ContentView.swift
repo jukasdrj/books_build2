@@ -6,7 +6,7 @@ struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.appTheme) private var theme
-    @Environment(\.themeStore) private var themeStore
+    @Environment(\.unifiedThemeStore) private var unifiedThemeStore
     
     // For tracking badge counts
     @State private var libraryCount = 0

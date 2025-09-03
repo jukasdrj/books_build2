@@ -111,6 +111,56 @@ extension View {
             vibrancy: .medium
         )
     }
+    
+    /// Enhanced Liquid Glass section with full customization (iOS 26)
+    func liquidGlassSection<Header: View>(
+        @ViewBuilder header: () -> Header,
+        material: LiquidGlassTheme.GlassMaterial = .thin,
+        depth: LiquidGlassTheme.GlassDepth = .elevated,
+        radius: LiquidGlassTheme.GlassRadius = .comfortable,
+        vibrancy: LiquidGlassTheme.VibrancyLevel = .medium
+    ) -> some View {
+        VStack(alignment: .leading, spacing: adaptiveSectionSpacing) {
+            header()
+                .font(.system(size: sectionHeaderSize, weight: .semibold, design: .rounded))
+                .foregroundColor(.primary.opacity(vibrancy.textOpacity))
+            
+            self
+                .padding(.top, 4) // Subtle spacing between header and content
+        }
+        .liquidGlassContainer(padding: EdgeInsets(top: adaptiveSectionPadding, leading: adaptiveSectionPadding, bottom: adaptiveSectionPadding, trailing: adaptiveSectionPadding))
+        .optimizedLiquidGlassCard(
+            material: material,
+            depth: depth,
+            radius: radius,
+            vibrancy: vibrancy
+        )
+    }
+    
+    // MARK: - iOS 26 Adaptive Layout Properties
+    private var adaptiveSectionSpacing: CGFloat {
+        switch UIDevice.current.userInterfaceIdiom {
+        case .phone: return 14
+        case .pad: return 16
+        default: return 15
+        }
+    }
+    
+    private var adaptiveSectionPadding: CGFloat {
+        switch UIDevice.current.userInterfaceIdiom {
+        case .phone: return 18
+        case .pad: return 22
+        default: return 20
+        }
+    }
+    
+    private var sectionHeaderSize: CGFloat {
+        switch UIDevice.current.userInterfaceIdiom {
+        case .phone: return 17   // iOS 26 enhanced readability on iPhone
+        case .pad: return 19     // Larger headers on iPad for better hierarchy
+        default: return 18
+        }
+    }
 }
 
 // MARK: - Typography Modifiers
@@ -138,31 +188,70 @@ extension View {
     }
 }
 
+// MARK: - iOS 26 Typography Style System
 enum LiquidGlassTypographyStyle {
-    case displayLarge, displayMedium, displaySmall
-    case headlineLarge, headlineMedium, headlineSmall
-    case titleLarge, titleMedium, titleSmall
-    case bodyLarge, bodyMedium, bodySmall
-    case labelLarge, labelMedium, labelSmall
+    case largeTitle
+    case title1
+    case title2
+    case title3
+    case headline
+    case sectionHeader
+    case body
+    case callout
+    case subheadline
+    case footnote
+    case caption1
+    case caption2
     
     var font: Font {
-        let typography = LiquidGlassTheme.typography
         switch self {
-        case .displayLarge: return typography.displayLarge
-        case .displayMedium: return typography.displayMedium
-        case .displaySmall: return typography.displaySmall
-        case .headlineLarge: return typography.headlineLarge
-        case .headlineMedium: return typography.headlineMedium
-        case .headlineSmall: return typography.headlineSmall
-        case .titleLarge: return typography.titleLarge
-        case .titleMedium: return typography.titleMedium
-        case .titleSmall: return typography.titleSmall
-        case .bodyLarge: return typography.bodyLarge
-        case .bodyMedium: return typography.bodyMedium
-        case .bodySmall: return typography.bodySmall
-        case .labelLarge: return typography.labelLarge
-        case .labelMedium: return typography.labelMedium
-        case .labelSmall: return typography.labelSmall
+        case .largeTitle:
+            return .system(size: 34, weight: .bold, design: .rounded)
+        case .title1:
+            return .system(size: 28, weight: .bold, design: .rounded)
+        case .title2:
+            return .system(size: 22, weight: .bold, design: .rounded)
+        case .title3:
+            return .system(size: 20, weight: .semibold, design: .rounded)
+        case .headline:
+            return .system(size: 17, weight: .semibold, design: .rounded)
+        case .sectionHeader:
+            return .system(size: 16, weight: .semibold, design: .rounded)
+        case .body:
+            return .system(size: 17, weight: .regular, design: .rounded)
+        case .callout:
+            return .system(size: 16, weight: .regular, design: .rounded)
+        case .subheadline:
+            return .system(size: 15, weight: .regular, design: .rounded)
+        case .footnote:
+            return .system(size: 13, weight: .regular, design: .rounded)
+        case .caption1:
+            return .system(size: 12, weight: .regular, design: .rounded)
+        case .caption2:
+            return .system(size: 11, weight: .regular, design: .rounded)
+        }
+    }
+}
+
+// MARK: - Vibrancy Level Extensions
+extension LiquidGlassTheme.VibrancyLevel {
+    /// Text opacity based on vibrancy level for enhanced readability
+    var textOpacity: Double {
+        switch self {
+        case .subtle: return 0.7
+        case .medium: return 0.85
+        case .prominent: return 1.0
+        case .maximum: return 1.0
+        }
+    }
+    
+    /// Background opacity for different vibrancy contexts
+    var backgroundOpacity: Double {
+        switch self {
+        case .subtle: return 0.3
+        case .medium: return 0.5
+        case .prominent: return 0.7
+        case .maximum: return 0.9
         }
     }
 }

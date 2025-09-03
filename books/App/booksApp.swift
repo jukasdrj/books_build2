@@ -99,6 +99,7 @@ struct ThemedRootView: View {
         // Integrate unified theme system with reactive updates
         .environment(\.unifiedThemeStore, unifiedThemeStore)
         .environment(\.appTheme, unifiedThemeStore.appTheme)
+        .preferredColorScheme(unifiedThemeStore.preferredColorScheme)
         .onChange(of: colorScheme) { _, _ in
             // Force refresh system UI when color scheme changes
             // No longer needed with new theming system

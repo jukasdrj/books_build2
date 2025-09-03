@@ -13,6 +13,8 @@ struct LiquidGlassButton: View {
     
     @State private var isPressed = false
     @Environment(\.unifiedThemeStore) private var themeStore
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     
     enum HapticStyle {
         case light
@@ -54,18 +56,108 @@ struct LiquidGlassButton: View {
             }
         }) {
             Text(title)
-                .font(.system(size: 16, weight: .semibold, design: .rounded))
+                .font(.system(size: adaptiveFontSize, weight: .semibold, design: .rounded))
                 .foregroundColor(foregroundColor)
-                .padding(.horizontal, horizontalPadding)
-                .padding(.vertical, verticalPadding)
+                .padding(.horizontal, adaptiveHorizontalPadding)
+                .padding(.vertical, adaptiveVerticalPadding)
+                .frame(minHeight: adaptiveMinHeight)
         }
-        .buttonStyle(LiquidGlassButtonStyleModifier(style: style, isPressed: $isPressed))
+        .buttonStyle(LiquidGlassButtonStyleModifier(
+            style: style, 
+            isPressed: $isPressed,
+            reduceMotion: reduceMotion
+        ))
         .optimizedLiquidGlassCard(
             material: backgroundMaterial,
-            depth: .elevated,
+            depth: buttonDepth,
             radius: .comfortable,
-            vibrancy: .medium
+            vibrancy: buttonVibrancy
         )
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(title)
+        .accessibilityAddTraits(.isButton)
+        .accessibilityHint(accessibilityHint)
+    }
+    
+    // MARK: - iOS 26 Adaptive Button Properties
+    private var adaptiveFontSize: CGFloat {
+        let baseSize: CGFloat = {
+            switch style {
+            case .primary: return 17
+            case .secondary: return 16
+            case .tertiary, .glass: return 15
+            case .floating: return 14
+            case .adaptive: return 16
+            }
+        }()
+        
+        // Scale with Dynamic Type
+        switch dynamicTypeSize {
+        case ...DynamicTypeSize.large: return baseSize
+        case .xLarge: return baseSize + 1
+        case .xxLarge: return baseSize + 2
+        default: return baseSize + 3
+        }
+    }
+    
+    private var adaptiveHorizontalPadding: CGFloat {
+        let basePadding = horizontalPadding
+        switch dynamicTypeSize {
+        case ...DynamicTypeSize.large: return basePadding
+        case .xLarge, .xxLarge: return basePadding + 2
+        default: return basePadding + 4
+        }
+    }
+    
+    private var adaptiveVerticalPadding: CGFloat {
+        let basePadding = verticalPadding
+        switch dynamicTypeSize {
+        case ...DynamicTypeSize.large: return basePadding
+        case .xLarge, .xxLarge: return basePadding + 2
+        default: return basePadding + 4
+        }
+    }
+    
+    private var adaptiveMinHeight: CGFloat {
+        // iOS 26 minimum touch target - 44pt minimum
+        switch dynamicTypeSize {
+        case ...DynamicTypeSize.large: return 44
+        case .xLarge: return 48
+        case .xxLarge: return 52
+        default: return 56
+        }
+    }
+    
+    private var buttonDepth: LiquidGlassTheme.GlassDepth {
+        switch style {
+        case .primary: return .elevated
+        case .secondary: return .elevated
+        case .tertiary: return .floating
+        case .glass: return .floating
+        case .floating: return .floating
+        case .adaptive: return .elevated
+        }
+    }
+    
+    private var buttonVibrancy: LiquidGlassTheme.VibrancyLevel {
+        switch style {
+        case .primary: return .prominent
+        case .secondary: return .medium
+        case .tertiary, .glass: return .subtle
+        case .floating: return .subtle
+        case .adaptive: return .medium
+        }
+    }
+    
+    private var accessibilityHint: String {
+        switch style {
+        case .primary: return "Primary action button"
+        case .secondary: return "Secondary action button"
+        case .tertiary: return "Tertiary action button"
+        case .glass: return "Glass style action button"
+        case .floating: return "Floating action button"
+        case .adaptive: return "Adaptive action button"
+        }
     }
     
     private var backgroundMaterial: LiquidGlassTheme.GlassMaterial {
@@ -119,12 +211,18 @@ struct LiquidGlassButton: View {
 struct LiquidGlassButtonStyleModifier: ButtonStyle {
     let style: LiquidGlassButtonStyleEnum
     @Binding var isPressed: Bool
+    let reduceMotion: Bool
     
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .scaleEffect(configuration.isPressed ? 0.96 : 1.0)
             .opacity(configuration.isPressed ? 0.9 : 1.0)
-            .animation(.spring(response: 0.3, dampingFraction: 0.8), value: configuration.isPressed)
+            .animation(
+                reduceMotion ? 
+                    .none : 
+                    .spring(response: 0.3, dampingFraction: 0.8), 
+                value: configuration.isPressed
+            )
             .onChange(of: configuration.isPressed) { _, newValue in
                 isPressed = newValue
             }
@@ -306,6 +404,8 @@ struct LiquidGlassSegmentedControl<SelectionValue: Hashable>: View {
     let displayName: (SelectionValue) -> String
     
     @Environment(\.unifiedThemeStore) private var themeStore
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Namespace private var selectionAnimation
     
     init(
@@ -319,7 +419,7 @@ struct LiquidGlassSegmentedControl<SelectionValue: Hashable>: View {
     }
     
     var body: some View {
-        HStack(spacing: 4) {
+        HStack(spacing: adaptiveSpacing) {
             ForEach(options, id: \.self) { option in
                 Button(action: {
                     selection = option
@@ -328,31 +428,88 @@ struct LiquidGlassSegmentedControl<SelectionValue: Hashable>: View {
                     }
                 }) {
                     Text(displayName(option))
-                        .font(.system(size: 14, weight: .semibold, design: .rounded))
+                        .font(.system(size: adaptiveFontSize, weight: .semibold, design: .rounded))
                         .foregroundColor(option == selection ? selectedTextColor : unselectedTextColor)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 8)
+                        .padding(.horizontal, adaptiveHorizontalPadding)
+                        .padding(.vertical, adaptiveVerticalPadding)
                         .background(
                             Group {
                                 if option == selection {
-                                    RoundedRectangle(cornerRadius: 8)
+                                    RoundedRectangle(cornerRadius: adaptiveCornerRadius)
                                         .fill(selectionBackgroundColor)
                                         .matchedGeometryEffect(id: "selection", in: selectionAnimation)
                                 }
                             }
                         )
+                        .accessibilityElement(children: .ignore)
+                        .accessibilityLabel(displayName(option))
+                        .accessibilityAddTraits(option == selection ? [.isButton, .isSelected] : .isButton)
+                        .accessibilityHint(option == selection ? "Currently selected" : "Tap to select")
                 }
                 .buttonStyle(.plain)
             }
         }
-        .padding(4)
+        .padding(adaptivePadding)
         .optimizedLiquidGlassCard(
             material: .thin,
             depth: .floating,
             radius: .comfortable,
             vibrancy: .medium
         )
-        .animation(.spring(response: 0.4, dampingFraction: 0.8), value: selection)
+        .animation(reduceMotion ? .none : .spring(response: 0.4, dampingFraction: 0.8), value: selection)
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Appearance preference selector")
+        .accessibilityHint("Choose between light, dark, or system appearance")
+    }
+    
+    // MARK: - iOS 26 Adaptive Layout Properties
+    private var adaptiveSpacing: CGFloat {
+        switch dynamicTypeSize {
+        case ...DynamicTypeSize.large: return 4
+        case .xLarge, .xxLarge: return 6
+        default: return 8
+        }
+    }
+    
+    private var adaptiveFontSize: CGFloat {
+        switch dynamicTypeSize {
+        case ...DynamicTypeSize.large: return 14
+        case .xLarge: return 16
+        case .xxLarge: return 18
+        default: return 20
+        }
+    }
+    
+    private var adaptiveHorizontalPadding: CGFloat {
+        switch dynamicTypeSize {
+        case ...DynamicTypeSize.large: return 16
+        case .xLarge, .xxLarge: return 18
+        default: return 20
+        }
+    }
+    
+    private var adaptiveVerticalPadding: CGFloat {
+        switch dynamicTypeSize {
+        case ...DynamicTypeSize.large: return 8
+        case .xLarge, .xxLarge: return 10
+        default: return 12
+        }
+    }
+    
+    private var adaptiveCornerRadius: CGFloat {
+        switch dynamicTypeSize {
+        case ...DynamicTypeSize.large: return 8
+        case .xLarge, .xxLarge: return 10
+        default: return 12
+        }
+    }
+    
+    private var adaptivePadding: CGFloat {
+        switch dynamicTypeSize {
+        case ...DynamicTypeSize.large: return 4
+        case .xLarge, .xxLarge: return 6
+        default: return 8
+        }
     }
     
     private var selectedTextColor: Color {
@@ -391,6 +548,115 @@ enum LiquidGlassButtonStyleEnum {
     case glass      // Apple's official .glass button style equivalent
     case floating   // Enhanced floating glass button
     case adaptive   // Content-adaptive button (Apple principle)
+}
+
+// MARK: - Enhanced Appearance Control (iOS 26 Liquid Glass)
+struct EnhancedAppearanceControl: View {
+    @Binding var selection: AppearancePreference
+    @Environment(\.unifiedThemeStore) private var themeStore
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Namespace private var selectionAnimation
+    
+    var body: some View {
+        HStack(spacing: 6) {
+            ForEach(AppearancePreference.allCases, id: \.self) { option in
+                appearanceButton(for: option)
+            }
+        }
+        .padding(6)
+        .optimizedLiquidGlassCard(
+            material: .regular,
+            depth: .floating,
+            radius: .comfortable,
+            vibrancy: .medium
+        )
+        .animation(animationValue, value: selection)
+    }
+    
+    @ViewBuilder
+    private func appearanceButton(for option: AppearancePreference) -> some View {
+        Button(action: {
+            selection = option
+            Task { @MainActor in
+                HapticFeedbackManager.shared.mediumImpact()
+            }
+        }) {
+            buttonContent(for: option)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("\(option.displayName) appearance")
+        .accessibilityHint("Sets the app to \(option.displayName.lowercased()) mode")
+        .accessibilityAddTraits(option == selection ? .isSelected : [])
+    }
+    
+    @ViewBuilder
+    private func buttonContent(for option: AppearancePreference) -> some View {
+        VStack(spacing: 4) {
+            iconView(for: option)
+            textView(for: option)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 12)
+        .background(backgroundView(for: option))
+    }
+    
+    @ViewBuilder
+    private func iconView(for option: AppearancePreference) -> some View {
+        Image(systemName: option.icon)
+            .font(.system(size: 16, weight: .medium))
+            .foregroundColor(option == selection ? selectedTextColor : unselectedTextColor)
+    }
+    
+    @ViewBuilder
+    private func textView(for option: AppearancePreference) -> some View {
+        Text(option.displayName)
+            .font(.system(size: 12, weight: .semibold, design: .rounded))
+            .foregroundColor(option == selection ? selectedTextColor : unselectedTextColor)
+    }
+    
+    @ViewBuilder
+    private func backgroundView(for option: AppearancePreference) -> some View {
+        Group {
+            if option == selection {
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .fill(selectionBackgroundColor)
+                    .matchedGeometryEffect(id: "selection", in: selectionAnimation)
+            }
+        }
+    }
+    
+    private var animationValue: Animation {
+        reduceMotion ? .linear(duration: 0.1) : 
+        .spring(response: 0.4, dampingFraction: 0.8)
+    }
+    
+    private var selectedTextColor: Color {
+        if themeStore.currentTheme.isLiquidGlass,
+           let liquidVariant = themeStore.currentTheme.liquidGlassVariant {
+            return liquidVariant.colorDefinition.primary.color
+        } else {
+            return themeStore.appTheme.primary
+        }
+    }
+    
+    private var unselectedTextColor: Color {
+        if themeStore.currentTheme.isLiquidGlass,
+           let liquidVariant = themeStore.currentTheme.liquidGlassVariant {
+            return liquidVariant.colorDefinition.secondary.color
+        } else {
+            return themeStore.appTheme.secondaryText
+        }
+    }
+    
+    private var selectionBackgroundColor: Color {
+        if themeStore.currentTheme.isLiquidGlass,
+           let liquidVariant = themeStore.currentTheme.liquidGlassVariant {
+            return liquidVariant.colorDefinition.primary.color.opacity(0.15)
+        } else {
+            return themeStore.appTheme.primary.opacity(0.15)
+        }
+    }
 }
 
 // MARK: - Namespace for Organization

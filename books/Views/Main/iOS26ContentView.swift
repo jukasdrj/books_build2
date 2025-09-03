@@ -10,7 +10,7 @@ struct iOS26ContentView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.appTheme) private var theme
-    @Environment(\.themeStore) private var themeStore
+    @Environment(\.unifiedThemeStore) private var unifiedThemeStore
     
     // Badge counts for tabs
     @State private var libraryCount = 0

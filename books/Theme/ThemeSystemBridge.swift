@@ -166,6 +166,18 @@ class UnifiedThemeStore: ObservableObject {
         return LiquidGlassTheme()
     }
     
+    /// Converts AppearancePreference to ColorScheme for SwiftUI
+    var preferredColorScheme: ColorScheme? {
+        switch appearancePreference {
+        case .light:
+            return .light
+        case .dark:
+            return .dark
+        case .system:
+            return nil // Let system decide
+        }
+    }
+    
     /// Bridged AppColorTheme for Liquid Glass variants
     private var bridgedAppTheme: AppColorTheme {
         // Create an AppColorTheme that maps Liquid Glass colors to MD3 structure

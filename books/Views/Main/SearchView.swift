@@ -3,7 +3,12 @@ import SwiftData
 
 struct SearchView: View {
     @Environment(\.modelContext) private var modelContext
-    @Environment(\.appTheme) private var currentTheme
+    @Environment(\.unifiedThemeStore) private var themeStore
+    
+    // Legacy theme access for compatibility during migration
+    private var currentTheme: AppColorTheme {
+        themeStore.appTheme
+    }
     
     @State private var searchService = BookSearchService.shared
     @State private var searchQuery = ""
@@ -14,9 +19,7 @@ struct SearchView: View {
     @State private var fromBarcodeScanner = false
     @FocusState private var isSearchFieldFocused: Bool
     
-    // iPad sheet presentation
-    @State private var showingBookDetailSheet = false
-    @State private var selectedBookForSheet: BookMetadata?
+    // Unified navigation for both iPad and iPhone
     
 
     enum SearchState: Equatable {
@@ -27,11 +30,136 @@ struct SearchView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            // Search bar for iPad
-            if UIDevice.current.userInterfaceIdiom == .pad {
-                simpleiPadSearchBar
+        Group {
+            if themeStore.currentTheme.isLiquidGlass {
+                liquidGlassImplementation
+            } else {
+                materialDesignImplementation
             }
+        }
+        .onAppear {
+            MigrationTracker.shared.markViewAsAccessed("SearchView")
+            MigrationTracker.shared.markViewAsMigrated("SearchView")
+            // Reset search state when view appears to ensure clean state
+            if case .error = searchState {
+                searchState = .idle
+            }
+        }
+    }
+    
+    // MARK: - Liquid Glass Theme Colors
+    private var primaryColor: Color {
+        if let liquidVariant = themeStore.currentTheme.liquidGlassVariant {
+            return liquidVariant.colorDefinition.primary.color
+        } else {
+            return themeStore.appTheme.primaryAction
+        }
+    }
+    
+    private var secondaryColor: Color {
+        if let liquidVariant = themeStore.currentTheme.liquidGlassVariant {
+            return liquidVariant.colorDefinition.secondary.color
+        } else {
+            return themeStore.appTheme.secondary
+        }
+    }
+    
+    // MARK: - iOS 26 Liquid Glass Material Hierarchy
+    enum LiquidGlassMaterialLevel {
+        case background    // .ultraThinMaterial - Immersive backgrounds
+        case surface      // .regularMaterial - Primary interactive surfaces  
+        case elevated     // .thinMaterial - Elevated controls and cards
+        case floating     // .thickMaterial - Modal overlays and sheets
+        
+        var material: Material {
+            switch self {
+            case .background: return .ultraThinMaterial
+            case .surface: return .regularMaterial  
+            case .elevated: return .thinMaterial
+            case .floating: return .thickMaterial
+            }
+        }
+    }
+
+    // MARK: - Search Suggestions
+    private var searchSuggestions: [String] {
+        guard !searchQuery.isEmpty else { return [] }
+        
+        let baseSuggestions = [
+            "Fiction", "Non-fiction", "Mystery", "Romance", "Science Fiction",
+            "Fantasy", "Biography", "History", "Self-help", "Poetry"
+        ]
+        
+        // Filter suggestions based on current search query
+        return baseSuggestions.filter { suggestion in
+            suggestion.localizedCaseInsensitiveContains(searchQuery)
+        }.prefix(5).map { $0 }
+    }
+    
+    // MARK: - Liquid Glass Main Content
+    @ViewBuilder
+    private var liquidGlassMainContent: some View {
+        VStack(spacing: 0) {
+            // Search Controls with Liquid Glass styling
+            if case .results(let books) = searchState, !books.isEmpty {
+                if UIDevice.current.userInterfaceIdiom == .pad {
+                    liquidGlassiPadControlsBar
+                } else {
+                    liquidGlassiPhoneControlsBar
+                }
+            }
+            
+            // Content Area with immersive glass backgrounds
+            liquidGlassContentArea
+        }
+    }
+
+    // MARK: - iOS 26 Liquid Glass Implementation
+    @ViewBuilder
+    private var liquidGlassImplementation: some View {
+        liquidGlassMainContent
+        .background {
+            // Immersive Liquid Glass background
+            Rectangle()
+                .fill(LiquidGlassMaterialLevel.background.material)
+                .overlay {
+                    LinearGradient(
+                        colors: [
+                            .clear,
+                            primaryColor.opacity(0.05),
+                            primaryColor.opacity(0.02)
+                        ],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                }
+        }
+        .keyboardAvoidingLayout()
+        .accessibilityLabel("Search for books")
+        .accessibilityHint("Enter a book title, author name, or ISBN to search for books in the online database")
+        .onSubmit(of: .search) {
+            performSearch()
+        }
+        .onChange(of: searchQuery) { oldValue, newValue in
+            if newValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !oldValue.isEmpty {
+                clearSearchResults()
+            }
+        }
+        .sheet(isPresented: $showingSortOptions) {
+            liquidGlassSortOptionsSheet
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .barcodeSearchCompleted)) { notification in
+            handleBarcodeSearchCompleted(notification)
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .barcodeSearchError)) { notification in
+            handleBarcodeSearchError(notification)
+        }
+    }
+    
+    // MARK: - Material Design Main Content  
+    @ViewBuilder
+    private var materialDesignMainContent: some View {
+        VStack(spacing: 0) {
             
             // Search Controls - device-specific layout
             if case .results(let books) = searchState, !books.isEmpty {
@@ -85,16 +213,33 @@ struct SearchView: View {
             }
             .background(currentTheme.background)
             .keyboardAvoidingLayout() // Prevent keyboard constraint conflicts
-            .if(UIDevice.current.userInterfaceIdiom != .pad) { view in
-                view.searchable(text: $searchQuery, prompt: "Search by title, author, or ISBN") {
-                    // Search suggestions appear properly below the search field
-                    if searchQuery.isEmpty {
-                        Text("\"The Great Gatsby\"").searchCompletion("The Great Gatsby")
-                        Text("\"Maya Angelou\"").searchCompletion("Maya Angelou") 
-                        Text("\"9780451524935\"").searchCompletion("9780451524935")
+    }
+    
+    // MARK: - Material Design 3 Implementation
+    @ViewBuilder
+    private var materialDesignImplementation: some View {
+        materialDesignMainContent
+            .searchable(
+                text: $searchQuery, 
+                placement: UIDevice.current.userInterfaceIdiom == .pad ? 
+                    .navigationBarDrawer(displayMode: .always) : .automatic,
+                prompt: "Search by title, author, or ISBN"
+            ) {
+                // Search suggestions
+                if !searchQuery.isEmpty && searchState != .searching {
+                    ForEach(searchSuggestions, id: \.self) { suggestion in
+                        Label(suggestion, systemImage: "magnifyingglass")
+                            .searchCompletion(suggestion)
                     }
+                } else if searchQuery.isEmpty {
+                    Text("\"The Great Gatsby\"").searchCompletion("The Great Gatsby")
+                    Text("\"Maya Angelou\"").searchCompletion("Maya Angelou") 
+                    Text("\"9780451524935\"").searchCompletion("9780451524935")
                 }
-                .keyboardToolbar() // Add Done button to prevent constraint conflicts
+            }
+            .submitLabel(.search)
+            .if(UIDevice.current.userInterfaceIdiom != .pad) { view in
+                view.keyboardToolbar() // Add Done button to prevent constraint conflicts
             }
             .accessibilityLabel("Search for books")
             .accessibilityHint("Enter a book title, author name, or ISBN to search for books in the online database")
@@ -110,28 +255,747 @@ struct SearchView: View {
             .sheet(isPresented: $showingSortOptions) {
                 sortOptionsSheet
             }
-            .sheet(isPresented: $showingBookDetailSheet) {
-                if let selectedBook = selectedBookForSheet {
-                    NavigationStack {
-                        SearchResultDetailView(
-                            bookMetadata: selectedBook,
-                            fromBarcodeScanner: fromBarcodeScanner
-                        )
-                    }
-                }
-            }
             .onReceive(NotificationCenter.default.publisher(for: .barcodeSearchCompleted)) { notification in
                 handleBarcodeSearchCompleted(notification)
             }
             .onReceive(NotificationCenter.default.publisher(for: .barcodeSearchError)) { notification in
                 handleBarcodeSearchError(notification)
             }
-            .onAppear {
-                // Reset search state when view appears to ensure clean state
-                if case .error = searchState {
-                    searchState = .idle
+    }
+    
+    // MARK: - Liquid Glass iPad Search Bar
+    @ViewBuilder
+    private var liquidGlassiPadSearchBar: some View {
+        VStack(spacing: Theme.Spacing.lg) {
+            // Main search container with enhanced glass effect
+            HStack(spacing: Theme.Spacing.md) {
+                // Search icon with glass vibrancy
+                Image(systemName: "magnifyingglass")
+                    .font(.title2)
+                    .fontWeight(.medium)
+                    .foregroundStyle(.primary)
+                    .opacity(0.7)
+                
+                // Enhanced search field
+                TextField("Search by title, author, or ISBN", text: $searchQuery)
+                    .font(.title3)
+                    .fontWeight(.regular)
+                    .textFieldStyle(.plain)
+                    .focused($isSearchFieldFocused)
+                    .onSubmit {
+                        performSearch()
+                    }
+                    .opacity(searchQuery.isEmpty ? 0.6 : 1.0)
+                    .keyboardDismissMode(.onDrag)
+                    .toolbar {
+                        ToolbarItemGroup(placement: .keyboard) {
+                            Spacer()
+                            Button("Done") {
+                                isSearchFieldFocused = false
+                            }
+                        }
+                    }
+                
+                // Clear button with enhanced glass effect
+                if !searchQuery.isEmpty {
+                    Button {
+                        withAnimation(LiquidGlassTheme.FluidAnimation.quick.springAnimation) {
+                            searchQuery = ""
+                            clearSearchResults()
+                        }
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.title3)
+                            .foregroundStyle(.secondary)
+                    }
+                    .transition(.scale.combined(with: .opacity))
                 }
             }
+            .padding(.horizontal, Theme.Spacing.xl)
+            .padding(.vertical, Theme.Spacing.lg)
+            .background {
+                // Enhanced Liquid Glass background
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .fill(LiquidGlassMaterialLevel.surface.material)
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 20, style: .continuous)
+                            .strokeBorder(
+                                LinearGradient(
+                                    colors: [
+                                        primaryColor.opacity(0.3),
+                                        primaryColor.opacity(0.1),
+                                        .clear
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: 1
+                            )
+                    }
+                    .shadow(
+                        color: primaryColor.opacity(0.15),
+                        radius: 12,
+                        x: 0,
+                        y: 4
+                    )
+                    .shadow(
+                        color: .black.opacity(0.05),
+                        radius: 4,
+                        x: 0,
+                        y: 2
+                    )
+            }
+            .scaleEffect(isSearchFieldFocused ? 1.02 : 1.0)
+            .animation(LiquidGlassTheme.FluidAnimation.smooth.springAnimation, value: isSearchFieldFocused)
+        }
+        .padding(.horizontal, Theme.Spacing.lg)
+        .padding(.vertical, Theme.Spacing.md)
+        .background {
+            // Ultra-thin material backdrop
+            Rectangle()
+                .fill(.ultraThinMaterial)
+                .ignoresSafeArea(edges: .top)
+                .onTapGesture {
+                    if UIDevice.current.userInterfaceIdiom == .pad {
+                        isSearchFieldFocused = false
+                    }
+                }
+        }
+        .keyboardAvoidingLayout()
+    }
+    
+    // MARK: - Liquid Glass Content Area
+    @ViewBuilder
+    private var liquidGlassContentArea: some View {
+        Group {
+            switch searchState {
+            case .idle:
+                liquidGlassEmptyState
+                
+            case .searching:
+                UnifiedLoadingState(config: .init(
+                    message: "Searching millions of books",
+                    subtitle: "Using smart relevance sorting",
+                    style: .spinner
+                ))
+                
+            case .results(let books):
+                if books.isEmpty {
+                    liquidGlassNoResultsState
+                } else {
+                    liquidGlassSearchResultsList(books: books)
+                }
+                
+            case .error(let message):
+                UnifiedErrorState(config: .init(
+                    title: "Search Error",
+                    message: message,
+                    retryAction: retrySearch,
+                    style: .standard
+                ))
+            }
+        }
+        .animation(LiquidGlassTheme.FluidAnimation.smooth.springAnimation, value: searchState)
+    }
+    
+    // MARK: - Liquid Glass Search Controls
+    @ViewBuilder
+    private var liquidGlassiPadControlsBar: some View {
+        // Use existing enhanced controls bar which already has Liquid Glass styling
+        iPadSearchControlsBar
+    }
+    
+    @ViewBuilder
+    private var liquidGlassiPhoneControlsBar: some View {
+        HStack(spacing: Theme.Spacing.sm) {
+            // Enhanced sort button with glass material
+            Button {
+                showingSortOptions = true
+            } label: {
+                HStack(spacing: 3) {
+                    Image(systemName: sortOption.systemImage)
+                        .font(.caption)
+                    Text(sortOption.displayName)
+                        .font(.caption)
+                        .fontWeight(.medium)
+                    Image(systemName: "chevron.down")
+                        .font(.caption2)
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .foregroundStyle(.primary)
+                .background {
+                    Capsule()
+                        .fill(LiquidGlassMaterialLevel.elevated.material)
+                        .overlay {
+                            Capsule()
+                                .strokeBorder(.primary.opacity(0.2), lineWidth: 0.5)
+                        }
+                        .shadow(color: .black.opacity(0.08), radius: 4, x: 0, y: 2)
+                }
+            }
+            .accessibilityLabel("Sort by \(sortOption.displayName)")
+            
+            // Enhanced translations toggle with glass material
+            Button {
+                withAnimation(LiquidGlassTheme.FluidAnimation.quick.springAnimation) {
+                    includeTranslations.toggle()
+                }
+                // Re-search logic
+                let trimmedQuery = searchQuery.trimmingCharacters(in: .whitespacesAndNewlines)
+                if !trimmedQuery.isEmpty {
+                    switch searchState {
+                    case .results, .error:
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            performSearch()
+                        }
+                    default:
+                        break
+                    }
+                }
+            } label: {
+                HStack(spacing: 3) {
+                    Image(systemName: includeTranslations ? "globe" : "globe.badge.chevron.backward")
+                        .font(.caption)
+                    Text(includeTranslations ? "All" : "EN")
+                        .font(.caption)
+                        .fontWeight(.medium)
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .foregroundStyle(includeTranslations ? .white : .primary)
+                .background {
+                    let capsuleShape = Capsule()
+                    Group {
+                        if includeTranslations {
+                            capsuleShape.fill(
+                                LinearGradient(
+                                    colors: [
+                                        primaryColor,
+                                        primaryColor.opacity(0.8)
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                        } else {
+                            capsuleShape.fill(LiquidGlassMaterialLevel.elevated.material)
+                        }
+                    }
+                    .overlay {
+                        if !includeTranslations {
+                            capsuleShape.strokeBorder(.primary.opacity(0.2), lineWidth: 0.5)
+                        }
+                    }
+                    .shadow(
+                        color: includeTranslations ? primaryColor.opacity(0.25) : .black.opacity(0.08),
+                        radius: includeTranslations ? 6 : 4,
+                        x: 0,
+                        y: includeTranslations ? 3 : 2
+                    )
+                }
+            }
+            .accessibilityLabel(includeTranslations ? "Including all languages" : "English only")
+            
+            Spacer()
+            
+            // Results count with glass material
+            if case .results(let books) = searchState {
+                Text("\(books.count)")
+                    .font(.caption)
+                    .fontWeight(.medium)
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background {
+                        Capsule()
+                            .fill(LiquidGlassMaterialLevel.background.material)
+                            .overlay {
+                                Capsule().strokeBorder(.secondary.opacity(0.1), lineWidth: 0.5)
+                            }
+                    }
+            }
+        }
+        .padding(.horizontal, Theme.Spacing.md)
+        .padding(.vertical, Theme.Spacing.sm)
+        .background {
+            Rectangle()
+                .fill(LiquidGlassMaterialLevel.elevated.material)
+                .overlay(alignment: .bottom) {
+                    Rectangle()
+                        .fill(.separator.opacity(0.3))
+                        .frame(height: 0.5)
+                }
+        }
+    }
+    
+    // MARK: - Liquid Glass Search Suggestions
+    @ViewBuilder
+    private var liquidGlassSearchSuggestions: some View {
+        if searchQuery.isEmpty {
+            Group {
+                Text("\"The Great Gatsby\"").searchCompletion("The Great Gatsby")
+                Text("\"Maya Angelou\"").searchCompletion("Maya Angelou") 
+                Text("\"9780451524935\"").searchCompletion("9780451524935")
+            }
+        }
+    }
+    
+    // MARK: - Liquid Glass Empty State
+    @ViewBuilder
+    private var liquidGlassEmptyState: some View {
+        if UIDevice.current.userInterfaceIdiom == .pad {
+            liquidGlassiPadEmptyState
+        } else {
+            liquidGlassiPhoneEmptyState
+        }
+    }
+    
+    @ViewBuilder
+    private var liquidGlassiPadEmptyState: some View {
+        VStack(spacing: Theme.Spacing.xl) {
+            // Enhanced hero content with depth
+            VStack(spacing: Theme.Spacing.lg) {
+                ZStack {
+                    // Multiple depth layers for enhanced glass effect
+                    Circle()
+                        .fill(LiquidGlassMaterialLevel.surface.material)
+                        .frame(width: 160, height: 160)
+                        .overlay {
+                            Circle()
+                                .fill(
+                                    RadialGradient(
+                                        colors: [
+                                            primaryColor.opacity(0.2),
+                                            primaryColor.opacity(0.1),
+                                            .clear
+                                        ],
+                                        center: .center,
+                                        startRadius: 10,
+                                        endRadius: 80
+                                    )
+                                )
+                        }
+                        .shadow(
+                            color: primaryColor.opacity(0.2),
+                            radius: 25,
+                            x: 0,
+                            y: 10
+                        )
+                        .shadow(
+                            color: .black.opacity(0.1),
+                            radius: 12,
+                            x: 0,
+                            y: 6
+                        )
+                    
+                    // Animated icon with vibrancy
+                    Image(systemName: "magnifyingglass.circle.fill")
+                        .font(.system(size: 72, weight: .medium))
+                        .foregroundStyle(
+                            LinearGradient(
+                                colors: [
+                                    primaryColor,
+                                    primaryColor.opacity(0.7)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .shadow(color: primaryColor.opacity(0.3), radius: 6, x: 0, y: 3)
+                }
+                .scaleEffect(1.0)
+                .animation(
+                    Animation.easeInOut(duration: 2.0)
+                        .repeatForever(autoreverses: true),
+                    value: UUID()
+                )
+                
+                VStack(spacing: Theme.Spacing.sm) {
+                    Text("Discover Your Next Great Read")
+                        .font(.largeTitle)
+                        .fontWeight(.light)
+                        .multilineTextAlignment(.center)
+                        .foregroundStyle(.primary)
+                    
+                    Text("Search millions of books with smart sorting and powerful filters")
+                        .font(.title3)
+                        .fontWeight(.regular)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 40)
+                }
+            }
+            
+            // Enhanced example searches with glass capsules
+            VStack(spacing: Theme.Spacing.md) {
+                Text("Try these searches:")
+                    .font(.title3)
+                    .fontWeight(.medium)
+                    .foregroundStyle(.secondary)
+                
+                LazyVGrid(columns: [
+                    GridItem(.adaptive(minimum: 200), spacing: Theme.Spacing.md)
+                ], spacing: Theme.Spacing.md) {
+                    ForEach([
+                        ("The Great Gatsby", "book.fill"),
+                        ("Maya Angelou", "person.fill"),
+                        ("9780451524935", "barcode")
+                    ], id: \.0) { example, icon in
+                        Button {
+                            withAnimation(LiquidGlassTheme.FluidAnimation.smooth.springAnimation) {
+                                searchQuery = example
+                                performSearch()
+                            }
+                        } label: {
+                            HStack(spacing: Theme.Spacing.xs) {
+                                Image(systemName: icon)
+                                    .font(.callout)
+                                    .fontWeight(.medium)
+                                Text(example)
+                                    .font(.callout)
+                                    .fontWeight(.medium)
+                            }
+                            .padding(.horizontal, 20)
+                            .padding(.vertical, 16)
+                            .foregroundStyle(.primary)
+                            .background {
+                                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                    .fill(LiquidGlassMaterialLevel.elevated.material)
+                                    .overlay {
+                                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                            .strokeBorder(
+                                                LinearGradient(
+                                                    colors: [
+                                                        primaryColor.opacity(0.3),
+                                                        primaryColor.opacity(0.1)
+                                                    ],
+                                                    startPoint: .topLeading,
+                                                    endPoint: .bottomTrailing
+                                                ),
+                                                lineWidth: 1
+                                            )
+                                    }
+                                    .shadow(
+                                        color: primaryColor.opacity(0.15),
+                                        radius: 12,
+                                        x: 0,
+                                        y: 6
+                                    )
+                                    .shadow(
+                                        color: .black.opacity(0.05),
+                                        radius: 4,
+                                        x: 0,
+                                        y: 2
+                                    )
+                            }
+                        }
+                        .buttonStyle(.plain)
+                        .scaleEffect(1.0)
+                        .animation(LiquidGlassTheme.FluidAnimation.quick.springAnimation, value: searchQuery)
+                    }
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background {
+            // Immersive multi-layer background
+            Rectangle()
+                .fill(.ultraThinMaterial)
+                .overlay {
+                    LinearGradient(
+                        colors: [
+                            .clear,
+                            primaryColor.opacity(0.03),
+                            primaryColor.opacity(0.01)
+                        ],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                }
+        }
+        .accessibilityLabel("Search for books")
+        .accessibilityHint("Use the search field above to find books by title, author, or ISBN")
+    }
+    
+    @ViewBuilder
+    private var liquidGlassiPhoneEmptyState: some View {
+        UnifiedHeroSection(config: .init(
+            icon: "magnifyingglass.circle.fill",
+            title: "Discover Your Next Great Read",
+            subtitle: "Search millions of books with smart sorting and find exactly what you're looking for",
+            style: .discovery,
+            actions: [
+                .init(
+                    title: "Smart Relevance",
+                    icon: "target",
+                    description: "Find the most relevant results for your search"
+                ) {},
+                .init(
+                    title: "Sort by Popularity",
+                    icon: "star.fill",
+                    description: "Discover trending and highly-rated books"
+                ) {},
+                .init(
+                    title: "All Languages",
+                    icon: "globe",
+                    description: "Include translated works from around the world"
+                ) {}
+            ]
+        ))
+        .background {
+            Rectangle()
+                .fill(.ultraThinMaterial)
+        }
+        .accessibilityLabel("Search for books")
+        .accessibilityHint("Use the search field above to find books by title, author, or ISBN")
+    }
+    
+    // MARK: - Liquid Glass No Results State
+    @ViewBuilder
+    private var liquidGlassNoResultsState: some View {
+        UnifiedHeroSection(config: .init(
+            icon: "questionmark.circle.fill",
+            title: "No Results Found",
+            subtitle: "Try different search terms or check your spelling. You can also try including translated works.",
+            style: .error,
+            actions: [
+                .init(
+                    title: "Book titles",
+                    icon: "book.fill",
+                    description: "Try \"The Great Gatsby\""
+                ) {
+                    searchQuery = "The Great Gatsby"
+                    performSearch()
+                },
+                .init(
+                    title: "Author names",
+                    icon: "person.fill",
+                    description: "Try \"Maya Angelou\""
+                ) {
+                    searchQuery = "Maya Angelou"
+                    performSearch()
+                },
+                .init(
+                    title: "ISBN numbers",
+                    icon: "barcode",
+                    description: "Try \"9780451524935\""
+                ) {
+                    searchQuery = "9780451524935"
+                    performSearch()
+                }
+            ]
+        ))
+        .background {
+            Rectangle()
+                .fill(LiquidGlassMaterialLevel.elevated.material)
+        }
+        .accessibilityLabel("No search results found")
+        .accessibilityHint("Try different search terms or check spelling")
+    }
+    
+    // MARK: - Liquid Glass Search Results List
+    @ViewBuilder
+    private func liquidGlassSearchResultsList(books: [BookMetadata]) -> some View {
+        if UIDevice.current.userInterfaceIdiom == .pad {
+            liquidGlassiPadSearchResultsGrid(books: books)
+        } else {
+            liquidGlassiPhoneSearchResultsList(books: books)
+        }
+    }
+    
+    @ViewBuilder
+    private func liquidGlassiPadSearchResultsGrid(books: [BookMetadata]) -> some View {
+        ScrollView {
+            LazyVGrid(
+                columns: [
+                    GridItem(.adaptive(minimum: 320, maximum: 400), spacing: Theme.Spacing.md)
+                ],
+                spacing: Theme.Spacing.md
+            ) {
+                ForEach(books) { book in
+                    NavigationLink(value: book) {
+                        liquidGlassSearchResultCard(book: book)
+                    }
+                    .onTapGesture {
+                        HapticFeedbackManager.shared.lightImpact()
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(.horizontal, 20)
+            .padding(.bottom, 20)
+        }
+        .background {
+            Rectangle()
+                .fill(.ultraThinMaterial)
+        }
+        .accessibilityLabel("\(books.count) search results sorted by \(sortOption.displayName)")
+    }
+    
+    @ViewBuilder
+    private func liquidGlassSearchResultCard(book: BookMetadata) -> some View {
+        VStack {
+            SearchResultRow(book: book)
+                .padding(Theme.Spacing.md)
+        }
+        .background {
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(.regularMaterial)
+                .overlay {
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .strokeBorder(.primary.opacity(0.1), lineWidth: 0.5)
+                }
+                .shadow(
+                    color: .black.opacity(0.08),
+                    radius: 8,
+                    x: 0,
+                    y: 4
+                )
+        }
+    }
+    
+    @ViewBuilder
+    private func liquidGlassiPhoneSearchResultsList(books: [BookMetadata]) -> some View {
+        List(books) { book in
+            NavigationLink(value: book) {
+                SearchResultRow(book: book)
+            }
+            .listRowBackground(
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(LiquidGlassMaterialLevel.surface.material)
+                    .opacity(0.8)
+            )
+            .listRowSeparator(.hidden)
+            .padding(.vertical, Theme.Spacing.xs)
+        }
+        .listStyle(.plain)
+        .background(.ultraThinMaterial)
+        .scrollContentBackground(.hidden)
+        .accessibilityLabel("\(books.count) search results sorted by \(sortOption.displayName)")
+    }
+    
+    // MARK: - Liquid Glass Sort Options Sheet
+    @ViewBuilder
+    private var liquidGlassSortOptionsSheet: some View {
+        NavigationStack {
+            VStack(spacing: 0) {
+                // Header
+                VStack(spacing: 8) {
+                    Text("Sort Search Results")
+                        .font(.title2)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.primary)
+                    
+                    Text("Choose how to order your search results")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                .padding(.top, 20)
+                .padding(.horizontal, 20)
+                
+                // Sort options with enhanced glass styling
+                LazyVStack(spacing: 0) {
+                    ForEach(BookSearchService.SortOption.allCases) { option in
+                        Button {
+                            let newSortOption = option
+                            sortOption = newSortOption
+                            showingSortOptions = false
+                            
+                            HapticFeedbackManager.shared.mediumImpact()
+                            
+                            let trimmedQuery = searchQuery.trimmingCharacters(in: .whitespacesAndNewlines)
+                            if !trimmedQuery.isEmpty {
+                                switch searchState {
+                                case .results, .error:
+                                    Task { @MainActor in
+                                        performSearch()
+                                    }
+                                default:
+                                    break
+                                }
+                            }
+                        } label: {
+                            HStack(spacing: 16) {
+                                ZStack {
+                                    Circle()
+                                        .fill(LiquidGlassMaterialLevel.elevated.material)
+                                        .frame(width: 40, height: 40)
+                                        .overlay {
+                                            Circle()
+                                                .strokeBorder(
+                                                    primaryColor.opacity(0.2),
+                                                    lineWidth: 1
+                                                )
+                                        }
+                                    
+                                    Image(systemName: option.systemImage)
+                                        .font(.system(size: 18))
+                                        .foregroundStyle(primaryColor)
+                                }
+                                
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(option.displayName)
+                                        .font(.headline)
+                                        .foregroundStyle(.primary)
+                                    
+                                    Text(sortDescription(for: option))
+                                        .font(.subheadline)
+                                        .foregroundStyle(.secondary)
+                                        .multilineTextAlignment(.leading)
+                                }
+                                
+                                Spacer()
+                                
+                                if sortOption == option {
+                                    Image(systemName: "checkmark")
+                                        .font(.headline)
+                                        .foregroundStyle(primaryColor)
+                                }
+                            }
+                            .padding(.horizontal, 20)
+                            .padding(.vertical, 16)
+                            .background {
+                                if sortOption == option {
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .fill(LiquidGlassMaterialLevel.elevated.material)
+                                        .overlay {
+                                            RoundedRectangle(cornerRadius: 12)
+                                                .strokeBorder(
+                                                    primaryColor.opacity(0.3),
+                                                    lineWidth: 1
+                                                )
+                                        }
+                                } else {
+                                    Color.clear
+                                }
+                            }
+                        }
+                        .buttonStyle(.plain)
+                        
+                        if option != BookSearchService.SortOption.allCases.last {
+                            Divider()
+                                .padding(.leading, 76)
+                        }
+                    }
+                }
+                .padding(.top, 20)
+                
+                Spacer()
+            }
+            .background(.regularMaterial)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        showingSortOptions = false
+                    }
+                    .foregroundStyle(primaryColor)
+                }
+            }
+        }
+        .presentationDetents([.medium])
+        .presentationDragIndicator(.visible)
     }
     
     // MARK: - Enhanced iPad Search Bar with Liquid Glass
@@ -187,7 +1051,7 @@ struct SearchView: View {
             .background {
                 // Liquid Glass background
                 RoundedRectangle(cornerRadius: 16)
-                    .fill(.regularMaterial)
+                    .fill(LiquidGlassMaterialLevel.surface.material)
                     .overlay {
                         RoundedRectangle(cornerRadius: 16)
                             .stroke(.primary.opacity(0.1), lineWidth: 0.5)
@@ -441,7 +1305,7 @@ struct SearchView: View {
                 .background {
                     let capsuleShape = Capsule()
                     capsuleShape
-                        .fill(.regularMaterial)
+                        .fill(LiquidGlassMaterialLevel.surface.material)
                         .overlay {
                             capsuleShape
                                 .strokeBorder(.primary.opacity(0.1), lineWidth: 0.5)
@@ -526,7 +1390,7 @@ struct SearchView: View {
                     .background {
                         let capsuleShape = Capsule()
                         capsuleShape
-                            .fill(.ultraThinMaterial)
+                            .fill(LiquidGlassMaterialLevel.background.material)
                             .overlay {
                                 capsuleShape.strokeBorder(.secondary.opacity(0.1), lineWidth: 0.5)
                             }
@@ -803,12 +1667,11 @@ struct SearchView: View {
                 spacing: Theme.Spacing.md
             ) {
                 ForEach(books) { book in
-                    Button {
-                        selectedBookForSheet = book
-                        showingBookDetailSheet = true
-                        HapticFeedbackManager.shared.lightImpact()
-                    } label: {
+                    NavigationLink(value: book) {
                         iPadSearchResultCard(book: book)
+                    }
+                    .onTapGesture {
+                        HapticFeedbackManager.shared.lightImpact()
                     }
                     .buttonStyle(.plain)
                 }
@@ -863,7 +1726,7 @@ struct SearchView: View {
                 ZStack {
                     // Enhanced backdrop with multiple depth layers
                     Circle()
-                        .fill(.regularMaterial)
+                        .fill(LiquidGlassMaterialLevel.surface.material)
                         .frame(width: 140, height: 140)
                         .overlay {
                             Circle()
@@ -952,7 +1815,7 @@ struct SearchView: View {
                             .foregroundStyle(.primary)
                             .background {
                                 RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                    .fill(.thinMaterial)
+                                    .fill(LiquidGlassMaterialLevel.elevated.material)
                                     .overlay {
                                         RoundedRectangle(cornerRadius: 12, style: .continuous)
                                             .strokeBorder(
@@ -1369,5 +2232,10 @@ struct ShimmerModifier: ViewModifier {
 #Preview {
     SearchView()
         .modelContainer(for: [UserBook.self, BookMetadata.self], inMemory: true)
+        .environment(\.unifiedThemeStore, UnifiedThemeStore())
         .preferredColorScheme(.dark)
+        .onAppear {
+            // Mark as migrated in preview for testing
+            MigrationTracker.shared.markViewAsMigrated("SearchView")
+        }
 }

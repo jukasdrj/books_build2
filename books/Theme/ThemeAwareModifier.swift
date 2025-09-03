@@ -9,12 +9,12 @@ extension Notification.Name {
 struct ThemeAwareModifier: ViewModifier {
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.appTheme) private var currentTheme
-    @Environment(\.themeStore) private var themeStore
+    @Environment(\.unifiedThemeStore) private var unifiedThemeStore
     
     func body(content: Content) -> some View {
         content
-            .environment(\.appTheme, themeStore.appTheme)
-            .animation(.easeInOut(duration: 0.3), value: themeStore.currentTheme)
+            .environment(\.appTheme, unifiedThemeStore.appTheme)
+            .animation(.easeInOut(duration: 0.3), value: unifiedThemeStore.currentTheme)
             .animation(.easeInOut(duration: 0.3), value: colorScheme)
             // Removed .id() - let SwiftUI handle efficient updates naturally
     }
@@ -28,6 +28,6 @@ extension View {
     
     /// Simple theme refresh modifier - forces view to use current theme colors
     func withCurrentTheme() -> some View {
-        self.environment(\.appTheme, ThemeStore().appTheme)
+        self.environment(\.appTheme, UnifiedThemeStore().appTheme)
     }
 }

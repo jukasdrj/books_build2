@@ -39,85 +39,165 @@ struct SettingsView: View {
     @ViewBuilder
     private var liquidGlassContent: some View {
         ScrollView {
-            LazyVStack(spacing: 20) {
-                VStack(spacing: 12) {
-                    LiquidGlassButton("Choose Your Theme", style: .glass) {
+            // iOS 26 adaptive spacing system
+            LazyVStack(spacing: adaptiveVerticalSpacing) {
+                // MARK: - Personalization Section (Primary Importance)
+                VStack(spacing: adaptiveContentSpacing) {
+                    // Enhanced theme selection with primary prominence
+                    LiquidGlassButton("Choose Your Theme", style: .primary, haptic: .medium) {
                         showingThemePicker = true
                         Task { @MainActor in
-                            HapticFeedbackManager.shared.lightImpact()
+                            HapticFeedbackManager.shared.mediumImpact()
                         }
                     }
                     
-                    LiquidGlassSegmentedControl(
+                    // Appearance control with enhanced vibrancy
+                    EnhancedAppearanceControl(
                         selection: Binding(
                             get: { unifiedThemeStore.appearancePreference },
                             set: { unifiedThemeStore.setAppearance($0) }
-                        ),
-                        options: AppearancePreference.allCases,
-                        displayName: { $0.displayName }
+                        )
                     )
                 }
-                .liquidGlassSection {
-                    Label("Personalization", systemImage: "paintbrush.fill")
-                }
+                .liquidGlassSection(
+                    header: {
+                        Label("Personalization", systemImage: "paintbrush.fill")
+                            .liquidGlassTypography(style: .sectionHeader, vibrancy: .prominent)
+                    },
+                    material: .regular,    // Primary section gets regular material
+                    depth: .elevated,      // Elevated depth for importance
+                    vibrancy: .prominent   // High vibrancy for primary content
+                )
                 
-                VStack(spacing: 12) {
-                    LiquidGlassButton("Reading Goals", style: .primary) {
+                // MARK: - Reading Goals Section (Secondary Importance)
+                VStack(spacing: adaptiveContentSpacing) {
+                    LiquidGlassButton("Reading Goals", style: .primary, haptic: .light) {
                         showingGoalSettings = true
                         Task { @MainActor in
                             HapticFeedbackManager.shared.lightImpact()
                         }
                     }
                 }
-                .liquidGlassSection {
-                    Label("Reading Goals", systemImage: "target")
-                }
+                .liquidGlassSection(
+                    header: {
+                        Label("Reading Goals", systemImage: "target")
+                            .liquidGlassTypography(style: .sectionHeader, vibrancy: .medium)
+                    },
+                    material: .thin,       // Secondary section gets thin material
+                    depth: .elevated,      // Standard elevation
+                    vibrancy: .medium      // Medium vibrancy
+                )
                 
-                VStack(spacing: 12) {
-                    LiquidGlassButton("Import Your Books", style: .secondary) {
+                // MARK: - Library Management Section (Utility Functions)
+                VStack(spacing: adaptiveContentSpacing) {
+                    LiquidGlassButton("Import Your Books", style: .secondary, haptic: .light) {
                         showingCSVImport = true
                         Task { @MainActor in
                             HapticFeedbackManager.shared.lightImpact()
                         }
                     }
                     
-                    LiquidGlassButton("Reset Library", style: .glass) {
+                    // Destructive action with appropriate styling
+                    LiquidGlassButton("Reset Library", style: .glass, haptic: .heavy) {
                         showingLibraryReset = true
                         Task { @MainActor in
                             HapticFeedbackManager.shared.warning()
                         }
                     }
                 }
-                .liquidGlassSection {
-                    Label("Your Library", systemImage: "books.vertical")
-                }
+                .liquidGlassSection(
+                    header: {
+                        Label("Your Library", systemImage: "books.vertical")
+                            .liquidGlassTypography(style: .sectionHeader, vibrancy: .medium)
+                    },
+                    material: .thin,       // Utility section gets thin material
+                    depth: .floating,      // Lower depth for utilities
+                    vibrancy: .subtle      // Subtle vibrancy for secondary actions
+                )
                 
-                VStack(spacing: 12) {
-                    LiquidGlassButton("About Books Tracker", style: .glass) {
+                // MARK: - Information Section (Lowest Priority)
+                VStack(spacing: adaptiveContentSpacing) {
+                    LiquidGlassButton("About Books Tracker", style: .glass, haptic: .light) {
                         showingAbout = true
                         Task { @MainActor in
                             HapticFeedbackManager.shared.lightImpact()
                         }
                     }
                 }
-                .liquidGlassSection {
-                    Label("Information", systemImage: "info.circle")
-                }
+                .liquidGlassSection(
+                    header: {
+                        Label("Information", systemImage: "info.circle")
+                            .liquidGlassTypography(style: .sectionHeader, vibrancy: .subtle)
+                    },
+                    material: .ultraThin,  // Info section gets minimal material
+                    depth: .floating,      // Minimal depth
+                    vibrancy: .subtle      // Subtle vibrancy for info
+                )
             }
-            .padding(.horizontal, 16)
+            .padding(.horizontal, adaptiveHorizontalPadding)
+            .padding(.vertical, adaptiveVerticalPadding)
         }
         .liquidGlassBackground(material: .ultraThin, vibrancy: .subtle)
         .navigationTitle("Settings")
         .navigationBarTitleDisplayMode(.large)
+        .liquidGlassNavigation(material: .thin, vibrancy: .medium)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
-                LiquidGlassButton("Done", style: .secondary) {
+                LiquidGlassButton("Done", style: .tertiary, haptic: .light) {
                     dismiss()
                     Task { @MainActor in
                         HapticFeedbackManager.shared.lightImpact()
                     }
                 }
             }
+        }
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Settings screen with personalization, reading goals, library management, and app information")
+    }
+    
+    // MARK: - iOS 26 Adaptive Spacing System
+    private var adaptiveVerticalSpacing: CGFloat {
+        // iOS 26 dynamic spacing based on device and content density
+        switch UIDevice.current.userInterfaceIdiom {
+        case .phone:
+            return 24  // Tighter spacing on iPhone for one-handed use
+        case .pad:
+            return 32  // More generous spacing on iPad
+        default:
+            return 28  // Default for other devices
+        }
+    }
+    
+    private var adaptiveContentSpacing: CGFloat {
+        switch UIDevice.current.userInterfaceIdiom {
+        case .phone:
+            return 16  // Comfortable content spacing on iPhone
+        case .pad:
+            return 20  // Larger content spacing on iPad
+        default:
+            return 18  // Default spacing
+        }
+    }
+    
+    private var adaptiveHorizontalPadding: CGFloat {
+        switch UIDevice.current.userInterfaceIdiom {
+        case .phone:
+            return 20  // Standard iPhone margins
+        case .pad:
+            return 24  // Wider margins on iPad for better visual balance
+        default:
+            return 20  // Default padding
+        }
+    }
+    
+    private var adaptiveVerticalPadding: CGFloat {
+        switch UIDevice.current.userInterfaceIdiom {
+        case .phone:
+            return 12  // Minimal top/bottom padding on iPhone
+        case .pad:
+            return 20  // More generous vertical padding on iPad
+        default:
+            return 16  // Default vertical padding
         }
     }
     

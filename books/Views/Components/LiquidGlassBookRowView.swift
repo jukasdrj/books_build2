@@ -18,134 +18,14 @@ struct LiquidGlassBookRowView: View {
     
     var body: some View {
         HStack(spacing: 16) {
-            // Enhanced book cover with glass materials - consistent with card
-            LiquidGlassRowBookCover(
-                imageURL: book.metadata?.imageURL?.absoluteString,
-                width: 60,
-                height: 90
-            )
-            
-            // Book information section - matches card hierarchy
-            VStack(alignment: .leading, spacing: 8) {
-                // Title with iOS 26 typography - consistent with card
-                Text(book.metadata?.title ?? "Unknown Title")
-                    .font(LiquidGlassTheme.typography.titleMedium)
-                    .foregroundColor(theme.primaryText)
-                    .lineLimit(2)
-                    .multilineTextAlignment(.leading)
-                
-                // Authors - consistent with card
-                if let authors = book.metadata?.authors, !authors.isEmpty {
-                    Text("by \(authors.joined(separator: ", "))")
-                        .font(LiquidGlassTheme.typography.bodySmall)
-                        .foregroundColor(theme.secondaryText)
-                        .lineLimit(1)
-                }
-                
-                // Metadata row with unified glass styling
-                HStack(spacing: 12) {
-                    // Rating - matches card design
-                    if let rating = book.rating, rating > 0 {
-                        HStack(spacing: 3) {
-                            ForEach(1...5, id: \.self) { star in
-                                Image(systemName: star <= Int(rating) ? "star.fill" : "star")
-                                    .font(.caption)
-                                    .fontWeight(.medium)
-                                    .foregroundColor(star <= Int(rating) ? .amber : .secondary.opacity(0.4))
-                            }
-                        }
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(Color.primary.opacity(0.05))
-                        .clipShape(Capsule())
-                    }
-                    
-                    // Reading progress - matches card
-                    if book.readingProgress > 0 && book.readingStatus == .reading {
-                        HStack(spacing: 6) {
-                            ProgressView(value: book.readingProgress / 100.0)
-                                .progressViewStyle(LinearProgressViewStyle())
-                                .frame(width: 50)
-                                .tint(theme.primary)
-                            
-                            Text("\(Int(book.readingProgress))%")
-                                .font(LiquidGlassTheme.typography.labelSmall)
-                                .foregroundColor(theme.primary)
-                        }
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 5)
-                        .background(theme.primary.opacity(0.1))
-                        .clipShape(Capsule())
-                    }
-                    
-                    Spacer()
-                }
-            }
-            
-            // Trailing section - status and cultural info
-            VStack(alignment: .trailing, spacing: 8) {
-                // Status indicator - consistent with card
-                if book.readingStatus != .toRead && book.readingStatus != .wantToRead {
-                    HStack(spacing: 4) {
-                        Image(systemName: book.readingStatus.systemImage)
-                            .font(.caption2)
-                            .foregroundColor(statusColor)
-                        
-                        Text(book.readingStatus.displayName)
-                            .font(LiquidGlassTheme.typography.labelSmall)
-                            .foregroundColor(statusColor)
-                    }
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(statusColor.opacity(0.15))
-                    .clipShape(Capsule())
-                }
-                
-                // Cultural language indicator - matches card design
-                if let language = book.metadata?.language, language != "en" {
-                    Text(language.uppercased())
-                        .font(LiquidGlassTheme.typography.labelSmall)
-                        .fontWeight(.bold)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(theme.primary.opacity(0.15))
-                        .foregroundColor(theme.primary)
-                        .clipShape(Capsule())
-                }
-                
-                // Cultural region indicator if available
-                if let region = book.metadata?.culturalRegion {
-                    HStack(spacing: 4) {
-                        Text(region.emoji)
-                            .font(.caption2)
-                        
-                        Text(region.shortName)
-                            .font(LiquidGlassTheme.typography.labelSmall)
-                            .foregroundColor(region.color(theme: theme))
-                    }
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(region.color(theme: theme).opacity(0.15))
-                    .clipShape(Capsule())
-                }
-                
-                Spacer()
-                
-                // Navigation chevron
-                Image(systemName: "chevron.right")
-                    .font(.caption)
-                    .fontWeight(.medium)
-                    .foregroundColor(theme.outline.opacity(0.6))
-            }
+            coverView
+            bookInfoSection
+            trailingSection
         }
         .frame(minHeight: 100)
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
-        .background(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(Color.primary.opacity(colorScheme == .dark ? 0.05 : 0.03))
-                .stroke(Color.primary.opacity(0.1), lineWidth: 0.5)
-        )
+        .background(backgroundView)
         .brightness(hoverIntensity * 0.05)
         .onHover { hovering in
             withAnimation(LiquidGlassTheme.FluidAnimation.smooth.springAnimation) {
@@ -155,6 +35,169 @@ struct LiquidGlassBookRowView: View {
         .accessibilityElement(children: .combine)
         .accessibilityLabel(accessibilityLabel)
         .accessibilityHint("Double tap to view book details")
+    }
+    
+    // MARK: - View Components
+    
+    @ViewBuilder
+    private var coverView: some View {
+        LiquidGlassRowBookCover(
+            imageURL: book.metadata?.imageURL?.absoluteString,
+            width: 60,
+            height: 90
+        )
+    }
+    
+    @ViewBuilder
+    private var bookInfoSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            titleView
+            authorsView
+            metadataRow
+        }
+    }
+    
+    @ViewBuilder
+    private var titleView: some View {
+        Text(book.metadata?.title ?? "Unknown Title")
+            .font(LiquidGlassTheme.typography.titleMedium)
+            .foregroundColor(theme.primaryText)
+            .lineLimit(2)
+            .multilineTextAlignment(.leading)
+    }
+    
+    @ViewBuilder
+    private var authorsView: some View {
+        if let authors = book.metadata?.authors, !authors.isEmpty {
+            Text("by \(authors.joined(separator: ", "))")
+                .font(LiquidGlassTheme.typography.bodySmall)
+                .foregroundColor(theme.secondaryText)
+                .lineLimit(1)
+        }
+    }
+    
+    @ViewBuilder
+    private var metadataRow: some View {
+        HStack(spacing: 12) {
+            ratingView
+            progressView
+            Spacer()
+        }
+    }
+    
+    @ViewBuilder
+    private var ratingView: some View {
+        if let rating = book.rating, rating > 0 {
+            HStack(spacing: 3) {
+                ForEach(1...5, id: \.self) { star in
+                    Image(systemName: star <= Int(rating) ? "star.fill" : "star")
+                        .font(.caption)
+                        .fontWeight(.medium)
+                        .foregroundColor(star <= Int(rating) ? .amber : .secondary.opacity(0.4))
+                }
+            }
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(Color.primary.opacity(0.05))
+            .clipShape(Capsule())
+        }
+    }
+    
+    @ViewBuilder
+    private var progressView: some View {
+        if book.readingProgress > 0 && book.readingStatus == .reading {
+            HStack(spacing: 6) {
+                ProgressView(value: book.readingProgress / 100.0)
+                    .progressViewStyle(LinearProgressViewStyle())
+                    .frame(width: 50)
+                    .tint(theme.primary)
+                
+                Text("\(Int(book.readingProgress))%")
+                    .font(LiquidGlassTheme.typography.labelSmall)
+                    .foregroundColor(theme.primary)
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 5)
+            .background(theme.primary.opacity(0.1))
+            .clipShape(Capsule())
+        }
+    }
+    
+    @ViewBuilder
+    private var trailingSection: some View {
+        VStack(alignment: .trailing, spacing: 8) {
+            statusIndicator
+            languageIndicator
+            culturalIndicator
+            Spacer()
+            chevronView
+        }
+    }
+    
+    @ViewBuilder
+    private var statusIndicator: some View {
+        if book.readingStatus != .toRead && book.readingStatus != .wantToRead {
+            HStack(spacing: 4) {
+                Image(systemName: book.readingStatus.systemImage)
+                    .font(.caption2)
+                    .foregroundColor(statusColor)
+                
+                Text(book.readingStatus.displayName)
+                    .font(LiquidGlassTheme.typography.labelSmall)
+                    .foregroundColor(statusColor)
+            }
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(statusColor.opacity(0.15))
+            .clipShape(Capsule())
+        }
+    }
+    
+    @ViewBuilder
+    private var languageIndicator: some View {
+        if let language = book.metadata?.language, language != "en" {
+            Text(language.uppercased())
+                .font(LiquidGlassTheme.typography.labelSmall)
+                .fontWeight(.bold)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(theme.primary.opacity(0.15))
+                .foregroundColor(theme.primary)
+                .clipShape(Capsule())
+        }
+    }
+    
+    @ViewBuilder
+    private var culturalIndicator: some View {
+        if let region = book.metadata?.culturalRegion {
+            HStack(spacing: 4) {
+                Text(region.emoji)
+                    .font(.caption2)
+                
+                Text(region.shortName)
+                    .font(LiquidGlassTheme.typography.labelSmall)
+                    .foregroundColor(region.color(theme: theme))
+            }
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(region.color(theme: theme).opacity(0.15))
+            .clipShape(Capsule())
+        }
+    }
+    
+    @ViewBuilder
+    private var chevronView: some View {
+        Image(systemName: "chevron.right")
+            .font(.caption)
+            .fontWeight(.medium)
+            .foregroundColor(theme.outline.opacity(0.6))
+    }
+    
+    @ViewBuilder
+    private var backgroundView: some View {
+        RoundedRectangle(cornerRadius: 12, style: .continuous)
+            .fill(Color.primary.opacity(colorScheme == .dark ? 0.05 : 0.03))
+            .stroke(Color.primary.opacity(0.1), lineWidth: 0.5)
     }
     
     // MARK: - Helper Properties

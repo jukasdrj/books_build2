@@ -385,6 +385,23 @@ enum CulturalRegion: String, Codable, CaseIterable, Identifiable, Sendable {
     }
     
     
+    var shortName: String {
+        switch self {
+        case .africa: return "Africa"
+        case .asia: return "Asia"
+        case .europe: return "Europe"
+        case .northAmerica: return "N. America"
+        case .southAmerica: return "S. America"
+        case .oceania: return "Oceania"
+        case .middleEast: return "Middle East"
+        case .caribbean: return "Caribbean"
+        case .centralAsia: return "C. Asia"
+        case .indigenous: return "Indigenous"
+        case .antarctica: return "Antarctica"
+        case .international: return "Global"
+        }
+    }
+    
     var icon: String {
         switch self {
         case .africa: return "globe.africa.fill"
