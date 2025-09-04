@@ -40,9 +40,24 @@ struct SearchView: View {
         .onAppear {
             MigrationTracker.shared.markViewAsAccessed("SearchView")
             MigrationTracker.shared.markViewAsMigrated("SearchView")
+            
+            #if DEBUG
+            print("[SearchView] 🎨 Current theme: \(themeStore.currentTheme.rawValue)")
+            print("[SearchView] 🔍 Is Liquid Glass: \(themeStore.currentTheme.isLiquidGlass)")
+            print("[SearchView] 🖼️ Using implementation: \(themeStore.currentTheme.isLiquidGlass ? "Liquid Glass" : "Material Design")")
+            #endif
+            
             // Reset search state when view appears to ensure clean state
             if case .error = searchState {
                 searchState = .idle
+            }
+            
+            // 🍎 Apple HIG: Start with search field focused for immediate keyboard appearance
+            // "This provides a more transient experience that brings people directly back 
+            // to their previous tab after they exit search, and is ideal when you want 
+            // search to resolve quickly and seamlessly."
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                isSearchFieldFocused = true
             }
         }
     }
@@ -129,6 +144,8 @@ struct SearchView: View {
                         Label(suggestion, systemImage: "magnifyingglass")
                             .searchCompletion(suggestion)
                             .foregroundStyle(.primary) // Enhanced contrast
+                            .font(LiquidGlassTheme.typography.bodyMedium)
+                            .tracking(0.1) // Enhanced readability
                     }
                 } else if searchQuery.isEmpty {
                     // HIG Deference: Content-focused examples that educate without overwhelming
@@ -188,7 +205,7 @@ struct SearchView: View {
         .keyboardAvoidingLayout()
     }
     
-    // MARK: - Material Design Main Content (HIG-Compliant Bridge)
+    // MARK: - Material Design Legacy Support (Backward Compatibility)
     @ViewBuilder
     private var materialDesignMainContent: some View {
         VStack(spacing: 0) {
@@ -252,7 +269,7 @@ struct SearchView: View {
             .keyboardAvoidingLayout() // Prevent keyboard constraint conflicts
     }
     
-    // MARK: - Material Design 3 Implementation (HIG-Enhanced Bridge)
+    // MARK: - Material Design Legacy Implementation (Backward Compatibility)
     @ViewBuilder
     private var materialDesignImplementation: some View {
         materialDesignMainContent
@@ -267,6 +284,8 @@ struct SearchView: View {
                         Label(suggestion, systemImage: "magnifyingglass")
                             .searchCompletion(suggestion)
                             .foregroundStyle(.primary) // Enhanced contrast
+                            .font(LiquidGlassTheme.typography.bodyMedium)
+                            .tracking(0.1) // Enhanced readability
                     }
                 } else if searchQuery.isEmpty {
                     // HIG Deference: Content-focused examples that educate without overwhelming
@@ -524,6 +543,13 @@ struct SearchView: View {
                                     endPoint: .bottomTrailing
                                 )
                             )
+                            .overlay {
+                                // Chrome-like reflective overlay for active state
+                                capsuleShape
+                                    .fill(.thickMaterial)
+                                    .opacity(0.3)
+                                    .blendMode(.overlay)
+                            }
                         } else {
                             capsuleShape.fill(LiquidGlassMaterialLevel.elevated.material)
                         }
@@ -651,8 +677,9 @@ struct SearchView: View {
                         .shadow(color: primaryColor.opacity(0.3), radius: 6, x: 0, y: 3)
                 }
                 .scaleEffect(1.0)
+                .offset(y: sin(Date().timeIntervalSince1970 * 0.5) * 2) // Subtle floating animation
                 .animation(
-                    Animation.easeInOut(duration: 2.0)
+                    Animation.easeInOut(duration: 3.0)
                         .repeatForever(autoreverses: true),
                     value: UUID()
                 )
@@ -853,12 +880,7 @@ struct SearchView: View {
     @ViewBuilder
     private func liquidGlassiPadSearchResultsGrid(books: [BookMetadata]) -> some View {
         ScrollView {
-            LazyVGrid(
-                columns: [
-                    GridItem(.adaptive(minimum: 320, maximum: 400), spacing: Theme.Spacing.md)
-                ],
-                spacing: Theme.Spacing.md
-            ) {
+            LazyVStack(spacing: 0) { // Clean list-style layout
                 ForEach(books) { book in
                     NavigationLink(value: book) {
                         liquidGlassSearchResultCard(book: book)
@@ -869,34 +891,51 @@ struct SearchView: View {
                     .buttonStyle(.plain)
                 }
             }
-            .padding(.horizontal, 20)
-            .padding(.bottom, 20)
+            .padding(.horizontal, Theme.Spacing.lg)
+            .padding(.bottom, Theme.Spacing.xl)
         }
         .liquidGlassBackground(
             material: .ultraThin, // HIG Depth: Consistent material hierarchy
             vibrancy: .subtle     // HIG Deference: Content-supporting background
         )
-        .accessibilityLabel("\(books.count) search results sorted by \(sortOption.displayName)")
+        .accessibilityLabel("Search results: \(books.count) \(books.count == 1 ? "book" : "books") found, sorted by \(sortOption.displayName.lowercased())")
+        .accessibilityHint("Swipe up or down to browse through search results")
     }
     
     @ViewBuilder
     private func liquidGlassSearchResultCard(book: BookMetadata) -> some View {
-        VStack {
+        VStack(spacing: 0) {
             SearchResultRow(book: book)
-                .padding(Theme.Spacing.md)
+                .padding(Theme.Spacing.xl) // Enhanced generous padding
         }
         .background {
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(.regularMaterial)
+            RoundedRectangle(cornerRadius: 16, style: .continuous) // Increased radius
+                .fill(.thinMaterial) // Lighter material for better distinction
                 .overlay {
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .strokeBorder(.primary.opacity(0.1), lineWidth: 0.5)
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .strokeBorder(
+                            LinearGradient(
+                                colors: [
+                                    primaryColor.opacity(0.2),
+                                    primaryColor.opacity(0.05)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 1
+                        )
                 }
                 .shadow(
-                    color: .black.opacity(0.08),
-                    radius: 8,
+                    color: primaryColor.opacity(0.12), // Colored shadow
+                    radius: 12,
                     x: 0,
-                    y: 4
+                    y: 6
+                )
+                .shadow(
+                    color: .black.opacity(0.06), // Subtle depth shadow
+                    radius: 4,
+                    x: 0,
+                    y: 2
                 )
         }
     }
@@ -907,17 +946,9 @@ struct SearchView: View {
             NavigationLink(value: book) {
                 SearchResultRow(book: book)
             }
-            .listRowBackground(
-                RoundedRectangle(cornerRadius: 8)
-                    .liquidGlassCard(
-                        material: .regular,  // HIG Depth: Standard list row material
-                        depth: .floating,    // HIG Depth: Subtle depth for list items
-                        radius: .compact,    // HIG Consistency: Standard list radius
-                        vibrancy: .medium    // HIG Deference: Balanced vibrancy
-                    )
-            )
-            .listRowSeparator(.hidden)
-            .padding(.vertical, Theme.Spacing.xs)
+            .listRowBackground(Color.clear) // Clean transparent background
+            .listRowSeparator(.visible) // Show clean system separators
+            .padding(.vertical, Theme.Spacing.xs) // Minimal padding
         }
         .listStyle(.plain)
         .liquidGlassBackground(
@@ -925,7 +956,8 @@ struct SearchView: View {
             vibrancy: .subtle     // HIG Deference: Minimal interference with content
         )
         .scrollContentBackground(.hidden)
-        .accessibilityLabel("\(books.count) search results sorted by \(sortOption.displayName)")
+        .accessibilityLabel("Search results: \(books.count) \(books.count == 1 ? "book" : "books") found, sorted by \(sortOption.displayName.lowercased())")
+        .accessibilityHint("Swipe up or down to browse through search results")
     }
     
     // MARK: - Liquid Glass Sort Options Sheet
@@ -1733,7 +1765,8 @@ struct SearchView: View {
             .padding(.bottom, 20)
         }
         .background(currentTheme.background)
-        .accessibilityLabel("\(books.count) search results sorted by \(sortOption.displayName)")
+        .accessibilityLabel("Search results: \(books.count) \(books.count == 1 ? "book" : "books") found, sorted by \(sortOption.displayName.lowercased())")
+        .accessibilityHint("Swipe up or down to browse through search results")
     }
     
     // MARK: - iPad Search Result Card
@@ -1757,7 +1790,8 @@ struct SearchView: View {
         .listStyle(.plain)
         .background(currentTheme.surface)
         .scrollContentBackground(.hidden)
-        .accessibilityLabel("\(books.count) search results sorted by \(sortOption.displayName)")
+        .accessibilityLabel("Search results: \(books.count) \(books.count == 1 ? "book" : "books") found, sorted by \(sortOption.displayName.lowercased())")
+        .accessibilityHint("Swipe up or down to browse through search results")
     }
 
     // MARK: - Enhanced Empty State for App Store Appeal
@@ -2145,11 +2179,242 @@ struct SearchView: View {
 
 // MARK: - Search Result Row (Enhanced)
 struct SearchResultRow: View {
-    @Environment(\.appTheme) private var currentTheme
+    @Environment(\.unifiedThemeStore) private var themeStore
     let book: BookMetadata
     @State private var isImageLoading = true
+    
+    // Legacy theme access for compatibility during migration
+    private var currentTheme: AppColorTheme {
+        themeStore.appTheme
+    }
+    
+    // Liquid Glass theme colors
+    private var primaryColor: Color {
+        if let liquidVariant = themeStore.currentTheme.liquidGlassVariant {
+            return liquidVariant.colorDefinition.primary.color
+        } else {
+            return themeStore.appTheme.primaryAction
+        }
+    }
+    
+    private var secondaryColor: Color {
+        if let liquidVariant = themeStore.currentTheme.liquidGlassVariant {
+            return liquidVariant.colorDefinition.secondary.color
+        } else {
+            return themeStore.appTheme.secondary
+        }
+    }
 
     var body: some View {
+        Group {
+            if themeStore.currentTheme.isLiquidGlass {
+                liquidGlassImplementation
+            } else {
+                materialDesignImplementation
+            }
+        }
+    }
+    
+    // MARK: - iOS 26 Liquid Glass Implementation
+    @ViewBuilder
+    private var liquidGlassImplementation: some View {
+        HStack(spacing: Theme.Spacing.lg) { // Increased spacing between cover and content
+            ZStack {
+                BookCoverImage(
+                    imageURL: book.imageURL?.absoluteString, 
+                    width: 65, // Larger cover for better presence
+                    height: 95
+                )
+                .optimizedLiquidGlassCard(
+                    material: .regular,
+                    depth: .elevated, // Enhanced depth for better presence
+                    radius: .comfortable, // More rounded for modern look
+                    vibrancy: .medium
+                )
+                .shadow(
+                    color: primaryColor.opacity(0.15), // Stronger colored shadow
+                    radius: 8,
+                    x: 0,
+                    y: 4
+                )
+                
+                // Enhanced loading shimmer for Liquid Glass
+                if isImageLoading {
+                    RoundedRectangle(cornerRadius: 8) // Increased radius
+                        .fill(.thinMaterial)
+                        .overlay {
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(
+                                    LinearGradient(
+                                        colors: [
+                                            primaryColor.opacity(0.15),
+                                            primaryColor.opacity(0.08)
+                                        ],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                        }
+                        .frame(width: 65, height: 95)
+                        .liquidGlassShimmer()
+                }
+            }
+            
+            VStack(alignment: .leading, spacing: Theme.Spacing.sm) { // More breathing room
+                // Enhanced title with better hierarchy
+                Text(book.title)
+                    .font(.system(size: 17, weight: .semibold, design: .default))
+                    .tracking(0.3) // iOS 26 enhanced letter spacing for clarity
+                    .foregroundStyle(.primary)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.leading)
+                
+                // Enhanced author styling
+                Text(book.authors.joined(separator: ", "))
+                    .font(.system(size: 15, weight: .medium, design: .default))
+                    .tracking(0.15) // Subtle letter spacing for readability
+                    .foregroundStyle(secondaryColor)
+                    .lineLimit(1)
+                
+                // Clean minimal metadata - text only, no backgrounds
+                HStack(spacing: Theme.Spacing.sm) {
+                    if let publishedYear = extractYear(from: book.publishedDate) {
+                        Text(publishedYear)
+                            .font(.system(size: 12, weight: .regular, design: .default))
+                            .foregroundStyle(.tertiary)
+                    }
+                    
+                    if book.pageCount != nil && extractYear(from: book.publishedDate) != nil {
+                        Text("•")
+                            .font(.system(size: 12, weight: .regular))
+                            .foregroundStyle(.tertiary)
+                    }
+                    
+                    if let pageCount = book.pageCount {
+                        Text("\(pageCount) pages")
+                            .font(.system(size: 12, weight: .regular, design: .default))
+                            .foregroundStyle(.tertiary)
+                    }
+                    
+                    Spacer()
+                    
+                    // Simple quality indicator
+                    if book.imageURL != nil {
+                        Circle()
+                            .fill(.tertiary)
+                            .frame(width: 4, height: 4)
+                    }
+                    
+                    Spacer()
+                }
+                .font(LiquidGlassTheme.typography.labelSmall)
+                .foregroundStyle(.secondary)
+            }
+            
+            Spacer()
+            
+            // Liquid Glass chevron with enhanced styling
+            Image(systemName: "chevron.right")
+                .font(.caption)
+                .fontWeight(.medium)
+                .foregroundStyle(secondaryColor.opacity(0.6))
+                .padding(8)
+                .background {
+                    Circle()
+                        .fill(.ultraThinMaterial)
+                        .overlay {
+                            Circle()
+                                .fill(primaryColor.opacity(0.05))
+                        }
+                        .shadow(
+                            color: primaryColor.opacity(0.1),
+                            radius: 2,
+                            x: 0,
+                            y: 1
+                        )
+                }
+        }
+        .padding(.vertical, Theme.Spacing.sm)
+        .onAppear {
+            // Simulate image loading completion
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                let animation = UIAccessibility.isReduceMotionEnabled ? 
+                    Animation.linear(duration: 0.1) : Animation.easeOut(duration: 0.3)
+                withAnimation(animation) {
+                    isImageLoading = false
+                }
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private func liquidGlassMetadataLabel(text: String, icon: String) -> some View {
+        HStack(spacing: 4) {
+            Image(systemName: icon)
+                .font(.caption2)
+                .foregroundStyle(secondaryColor.opacity(0.7))
+            Text(text)
+                .font(LiquidGlassTheme.typography.labelSmall)
+                .foregroundStyle(.secondary)
+        }
+        .padding(.horizontal, 6)
+        .padding(.vertical, 2)
+        .background {
+            Capsule()
+                .fill(.ultraThinMaterial)
+                .overlay {
+                    Capsule()
+                        .strokeBorder(.secondary.opacity(0.1), lineWidth: 0.5)
+                }
+        }
+    }
+    
+    // Enhanced metadata label with better visual presence
+    private func enhancedLiquidGlassMetadataLabel(text: String, icon: String) -> some View {
+        HStack(spacing: 6) {
+            Image(systemName: icon)
+                .font(.caption)
+                .fontWeight(.medium)
+                .foregroundStyle(
+                    LinearGradient(
+                        colors: [
+                            primaryColor.opacity(0.8),
+                            primaryColor.opacity(0.5)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+            Text(text)
+                .font(.system(size: 13, weight: .medium, design: .default))
+                .foregroundStyle(.secondary)
+                .tracking(0.1)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .background {
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .fill(.thinMaterial)
+                .overlay {
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .strokeBorder(
+                            LinearGradient(
+                                colors: [
+                                    primaryColor.opacity(0.15),
+                                    primaryColor.opacity(0.05)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 0.5
+                        )
+                }
+        }
+    }
+    
+    // MARK: - Material Design Legacy Implementation
+    @ViewBuilder
+    private var materialDesignImplementation: some View {
         HStack(spacing: Theme.Spacing.md) {
             ZStack {
                 BookCoverImage(
@@ -2189,7 +2454,7 @@ struct SearchResultRow: View {
                     .lineLimit(1)
                 
                 HStack(spacing: Theme.Spacing.md) {
-                    if let publishedYear = self.extractYear(from: book.publishedDate) {
+                    if let publishedYear = extractYear(from: book.publishedDate) {
                         Label(publishedYear, systemImage: "calendar")
                             .labelSmall()
                             .foregroundStyle(currentTheme.secondaryText)
@@ -2254,6 +2519,10 @@ extension View {
     func shimmer() -> some View {
         self.modifier(ShimmerModifier())
     }
+    
+    func liquidGlassShimmer() -> some View {
+        self.modifier(LiquidGlassShimmerModifier())
+    }
 }
 
 struct ShimmerModifier: ViewModifier {
@@ -2276,6 +2545,36 @@ struct ShimmerModifier: ViewModifier {
             )
             .onAppear {
                 withAnimation(.linear(duration: 1.5).repeatForever(autoreverses: false)) {
+                    phase = 200
+                }
+            }
+    }
+}
+
+struct LiquidGlassShimmerModifier: ViewModifier {
+    @State private var phase: CGFloat = 0
+    
+    func body(content: Content) -> some View {
+        content
+            .overlay(
+                Rectangle()
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                Color.clear,
+                                Color.white.opacity(0.4),
+                                Color.clear
+                            ],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .rotationEffect(.degrees(30))
+                    .offset(x: phase)
+                    .clipped()
+            )
+            .onAppear {
+                withAnimation(.linear(duration: 1.2).repeatForever(autoreverses: false)) {
                     phase = 200
                 }
             }

@@ -336,6 +336,7 @@ struct LiquidGlassInteractionModifier: ViewModifier {
         content
             .scaleEffect(isPressed ? 0.96 : 1.0)
             .opacity(isPressed ? 0.9 : 1.0)
+            .brightness(isPressed ? -0.05 : 0.0) // Subtle brightness feedback for tactile richness
             .animation(.spring(response: 0.3, dampingFraction: 0.8), value: isPressed)
             .onLongPressGesture(minimumDuration: 0, maximumDistance: .infinity) { pressing in
                 isPressed = pressing

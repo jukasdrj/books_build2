@@ -129,8 +129,8 @@ enum UnifiedThemeVariant: String, CaseIterable, Identifiable {
 class UnifiedThemeStore: ObservableObject {
     private let userDefaults = UserDefaults.standard
     
-    /// Current unified theme variant
-    @Published var currentTheme: UnifiedThemeVariant = .purpleBoho {
+    /// Current unified theme variant - defaulting to iOS 26 Liquid Glass for Phase 2
+    @Published var currentTheme: UnifiedThemeVariant = .crystalClear {
         didSet {
             persistTheme()
         }
@@ -223,6 +223,22 @@ class UnifiedThemeStore: ObservableObject {
         HapticFeedbackManager.shared.lightImpact()
     }
     
+    /// Forces reset to iOS 26 Liquid Glass default for Phase 2 development
+    func forceResetToLiquidGlass() {
+        UserDefaults.standard.removeObject(forKey: "selectedTheme")
+        withAnimation(.easeInOut(duration: 0.5)) {
+            currentTheme = .crystalClear
+        }
+        HapticFeedbackManager.shared.mediumImpact()
+        
+        #if DEBUG
+        print("[UnifiedThemeStore] 🔧 Force reset completed:")
+        print("  - Theme: \(currentTheme.rawValue)")
+        print("  - Is Liquid Glass: \(currentTheme.isLiquidGlass)")
+        print("  - UserDefaults cleared for 'selectedTheme'")
+        #endif
+    }
+    
     /// Loads the persisted theme from UserDefaults
     private func loadPersistedTheme() {
         if let themeName = UserDefaults.standard.string(forKey: "selectedTheme") {
@@ -239,8 +255,8 @@ class UnifiedThemeStore: ObservableObject {
             }
         }
         
-        // Default fallback
-        currentTheme = .purpleBoho
+        // Default fallback - iOS 26 Liquid Glass for Phase 2
+        currentTheme = .crystalClear
     }
     
     /// Converts legacy ThemeVariant to UnifiedThemeVariant

@@ -11,7 +11,12 @@ import SwiftData
 struct SearchResultDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
-    @Environment(\.appTheme) private var currentTheme
+    @Environment(\.unifiedThemeStore) private var themeStore
+    
+    // Legacy theme access for compatibility during migration
+    private var currentTheme: AppColorTheme {
+        themeStore.appTheme
+    }
     
     let bookMetadata: BookMetadata
     let fromBarcodeScanner: Bool
@@ -33,6 +38,72 @@ struct SearchResultDetailView: View {
     @State private var newlyAddedBook: UserBook?
 
     var body: some View {
+        Group {
+            if themeStore.currentTheme.isLiquidGlass {
+                liquidGlassImplementation
+            } else {
+                materialDesignImplementation
+            }
+        }
+        .onAppear {
+            MigrationTracker.shared.markViewAsAccessed("SearchResultDetailView")
+            MigrationTracker.shared.markViewAsMigrated("SearchResultDetailView")
+            checkForDuplicate()
+        }
+    }
+    
+    // MARK: - iOS 26 Liquid Glass Implementation
+    @ViewBuilder
+    private var liquidGlassImplementation: some View {
+        ZStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: Theme.Spacing.xl) {
+                    // Enhanced Header Section with Liquid Glass styling
+                    liquidGlassBookHeaderSection
+                    
+                    // Enhanced Action Buttons with Liquid Glass materials
+                    liquidGlassActionButtonsSection
+                    
+                    // Description Section with Liquid Glass styling
+                    if let description = bookMetadata.bookDescription, !description.isEmpty {
+                        liquidGlassDescriptionSection(description: description)
+                    }
+                    
+                    // Publication Details with Liquid Glass materials
+                    liquidGlassPublicationDetailsSection
+                }
+                .padding(Theme.Spacing.lg)
+                .padding(.bottom, 100) // Extra space for toast overlay
+            }
+            .liquidGlassBackground(
+                material: .ultraThin,
+                vibrancy: .subtle
+            )
+            
+            // Success Toast Overlay with enhanced Liquid Glass styling
+            if showingSuccessToast {
+                liquidGlassSuccessToast
+            }
+        }
+        .navigationTitle(bookMetadata.title)
+        .navigationBarTitleDisplayMode(.inline)
+        .liquidGlassModal(isPresented: $showingEditView) {
+            liquidGlassEditSheet
+        }
+        .liquidGlassNavigation(material: .regular, vibrancy: .medium)
+        .toolbar {
+            liquidGlassToolbarContent
+        }
+        .alert("Book Already Exists", isPresented: $showingDuplicateAlert, presenting: existingBook) { book in
+            Button("OK", role: .cancel) {}
+        } message: { book in
+            Text("\"\(book.metadata?.title ?? "This book")\" is already in your library with the status \"\(book.readingStatus.rawValue)\".")
+        }
+    }
+    
+    // MARK: - Material Design Legacy Implementation (Backward Compatibility)
+    @ViewBuilder
+    private var materialDesignImplementation: some View {
         ZStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: Theme.Spacing.xl) {
@@ -101,6 +172,488 @@ struct SearchResultDetailView: View {
             Button("OK", role: .cancel) {}
         } message: { book in
             Text("\"\(book.metadata?.title ?? "This book")\" is already in your library with the status \"\(book.readingStatus.rawValue)\".")
+        }
+    }
+    
+    // MARK: - Liquid Glass Theme Colors
+    private var primaryColor: Color {
+        if let liquidVariant = themeStore.currentTheme.liquidGlassVariant {
+            return liquidVariant.colorDefinition.primary.color
+        } else {
+            return themeStore.appTheme.primaryAction
+        }
+    }
+    
+    private var secondaryColor: Color {
+        if let liquidVariant = themeStore.currentTheme.liquidGlassVariant {
+            return liquidVariant.colorDefinition.secondary.color
+        } else {
+            return themeStore.appTheme.secondary
+        }
+    }
+    
+    // MARK: - Liquid Glass Header Section
+    @ViewBuilder
+    private var liquidGlassBookHeaderSection: some View {
+        HStack(alignment: .top, spacing: Theme.Spacing.lg) {
+            // Enhanced book cover with liquid glass depth
+            BookCoverImage(
+                imageURL: bookMetadata.imageURL?.absoluteString,
+                width: 120,
+                height: 180
+            )
+            .optimizedLiquidGlassCard(
+                material: .regular,
+                depth: .elevated,
+                radius: .compact,
+                vibrancy: .medium
+            )
+            .shadow(
+                color: primaryColor.opacity(0.15),
+                radius: 12,
+                x: 0,
+                y: 6
+            )
+            .shadow(
+                color: .black.opacity(0.1),
+                radius: 6,
+                x: 0,
+                y: 3
+            )
+            
+            VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+                Text(bookMetadata.title)
+                    .font(LiquidGlassTheme.typography.displaySmall)
+                    .fontWeight(.light)
+                    .foregroundStyle(.primary)
+                    .multilineTextAlignment(.leading)
+                
+                // Author names with liquid glass styling
+                Text(bookMetadata.authors.joined(separator: ", "))
+                    .font(LiquidGlassTheme.typography.titleMedium)
+                    .fontWeight(.regular)
+                    .foregroundStyle(secondaryColor)
+                
+                // Genre with enhanced liquid glass badge
+                if !bookMetadata.genre.isEmpty {
+                    Text(bookMetadata.genre.first!)
+                        .font(LiquidGlassTheme.typography.labelLarge)
+                        .fontWeight(.medium)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .foregroundStyle(primaryColor)
+                        .background {
+                            Capsule()
+                                .fill(.regularMaterial)
+                                .overlay {
+                                    Capsule()
+                                        .fill(
+                                            LinearGradient(
+                                                colors: [
+                                                    primaryColor.opacity(0.15),
+                                                    primaryColor.opacity(0.05)
+                                                ],
+                                                startPoint: .topLeading,
+                                                endPoint: .bottomTrailing
+                                            )
+                                        )
+                                }
+                                .overlay {
+                                    Capsule()
+                                        .strokeBorder(primaryColor.opacity(0.2), lineWidth: 1)
+                                }
+                                .shadow(color: primaryColor.opacity(0.1), radius: 4, x: 0, y: 2)
+                        }
+                }
+                
+                // Enhanced search result badge with liquid glass
+                HStack(spacing: Theme.Spacing.xs) {
+                    Image(systemName: "magnifyingglass")
+                        .font(.caption)
+                        .foregroundStyle(secondaryColor)
+                    Text("Search Result")
+                        .font(LiquidGlassTheme.typography.labelSmall)
+                        .fontWeight(.medium)
+                        .foregroundStyle(secondaryColor)
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 4)
+                .background {
+                    Capsule()
+                        .fill(.ultraThinMaterial)
+                        .overlay {
+                            Capsule()
+                                .strokeBorder(.secondary.opacity(0.1), lineWidth: 0.5)
+                        }
+                }
+                
+                Spacer()
+            }
+            .frame(minHeight: 180)
+        }
+    }
+    
+    // MARK: - Liquid Glass Action Buttons Section
+    @ViewBuilder
+    private var liquidGlassActionButtonsSection: some View {
+        VStack(spacing: Theme.Spacing.lg) {
+            // Section header with liquid glass styling
+            HStack {
+                Text("Add to Collection")
+                    .font(LiquidGlassTheme.typography.titleMedium)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(.primary)
+                Spacer()
+            }
+            
+            // Status indicator for existing books with enhanced glass styling
+            if let existing = existingBook {
+                HStack(spacing: Theme.Spacing.sm) {
+                    ZStack {
+                        Circle()
+                            .fill(.thinMaterial)
+                            .overlay {
+                                Circle()
+                                    .fill(
+                                        RadialGradient(
+                                            colors: [
+                                                Color.green.opacity(0.2),
+                                                Color.green.opacity(0.05)
+                                            ],
+                                            center: .center,
+                                            startRadius: 2,
+                                            endRadius: 12
+                                        )
+                                    )
+                            }
+                            .overlay {
+                                Circle()
+                                    .strokeBorder(Color.green.opacity(0.2), lineWidth: 1)
+                            }
+                            .shadow(color: Color.green.opacity(0.15), radius: 4, x: 0, y: 2)
+                            .frame(width: 24, height: 24)
+                        
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundStyle(Color.green)
+                    }
+                    
+                    Text("Already in your \(existing.onWishlist ? "wishlist" : "library")")
+                        .font(LiquidGlassTheme.typography.bodyMedium)
+                        .foregroundStyle(.secondary)
+                    
+                    Spacer()
+                    
+                    Text(existing.readingStatus.rawValue)
+                        .font(LiquidGlassTheme.typography.labelSmall)
+                        .fontWeight(.medium)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .foregroundStyle(.white)
+                        .background {
+                            Capsule()
+                                .fill(
+                                    LinearGradient(
+                                        colors: [
+                                            Color.green,
+                                            Color.green.opacity(0.8)
+                                        ],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .shadow(color: Color.green.opacity(0.3), radius: 4, x: 0, y: 2)
+                        }
+                }
+                .padding(Theme.Spacing.md)
+                .optimizedLiquidGlassCard(
+                    material: .regular,
+                    depth: .elevated,
+                    radius: .comfortable,
+                    vibrancy: .medium
+                )
+                .overlay {
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .strokeBorder(
+                            LinearGradient(
+                                colors: [
+                                    Color.green.opacity(0.2),
+                                    Color.green.opacity(0.05)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 1
+                        )
+                }
+            } else {
+                // Action buttons for new books with enhanced liquid glass styling
+                VStack(spacing: Theme.Spacing.md) {
+                    // Add to Library button
+                    LiquidGlassButton(
+                        "Add to Library",
+                        style: .primary,
+                        haptic: .medium
+                    ) {
+                        addBook(toWishlist: false)
+                    }
+                    .disabled(isAddingToLibrary || isAddingToWishlist)
+                    .overlay {
+                        if isAddingToLibrary {
+                            HStack(spacing: 8) {
+                                ProgressView()
+                                    .scaleEffect(0.8)
+                                    .tint(.white)
+                                Text("Adding...")
+                                    .font(LiquidGlassTheme.typography.labelMedium)
+                                    .foregroundStyle(.white)
+                            }
+                        }
+                    }
+                    
+                    // Add to Wishlist button
+                    LiquidGlassButton(
+                        "Add to Wishlist",
+                        style: .secondary,
+                        haptic: .medium
+                    ) {
+                        addBook(toWishlist: true)
+                    }
+                    .disabled(isAddingToLibrary || isAddingToWishlist)
+                    .overlay {
+                        if isAddingToWishlist {
+                            HStack(spacing: 8) {
+                                ProgressView()
+                                    .scaleEffect(0.8)
+                                    .tint(primaryColor)
+                                Text("Adding...")
+                                    .font(LiquidGlassTheme.typography.labelMedium)
+                                    .foregroundStyle(primaryColor)
+                            }
+                        }
+                    }
+                    
+                    // Helper text with liquid glass styling
+                    HStack(spacing: Theme.Spacing.xs) {
+                        Image(systemName: "info.circle")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Text("Library books can be customized and tracked. Wishlist items are saved for later.")
+                            .font(LiquidGlassTheme.typography.bodySmall)
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.leading)
+                    }
+                    .padding(.top, Theme.Spacing.xs)
+                }
+                .optimizedLiquidGlassCard(
+                    material: .thin,
+                    depth: .elevated,
+                    radius: .comfortable,
+                    vibrancy: .medium
+                )
+                .padding(.horizontal, Theme.Spacing.sm)
+            }
+        }
+    }
+    
+    // MARK: - Liquid Glass Description Section
+    @ViewBuilder
+    private func liquidGlassDescriptionSection(description: String) -> some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.md) {
+            Text("Description")
+                .font(LiquidGlassTheme.typography.titleMedium)
+                .fontWeight(.semibold)
+                .foregroundStyle(.primary)
+            
+            Text(description)
+                .font(LiquidGlassTheme.typography.bodyMedium)
+                .foregroundStyle(.secondary)
+                .lineSpacing(4)
+        }
+        .liquidGlassSection {
+            EmptyView()
+        }
+    }
+    
+    // MARK: - Liquid Glass Publication Details Section
+    @ViewBuilder
+    private var liquidGlassPublicationDetailsSection: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.md) {
+            Text("Publication Details")
+                .font(LiquidGlassTheme.typography.titleMedium)
+                .fontWeight(.semibold)
+                .foregroundStyle(.primary)
+            
+            VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+                if let publisher = bookMetadata.publisher, !publisher.isEmpty {
+                    liquidGlassDetailRow(label: "Publisher", value: publisher, icon: "building.2")
+                }
+                
+                if let publishedDate = bookMetadata.publishedDate, !publishedDate.isEmpty {
+                    liquidGlassDetailRow(label: "Published", value: publishedDate, icon: "calendar")
+                }
+                
+                if let pageCount = bookMetadata.pageCount, pageCount > 0 {
+                    liquidGlassDetailRow(label: "Pages", value: "\(pageCount)", icon: "doc.text")
+                }
+                
+                if let language = bookMetadata.language, !language.isEmpty {
+                    liquidGlassDetailRow(label: "Language", value: language, icon: "globe")
+                }
+                
+                if let isbn = bookMetadata.isbn, !isbn.isEmpty {
+                    liquidGlassDetailRow(label: "ISBN", value: isbn, icon: "barcode")
+                }
+                
+                liquidGlassDetailRow(label: "Source", value: "Google Books", icon: "magnifyingglass")
+            }
+        }
+        .liquidGlassSection {
+            EmptyView()
+        }
+    }
+    
+    @ViewBuilder
+    private func liquidGlassDetailRow(label: String, value: String, icon: String) -> some View {
+        HStack(spacing: Theme.Spacing.md) {
+            ZStack {
+                Circle()
+                    .fill(.ultraThinMaterial)
+                    .overlay {
+                        Circle()
+                            .fill(secondaryColor.opacity(0.1))
+                    }
+                    .frame(width: 28, height: 28)
+                
+                Image(systemName: icon)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(secondaryColor)
+            }
+            
+            Text(label)
+                .font(LiquidGlassTheme.typography.labelMedium)
+                .fontWeight(.medium)
+                .foregroundStyle(.primary)
+                .frame(minWidth: 80, alignment: .leading)
+            
+            Text(value)
+                .font(LiquidGlassTheme.typography.bodyMedium)
+                .foregroundStyle(.secondary)
+            
+            Spacer()
+        }
+        .padding(.vertical, 2)
+    }
+    
+    // MARK: - Liquid Glass Success Toast
+    @ViewBuilder
+    private var liquidGlassSuccessToast: some View {
+        VStack {
+            Spacer()
+            HStack(spacing: Theme.Spacing.md) {
+                ZStack {
+                    Circle()
+                        .fill(.thinMaterial)
+                        .overlay {
+                            Circle()
+                                .fill(
+                                    RadialGradient(
+                                        colors: [
+                                            Color.green.opacity(0.3),
+                                            Color.green.opacity(0.1)
+                                        ],
+                                        center: .center,
+                                        startRadius: 2,
+                                        endRadius: 16
+                                    )
+                                )
+                        }
+                        .overlay {
+                            Circle()
+                                .strokeBorder(Color.green.opacity(0.3), lineWidth: 1)
+                        }
+                        .shadow(color: Color.green.opacity(0.2), radius: 6, x: 0, y: 3)
+                        .frame(width: 32, height: 32)
+                    
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundStyle(.white)
+                }
+                
+                Text(successMessage)
+                    .font(LiquidGlassTheme.typography.bodyMedium)
+                    .fontWeight(.medium)
+                    .foregroundStyle(.primary)
+                    .multilineTextAlignment(.leading)
+                
+                Spacer()
+            }
+            .padding(.horizontal, Theme.Spacing.lg)
+            .padding(.vertical, Theme.Spacing.md)
+            .optimizedLiquidGlassCard(
+                material: .thick,
+                depth: .floating,
+                radius: .comfortable,
+                vibrancy: .prominent
+            )
+            .overlay {
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .strokeBorder(
+                        LinearGradient(
+                            colors: [
+                                Color.green.opacity(0.4),
+                                Color.green.opacity(0.1)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 1.5
+                    )
+            }
+            .shadow(color: Color.green.opacity(0.2), radius: 15, x: 0, y: 8)
+            .padding(.horizontal, Theme.Spacing.lg)
+            .padding(.bottom, 100)
+            .transition(.asymmetric(
+                insertion: .move(edge: .bottom).combined(with: .scale(scale: 0.9)).combined(with: .opacity),
+                removal: .move(edge: .bottom).combined(with: .scale(scale: 0.8)).combined(with: .opacity)
+            ))
+            .zIndex(1)
+        }
+        .allowsHitTesting(false)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(successMessage)
+    }
+    
+    // MARK: - Liquid Glass Edit Sheet
+    @ViewBuilder
+    private var liquidGlassEditSheet: some View {
+        if let book = newlyAddedBook {
+            NavigationStack {
+                EditBookView(userBook: book) { savedBook in
+                    showingEditView = false
+                    dismiss()
+                }
+                .liquidGlassBackground(material: .regular, vibrancy: .medium)
+                .liquidGlassNavigation(material: .thin, vibrancy: .medium)
+            }
+        }
+    }
+    
+    // MARK: - Liquid Glass Toolbar Content
+    private var liquidGlassToolbarContent: some ToolbarContent {
+        ToolbarItem(placement: .navigationBarTrailing) {
+            ShareLink(item: shareableText) {
+                Image(systemName: "square.and.arrow.up")
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundStyle(primaryColor)
+            }
+            .optimizedLiquidGlassCard(
+                material: .ultraThin,
+                depth: .floating,
+                radius: .compact,
+                vibrancy: .medium
+            )
+            .padding(8)
         }
     }
     

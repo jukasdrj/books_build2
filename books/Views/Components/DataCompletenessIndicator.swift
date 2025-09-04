@@ -133,7 +133,12 @@ struct DataCompletenessBar: View {
             }
         }
         .padding(Theme.Spacing.md)
-        .liquidGlassCard()
+        .optimizedLiquidGlassCard(
+            material: .regular,
+            depth: .elevated,
+            radius: .comfortable,
+            vibrancy: .medium
+        )
     }
 }
 

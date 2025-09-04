@@ -108,6 +108,12 @@ struct ThemedRootView: View {
         }
         .statusBarHidden(false)
         .onAppear {
+            // Force iOS 26 Liquid Glass theme for Phase 2 development
+            #if DEBUG
+            unifiedThemeStore.forceResetToLiquidGlass()
+            print("[Phase 2] 🎨 Forced reset to iOS 26 Liquid Glass theme (.crystalClear)")
+            #endif
+            
             // Set up import state manager with model context
             Task { @MainActor in
                 // We'll set up the model context in the ContentView where it has access to the environment
