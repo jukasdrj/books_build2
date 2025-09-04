@@ -166,15 +166,6 @@ enum Theme {
         static let profileImageSize: CGFloat = 40
     }
     
-    // MARK: - Color Aliases (Legacy)
-    // These color aliases have been deprecated in favor of the dynamic theme system.
-    // Use @Environment(\.appTheme) in your SwiftUI views instead.
-    // This enum is kept temporarily for compatibility but should not be used in new code.
-    enum Color {
-        // Legacy color aliases removed - use @Environment(\.appTheme) instead
-        // Example: @Environment(\.appTheme) private var currentTheme
-        // Then use: currentTheme.primaryAction instead of Theme.Color.PrimaryAction
-    }
 }
 
 // MARK: - Theme-Aware Helpers

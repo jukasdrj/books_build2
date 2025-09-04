@@ -195,9 +195,6 @@ extension UIView {
     }
 }
 
-extension Color {
-    // Legacy static references removed - use @Environment(\.appTheme) instead
-}
 
 // MARK: - Theme Environment Key
 struct ThemeKey: EnvironmentKey {
