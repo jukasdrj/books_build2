@@ -38,7 +38,7 @@ This directory contains documentation for the main features implemented in the b
 
 ## Future Enhancements 🔄
 
-### [Batch Processing Strategy](batch-processing.md)
+### [Batch Processing Strategy](../planning/batch-processing.md)
 **Status**: ❌ Planning Phase
 - Describes potential API-level batch processing
 - ISBNdb native batch support integration

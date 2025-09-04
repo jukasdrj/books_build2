@@ -24,11 +24,13 @@ This is a SwiftUI iOS book reading tracker app with cultural diversity tracking 
 ## Development Commands
 
 ### Building and Testing
-- **Build**: Use Xcode's standard build (⌘+B) or Product → Build
-- **Run**: Use Xcode's run (⌘+R) or Product → Run  
-- **Test**: Use Xcode's test (⌘+U) or Product → Test
+- **Build**: Use Xcode's standard build (⌘+B) or via MCP tools: `build_sim({ projectPath: "books.xcodeproj", scheme: "books", simulatorName: "iPhone 16" })`
+- **Run**: Use Xcode's run (⌘+R) or via MCP tools: `build_run_sim({ projectPath: "books.xcodeproj", scheme: "books", simulatorName: "iPhone 16" })`
+- **Test**: Use Xcode's test (⌘+U) or via MCP tools: `test_sim({ projectPath: "books.xcodeproj", scheme: "books", simulatorName: "iPhone 16" })`
 - **Unit Tests**: Run `booksTests` target for model and service tests
 - **UI Tests**: Run `booksUITests` target for interface tests
+- **Available Simulators**: Use `list_sims()` to see available iOS simulators
+- **Clean Build**: Use `clean({ projectPath: "books.xcodeproj", scheme: "books" })` if needed
 
 ### Xcode Project Structure
 - Main project: `books_build2/books.xcodeproj`
@@ -38,14 +40,15 @@ This is a SwiftUI iOS book reading tracker app with cultural diversity tracking 
 ### SwiftLens Development Tools ✅
 - **SwiftLens Setup**: Fully configured and verified Swift intelligence system
 - **Environment**: Swift 6.1.2 + Xcode 16.4 with sourcekit-lsp integration
-- **Project Analysis**: 135 Swift files indexed and ready for semantic analysis
+- **Project Analysis**: 135+ Swift files indexed and ready for semantic analysis
 - **Core Capabilities**:
-  - `swift_get_symbols_overview` - Quick file structure scanning
-  - `swift_analyze_files` - Comprehensive symbol analysis with hierarchies
-  - `swift_find_symbol_references_files` - Cross-file symbol references
-  - `swift_replace_symbol_body` - Targeted code modifications
-  - `swift_validate_file` - Syntax validation after changes
-- **Usage Pattern**: Use symbols overview → targeted analysis → modify → validate workflow
+  - `swift_get_symbols_overview("file_path")` - Quick file structure scanning
+  - `swift_analyze_files(["file_path1", "file_path2"])` - Comprehensive symbol analysis
+  - `swift_find_symbol_references_files(["file_path1"], "SymbolName")` - Cross-file references
+  - `swift_replace_symbol_body("file_path", "symbol", "new_body")` - Targeted modifications
+  - `swift_validate_file("file_path")` - Syntax validation after changes
+- **Usage Pattern**: Always start with `swift_get_symbols_overview` → targeted analysis → modify → validate
+- **Best Practice**: Run `swift_build_index()` after major structural changes for accurate cross-file analysis
 
 ### Search Infrastructure
 The app uses an **optimized CloudFlare Workers proxy** for book search functionality:
@@ -93,7 +96,7 @@ The app uses an **optimized CloudFlare Workers proxy** for book search functiona
 
 ## Development Patterns
 
-### Swift 6.2 Concurrency Architecture ✅
+### Swift 6 Concurrency Architecture ✅
 - **Data Models**: Use `@unchecked Sendable` for SwiftData models (thread safety handled by SwiftData)
 - **UI Classes**: `@MainActor` isolation for ObservableObject types (UnifiedThemeStore)
 - **Service Layer**: Proper async/await patterns with structured concurrency
@@ -101,6 +104,14 @@ The app uses an **optimized CloudFlare Workers proxy** for book search functiona
 - **Actor System**: Enhanced BookAnalyticsActor with Sendable conformance
 - **Performance Monitoring**: Actor-based performance tracking with backtrace capture
 - **Background Tasks**: Safe Task.detached usage to avoid actor isolation issues
+
+### Code Modification Workflow
+When modifying Swift code, always follow this pattern:
+1. **Analyze**: Use `swift_get_symbols_overview` to understand file structure
+2. **Locate**: Use `swift_find_symbol_references_files` to find all usages
+3. **Modify**: Use `swift_replace_symbol_body` for surgical changes
+4. **Validate**: Always run `swift_validate_file` immediately after modifications
+5. **Test**: Build and run tests to ensure changes work correctly
 
 ### iOS 26 Liquid Glass Design System ✅
 - **Liquid Glass Foundation**: Complete implementation with 5 glass materials (ultraThin → chrome)
@@ -145,6 +156,13 @@ The app uses an **optimized CloudFlare Workers proxy** for book search functiona
 
 ## File Organization
 
+### Key Entry Points for New Developers
+- **App Entry**: `books/App/booksApp.swift` - Main app initialization with SwiftData and theme setup
+- **Root Content**: `books/Views/Main/ContentView.swift` or `books/Views/Main/iOS26ContentView.swift` - Main navigation
+- **Theme System**: `books/Theme/ThemeSystemBridge.swift` - Unified theme management
+- **Search Service**: `books/Services/BookSearchService.swift` - CloudFlare proxy integration
+- **Data Models**: `books/Models/UserBook.swift` and `books/Models/BookMetadata.swift` - Core SwiftData models
+
 ### Views Hierarchy
 - `Views/Main/`: Primary app screens (ContentView, LibraryView, SearchView, ReadingInsightsView, SettingsView)
 - `Views/Detail/`: Detail screens (BookDetailsView, EditBookView, SearchResultDetailView)
@@ -158,8 +176,8 @@ The app uses an **optimized CloudFlare Workers proxy** for book search functiona
 ### Supporting Code
 - `Models/`: SwiftData models and import data structures
 - `Services/`: API integration, caching, import services, background processing
-- `Stores/`: State management (ThemeStore with appearance preferences)
-- `Theme/`: Comprehensive theming system with iOS 26 Liquid Glass variants
+- `Stores/`: State management (legacy ThemeStore, use UnifiedThemeStore from Theme/)
+- `Theme/`: **Primary theme system** - iOS 26 Liquid Glass with Material Design 3 bridge
 - `Utilities/`: Helper functions, CSV parsing, validation, error handling
 - `Extensions/`: Color extensions and utility extensions
 - `Managers/`: Specialized managers (ReadingGoalsManager)

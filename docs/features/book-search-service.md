@@ -34,8 +34,8 @@ enum APIProvider: String, CaseIterable {
 - `searchByTitle(_:sortBy:maxResults:includeTranslations:)` - Title-specific search using "intitle:" query
 - `searchByISBN(_:provider:)` - Direct ISBN lookup with provider selection
 - `searchWithFallback(query:sortBy:maxResults:includeTranslations:provider:)` - Search with automatic provider fallback
-- `searchWithISBNDBFallback(query:sortBy:maxResults:)` - Search with ISBNdb-specific fallback chain
-- `searchByISBNWithISBNDBFallback(_:provider:)` - ISBN lookup with ISBNdb fallback
+- `searchWithISBNDBFallback(query:sortBy:maxResults:)` - Private method for ISBNdb-specific search fallback
+- `searchByISBNWithISBNDBFallback(_:provider:)` - Private method for ISBN lookup with ISBNdb fallback
 
 ### 2. Provider Routing
 ```swift
@@ -52,18 +52,18 @@ let results = try await bookSearchService.search(query: query, provider: .openli
 ### 3. Intelligent Fallback Chain
 1. **Primary Provider** (user specified or auto-selected)
 2. **Secondary Fallback** - Automatic fallback to other providers
-3. **Merge Results** - Combines metadata from multiple sources using `mergeBookMetadata(primary:secondary:)`
-4. **Query Optimization** - Automatic query enhancement with `optimizeQuery(_:)`
-5. **Duplicate Removal** - Advanced duplicate detection using `removeDuplicates(_:)`
+3. **Merge Results** - Combines metadata from multiple sources (internal logic)
+4. **Query Optimization** - Automatic query enhancement (internal processing)
+5. **Duplicate Removal** - Advanced duplicate detection algorithms
 
 ### 4. Search Optimization
-- **Query Optimization**: Automatically optimizes search queries with `optimizeQuery(_:)`
+- **Query Optimization**: Automatically optimizes search queries (internal logic)
 - **Duplicate Removal**: Advanced duplicate detection using title/author similarity
-- **Relevance Scoring**: Custom scoring with `calculateRelevanceScore(_:query:)`
-- **Popularity Scoring**: Publication recency and page count weighting with `calculatePopularityScore(_:)`
+- **Relevance Scoring**: Custom scoring algorithms for result ranking
+- **Popularity Scoring**: Publication recency and metadata quality weighting
 - **Result Sorting**: Multiple sort options (relevance, newest, popularity)
-- **ISBN Detection**: Automatic ISBN format recognition with `isISBN(_:)`
-- **String Similarity**: Levenshtein distance and fuzzy matching algorithms
+- **ISBN Detection**: Automatic ISBN format recognition and validation
+- **String Similarity**: Title/author matching algorithms for duplicate detection
 
 ### 5. Error Handling
 ```swift
