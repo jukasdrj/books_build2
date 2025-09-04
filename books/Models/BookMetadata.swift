@@ -73,9 +73,15 @@ final class BookMetadata: Identifiable, Hashable {
     var dataQualityScore: Double = 1.0 // Enhanced from existing field
     
 
+    // MARK: - Relationships
+    
     // One-to-many relationship: BookMetadata can have multiple UserBooks
     @Relationship(inverse: \UserBook.metadata)
     var userBooks: [UserBook] = []
+    
+    // Many-to-many relationship: BookMetadata can have multiple AuthorProfiles
+    @Relationship()
+    var authorProfiles: [AuthorProfile] = []
     
     @Transient
     var id: String { googleBooksID }
@@ -292,6 +298,112 @@ final class BookMetadata: Identifiable, Hashable {
         }
         
         return nil
+    }
+    
+    // MARK: - AuthorProfile Integration Methods
+    
+    /// Get all author names from both legacy authors string and AuthorProfile relationships
+    func getAllAuthorNames() -> [String] {
+        var allNames = authors // Legacy string-based authors
+        
+        // Add names from AuthorProfile relationships
+        let profileNames = authorProfiles.map { $0.name }
+        allNames.append(contentsOf: profileNames)
+        
+        // Remove duplicates and empty names
+        return Array(Set(allNames.filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }))
+    }
+    
+    /// Get primary cultural metadata from AuthorProfiles
+    func getPrimaryCulturalData() -> (regions: [CulturalRegion], genders: [AuthorGender], themes: [String]) {
+        let regions = Set(authorProfiles.compactMap { $0.culturalRegion })
+        let genders = Set(authorProfiles.map { $0.gender }).filter { $0 != .unknown }
+        let themes = Set(authorProfiles.flatMap { $0.culturalThemes })
+        
+        return (
+            regions: Array(regions),
+            genders: Array(genders),
+            themes: Array(themes)
+        )
+    }
+    
+    /// Check if any author represents indigenous voices
+    func hasIndigenousAuthorVoices() -> Bool {
+        return authorProfiles.contains { $0.representsIndigenousVoices() }
+    }
+    
+    /// Check if any author represents marginalized voices
+    func hasMarginalizedAuthorVoices() -> Bool {
+        return authorProfiles.contains { $0.representsMarginalizedVoices() }
+    }
+    
+    /// Get the highest cultural data confidence from all authors
+    func getHighestCulturalConfidence() -> Double {
+        return authorProfiles.map { $0.culturalDataConfidence }.max() ?? 0.0
+    }
+    
+    /// Associate an AuthorProfile with this book
+    func addAuthorProfile(_ profile: AuthorProfile) {
+        if !authorProfiles.contains(profile) {
+            authorProfiles.append(profile)
+            
+            // Update author profile's book count and statistics
+            profile.bookCount += 1
+            profile.dateLastModified = Date()
+        }
+    }
+    
+    /// Remove an AuthorProfile association from this book
+    func removeAuthorProfile(_ profile: AuthorProfile) {
+        if let index = authorProfiles.firstIndex(of: profile) {
+            authorProfiles.remove(at: index)
+            
+            // Update author profile's book count
+            profile.bookCount = max(0, profile.bookCount - 1)
+            profile.dateLastModified = Date()
+        }
+    }
+    
+    /// Migration helper: Create AuthorProfile entities from legacy string-based authors
+    func migrateToAuthorProfiles() -> [AuthorProfile] {
+        var createdProfiles: [AuthorProfile] = []
+        
+        for authorName in authors {
+            // Check if we already have a profile for this author
+            let existingProfile = authorProfiles.first { $0.matches(authorName) }
+            
+            if existingProfile == nil {
+                // Create new AuthorProfile
+                let profile = AuthorProfile(
+                    name: authorName,
+                    culturalDataConfidence: 0.3, // Low confidence for migrated data
+                    culturalDataSources: [
+                        "migration": DataSourceInfo(source: .mixedSources, confidence: 0.3, fieldPath: "migration")
+                    ]
+                )
+                
+                // Try to infer cultural data from existing BookMetadata fields
+                if let gender = authorGender {
+                    profile.gender = gender
+                }
+                
+                if let nationality = authorNationality {
+                    profile.nationality = nationality
+                }
+                
+                if let region = culturalRegion {
+                    profile.culturalRegion = region
+                }
+                
+                // Add cultural themes from book
+                profile.culturalThemes = culturalThemes
+                
+                createdProfiles.append(profile)
+                addAuthorProfile(profile)
+            }
+        }
+        
+        return createdProfiles
     }
 }
 

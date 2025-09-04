@@ -22,12 +22,14 @@ struct booksApp: App {
         let schema = Schema([
             UserBook.self,
             BookMetadata.self,
+            AuthorProfile.self,
         ])
         
         // Debug: Print schema information
         print("SwiftData Schema Debug:")
         print("- UserBook: \(UserBook.self)")
         print("- BookMetadata: \(BookMetadata.self)")
+        print("- AuthorProfile: \(AuthorProfile.self)")
         
         do {
             // Configure without CloudKit to avoid unique constraint conflict

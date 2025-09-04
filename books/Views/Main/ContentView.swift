@@ -41,6 +41,9 @@ struct ContentView: View {
             Task { @MainActor in
                 ImportStateManager.shared.setModelContext(modelContext)
                 _ = BackgroundImportCoordinator.initialize(with: modelContext)
+                
+                // Run AuthorProfile migration if needed
+                await runAuthorProfileMigration()
             }
             
             // Prevent navigation bar bounce by ensuring consistent state
@@ -441,6 +444,34 @@ struct ContentView: View {
                     handleBarcodeScanned(scannedBarcode)
                 }
             }
+        }
+    }
+    
+    // MARK: - AuthorProfile Migration
+    
+    /// Run AuthorProfile migration for existing library
+    private func runAuthorProfileMigration() async {
+        // Check if migration has already been completed
+        let migrationKey = "authorProfileMigrationCompleted"
+        if UserDefaults.standard.bool(forKey: migrationKey) {
+            print("AuthorProfile migration already completed")
+            return
+        }
+        
+        print("Starting AuthorProfile migration...")
+        let authorService = AuthorService(modelContext: modelContext)
+        
+        let result = await authorService.migrateAllBooksToAuthorProfiles()
+        
+        if result.success {
+            print("✅ AuthorProfile migration completed successfully")
+            print("- Books processed: \(result.booksProcessed)")
+            print("- Authors created: \(result.authorsCreated)")
+            
+            // Mark migration as complete
+            UserDefaults.standard.set(true, forKey: migrationKey)
+        } else {
+            print("❌ AuthorProfile migration failed: \(result.error?.localizedDescription ?? "Unknown error")")
         }
     }
     

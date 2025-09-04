@@ -1,0 +1,173 @@
+# Optimized Wrangler Configuration for Books API Proxy
+# Includes all optimization systems and proper resource allocation
+
+name = "books-api-proxy-optimized"
+main = "production-optimized-worker.js"
+compatibility_date = "2024-12-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Worker configuration
+[build]
+command = ""
+cwd = ""
+watch_dir = ""
+
+# Durable Objects for advanced features (optional)
+# [[durable_objects.bindings]]
+# name = "AUTHOR_INDEX"
+# class_name = "AuthorIndexDurableObject"
+
+# Tail Worker for advanced analytics (commented out for now)
+# tail_consumers = [
+#   { service = "books-proxy-tail-worker", environment = "production" }
+# ]
+
+# Production Environment
+[env.production]
+
+# Variables (non-sensitive configuration)
+[env.production.vars]
+ENVIRONMENT = "production"
+VERSION = "3.0-optimized"
+LOG_LEVEL = "info"
+FEATURE_FLAGS = "intelligent-caching,quota-optimization,cultural-indexing,performance-optimization"
+CACHE_DEBUG = "false"
+
+# Rate limiting configuration
+RATE_LIMIT_DEFAULT = "100"
+RATE_LIMIT_AUTHENTICATED = "1000"
+RATE_LIMIT_BATCH_MAX = "10"
+
+# Performance configuration
+COMPRESSION_ENABLED = "true"
+COMPRESSION_THRESHOLD = "1024"
+EDGE_CACHE_TTL = "300"
+BROWSER_CACHE_TTL = "60"
+
+# Cultural indexing configuration
+CULTURAL_INDEXING_ENABLED = "true"
+AUTHOR_PROFILE_CONFIDENCE_THRESHOLD = "30"
+CULTURAL_DATA_TTL = "604800"
+
+# Analytics configuration
+ANALYTICS_ENABLED = "true"
+PERFORMANCE_MONITORING_ENABLED = "true"
+
+# Security configuration  
+SECURITY_HEADERS_ENABLED = "true"
+CORS_ORIGIN = "*"  # Restrict this to your domain in production
+REQUEST_SIZE_LIMIT = "1048576"  # 1MB
+
+# KV Namespaces for caching and data storage
+[[env.production.kv_namespaces]]
+binding = "BOOKS_CACHE"
+id = "b9cade63b6db48fd80c109a013f38fdb"
+preview_id = "b9cade63b6db48fd80c109a013f38fdb"
+
+# Additional KV namespace for author profiles
+[[env.production.kv_namespaces]]
+binding = "AUTHOR_PROFILES"
+id = "c7da0b776d6247589949d19c0faf03ae"
+preview_id = "c7da0b776d6247589949d19c0faf03ae"
+
+# R2 Buckets for cold storage
+[[env.production.r2_buckets]]
+binding = "BOOKS_R2"
+bucket_name = "books-cache"
+preview_bucket_name = "books-cache-preview"
+
+# Additional R2 bucket for cultural data and analytics
+[[env.production.r2_buckets]]
+binding = "CULTURAL_DATA_R2"
+bucket_name = "cultural-data-staging"
+preview_bucket_name = "cultural-data-staging"
+
+# Queue for background processing (optional)
+# [[env.production.queues]]
+# binding = "BACKGROUND_PROCESSING"
+# queue = "books-background-queue"
+
+# Development Environment
+[env.development]
+
+[env.development.vars]
+ENVIRONMENT = "development"
+VERSION = "3.0-optimized-dev"
+LOG_LEVEL = "debug"
+FEATURE_FLAGS = "intelligent-caching,quota-optimization,cultural-indexing,performance-optimization"
+CACHE_DEBUG = "true"
+RATE_LIMIT_DEFAULT = "1000"  # More permissive for dev
+RATE_LIMIT_AUTHENTICATED = "5000"
+RATE_LIMIT_BATCH_MAX = "50"
+COMPRESSION_ENABLED = "true"
+CULTURAL_INDEXING_ENABLED = "true"
+ANALYTICS_ENABLED = "true"
+SECURITY_HEADERS_ENABLED = "true"
+CORS_ORIGIN = "*"
+
+[[env.development.kv_namespaces]]
+binding = "BOOKS_CACHE"
+id = "8e05b3b27f404b7789cd9a00d19208bc"
+
+[[env.development.kv_namespaces]]
+binding = "AUTHOR_PROFILES"
+id = "c7da0b776d6247589949d19c0faf03ae"
+
+[[env.development.r2_buckets]]
+binding = "BOOKS_R2"
+bucket_name = "books-cache-staging"
+
+[[env.development.r2_buckets]]
+binding = "CULTURAL_DATA_R2"
+bucket_name = "cultural-data-staging"
+
+# Staging Environment
+[env.staging]
+
+[env.staging.vars]
+ENVIRONMENT = "staging"
+VERSION = "3.0-optimized-staging"
+LOG_LEVEL = "info"
+FEATURE_FLAGS = "intelligent-caching,quota-optimization,cultural-indexing,performance-optimization"
+CACHE_DEBUG = "false"
+RATE_LIMIT_DEFAULT = "200"
+RATE_LIMIT_AUTHENTICATED = "2000"
+RATE_LIMIT_BATCH_MAX = "20"
+COMPRESSION_ENABLED = "true"
+CULTURAL_INDEXING_ENABLED = "true"
+ANALYTICS_ENABLED = "true"
+SECURITY_HEADERS_ENABLED = "true"
+CORS_ORIGIN = "*"
+
+[[env.staging.kv_namespaces]]
+binding = "BOOKS_CACHE"
+id = "8e05b3b27f404b7789cd9a00d19208bc"
+
+[[env.staging.kv_namespaces]]
+binding = "AUTHOR_PROFILES"
+id = "c7da0b776d6247589949d19c0faf03ae"
+
+[[env.staging.r2_buckets]]
+binding = "BOOKS_R2"
+bucket_name = "books-cache-staging"
+
+[[env.staging.r2_buckets]]
+binding = "CULTURAL_DATA_R2"
+bucket_name = "cultural-data-staging"
+
+# Cron triggers for maintenance tasks (commented out for now)
+# [[env.production.triggers]]
+# crons = ["0 2 * * *"]  # Daily at 2 AM UTC for maintenance
+# [[env.staging.triggers]]  
+# crons = ["0 3 * * *"]   # Daily at 3 AM UTC for staging maintenance
+
+# Custom domains (optional)
+# [env.production]
+# routes = [
+#   "api.yourdomain.com/books/*"
+# ]
+
+# [env.staging]
+# routes = [
+#   "staging-api.yourdomain.com/books/*"
+# ]
