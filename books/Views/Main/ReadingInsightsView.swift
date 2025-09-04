@@ -12,6 +12,7 @@ struct ReadingInsightsView: View {
     
     @State private var selectedTimeframe: TimeFrame = .allTime
     @State private var animateElements = false
+    @State private var sectionsLoaded: Set<String> = []
     
     var body: some View {
         NavigationStack {
@@ -23,11 +24,45 @@ struct ReadingInsightsView: View {
                     // Key metrics dashboard
                     metricsSection
                     
+                    // Achievement System (iOS 26 Stage 1 Feature)
+                    if sectionsLoaded.contains("achievements") {
+                        achievementSection
+                    } else {
+                        LazyVStack {}
+                            .onAppear {
+                                loadSection("achievements")
+                            }
+                    }
+                    
+                    // Interactive Timeline (iOS 26 Phase 2 Flagship Feature)
+                    if sectionsLoaded.contains("timeline") {
+                        timelineSection
+                    } else {
+                        LazyVStack {}
+                            .onAppear {
+                                loadSection("timeline")
+                            }
+                    }
+                    
                     // Cultural diversity section
-                    culturalSection
+                    if sectionsLoaded.contains("cultural") {
+                        culturalSection
+                    } else {
+                        LazyVStack {}
+                            .onAppear {
+                                loadSection("cultural")
+                            }
+                    }
                     
                     // Reading goals section
-                    goalsSection
+                    if sectionsLoaded.contains("goals") {
+                        goalsSection
+                    } else {
+                        LazyVStack {}
+                            .onAppear {
+                                loadSection("goals")
+                            }
+                    }
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 8)
@@ -38,8 +73,35 @@ struct ReadingInsightsView: View {
             .navigationBarTitleDisplayMode(.large)
             #endif
             .onAppear {
+                // Initial hero section is always loaded
+                sectionsLoaded.insert("hero")
+                sectionsLoaded.insert("metrics")
+                
                 withAnimation(.spring(response: 0.8, dampingFraction: 0.8).delay(0.2)) {
                     animateElements = true
+                }
+                
+                // Stagger load remaining sections for better performance
+                Task {
+                    try? await Task.sleep(nanoseconds: 300_000_000) // 0.3 seconds
+                    await MainActor.run {
+                        loadSection("achievements")
+                    }
+                    
+                    try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds  
+                    await MainActor.run {
+                        loadSection("timeline")
+                    }
+                    
+                    try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
+                    await MainActor.run {
+                        loadSection("cultural")
+                    }
+                    
+                    try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
+                    await MainActor.run {
+                        loadSection("goals")
+                    }
                 }
             }
         }
@@ -72,58 +134,22 @@ struct ReadingInsightsView: View {
     @ViewBuilder
     private var heroSection: some View {
         VStack(spacing: 20) {
-            // Header with cultural globe
-            HStack {
-                ZStack {
-                    Circle()
-                        .fill(
-                            RadialGradient(
-                                colors: [
-                                    currentTheme.primary.opacity(0.3),
-                                    currentTheme.secondary.opacity(0.1),
-                                    Color.clear
-                                ],
-                                center: .center,
-                                startRadius: 10,
-                                endRadius: 30
-                            )
-                        )
-                        .frame(width: 60, height: 60)
-                    
-                    Image(systemName: "globe.americas.fill")
-                        .font(.title)
-                        .foregroundStyle(
-                            LinearGradient(
-                                colors: [currentTheme.primary, currentTheme.secondary],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        .rotationEffect(.degrees(animateElements ? 5 : -5))
-                        .animation(.easeInOut(duration: 3).repeatForever(autoreverses: true), value: animateElements)
-                }
-                
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Your Reading Journey")
-                        .font(.system(size: 28, weight: .bold, design: .rounded))
-                        .foregroundColor(currentTheme.primaryText)
-                    
-                    Text("Exploring \(culturesExplored) cultures across \(booksReadThisYear) books")
-                        .font(.system(size: 16, weight: .medium, design: .rounded))
-                        .foregroundColor(currentTheme.secondaryText)
-                        .multilineTextAlignment(.leading)
-                }
-                
-                Spacer()
+            // Header
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Exploring \(culturesExplored) cultures across \(booksReadThisYear) books")
+                    .liquidGlassTypography(style: .callout, vibrancy: .medium)
+                    .foregroundColor(currentTheme.secondaryText)
+                    .multilineTextAlignment(.leading)
             }
             
             // Progress visualization
             HStack(spacing: 24) {
-                // Reading progress ring
+                // iOS 26 Dual-Ring Progress Indicator (Flagship Feature)
                 ZStack {
+                    // Outer ring - Reading Progress
                     Circle()
-                        .stroke(currentTheme.surface.opacity(0.8), lineWidth: 10)
-                        .frame(width: 100, height: 100)
+                        .stroke(currentTheme.surface.opacity(0.3), lineWidth: 12)
+                        .frame(width: 110, height: 110)
                     
                     Circle()
                         .trim(from: 0, to: animateElements ? readingProgress : 0)
@@ -132,21 +158,42 @@ struct ReadingInsightsView: View {
                                 colors: [currentTheme.primary, currentTheme.secondary, currentTheme.primary],
                                 center: .center
                             ),
-                            style: StrokeStyle(lineWidth: 10, lineCap: .round)
+                            style: StrokeStyle(lineWidth: 12, lineCap: .round)
                         )
-                        .frame(width: 100, height: 100)
+                        .frame(width: 110, height: 110)
                         .rotationEffect(.degrees(-90))
                         .animation(.spring(response: 1.0, dampingFraction: 0.8).delay(0.5), value: animateElements)
                     
+                    // Inner ring - Cultural Diversity Progress
+                    Circle()
+                        .stroke(currentTheme.tertiary.opacity(0.2), lineWidth: 8)
+                        .frame(width: 80, height: 80)
+                    
+                    Circle()
+                        .trim(from: 0, to: animateElements ? (Double(culturesExplored) / 10.0) : 0)
+                        .stroke(
+                            LinearGradient(
+                                colors: [currentTheme.tertiary, currentTheme.secondary],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            style: StrokeStyle(lineWidth: 8, lineCap: .round)
+                        )
+                        .frame(width: 80, height: 80)
+                        .rotationEffect(.degrees(-90))
+                        .animation(.spring(response: 1.2, dampingFraction: 0.7).delay(0.7), value: animateElements)
+                    
+                    // Enhanced center content with iOS 26 styling
                     VStack(spacing: 2) {
                         Text("\(Int(readingProgress * 100))%")
-                            .font(.system(size: 20, weight: .bold, design: .rounded))
+                            .liquidGlassTypography(style: .title3, vibrancy: .prominent)
                             .foregroundColor(currentTheme.primary)
-                        Text("Goal")
-                            .font(.system(size: 12, weight: .medium, design: .rounded))
+                        Text("Journey")
+                            .liquidGlassTypography(style: .caption1, vibrancy: .medium)
                             .foregroundColor(currentTheme.secondaryText)
                     }
                 }
+                .liquidGlassInteraction(style: .glass, haptic: .light)
                 
                 // Key stats
                 VStack(alignment: .leading, spacing: 12) {
@@ -157,25 +204,18 @@ struct ReadingInsightsView: View {
             }
         }
         .padding(24)
-        .background {
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(.regularMaterial.opacity(0.8))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 20, style: .continuous)
-                        .strokeBorder(
-                            LinearGradient(
-                                colors: [currentTheme.primary.opacity(0.3), currentTheme.secondary.opacity(0.1)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ),
-                            lineWidth: 1
-                        )
-                )
-        }
-        .shadow(color: currentTheme.primary.opacity(0.1), radius: 20, x: 0, y: 10)
+        .optimizedLiquidGlassCard(
+            material: .regular,
+            depth: .prominent,
+            radius: .spacious,
+            vibrancy: .prominent
+        )
+        .shadow(color: currentTheme.primary.opacity(0.15), radius: 25, x: 0, y: 12)
+        .liquidGlassEntrance(delay: 0.2, animation: .flowing)
         .scaleEffect(animateElements ? 1 : 0.95)
         .opacity(animateElements ? 1 : 0.8)
-        .animation(.spring(response: 0.8, dampingFraction: 0.8), value: animateElements)
+        .liquidGlassTransition(value: animateElements, animation: .smooth)
+        .drawingGroup() // Performance optimization for complex visual effects
     }
     
     @ViewBuilder
@@ -196,6 +236,14 @@ struct ReadingInsightsView: View {
                     .foregroundColor(currentTheme.secondaryText)
             }
         }
+    }
+    
+    // MARK: - Interactive Timeline Section (iOS 26 Phase 2)
+    
+    @ViewBuilder
+    private var timelineSection: some View {
+        ReadingTimelineChart(timelineData: timelineData)
+            .liquidGlassEntrance(delay: 0.8, animation: .flowing)
     }
     
     // MARK: - Metrics Section
@@ -284,14 +332,12 @@ struct ReadingInsightsView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(20)
-        .background {
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(.thinMaterial.opacity(0.8))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .strokeBorder(color.opacity(0.3), lineWidth: 1)
-                )
-        }
+        .optimizedLiquidGlassCard(
+            material: .thin,
+            depth: .elevated,
+            radius: .comfortable,
+            vibrancy: .medium
+        )
         .shadow(color: color.opacity(0.1), radius: 10, x: 0, y: 5)
         .scaleEffect(animateElements ? 1 : 0.9)
         .opacity(animateElements ? 1 : 0.6)
@@ -338,21 +384,12 @@ struct ReadingInsightsView: View {
             }
         }
         .padding(20)
-        .background {
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(.regularMaterial.opacity(0.7))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 20, style: .continuous)
-                        .strokeBorder(
-                            LinearGradient(
-                                colors: [currentTheme.secondary.opacity(0.3), currentTheme.primary.opacity(0.1)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ),
-                            lineWidth: 1
-                        )
-                )
-        }
+        .optimizedLiquidGlassCard(
+            material: .regular,
+            depth: .elevated,
+            radius: .spacious,
+            vibrancy: .medium
+        )
         .shadow(color: currentTheme.secondary.opacity(0.1), radius: 15, x: 0, y: 8)
         .padding(.horizontal, 4)
     }
@@ -474,18 +511,104 @@ struct ReadingInsightsView: View {
             }
         }
         .padding(20)
-        .background {
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(.thinMaterial.opacity(0.8))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .strokeBorder(color.opacity(0.2), lineWidth: 1)
-                )
-        }
+        .optimizedLiquidGlassCard(
+            material: .thin,
+            depth: .elevated,
+            radius: .comfortable,
+            vibrancy: .medium
+        )
         .shadow(color: color.opacity(0.08), radius: 12, x: 0, y: 6)
         .scaleEffect(animateElements ? 1 : 0.95)
         .opacity(animateElements ? 1 : 0.7)
         .animation(.spring(response: 0.7, dampingFraction: 0.8).delay(animationDelay), value: animateElements)
+    }
+    
+    // MARK: - Achievement Section
+    
+    @ViewBuilder
+    private var achievementSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                Text("Achievements")
+                    .font(.system(size: 22, weight: .bold, design: .rounded))
+                    .foregroundColor(currentTheme.primaryText)
+                
+                Spacer()
+                
+                Text("\(userAchievements.filter { $0.isUnlocked }.count)/\(userAchievements.count)")
+                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                    .foregroundColor(currentTheme.primary)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background {
+                        Capsule()
+                            .fill(.ultraThinMaterial.opacity(0.8))
+                            .overlay(Capsule().strokeBorder(currentTheme.primary.opacity(0.3), lineWidth: 1))
+                    }
+            }
+            
+            // Achievement Grid
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 4), spacing: 12) {
+                ForEach(Array(userAchievements.prefix(8).enumerated()), id: \.offset) { index, achievement in
+                    AchievementBadge(achievement: achievement) {
+                        // Handle achievement tap with haptic feedback
+                        #if canImport(UIKit)
+                        let impactGenerator = UIImpactFeedbackGenerator(style: achievement.rarity.hapticIntensity.uiKitStyle)
+                        impactGenerator.impactOccurred()
+                        #endif
+                    }
+                    .liquidGlassEntrance(
+                        delay: Double(index) * 0.1 + 1.0,
+                        animation: .flowing
+                    )
+                }
+            }
+            
+            // Show More Button (if more than 8 achievements)
+            if userAchievements.count > 8 {
+                Button(action: {
+                    // TODO: Navigate to full achievements view
+                }) {
+                    HStack {
+                        Text("View All Achievements")
+                            .font(.system(size: 16, weight: .semibold, design: .rounded))
+                            .foregroundColor(currentTheme.primary)
+                        
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundColor(currentTheme.primary)
+                    }
+                    .padding(.vertical, 12)
+                    .padding(.horizontal, 20)
+                    .background {
+                        Capsule()
+                            .fill(.ultraThinMaterial.opacity(0.6))
+                            .overlay(Capsule().strokeBorder(currentTheme.primary.opacity(0.3), lineWidth: 1))
+                    }
+                }
+                .buttonStyle(PlainButtonStyle())
+                .liquidGlassInteraction(style: .glass, haptic: .light)
+                .frame(maxWidth: .infinity, alignment: .center)
+                .padding(.top, 8)
+            }
+        }
+        .padding(20)
+        .optimizedLiquidGlassCard(
+            material: .regular,
+            depth: .elevated,
+            radius: .spacious,
+            vibrancy: .medium
+        )
+        .shadow(color: currentTheme.primary.opacity(0.1), radius: 15, x: 0, y: 8)
+        .padding(.horizontal, 4)
+    }
+    
+    // MARK: - Performance Optimization
+    
+    private func loadSection(_ section: String) {
+        withAnimation(.smooth(duration: 0.4)) {
+            sectionsLoaded.insert(section)
+        }
     }
     
     // MARK: - Theme Helper
@@ -535,6 +658,96 @@ struct ReadingInsightsView: View {
     
     private var uniqueRegions: [CulturalRegion] {
         Array(Set(allBooks.compactMap { $0.metadata?.culturalRegion }))
+    }
+    
+    private var timelineData: [TimelineDataPoint] {
+        let calendar = Calendar.current
+        let now = Date()
+        
+        // Generate last 12 months of data
+        var monthData: [TimelineDataPoint] = []
+        
+        for monthOffset in (0..<12).reversed() {
+            guard let monthStart = calendar.date(byAdding: .month, value: -monthOffset, to: now),
+                  let monthEnd = calendar.date(byAdding: .month, value: 1, to: monthStart) else {
+                continue
+            }
+            
+            let monthBooks = allBooks.filter { book in
+                guard book.readingStatus == .read,
+                      let completedDate = book.dateCompleted else { return false }
+                return completedDate >= monthStart && completedDate < monthEnd
+            }
+            
+            let diversityScore = calculateMonthlyDiversityScore(books: monthBooks)
+            let averageRating = monthBooks.compactMap { $0.rating }.isEmpty ? nil : 
+                Double(monthBooks.compactMap { $0.rating }.reduce(0, +)) / Double(monthBooks.count)
+            
+            let dataPoint = TimelineDataPoint(
+                date: monthStart,
+                bookCount: monthBooks.count,
+                diversityPercentage: diversityScore * 100,
+                averageRating: monthBooks.isEmpty ? nil : averageRating,
+                genreBreakdown: calculateGenreBreakdown(monthBooks),
+                authorDemographics: calculateAuthorDemographics(monthBooks)
+            )
+            
+            monthData.append(dataPoint)
+        }
+        
+        return monthData
+    }
+    
+    private var userAchievements: [UnifiedAchievement] {
+        AchievementService.shared.calculateAchievements(from: allBooks)
+    }
+    
+    private func calculateMonthlyDiversityScore(books: [UserBook]) -> Double {
+        guard !books.isEmpty else { return 0.0 }
+        
+        let uniqueRegions = Set(books.compactMap { $0.metadata?.culturalRegion })
+        let uniqueGenders = Set(books.compactMap { $0.metadata?.authorGender })
+        
+        // Simple diversity calculation (can be enhanced)
+        let regionScore = min(Double(uniqueRegions.count) / 5.0, 1.0) // Max 5 regions = 100%
+        let genderScore = min(Double(uniqueGenders.count) / 3.0, 1.0) // Max 3 genders = 100%
+        
+        return (regionScore + genderScore) / 2.0
+    }
+    
+    private func calculateGenreBreakdown(_ books: [UserBook]) -> [String: Int] {
+        var breakdown: [String: Int] = [:]
+        for book in books {
+            // Simplified genre extraction
+            let genre = book.metadata?.genre.first ?? "Unknown"
+            breakdown[genre, default: 0] += 1
+        }
+        return breakdown
+    }
+    
+    private func calculateAuthorDemographics(_ books: [UserBook]) -> AuthorDemographics {
+        var genderDistribution: [String: Int] = [:]
+        var regionalDistribution: [String: Int] = [:]
+        
+        for book in books {
+            if let gender = book.metadata?.authorGender {
+                let genderKey = String(describing: gender)
+                genderDistribution[genderKey, default: 0] += 1
+            }
+            
+            if let region = book.metadata?.culturalRegion {
+                let regionKey = String(describing: region)
+                regionalDistribution[regionKey, default: 0] += 1
+            }
+        }
+        
+        let diversityScore = calculateMonthlyDiversityScore(books: books)
+        
+        return AuthorDemographics(
+            genderDistribution: genderDistribution,
+            regionalDistribution: regionalDistribution,
+            diversityScore: diversityScore
+        )
     }
 }
 

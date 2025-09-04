@@ -118,6 +118,57 @@ struct SearchView: View {
     @ViewBuilder
     private var liquidGlassImplementation: some View {
         liquidGlassMainContent
+            .searchable(
+                text: $searchQuery, 
+                placement: .navigationBarDrawer(displayMode: .always),
+                prompt: "Search by title, author, or ISBN"
+            ) {
+                // HIG Clarity: Enhanced search suggestions with better contrast
+                if !searchQuery.isEmpty && searchState != .searching {
+                    ForEach(searchSuggestions, id: \.self) { suggestion in
+                        Label(suggestion, systemImage: "magnifyingglass")
+                            .searchCompletion(suggestion)
+                            .foregroundStyle(.primary) // Enhanced contrast
+                    }
+                } else if searchQuery.isEmpty {
+                    // HIG Deference: Content-focused examples that educate without overwhelming
+                    Text("\"The Great Gatsby\"")
+                        .searchCompletion("The Great Gatsby")
+                        .foregroundStyle(.primary.opacity(0.8))
+                    Text("\"Maya Angelou\"")
+                        .searchCompletion("Maya Angelou")
+                        .foregroundStyle(.primary.opacity(0.8))
+                    Text("\"9780451524935\"")
+                        .searchCompletion("9780451524935")
+                        .foregroundStyle(.primary.opacity(0.8))
+                }
+            }
+            .submitLabel(.search)
+            .if(UIDevice.current.userInterfaceIdiom != .pad) { view in
+                view.keyboardToolbar() // Add Done button to prevent constraint conflicts
+            }
+            .liquidGlassAccessibility(
+                label: "Search for books",
+                hint: "Enter a book title, author name, or ISBN to search for books in the online database"
+            )
+            .onSubmit(of: .search) {
+                performSearch()
+            }
+            .onChange(of: searchQuery) { oldValue, newValue in
+                // Clear results when search query is cleared
+                if newValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !oldValue.isEmpty {
+                    clearSearchResults()
+                }
+            }
+            .liquidGlassModal(isPresented: $showingSortOptions) {
+                liquidGlassSortOptionsSheet
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .barcodeSearchCompleted)) { notification in
+                handleBarcodeSearchCompleted(notification)
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .barcodeSearchError)) { notification in
+                handleBarcodeSearchError(notification)
+            }
         .background {
             // Immersive Liquid Glass background
             Rectangle()
@@ -135,28 +186,9 @@ struct SearchView: View {
                 }
         }
         .keyboardAvoidingLayout()
-        .accessibilityLabel("Search for books")
-        .accessibilityHint("Enter a book title, author name, or ISBN to search for books in the online database")
-        .onSubmit(of: .search) {
-            performSearch()
-        }
-        .onChange(of: searchQuery) { oldValue, newValue in
-            if newValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !oldValue.isEmpty {
-                clearSearchResults()
-            }
-        }
-        .sheet(isPresented: $showingSortOptions) {
-            liquidGlassSortOptionsSheet
-        }
-        .onReceive(NotificationCenter.default.publisher(for: .barcodeSearchCompleted)) { notification in
-            handleBarcodeSearchCompleted(notification)
-        }
-        .onReceive(NotificationCenter.default.publisher(for: .barcodeSearchError)) { notification in
-            handleBarcodeSearchError(notification)
-        }
     }
     
-    // MARK: - Material Design Main Content  
+    // MARK: - Material Design Main Content (HIG-Compliant Bridge)
     @ViewBuilder
     private var materialDesignMainContent: some View {
         VStack(spacing: 0) {
@@ -170,7 +202,7 @@ struct SearchView: View {
                 }
             }
             
-            // Content Area with enhanced empty state
+            // Content Area with HIG Clarity enhancements
             Group {
                     switch searchState {
                     case .idle:
@@ -199,50 +231,64 @@ struct SearchView: View {
                         ))
                     }
                 }
-                .background(
-                    LinearGradient(
-                        colors: [
-                            currentTheme.background,
-                            currentTheme.surface.opacity(0.5)
-                        ],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                )
-                .animation(Theme.Animation.accessible, value: searchState)
+                .background {
+                    // HIG Deference: Content-first background that doesn't compete
+                    Rectangle()
+                        .fill(.ultraThinMaterial)
+                        .overlay {
+                            LinearGradient(
+                                colors: [
+                                    .clear,
+                                    primaryColor.opacity(0.02),
+                                    primaryColor.opacity(0.01)
+                                ],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        }
+                }
+                .liquidGlassTransition(value: searchState, animation: .smooth)
             }
-            .background(currentTheme.background)
             .keyboardAvoidingLayout() // Prevent keyboard constraint conflicts
     }
     
-    // MARK: - Material Design 3 Implementation
+    // MARK: - Material Design 3 Implementation (HIG-Enhanced Bridge)
     @ViewBuilder
     private var materialDesignImplementation: some View {
         materialDesignMainContent
             .searchable(
                 text: $searchQuery, 
-                placement: UIDevice.current.userInterfaceIdiom == .pad ? 
-                    .navigationBarDrawer(displayMode: .always) : .automatic,
+                placement: .navigationBarDrawer(displayMode: .always),
                 prompt: "Search by title, author, or ISBN"
             ) {
-                // Search suggestions
+                // HIG Clarity: Enhanced search suggestions with better contrast
                 if !searchQuery.isEmpty && searchState != .searching {
                     ForEach(searchSuggestions, id: \.self) { suggestion in
                         Label(suggestion, systemImage: "magnifyingglass")
                             .searchCompletion(suggestion)
+                            .foregroundStyle(.primary) // Enhanced contrast
                     }
                 } else if searchQuery.isEmpty {
-                    Text("\"The Great Gatsby\"").searchCompletion("The Great Gatsby")
-                    Text("\"Maya Angelou\"").searchCompletion("Maya Angelou") 
-                    Text("\"9780451524935\"").searchCompletion("9780451524935")
+                    // HIG Deference: Content-focused examples that educate without overwhelming
+                    Text("\"The Great Gatsby\"")
+                        .searchCompletion("The Great Gatsby")
+                        .foregroundStyle(.primary.opacity(0.8))
+                    Text("\"Maya Angelou\"")
+                        .searchCompletion("Maya Angelou")
+                        .foregroundStyle(.primary.opacity(0.8))
+                    Text("\"9780451524935\"")
+                        .searchCompletion("9780451524935")
+                        .foregroundStyle(.primary.opacity(0.8))
                 }
             }
             .submitLabel(.search)
             .if(UIDevice.current.userInterfaceIdiom != .pad) { view in
                 view.keyboardToolbar() // Add Done button to prevent constraint conflicts
             }
-            .accessibilityLabel("Search for books")
-            .accessibilityHint("Enter a book title, author name, or ISBN to search for books in the online database")
+            .liquidGlassAccessibility(
+                label: "Search for books",
+                hint: "Enter a book title, author name, or ISBN to search for books in the online database"
+            )
             .onSubmit(of: .search) {
                 performSearch()
             }
@@ -252,7 +298,7 @@ struct SearchView: View {
                     clearSearchResults()
                 }
             }
-            .sheet(isPresented: $showingSortOptions) {
+            .liquidGlassModal(isPresented: $showingSortOptions) {
                 sortOptionsSheet
             }
             .onReceive(NotificationCenter.default.publisher(for: .barcodeSearchCompleted)) { notification in
@@ -743,10 +789,10 @@ struct SearchView: View {
                 ) {}
             ]
         ))
-        .background {
-            Rectangle()
-                .fill(.ultraThinMaterial)
-        }
+        .liquidGlassBackground(
+            material: .ultraThin, // HIG Depth: Consistent material hierarchy
+            vibrancy: .subtle     // HIG Deference: Content-supporting background
+        )
         .accessibilityLabel("Search for books")
         .accessibilityHint("Use the search field above to find books by title, author, or ISBN")
     }
@@ -826,10 +872,10 @@ struct SearchView: View {
             .padding(.horizontal, 20)
             .padding(.bottom, 20)
         }
-        .background {
-            Rectangle()
-                .fill(.ultraThinMaterial)
-        }
+        .liquidGlassBackground(
+            material: .ultraThin, // HIG Depth: Consistent material hierarchy
+            vibrancy: .subtle     // HIG Deference: Content-supporting background
+        )
         .accessibilityLabel("\(books.count) search results sorted by \(sortOption.displayName)")
     }
     
@@ -863,14 +909,21 @@ struct SearchView: View {
             }
             .listRowBackground(
                 RoundedRectangle(cornerRadius: 8)
-                    .fill(LiquidGlassMaterialLevel.surface.material)
-                    .opacity(0.8)
+                    .liquidGlassCard(
+                        material: .regular,  // HIG Depth: Standard list row material
+                        depth: .floating,    // HIG Depth: Subtle depth for list items
+                        radius: .compact,    // HIG Consistency: Standard list radius
+                        vibrancy: .medium    // HIG Deference: Balanced vibrancy
+                    )
             )
             .listRowSeparator(.hidden)
             .padding(.vertical, Theme.Spacing.xs)
         }
         .listStyle(.plain)
-        .background(.ultraThinMaterial)
+        .liquidGlassBackground(
+            material: .ultraThin, // HIG Depth: Ultra-light for list background
+            vibrancy: .subtle     // HIG Deference: Minimal interference with content
+        )
         .scrollContentBackground(.hidden)
         .accessibilityLabel("\(books.count) search results sorted by \(sortOption.displayName)")
     }
