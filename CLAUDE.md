@@ -7,7 +7,9 @@ SwiftUI iOS book reading tracker app with cultural diversity tracking. Uses Swif
 ### Current Status
 - ✅ **Build Status**: Successfully builds and runs (iPhone 16 Pro, iOS 18.0)
 - ✅ **iOS 26 Foundation**: Complete with UnifiedThemeStore (5 MD3 + 6 Liquid Glass themes)
-- 🚀 **Next Phase**: Core Experience Migration (SearchView, LibraryView, ContentView)
+- ✅ **Search Workflow Migration**: Complete with clean minimalist design
+- ✅ **Apple HIG Compliance**: Auto-focus search field, clean typography hierarchy
+- 🚀 **Next Phase**: LibraryView and ContentView migration
 
 ## Development Commands
 
@@ -51,14 +53,18 @@ CloudFlare Workers proxy at `https://books-api-proxy.jukasdrj.workers.dev` with 
 
 ### Swift 6 & iOS 26 Compliance
 - **Concurrency**: `@MainActor` UI, `async/await`, proper Sendable conformance
-- **Design System**: Liquid Glass materials with 5 glass levels (ultraThin → chrome)
+- **Design System**: Dual-theme architecture (Clean Minimalist + Liquid Glass fallback)
+- **Clean Design Patterns**: Content-first, minimal visual noise, system typography
+- **Apple HIG**: Auto-focus search fields, clean separators, readable typography
 - **Modification Workflow**: `swift_get_symbols_overview` → analyze → modify → `swift_validate_file`
 - **Navigation**: Modern NavigationStack with value-based routing
 - **Security**: KeychainService for sensitive data, HTTPS-only APIs
 
 ### Design Components
-- **Glass Modifiers**: `.liquidGlassCard()`, `.liquidGlassButton()`, `.liquidGlassVibrancy()`
-- **Card Layout**: Fixed 140x260 dimensions
+- **Clean Design Patterns**: Transparent backgrounds, minimal shadows, system separators
+- **Typography Hierarchy**: System fonts with semantic colors (.primary, .secondary, .tertiary)
+- **Dual Theme Support**: Clean minimalist primary, Liquid Glass fallback
+- **Search Experience**: Auto-focus, immediate keyboard, content-first results
 - **Cultural Diversity**: Author demographics, language, regional tracking
 
 ## File Organization
@@ -70,12 +76,12 @@ CloudFlare Workers proxy at `https://books-api-proxy.jukasdrj.workers.dev` with 
 - **Data Models**: `books/Models/UserBook.swift`, `books/Models/BookMetadata.swift`
 
 ### Views Structure
-- `Views/Main/`: Primary screens (ContentView, LibraryView, SearchView, ReadingInsightsView)
-- `Views/Detail/`: Detail screens (BookDetailsView, EditBookView)
-- `Views/Components/`: Reusable UI components
+- `Views/Main/`: Primary screens (ContentView, LibraryView, **SearchView** ✅, ReadingInsightsView)
+- `Views/Detail/`: Detail screens (**SearchResultDetailView** ✅, **AuthorSearchResultsView** ✅, BookDetailsView, EditBookView)
+- `Views/Components/`: Reusable UI components (clean design patterns)
 - `Views/Import/`: CSV import flow
 - `Services/`: API integration, import services
-- `Theme/`: iOS 26 Liquid Glass system
+- `Theme/`: Dual-theme system (Clean + Liquid Glass)
 
 ## Cultural Diversity Features
 

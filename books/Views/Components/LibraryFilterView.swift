@@ -79,7 +79,6 @@ struct LibraryFilterView: View {
                         }
                         HapticFeedbackManager.shared.lightImpact()
                     }
-                    .nativeTextButton()
                     .disabled(!filter.isActive)
                 }
                 
@@ -147,7 +146,12 @@ struct LibraryFilterView: View {
             }
         }
         .padding(Theme.Spacing.lg)
-        .nativeCard()
+        .optimizedLiquidGlassCard(
+            material: .regular,
+            depth: .elevated,
+            radius: .comfortable,
+            vibrancy: .medium
+        )
     }
     
     @ViewBuilder
@@ -206,7 +210,12 @@ struct LibraryFilterView: View {
             }
         }
         .padding(Theme.Spacing.lg)
-        .nativeCard()
+        .optimizedLiquidGlassCard(
+            material: .regular,
+            depth: .elevated,
+            radius: .comfortable,
+            vibrancy: .medium
+        )
     }
     
     @ViewBuilder
@@ -229,7 +238,6 @@ struct LibraryFilterView: View {
                     }
                     HapticFeedbackManager.shared.lightImpact()
                 }
-                .nativeTextButton()
             }
             
             LazyVGrid(columns: [
@@ -254,7 +262,12 @@ struct LibraryFilterView: View {
             }
         }
         .padding(Theme.Spacing.lg)
-        .nativeCard()
+        .optimizedLiquidGlassCard(
+            material: .regular,
+            depth: .elevated,
+            radius: .comfortable,
+            vibrancy: .medium
+        )
     }
 }
 
