@@ -45,6 +45,10 @@ struct BookDetailsView: View {
             }
             .padding()
         }
+        .progressiveGlassEffect(
+            material: .ultraThinMaterial,
+            level: .minimal
+        )
         .navigationTitle(book.metadata?.title ?? "Details")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -69,6 +73,7 @@ struct BookDetailsView: View {
                 isEditing = false
             })
         }
+        .progressiveGlassEffect(material: .regularMaterial, level: .optimized)
         .themeAware()
     }
     
@@ -87,22 +92,24 @@ struct BookTagsDisplaySection: View {
     @State private var showingAddTag = false
     
     var body: some View {
-        GroupBox {
-            VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-                // Header with manage button
-                HStack {
-                    Text("Tags")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(currentTheme.secondaryText)
-                    
-                    Spacer()
-                    
-                    Button("Add Tag") {
-                        showingAddTag = true
-                    }
-                    .labelMedium()
-                    .foregroundColor(currentTheme.primaryAction)
+        VStack(alignment: .leading, spacing: Theme.Spacing.md) {
+            // Header with manage button
+            HStack {
+                Text("Tags")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(currentTheme.secondaryText)
+                
+                Spacer()
+                
+                Button("Add Tag") {
+                    showingAddTag = true
                 }
+                .labelMedium()
+                .foregroundColor(currentTheme.primaryAction)
+                .progressiveGlassButton(style: .adaptive)
+            }
+            
+            VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
                 
                 // Tags display
                 if book.tags.isEmpty {
@@ -123,6 +130,9 @@ struct BookTagsDisplaySection: View {
                     }
                 }
             }
+        }
+        .progressiveGlassContainer {
+            EmptyView()
         }
         .alert("Add Tag", isPresented: $showingAddTag) {
             TextField("Tag name", text: $newTag)
@@ -166,11 +176,18 @@ struct TagChip: View {
             Text(tag)
                 .culturalTag()
             
-            Button(action: onRemove) {
+            Button(action: {
+                withAnimation(.bouncy(duration: 0.3)) {
+                    onRemove()
+                }
+                HapticFeedbackManager.shared.lightImpact()
+            }) {
                 Image(systemName: "xmark")
                     .labelSmall()
                     .foregroundColor(currentTheme.secondaryText)
             }
+            .progressiveGlassButton(style: .adaptive)
+            .scaleEffect(0.8)
         }
         .padding(.horizontal, Theme.Spacing.sm)
         .padding(.vertical, Theme.Spacing.xs)
@@ -242,29 +259,38 @@ struct RatingSection: View {
     @Binding var rating: Int?
     
     var body: some View {
-        GroupBox {
+        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+            Text("Your Rating")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundColor(currentTheme.secondaryText)
+                .padding(.bottom, Theme.Spacing.xs)
+            
             HStack {
                 ForEach(1...5, id: \.self) { star in
                     Button(action: {
-                        if rating == star {
-                            rating = nil // Allow un-setting rating
-                        } else {
-                            rating = star
+                        withAnimation(.smooth(duration: 0.3)) {
+                            if rating == star {
+                                rating = nil // Allow un-setting rating
+                            } else {
+                                rating = star
+                            }
                         }
+                        HapticFeedbackManager.shared.mediumImpact()
                     }) {
                         Image(systemName: star <= (rating ?? 0) ? "star.fill" : "star")
                             .font(.title)
                             .foregroundColor(currentTheme.accentHighlight)
+                            .symbolEffect(.bounce, value: rating)
                     }
                     .scaleEffect(star == rating ? 1.25 : 1.0)
-                    .animation(Theme.Animation.bouncySpring, value: rating)
+                    .animation(.bouncy(duration: 0.4), value: rating)
+                    .progressiveGlassButton(style: .adaptive)
                 }
                 Spacer()
             }
-        } label: {
-            Text("Your Rating")
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(currentTheme.secondaryText)
+        }
+        .progressiveGlassContainer {
+            EmptyView()
         }
     }
 }
@@ -280,7 +306,11 @@ struct DescriptionSection: View {
     }
     
     var body: some View {
-        GroupBox {
+        VStack(alignment: .leading, spacing: Theme.Spacing.md) {
+            Text("Description")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundColor(currentTheme.secondaryText)
+            
             VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
                 Text(description)
                     .bodyMedium()
@@ -288,19 +318,20 @@ struct DescriptionSection: View {
                 
                 if isTruncated {
                     Button(isExpanded ? "Show Less" : "Show More") {
-                        withAnimation(.easeInOut) {
+                        withAnimation(.smooth(duration: 0.5)) {
                             isExpanded.toggle()
                         }
+                        HapticFeedbackManager.shared.lightImpact()
                     }
                     .labelMedium()
                     .fontWeight(.semibold)
                     .frame(maxWidth: .infinity, alignment: .trailing)
+                    .progressiveGlassButton(style: .adaptive)
                 }
             }
-        } label: {
-            Text("Description")
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(currentTheme.secondaryText)
+        }
+        .progressiveGlassContainer {
+            EmptyView()
         }
     }
 }
@@ -311,7 +342,11 @@ struct NotesSection: View {
     @Binding var notes: String?
     
     var body: some View {
-        GroupBox {
+        VStack(alignment: .leading, spacing: Theme.Spacing.md) {
+            Text("Personal Notes")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundColor(currentTheme.secondaryText)
+            
             TextField("Your thoughts on the book...", text: Binding(
                 get: { notes ?? "" },
                 set: { notes = $0.isEmpty ? nil : $0 }
@@ -319,10 +354,9 @@ struct NotesSection: View {
             .lineLimit(3...10)
             .textFieldStyle(.roundedBorder)
             .bodyMedium()
-        } label: {
-            Text("Personal Notes")
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(currentTheme.secondaryText)
+        }
+        .progressiveGlassContainer {
+            EmptyView()
         }
     }
 }
@@ -333,7 +367,11 @@ struct PublicationDetailsSection: View {
     let book: UserBook
     
     var body: some View {
-        GroupBox {
+        VStack(alignment: .leading, spacing: Theme.Spacing.md) {
+            Text("Details")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundColor(currentTheme.secondaryText)
+            
             VStack(alignment: .leading, spacing: 0) {
                 // Basic Details
                 BasicDetailsView(book: book)
@@ -356,10 +394,9 @@ struct PublicationDetailsSection: View {
                 // Publication Info
                 PublicationInfoView(book: book)
             }
-        } label: {
-            Text("Details")
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(currentTheme.secondaryText)
+        }
+        .progressiveGlassContainer {
+            EmptyView()
         }
     }
     
@@ -523,7 +560,7 @@ struct ActionButtonsSection: View {
                 }
                 .frame(maxWidth: .infinity)
             }
-            .materialButton(style: .outlined, size: .large)
+.progressiveGlassButton(style: .adaptive)
             
             Button(action: onEdit) {
                 HStack(spacing: Theme.Spacing.sm) {
@@ -534,7 +571,7 @@ struct ActionButtonsSection: View {
                 }
                 .frame(maxWidth: .infinity)
             }
-            .materialButton(style: .tonal, size: .large)
+.progressiveGlassButton(style: .adaptive)
             .shadow(color: currentTheme.primary.opacity(0.2), radius: 4, x: 0, y: 2)
         }
         .padding(.top)
@@ -589,14 +626,16 @@ struct ReadingProgressSection: View {
     }
     
     var body: some View {
-        GroupBox {
+        VStack(alignment: .leading, spacing: Theme.Spacing.lg) {
+            // Section title
+            Text("Reading Progress")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundColor(currentTheme.primaryText)
+            
             VStack(alignment: .leading, spacing: Theme.Spacing.md) {
                 // Progress Header
                 HStack {
                     VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
-                        Text("Reading Progress")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(currentTheme.primaryText)
                         
                         if totalPages > 0 {
                             Text("\(book.currentPage) of \(totalPages) pages")
@@ -638,14 +677,14 @@ struct ReadingProgressSection: View {
                     Button("Update Progress") {
                         showingPageInput = true
                     }
-                    .materialButton(style: .tonal, size: .small)
+.progressiveGlassButton(style: .adaptive)
                     .accessibilityHint("Opens page input to update your current reading progress")
                     
                     if book.readingStatus == .reading {
                         Button("Log Session") {
                             showingReadingSessionInput = true
                         }
-                        .materialButton(style: .outlined, size: .small)
+.progressiveGlassButton(style: .adaptive)
                         .accessibilityHint("Opens form to log a completed reading session")
                     }
                 }
@@ -688,6 +727,9 @@ struct ReadingProgressSection: View {
                     book.updateReadingProgress()
                 }
             )
+        }
+        .progressiveGlassContainer {
+            EmptyView()
         }
         .sheet(isPresented: $showingReadingSessionInput) {
             ReadingSessionInputView(book: book)

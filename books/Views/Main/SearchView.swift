@@ -164,10 +164,7 @@ struct SearchView: View {
             .if(UIDevice.current.userInterfaceIdiom != .pad) { view in
                 view.keyboardToolbar() // Add Done button to prevent constraint conflicts
             }
-            .liquidGlassAccessibility(
-                label: "Search for books",
-                hint: "Enter a book title, author name, or ISBN to search for books in the online database"
-            )
+            .progressiveGlassEffect(material: .ultraThinMaterial, level: .optimized)
             .onSubmit(of: .search) {
                 performSearch()
             }
@@ -177,7 +174,7 @@ struct SearchView: View {
                     clearSearchResults()
                 }
             }
-            .liquidGlassModal(isPresented: $showingSortOptions) {
+            .sheet(isPresented: $showingSortOptions) {
                 liquidGlassSortOptionsSheet
             }
             .onReceive(NotificationCenter.default.publisher(for: .barcodeSearchCompleted)) { notification in
@@ -264,7 +261,7 @@ struct SearchView: View {
                             )
                         }
                 }
-                .liquidGlassTransition(value: searchState, animation: .smooth)
+                .progressiveGlassEffect(material: .thinMaterial, level: .optimized)
             }
             .keyboardAvoidingLayout() // Prevent keyboard constraint conflicts
     }
@@ -304,10 +301,7 @@ struct SearchView: View {
             .if(UIDevice.current.userInterfaceIdiom != .pad) { view in
                 view.keyboardToolbar() // Add Done button to prevent constraint conflicts
             }
-            .liquidGlassAccessibility(
-                label: "Search for books",
-                hint: "Enter a book title, author name, or ISBN to search for books in the online database"
-            )
+            .progressiveGlassEffect(material: .ultraThinMaterial, level: .optimized)
             .onSubmit(of: .search) {
                 performSearch()
             }
@@ -317,7 +311,7 @@ struct SearchView: View {
                     clearSearchResults()
                 }
             }
-            .liquidGlassModal(isPresented: $showingSortOptions) {
+            .sheet(isPresented: $showingSortOptions) {
                 sortOptionsSheet
             }
             .onReceive(NotificationCenter.default.publisher(for: .barcodeSearchCompleted)) { notification in
@@ -816,9 +810,9 @@ struct SearchView: View {
                 ) {}
             ]
         ))
-        .liquidGlassBackground(
-            material: .ultraThin, // HIG Depth: Consistent material hierarchy
-            vibrancy: .subtle     // HIG Deference: Content-supporting background
+        .progressiveGlassEffect(
+            material: .ultraThinMaterial,
+            level: .minimal
         )
         .accessibilityLabel("Search for books")
         .accessibilityHint("Use the search field above to find books by title, author, or ISBN")
@@ -894,9 +888,9 @@ struct SearchView: View {
             .padding(.horizontal, Theme.Spacing.lg)
             .padding(.bottom, Theme.Spacing.xl)
         }
-        .liquidGlassBackground(
-            material: .ultraThin, // HIG Depth: Consistent material hierarchy
-            vibrancy: .subtle     // HIG Deference: Content-supporting background
+        .progressiveGlassEffect(
+            material: .ultraThinMaterial,
+            level: .minimal
         )
         .accessibilityLabel("Search results: \(books.count) \(books.count == 1 ? "book" : "books") found, sorted by \(sortOption.displayName.lowercased())")
         .accessibilityHint("Swipe up or down to browse through search results")
@@ -951,9 +945,9 @@ struct SearchView: View {
             .padding(.vertical, Theme.Spacing.xs) // Minimal padding
         }
         .listStyle(.plain)
-        .liquidGlassBackground(
-            material: .ultraThin, // HIG Depth: Ultra-light for list background
-            vibrancy: .subtle     // HIG Deference: Minimal interference with content
+        .progressiveGlassEffect(
+            material: .ultraThinMaterial,
+            level: .minimal
         )
         .scrollContentBackground(.hidden)
         .accessibilityLabel("Search results: \(books.count) \(books.count == 1 ? "book" : "books") found, sorted by \(sortOption.displayName.lowercased())")
@@ -2254,7 +2248,7 @@ struct SearchResultRow: View {
                                 )
                         }
                         .frame(width: 65, height: 95)
-                        .liquidGlassShimmer()
+                        .progressiveGlassEffect(material: .thinMaterial, level: .minimal)
                 }
             }
             

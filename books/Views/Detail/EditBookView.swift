@@ -109,7 +109,7 @@ struct EditBookView: View {
                                             .labelSmall()
                                             .foregroundColor(selectedFormat == format ? currentTheme.onPrimary : currentTheme.primaryText)
                                     }
-                                    .frame(height: 60)
+.frame(height: 60)
                                     .frame(maxWidth: .infinity)
                                     .background(selectedFormat == format ? currentTheme.primaryAction : currentTheme.cardBackground)
                                     .cornerRadius(Theme.CornerRadius.medium)
@@ -117,8 +117,11 @@ struct EditBookView: View {
                                         RoundedRectangle(cornerRadius: Theme.CornerRadius.medium)
                                             .stroke(selectedFormat == format ? currentTheme.primaryAction : currentTheme.outline, lineWidth: 1)
                                     )
+                                    .progressiveGlassContainer {
+                                        EmptyView()
+                                    }
                                 }
-                                .buttonStyle(.plain)
+                                .progressiveGlassButton(style: .adaptive)
                             }
                         }
                     }
@@ -204,12 +207,15 @@ struct EditBookView: View {
                             .accessibilityHint("Read-only book metadata")
                     }
                     
-                    // Use new structured cultural selection pickers
+    // Use new structured cultural selection pickers
                     CulturalSelectionSection(
                         originalLanguage: $originalLanguage,
                         authorNationality: $authorNationality,
                         authorGender: $selectedAuthorGender
                     )
+                    .progressiveGlassContainer {
+                        EmptyView()
+                    }
                 } header: {
                     Text("Cultural & Language Details")
                         .titleSmall()
@@ -278,17 +284,19 @@ struct EditBookView: View {
                         }
                         .padding(.vertical, Theme.Spacing.xs)
                     }
-                    .buttonStyle(PlainButtonStyle())
+.progressiveGlassButton(style: .adaptive)
                 } footer: {
                     Text("This will permanently remove the book from your library. This action cannot be undone.")
                         .labelSmall()
                         .foregroundColor(currentTheme.secondaryText)
                 }
             }
+.progressiveGlassEffect(material: .ultraThinMaterial, level: .minimal)
             .background(currentTheme.surface)
             .scrollContentBackground(.hidden)
             .navigationTitle("Edit Book Details")
             .navigationBarTitleDisplayMode(.inline)
+            .progressiveGlassEffect(material: .regularMaterial, level: .optimized)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }

@@ -25,7 +25,13 @@ struct LiquidGlassBookRowView: View {
         .frame(minHeight: 100)
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
-        .background(backgroundView)
+        .progressiveGlassEffect(
+            material: .ultraThinMaterial,
+            level: .optimized
+        )
+        .progressiveGlassButton(
+            style: .adaptive
+        )
         .brightness(hoverIntensity * 0.05)
         .onHover { hovering in
             withAnimation(LiquidGlassTheme.FluidAnimation.smooth.springAnimation) {
@@ -599,15 +605,12 @@ struct RowBaseModifier: ViewModifier {
             .frame(minHeight: 90)
             .padding(.horizontal, Theme.Spacing.md)
             .padding(.vertical, Theme.Spacing.sm)
-            .liquidGlassCard(
-                material: .regular,
-                depth: .floating,
-                radius: .comfortable,
-                vibrancy: .medium
+            .progressiveGlassEffect(
+                material: .regularMaterial,
+                level: .full
             )
-            .materialInteractive(
-                pressedScale: 0.98,
-                pressedOpacity: 0.9
+            .progressiveGlassButton(
+                style: .adaptive
             )
             .contentShape(Rectangle())
     }

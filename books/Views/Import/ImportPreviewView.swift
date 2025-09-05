@@ -38,13 +38,13 @@ struct ImportPreviewView: View {
                 Button("Back") {
                     onBack()
                 }
-                .materialButton(style: .outlined, size: .large)
+                .progressiveGlassButton(style: .adaptive)
                 .frame(maxWidth: .infinity)
                 
                 Button(canProceedDirectly ? "Start Import" : "Map Columns") {
                     onNext()
                 }
-                .materialButton(style: .filled, size: .large)
+                .progressiveGlassButton(style: .adaptive)
                 .frame(maxWidth: .infinity)
                 .disabled(!session.isValidGoodreadsFormat && !canProceedDirectly)
             }
@@ -184,7 +184,7 @@ struct DetectionResultsCard: View {
             .cornerRadius(Theme.CornerRadius.small)
         }
         .padding(Theme.Spacing.md)
-        .materialCard()
+        .progressiveGlassEffect(material: .ultraThinMaterial, level: .optimized)
     }
 }
 
@@ -294,7 +294,7 @@ struct SampleDataPreview: View {
                 .foregroundColor(currentTheme.secondaryText)
         }
         .padding(Theme.Spacing.md)
-        .materialCard()
+        .progressiveGlassEffect(material: .ultraThinMaterial, level: .optimized)
     }
 }
 
@@ -384,7 +384,7 @@ struct ValidationSummaryCard: View {
                 .multilineTextAlignment(.leading)
         }
         .padding(Theme.Spacing.md)
-        .materialCard()
+        .progressiveGlassEffect(material: .ultraThinMaterial, level: .optimized)
     }
 }
 

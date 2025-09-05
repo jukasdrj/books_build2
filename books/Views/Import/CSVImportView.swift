@@ -475,12 +475,12 @@ struct ImportCompletedView: View {
                 Button("View My Library") {
                     onViewLibrary()
                 }
-                .materialButton(style: .filled, size: .large)
+                .progressiveGlassButton(style: .adaptive)
                 
                 Button("Import Another File") {
                     onImportAnother()
                 }
-                .materialButton(style: .outlined, size: .large)
+                .progressiveGlassButton(style: .adaptive)
             }
             .padding(.horizontal, Theme.Spacing.lg)
         }
@@ -523,7 +523,7 @@ struct ResultCard: View {
             Spacer()
         }
         .padding(Theme.Spacing.md)
-        .materialCard()
+        .progressiveGlassEffect(material: .ultraThinMaterial, level: .optimized)
     }
 }
 
@@ -657,7 +657,7 @@ struct FileSelectionView: View {
                     }
                     .padding(Theme.Spacing.md)
                     .background(currentTheme.successContainer)
-                    .materialCard()
+                    .progressiveGlassEffect(material: .ultraThinMaterial, level: .optimized)
                 }
                 
                 // Select file button
@@ -669,7 +669,7 @@ struct FileSelectionView: View {
                     }
                     .frame(maxWidth: .infinity)
                 }
-                .materialButton(style: .filled, size: .large)
+                .progressiveGlassButton(style: .adaptive)
                 .padding(.horizontal, Theme.Spacing.lg)
             }
             
@@ -705,7 +705,7 @@ struct InstructionsCard: View {
             }
         }
         .padding(Theme.Spacing.md)
-        .materialCard()
+        .progressiveGlassEffect(material: .ultraThinMaterial, level: .optimized)
     }
 }
 

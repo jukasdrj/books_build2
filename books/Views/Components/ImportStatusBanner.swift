@@ -2,7 +2,8 @@
 //  ImportStatusBanner.swift
 //  books
 //
-//  A prominent banner that shows CSV import progress at the top of the library
+//  Enhanced iOS 26 prominent banner with skeleton states and contextual feedback
+//  Shows CSV import progress with haptic responses and progressive enhancement
 //
 
 import SwiftUI
@@ -17,10 +18,23 @@ struct ImportStatusBanner: View {
     @State private var updateTimer: Timer?
     @State private var refreshTrigger = 0  // Used to force UI updates
     @State private var lastProgress: ImportProgress?  // Track progress changes
+    @State private var isConnecting = true
+    @State private var hasConnectionError = false
+    @State private var lastProcessedCount = 0
     
     var body: some View {
         Group {
-            if let service = importService, 
+            if isConnecting && importService == nil {
+                // Skeleton banner while connecting
+                SkeletonImportBanner()
+                    .progressiveGlassEffect(material: .regular, level: .elevated)
+            } else if hasConnectionError {
+                // Connection error banner
+                ErrorImportBanner {
+                    setupImportService()
+                }
+                .progressiveGlassEffect(material: .regular, level: .elevated)
+            } else if let service = importService, 
                service.isImporting,
                let progress = service.importProgress {
                 
@@ -28,10 +42,17 @@ struct ImportStatusBanner: View {
                     // Main banner
                     Button(action: { withAnimation { isExpanded.toggle() } }) {
                         HStack(spacing: Theme.Spacing.md) {
-                            // Progress indicator
-                            ProgressView()
-                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                                .scaleEffect(0.8)
+                            // Enhanced progress indicator with iOS 26 styling
+                            ZStack {
+                                Circle()
+                                    .stroke(Color.white.opacity(0.3), lineWidth: 2)
+                                    .frame(width: 20, height: 20)
+                                
+                                ProgressView()
+                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                    .scaleEffect(0.6)
+                                    .progressiveGlassEffect(material: .regular, level: .subtle)
+                            }
                             
                             // Status text
                             VStack(alignment: .leading, spacing: 2) {
@@ -67,6 +88,7 @@ struct ImportStatusBanner: View {
                             endPoint: .trailing
                         )
                     )
+                    .progressiveGlassEffect(material: .regular, level: .elevated)
                     
                     // Expanded details
                     if isExpanded {
@@ -113,8 +135,12 @@ struct ImportStatusBanner: View {
                                 
                                 Spacer()
                                 
-                                // Cancel button
-                                Button(action: { showCancelAlert = true }) {
+                                // Enhanced cancel button
+                                Button(action: { 
+                                    let notificationFeedback = UINotificationFeedbackGenerator()
+                                    notificationFeedback.notificationOccurred(.warning)
+                                    showCancelAlert = true 
+                                }) {
                                     Text("Cancel")
                                         .font(.system(size: 12, weight: .medium))
                                         .foregroundColor(.white)
@@ -122,7 +148,10 @@ struct ImportStatusBanner: View {
                                         .padding(.vertical, 4)
                                         .background(Color.white.opacity(0.2))
                                         .cornerRadius(4)
+                                        .progressiveGlassEffect(material: .regular, level: .subtle)
                                 }
+                                .accessibilityLabel("Cancel import")
+                                .accessibilityHint("This will stop the current import process")
                             }
                             .padding(.horizontal, Theme.Spacing.md)
                             
@@ -141,7 +170,8 @@ struct ImportStatusBanner: View {
                 }
                 .id(refreshTrigger)  // Force refresh when timer updates
                 .transition(.move(edge: .top).combined(with: .opacity))
-                .shadow(radius: 4)
+                .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
+                .progressiveGlassEffect(material: .regular, level: .elevated)
                 .alert("Cancel Import?", isPresented: $showCancelAlert) {
                     Button("Continue Import", role: .cancel) { }
                     Button("Cancel", role: .destructive) {
@@ -155,6 +185,17 @@ struct ImportStatusBanner: View {
         .onAppear {
             setupImportService()
             startUpdateTimerIfNeeded()
+            
+            // Auto-hide connecting state after delay
+            Task {
+                try await Task.sleep(nanoseconds: 3_000_000_000)
+                await MainActor.run {
+                    if importService == nil {
+                        isConnecting = false
+                        hasConnectionError = true
+                    }
+                }
+            }
         }
         .onDisappear {
             stopUpdateTimer()
@@ -164,6 +205,15 @@ struct ImportStatusBanner: View {
                 startUpdateTimerIfNeeded()
             } else {
                 stopUpdateTimer()
+            }
+        }
+        .onChange(of: importService?.importProgress?.processedBooks) { oldValue, newValue in
+            // Haptic feedback for progress updates
+            if let newCount = newValue, let oldCount = oldValue {
+                if newCount > oldCount {
+                    let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+                    impactFeedback.impactOccurred()
+                }
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: .importServiceCreated)) { notification in
@@ -183,14 +233,30 @@ struct ImportStatusBanner: View {
     }
     
     private func setupImportService() {
+        isConnecting = true
+        hasConnectionError = false
+        
         // Get the shared import service from BackgroundImportCoordinator
         if let coordinator = BackgroundImportCoordinator.shared {
             self.importService = coordinator.csvImportService
+            isConnecting = false
             print("[ImportStatusBanner] Service connected: \(importService != nil)")
             print("[ImportStatusBanner] Is importing: \(importService?.isImporting ?? false)")
             print("[ImportStatusBanner] Progress exists: \(importService?.importProgress != nil)")
         } else {
-            print("[ImportStatusBanner] No coordinator found")
+            // Retry connection after delay
+            Task {
+                try await Task.sleep(nanoseconds: 1_000_000_000)
+                await MainActor.run {
+                    if BackgroundImportCoordinator.shared != nil {
+                        setupImportService()
+                    } else {
+                        isConnecting = false
+                        hasConnectionError = true
+                        print("[ImportStatusBanner] No coordinator found")
+                    }
+                }
+            }
         }
     }
     

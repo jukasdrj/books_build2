@@ -14,18 +14,44 @@ struct BackgroundImportProgressIndicator: View {
     @Environment(\.modelContext) private var modelContext
     @State private var backgroundCoordinator: BackgroundImportCoordinator?
     @State private var showingDetails = false
+    @State private var hasError = false
+    @State private var errorMessage = ""
+    @State private var isConnecting = true
     
     var body: some View {
         Group {
-            if let coordinator = backgroundCoordinator, 
+            if isConnecting && backgroundCoordinator == nil {
+                // Skeleton state while connecting to coordinator
+                SkeletonProgressIndicator()
+                    .progressiveGlassEffect(material: .regular, level: .subtle)
+            } else if hasError {
+                // Error state with retry
+                ErrorProgressIndicator(
+                    message: errorMessage,
+                    onRetry: { setupImportService() }
+                )
+                .progressiveGlassEffect(material: .regular, level: .subtle)
+            } else if let coordinator = backgroundCoordinator, 
                coordinator.isImporting, 
                coordinator.progress != nil {
-                Button(action: { showingDetails = true }) {
+                Button(action: { 
+                    // Haptic feedback for interaction
+                    let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+                    impactFeedback.impactOccurred()
+                    showingDetails = true 
+                }) {
                     HStack(spacing: Theme.Spacing.xs) {
-                        // Animated progress indicator
-                        ProgressView()
-                            .progressViewStyle(CircularProgressViewStyle(tint: theme.primary))
-                            .scaleEffect(0.7)
+                        // Enhanced animated progress indicator with iOS 26 styling
+                        ZStack {
+                            Circle()
+                                .stroke(theme.primary.opacity(0.2), lineWidth: 2)
+                                .frame(width: 20, height: 20)
+                            
+                            ProgressView()
+                                .progressViewStyle(CircularProgressViewStyle(tint: theme.primary))
+                                .scaleEffect(0.6)
+                                .progressiveGlassEffect(material: .regular, level: .subtle)
+                        }
                         
                         // Progress text (minimal)
                         if let progress = coordinator.progress {
@@ -40,20 +66,51 @@ struct BackgroundImportProgressIndicator: View {
                 .sheet(isPresented: $showingDetails) {
                     BackgroundImportDetailView(coordinator: coordinator)
                 }
-                .transition(.opacity.combined(with: .scale(scale: 0.8)))
+                .transition(.move(edge: .top).combined(with: .opacity))
+                .progressiveGlassEffect(material: .regular, level: .elevated)
+                .accessibilityLabel("Import progress: \(coordinator.progress?.processedBooks ?? 0) of \(coordinator.progress?.totalBooks ?? 0) books")
+                .accessibilityHint("Double tap to view detailed progress")
             }
         }
         .onAppear {
-            // Use existing shared instance or create if needed
-            if backgroundCoordinator == nil {
-                if let shared = BackgroundImportCoordinator.shared {
-                    backgroundCoordinator = shared
-                } else {
-                    backgroundCoordinator = BackgroundImportCoordinator.initialize(with: modelContext)
+            setupImportService()
+            // Auto-hide connecting state after 3 seconds
+            Task {
+                try await Task.sleep(nanoseconds: 3_000_000_000)
+                await MainActor.run {
+                    if backgroundCoordinator == nil {
+                        isConnecting = false
+                        hasError = true
+                        errorMessage = "Unable to connect to import service"
+                    }
                 }
             }
         }
-        .animation(.easeInOut(duration: 0.3), value: (backgroundCoordinator?.isImporting ?? false) && (backgroundCoordinator?.progress != nil))
+        .animation(.spring(response: 0.6, dampingFraction: 0.8), value: (backgroundCoordinator?.isImporting ?? false) && (backgroundCoordinator?.progress != nil))
+        .animation(.easeInOut(duration: 0.3), value: isConnecting)
+        .animation(.easeInOut(duration: 0.3), value: hasError)
+    }
+    
+    private func setupImportService() {
+        isConnecting = true
+        hasError = false
+        errorMessage = ""
+        
+        // Use existing shared instance or create if needed
+        if let shared = BackgroundImportCoordinator.shared {
+            backgroundCoordinator = shared
+            isConnecting = false
+        } else {
+            // Try to initialize
+            do {
+                backgroundCoordinator = BackgroundImportCoordinator.initialize(with: modelContext)
+                isConnecting = false
+            } catch {
+                hasError = true
+                errorMessage = "Failed to initialize import service"
+                isConnecting = false
+            }
+        }
     }
 }
 

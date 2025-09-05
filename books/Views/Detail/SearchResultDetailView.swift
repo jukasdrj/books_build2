@@ -75,9 +75,9 @@ struct SearchResultDetailView: View {
                 .padding(Theme.Spacing.lg)
                 .padding(.bottom, 100) // Extra space for toast overlay
             }
-            .liquidGlassBackground(
-                material: .ultraThin,
-                vibrancy: .subtle
+            .progressiveGlassEffect(
+                material: .ultraThinMaterial,
+                level: .minimal
             )
             
             // Success Toast Overlay with enhanced Liquid Glass styling
@@ -87,10 +87,10 @@ struct SearchResultDetailView: View {
         }
         .navigationTitle(bookMetadata.title)
         .navigationBarTitleDisplayMode(.inline)
-        .liquidGlassModal(isPresented: $showingEditView) {
+        .sheet(isPresented: $showingEditView) {
             liquidGlassEditSheet
         }
-        .liquidGlassNavigation(material: .regular, vibrancy: .medium)
+        .progressiveGlassEffect(material: .regularMaterial, level: .optimized)
         .toolbar {
             liquidGlassToolbarContent
         }
@@ -470,7 +470,7 @@ struct SearchResultDetailView: View {
                 .foregroundStyle(.secondary)
                 .lineSpacing(4)
         }
-        .liquidGlassSection {
+        .progressiveGlassContainer {
             EmptyView()
         }
     }
@@ -508,7 +508,7 @@ struct SearchResultDetailView: View {
                 liquidGlassDetailRow(label: "Source", value: "Google Books", icon: "magnifyingglass")
             }
         }
-        .liquidGlassSection {
+        .progressiveGlassContainer {
             EmptyView()
         }
     }
@@ -633,8 +633,8 @@ struct SearchResultDetailView: View {
                     showingEditView = false
                     dismiss()
                 }
-                .liquidGlassBackground(material: .regular, vibrancy: .medium)
-                .liquidGlassNavigation(material: .thin, vibrancy: .medium)
+                .progressiveGlassEffect(material: .regularMaterial, level: .optimized)
+                .progressiveGlassEffect(material: .regularMaterial, level: .optimized)
             }
         }
     }
@@ -885,7 +885,7 @@ struct SearchActionButtonsSection: View {
                             }
                             .frame(maxWidth: .infinity)
                         }
-                        .materialButton(style: .filled, size: .large)
+                        .progressiveGlassButton(style: .adaptive)
                         .disabled(isAddingToLibrary || isAddingToWishlist)
                         .shadow(color: currentTheme.primary.opacity(0.3), radius: 4, x: 0, y: 2)
                         .animation(.easeInOut(duration: 0.2), value: isAddingToLibrary)
@@ -905,7 +905,7 @@ struct SearchActionButtonsSection: View {
                             }
                             .frame(maxWidth: .infinity)
                         }
-                        .materialButton(style: .tonal, size: .large)
+                        .progressiveGlassButton(style: .adaptive)
                         .disabled(isAddingToLibrary || isAddingToWishlist)
                         .animation(.easeInOut(duration: 0.2), value: isAddingToWishlist)
                     }

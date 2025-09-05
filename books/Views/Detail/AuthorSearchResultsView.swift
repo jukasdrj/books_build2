@@ -13,6 +13,7 @@ struct AuthorSearchResultsView: View {
     @State private var searchService = BookSearchService.shared
     @State private var sortOption: BookSearchService.SortOption = .relevance
     @State private var showingSortOptions = false
+    @State private var includeTranslations = false
     
     enum SearchState: Equatable {
         case searching
@@ -65,7 +66,7 @@ struct AuthorSearchResultsView: View {
                         subtitle: "Using smart relevance sorting",
                         style: .spinner
                     ))
-                    .task(id: authorName) {
+                    .task(id: "\(authorName)-\(includeTranslations)") {
                         await performAuthorSearch()
                     }
                     
@@ -89,16 +90,16 @@ struct AuthorSearchResultsView: View {
                     ))
                 }
             }
-            .liquidGlassBackground(
-                material: .ultraThin,
-                vibrancy: .subtle
+            .progressiveGlassEffect(
+                material: .ultraThinMaterial,
+                level: .minimal
             )
-            .liquidGlassTransition(value: searchState, animation: .smooth)
+            .progressiveGlassEffect(material: .thinMaterial, level: .optimized)
         }
         .navigationTitle("Books by \(authorName)")
         .navigationBarTitleDisplayMode(.large)
-        .liquidGlassNavigation(material: .regular, vibrancy: .medium)
-        .liquidGlassModal(isPresented: $showingSortOptions) {
+        .progressiveGlassEffect(material: .regularMaterial, level: .optimized)
+        .sheet(isPresented: $showingSortOptions) {
             liquidGlassSortOptionsSheet
         }
     }
@@ -121,7 +122,7 @@ struct AuthorSearchResultsView: View {
                         subtitle: "Using smart relevance sorting",
                         style: .spinner
                     ))
-                        .task(id: authorName) {
+                        .task(id: "\(authorName)-\(includeTranslations)") {
                             await performAuthorSearch()
                         }
                         
@@ -233,6 +234,8 @@ struct AuthorSearchResultsView: View {
             .accessibilityLabel("Sort by \(sortOption.displayName)")
             .accessibilityHint("Opens sort options menu")
             
+            liquidGlassTranslationToggle
+            
             Spacer()
             
             // Enhanced results count with liquid glass styling
@@ -277,6 +280,70 @@ struct AuthorSearchResultsView: View {
                         .fill(.separator.opacity(0.3))
                         .frame(height: 0.5)
                 }
+        }
+    }
+    
+    // MARK: - Liquid Glass Translation Toggle
+    @ViewBuilder
+    private var liquidGlassTranslationToggle: some View {
+        Button {
+            withAnimation(.smooth) {
+                includeTranslations.toggle()
+                // Re-search with new translation setting
+                if case .results = searchState {
+                    Task {
+                        await performAuthorSearch()
+                    }
+                }
+            }
+            HapticFeedbackManager.shared.lightImpact()
+        } label: {
+            HStack(spacing: 4) {
+                Image(systemName: "globe")
+                    .font(.caption)
+                    .fontWeight(.medium)
+                Text(includeTranslations ? "All Languages" : "English Only")
+                    .font(LiquidGlassTheme.typography.labelMedium)
+                    .fontWeight(.medium)
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .foregroundStyle(includeTranslations ? .white : .primary)
+            .background(translationToggleBackground)
+        }
+        .accessibilityLabel(includeTranslations ? "Including all languages" : "English only")
+        .accessibilityHint("Toggle to include or exclude translations")
+    }
+    
+    @ViewBuilder
+    private var translationToggleBackground: some View {
+        if includeTranslations {
+            Capsule()
+                .fill(primaryColor)
+                .shadow(color: primaryColor.opacity(0.1), radius: 6, x: 0, y: 3)
+                .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
+        } else {
+            Capsule()
+                .fill(.regularMaterial)
+                .overlay {
+                    Capsule()
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    primaryColor.opacity(0.15),
+                                    primaryColor.opacity(0.05)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                }
+                .overlay {
+                    Capsule()
+                        .strokeBorder(primaryColor.opacity(0.2), lineWidth: 1)
+                }
+                .shadow(color: primaryColor.opacity(0.1), radius: 6, x: 0, y: 3)
+                .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
         }
     }
     
@@ -409,8 +476,8 @@ struct AuthorSearchResultsView: View {
                 
                 Spacer()
             }
-            .liquidGlassBackground(material: .regular, vibrancy: .medium)
-            .liquidGlassNavigation(material: .thin, vibrancy: .medium)
+            .progressiveGlassEffect(material: .regularMaterial, level: .optimized)
+            .progressiveGlassEffect(material: .regularMaterial, level: .optimized)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -436,20 +503,15 @@ struct AuthorSearchResultsView: View {
             }
             .listRowBackground(
                 RoundedRectangle(cornerRadius: 8)
-                    .liquidGlassCard(
-                        material: .regular,
-                        depth: .floating,
-                        radius: .compact,
-                        vibrancy: .medium
-                    )
+                    .progressiveGlassEffect(material: .ultraThinMaterial, level: .optimized)
             )
             .listRowSeparator(.hidden)
             .padding(.vertical, Theme.Spacing.xs)
         }
         .listStyle(.plain)
-        .liquidGlassBackground(
-            material: .ultraThin,
-            vibrancy: .subtle
+        .progressiveGlassEffect(
+            material: .ultraThinMaterial,
+            level: .minimal
         )
         .scrollContentBackground(.hidden)
         .accessibilityLabel("\(books.count) books by \(authorName) sorted by \(sortOption.displayName)")
@@ -476,9 +538,9 @@ struct AuthorSearchResultsView: View {
                 ) {}
             ]
         ))
-        .liquidGlassBackground(
-            material: .ultraThin,
-            vibrancy: .subtle
+        .progressiveGlassEffect(
+            material: .ultraThinMaterial,
+            level: .minimal
         )
         .accessibilityLabel("No books found by \(authorName)")
         .accessibilityHint("Try checking the spelling or search for a different author")
@@ -509,6 +571,34 @@ struct AuthorSearchResultsView: View {
             }
             .accessibilityLabel("Sort by \(sortOption.displayName)")
             .accessibilityHint("Opens sort options menu")
+            
+            // Translation toggle
+            Button {
+                withAnimation(.smooth) {
+                    includeTranslations.toggle()
+                    if case .results = searchState {
+                        Task {
+                            await performAuthorSearch()
+                        }
+                    }
+                }
+                HapticFeedbackManager.shared.lightImpact()
+            } label: {
+                HStack(spacing: 4) {
+                    Image(systemName: "globe")
+                        .font(.caption)
+                    Text(includeTranslations ? "All Languages" : "English Only")
+                        .font(.caption)
+                        .fontWeight(.medium)
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(includeTranslations ? currentTheme.primary : currentTheme.primaryContainer)
+                .foregroundColor(includeTranslations ? currentTheme.onPrimary : currentTheme.onPrimaryContainer)
+                .cornerRadius(16)
+            }
+            .accessibilityLabel(includeTranslations ? "Including all languages" : "English only")
+            .accessibilityHint("Toggle to include or exclude translations")
             
             Spacer()
             
@@ -685,11 +775,12 @@ struct AuthorSearchResultsView: View {
         searchState = .searching
         
         // Use the dedicated author search method for proper proxy API formatting
+        // This leverages the CloudFlare caching system for optimal performance
         let result = await searchService.searchByAuthor(
             authorName,
             sortBy: sortOption,
             maxResults: 40,
-            includeTranslations: true
+            includeTranslations: includeTranslations
         )
         
         await MainActor.run {

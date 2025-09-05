@@ -18,8 +18,11 @@ struct LiquidGlassBookCardView: View {
             // Book information section with content layer styling
             bookInfoSection
         }
-        .layerStyle(.content, intensity: .medium, themeStore: themeStore)
-        .brightness(hoverIntensity * 0.05) // Reduced brightness effect for content
+        .progressiveGlassEffect(
+            material: .ultraThinMaterial,
+            level: .full
+        )
+        .brightness(hoverIntensity * 0.05)
         .onHover { hovering in
             withAnimation(.easeInOut(duration: 0.2)) {
                 hoverIntensity = hovering ? 1.0 : 0.0
@@ -137,7 +140,7 @@ struct LiquidGlassBookCardView: View {
                     )
             )
             .shadow(color: .black.opacity(0.2), radius: 2, x: 0, y: 1)
-            .liquidGlassVibrancy(.prominent)
+            .progressiveGlassEffect(material: .regularMaterial, level: .optimized)
     }
     
     @ViewBuilder
@@ -147,7 +150,7 @@ struct LiquidGlassBookCardView: View {
                 Image(systemName: star <= Int(rating) ? "star.fill" : "star")
                     .font(.caption2)
                     .foregroundColor(.amber)
-                    .liquidGlassVibrancy(.prominent)
+                    .progressiveGlassEffect(material: .thinMaterial, level: .minimal)
             }
         }
         .padding(.horizontal, 6)
@@ -282,7 +285,7 @@ struct LiquidGlassBookCoverView: View {
             ProgressView()
                 .progressViewStyle(CircularProgressViewStyle(tint: .primary))
                 .scaleEffect(0.8)
-                .liquidGlassVibrancy(.medium)
+                .progressiveGlassEffect(material: .thinMaterial, level: .optimized)
         }
         .redacted(reason: .placeholder)
         .shimmering()
@@ -309,7 +312,7 @@ struct LiquidGlassBookCoverView: View {
                     .font(.caption2)
                     .foregroundColor(.secondary)
             }
-            .liquidGlassVibrancy(.subtle)
+            .progressiveGlassEffect(material: .thinMaterial, level: .minimal)
         }
     }
 }

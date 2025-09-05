@@ -8,8 +8,11 @@ struct GoalProgressRing: View {
     let subtitle: String?
     let color: Color
     let size: CGFloat
+    let isLoading: Bool
+    let hasError: Bool
+    let onRetry: (() -> Void)?
     
-    init(progress: Double, current: Int, goal: Int, title: String, subtitle: String? = nil, color: Color = .blue, size: CGFloat = 120) {
+    init(progress: Double, current: Int, goal: Int, title: String, subtitle: String? = nil, color: Color = .blue, size: CGFloat = 120, isLoading: Bool = false, hasError: Bool = false, onRetry: (() -> Void)? = nil) {
         self.progress = progress
         self.current = current
         self.goal = goal
@@ -17,6 +20,9 @@ struct GoalProgressRing: View {
         self.subtitle = subtitle
         self.color = color
         self.size = size
+        self.isLoading = isLoading
+        self.hasError = hasError
+        self.onRetry = onRetry
     }
     
     var body: some View {

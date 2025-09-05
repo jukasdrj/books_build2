@@ -72,7 +72,7 @@ struct ColumnMappingView: View {
                 Button("Back") {
                     onBack()
                 }
-                .materialButton(style: .outlined, size: .large)
+                .progressiveGlassButton(style: .adaptive)
                 .frame(maxWidth: .infinity)
                 
                 Button {
@@ -89,7 +89,7 @@ struct ColumnMappingView: View {
                         Text("Start Import")
                     }
                 }
-                .materialButton(style: .filled, size: .large)
+                .progressiveGlassButton(style: .adaptive)
                 .frame(maxWidth: .infinity)
                 .disabled(!requiredMappingsComplete || isStartingImport)
             }
@@ -288,7 +288,7 @@ struct ColumnMappingRow: View {
             }
         }
         .padding(Theme.Spacing.md)
-        .materialCard()
+        .progressiveGlassEffect(material: .ultraThinMaterial, level: .optimized)
         .confirmationDialog(
             "Map \(column.originalName)",
             isPresented: $showingFieldPicker,

@@ -43,12 +43,12 @@ struct BookRowView: View {
         .padding(.horizontal, Theme.Spacing.md)
         .padding(.vertical, Theme.Spacing.sm)
         .background(theme.surface)
-        .materialCard(
-            elevation: Theme.Elevation.level1
+        .progressiveGlassEffect(
+            material: .ultraThinMaterial,
+            level: .optimized
         )
-        .materialInteractive(
-            pressedScale: UnifiedBookCard.InteractiveStates.rowPressedScale,
-            pressedOpacity: UnifiedBookCard.InteractiveStates.pressedOpacity
+        .progressiveGlassButton(
+            style: .adaptive
         )
         .contentShape(Rectangle())
         // Enhanced accessibility

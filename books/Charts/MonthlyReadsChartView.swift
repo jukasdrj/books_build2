@@ -79,7 +79,7 @@ struct MonthlyReadsChartView: View {
             }
             .frame(height: 200)
         }
-        .materialCard()
+        .progressiveGlassEffect(material: .ultraThinMaterial, level: .optimized)
     }
 }
 
