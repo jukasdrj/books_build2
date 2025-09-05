@@ -55,6 +55,7 @@ struct LiquidGlassTheme {
             case .clear: return 0.0     // No blur for content clarity
             }
         }
+    }
     
     // MARK: - Depth & Elevation System
     enum GlassDepth {
@@ -195,6 +196,8 @@ struct LiquidGlassTheme {
     // MARK: - Typography Enhancement
     static let typography = LiquidGlassTypography()
 }
+
+// MARK: - Typography System
 
 struct LiquidGlassTypography {
     // iOS 26 enhanced typography with improved readability

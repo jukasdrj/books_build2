@@ -5,8 +5,16 @@ import SwiftUI
 // Following Apple's Liquid Glass specification: "adapts between light and dark appearance in response to underlying content"
 
 @MainActor
-class LiquidGlassContentAnalyzer: ObservableObject {
+class LiquidGlassContentAnalyzer: ObservableObject, @unchecked Sendable {
     static let shared = LiquidGlassContentAnalyzer()
+    
+    // For EnvironmentKey non-isolated access
+    nonisolated static func createDefault() -> LiquidGlassContentAnalyzer {
+        // Use MainActor.assumeIsolated for initialization in Environment context
+        return MainActor.assumeIsolated {
+            LiquidGlassContentAnalyzer()
+        }
+    }
     
     // MARK: - Published Properties
     @Published private(set) var contentBrightness: ContentBrightness = .neutral
@@ -420,8 +428,7 @@ extension Double {
 // MARK: - Environment Integration
 
 struct LiquidGlassContentAnalyzerKey: EnvironmentKey {
-    @MainActor
-    static let defaultValue = LiquidGlassContentAnalyzer()
+    static let defaultValue = LiquidGlassContentAnalyzer.createDefault()
 }
 
 extension EnvironmentValues {

@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import OSLog
 
 struct ContentView: View {
     @AppStorage("selectedTab") private var selectedTab = 0
@@ -7,6 +8,9 @@ struct ContentView: View {
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.appTheme) private var theme
     @Environment(\.unifiedThemeStore) private var unifiedThemeStore
+    
+    // iOS 26 integration
+    @StateObject private var versionManager = iOS26VersionManager.shared
     
     // For tracking badge counts
     @State private var libraryCount = 0
@@ -34,6 +38,8 @@ struct ContentView: View {
         .fullStatusBarTheming() // Apply complete status bar theming (background + style)
         .preferredColorScheme(getPreferredColorScheme()) // Apply color scheme based on theme
         .keyboardAvoidingLayout() // Prevent keyboard constraint conflicts
+        .environmentObject(versionManager)
+        .environment(\.iOS26VersionManager, versionManager)
         .onAppear {
             updateBadgeCounts()
             
@@ -373,43 +379,43 @@ struct ContentView: View {
         .liquidGlassNavigationSplitView()
     }
     
-    // MARK: - Enhanced iPhone Layout with Custom Tab Bar
+    // MARK: - Enhanced iPhone Layout with iOS 26 Integration
     
     @ViewBuilder
     private var iPhoneLayout: some View {
-        NavigationStack {
-            ZStack(alignment: .top) {
-                ZStack(alignment: .bottom) {
-                // Main content
-                Group {
-                    switch selectedTab {
-                    case 0:
-                        LibraryView()
-                    case 1:
-                        SearchView()
-                    case 2:
-                        ReadingInsightsView()
-                    default:
-                        LibraryView()
+        // iOS 26 only - use native TabView with all enhancements
+        iOS26NativeTabViewLayout
+    }
+    
+    // MARK: - iOS 26 Native TabView Implementation
+    
+    @ViewBuilder
+    private var iOS26NativeTabViewLayout: some View {
+        TabView(selection: $selectedTab) {
+            // Library Tab
+            NavigationStack {
+                LibraryView()
+                    .extendUnderTabBar()
+                    .withNavigationDestinations()
+                    .onTapGesture(count: 2) {
+                        withAnimation(.easeOut(duration: 0.5)) {
+                            NotificationCenter.default.post(name: .scrollToTop, object: nil)
+                        }
+                        HapticFeedbackManager.shared.lightImpact()
                     }
-                }
-                .ignoresSafeArea(.keyboard)
-                .padding(.bottom, 72) // Add padding to prevent custom tab bar from blocking content
-                .animation(.easeInOut(duration: 0.3), value: selectedTab)
-                // Add navigation title based on selected tab with consistent display mode
-                .navigationTitle(tabTitle(for: selectedTab))
-                .navigationBarTitleDisplayMode(.large)
-                // Add pull-down gesture for easier reachability
-                .onTapGesture(count: 2) {
-                    // Double tap anywhere to scroll to top for one-handed use
-                    withAnimation(.easeOut(duration: 0.5)) {
-                        // This would trigger scroll to top in individual views
-                        NotificationCenter.default.post(name: .scrollToTop, object: nil)
-                    }
-                    HapticFeedbackManager.shared.lightImpact()
-                }
-                .toolbar {
-                    if selectedTab == 1 { // Search tab
+            }
+            .tabItem {
+                Label("Library", systemImage: selectedTab == 0 ? "books.vertical.fill" : "books.vertical")
+            }
+            .tag(0)
+            .badge(libraryCount)
+            
+            // Search Tab with iOS 26 floating role
+            NavigationStack {
+                SearchView()
+                    .extendUnderTabBar()
+                    .withNavigationDestinations()
+                    .toolbar {
                         ToolbarItem(placement: .navigationBarTrailing) {
                             Button {
                                 showingBarcodeScanner = true
@@ -422,30 +428,54 @@ struct ContentView: View {
                             .foregroundColor(theme.primaryAction)
                         }
                     }
-                }
-                
-                // Custom Enhanced Tab Bar
-                EnhancedTabBar(
-                    selectedTab: $selectedTab,
-                    libraryCount: libraryCount,
-                    wishlistCount: wishlistCount,
-                    completedBooksCount: completedBooksCount,
-                    currentlyReadingCount: currentlyReadingCount
-                )
-                }
-                
-                // Import completion notification banner (top layer)
-                ImportCompletionBanner()
             }
-            .ignoresSafeArea(.keyboard, edges: .bottom)
-            .withNavigationDestinations() // Apply navigation destinations inside NavigationStack
-            .sheet(isPresented: $showingBarcodeScanner) {
-                BarcodeScannerView { scannedBarcode in
-                    handleBarcodeScanned(scannedBarcode)
-                }
+            .tabItem {
+                Label("Search", systemImage: "magnifyingglass")
+            }
+            .tag(1)
+            // .role(.search) // iOS 26 floating search button - API not available yet
+            
+            // Reading Insights Tab
+            NavigationStack {
+                ReadingInsightsView()
+                    .extendUnderTabBar()
+                    .withNavigationDestinations()
+                    .onTapGesture(count: 2) {
+                        withAnimation(.easeOut(duration: 0.5)) {
+                            NotificationCenter.default.post(name: .scrollToTop, object: nil)
+                        }
+                        HapticFeedbackManager.shared.lightImpact()
+                    }
+            }
+            .tabItem {
+                Label("Insights", systemImage: selectedTab == 2 ? "chart.line.uptrend.xyaxis.fill" : "chart.line.uptrend.xyaxis")
+            }
+            .tag(2)
+            .badge(completedBooksCount)
+        }
+        // .tabBarMinimizeBehavior(.onScrollDown) // iOS 26 dynamic minimization - API not available yet
+        // .tabViewBottomAccessory { // iOS 26 bottom accessory - API not available yet
+        //     // Barcode scanner as floating accessory
+        //     FloatingActionButton(
+        //         icon: "barcode.viewfinder",
+        //         title: "Scan Book"
+        //     ) {
+        //         showingBarcodeScanner = true
+        //     }
+        //     .padding(.bottom, 8)
+        // }
+        .tint(theme.primary)
+        .overlay(alignment: .top) {
+            // Import completion notification banner
+            ImportCompletionBanner()
+        }
+        .sheet(isPresented: $showingBarcodeScanner) {
+            BarcodeScannerView { scannedBarcode in
+                handleBarcodeScanned(scannedBarcode)
             }
         }
     }
+    
     
     // MARK: - AuthorProfile Migration
     
@@ -539,191 +569,6 @@ struct EnhancedNavItem: View {
     }
 }
 
-// MARK: - Enhanced Custom Tab Bar for iPhone
-struct EnhancedTabBar: View {
-    @Environment(\.appTheme) private var theme
-    @Binding var selectedTab: Int
-    let libraryCount: Int
-    let wishlistCount: Int
-    let completedBooksCount: Int
-    let currentlyReadingCount: Int
-    
-    private let tabItems: [TabBarItem] = [
-        TabBarItem(title: "Library", icon: "books.vertical", selectedIcon: "books.vertical.fill"),
-        TabBarItem(title: "Search", icon: "magnifyingglass", selectedIcon: "magnifyingglass"),
-        TabBarItem(title: "Insights", icon: "chart.line.uptrend.xyaxis", selectedIcon: "chart.line.uptrend.xyaxis.fill")
-    ]
-    
-    var body: some View {
-        VStack(spacing: 0) {
-            // Apple's enhanced liquid glass selection indicator
-            HStack {
-                ForEach(0..<tabItems.count, id: \.self) { index in
-                    RoundedRectangle(cornerRadius: 1)
-                        .fill(selectedTab == index ? theme.primary : Color.clear)
-                        .liquidGlassVibrancy(selectedTab == index ? .maximum : .subtle)
-                        .frame(height: 3)
-                        .shadow(
-                            color: theme.primary.opacity(selectedTab == index ? 0.3 : 0),
-                            radius: selectedTab == index ? 2 : 0,
-                            x: 0,
-                            y: 1
-                        )
-                        .animation(
-                            LiquidGlassTheme.respectingUserPreferences(.flowing).springAnimation,
-                            value: selectedTab
-                        )
-                }
-            }
-            
-            HStack(spacing: 0) {
-                ForEach(0..<tabItems.count, id: \.self) { index in
-                    EnhancedTabBarButton(
-                        item: tabItems[index],
-                        isSelected: selectedTab == index,
-                        badge: badgeCount(for: index),
-                        action: {
-                            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-                                selectedTab = index
-                            }
-                            HapticFeedbackManager.shared.lightImpact()
-                        }
-                    )
-                    .frame(maxWidth: .infinity)
-                }
-            }
-            .padding(.horizontal, Theme.Spacing.md)
-            .padding(.vertical, 12) // Increased for better thumb accessibility
-            .liquidGlassCard(
-                material: .regular,
-                depth: .floating,
-                radius: .minimal,
-                vibrancy: .medium
-            )
-            .overlay(
-                Rectangle()
-                    .frame(height: 0.5)
-                    .foregroundColor(theme.outline.opacity(0.2)),
-                alignment: .top
-            )
-        }
-        .background(theme.surface.opacity(0.95))
-    }
-    
-    private func badgeCount(for index: Int) -> Int? {
-        switch index {
-        case 0: return libraryCount > 0 ? libraryCount : nil
-        case 2: return completedBooksCount > 0 ? completedBooksCount : nil
-        default: return nil
-        }
-    }
-}
-
-// MARK: - Tab Bar Models
-struct TabBarItem {
-    let title: String
-    let icon: String
-    let selectedIcon: String
-}
-
-struct EnhancedTabBarButton: View {
-    @Environment(\.appTheme) private var theme
-    let item: TabBarItem
-    let isSelected: Bool
-    let badge: Int?
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: {
-            // Enhanced haptic feedback for different interactions
-            if isSelected {
-                HapticFeedbackManager.shared.lightImpact() // Already selected
-            } else {
-                HapticFeedbackManager.shared.mediumImpact() // Tab switch
-            }
-            action()
-        }) {
-            VStack(spacing: 6) { // Increased spacing for better thumb targets
-                ZStack {
-                    // Apple's Liquid Glass button background with adaptive behavior
-                    Circle()
-                        .fill(Color.clear)
-                        .background {
-                            if isSelected {
-                                Circle()
-                                    .fill(.regularMaterial)
-                            }
-                        }
-                        .overlay {
-                            Circle()
-                                .fill(theme.primaryContainer.opacity(isSelected ? 0.4 : 0.0))
-                                .blur(radius: 0.5) // Apple's performance-optimized blur
-                        }
-                        .frame(width: 40, height: 40) // Apple's recommended touch target
-                        .scaleEffect(isSelected ? 1.05 : 0.85)
-                        .animation(
-                            LiquidGlassTheme.respectingUserPreferences(.smooth).springAnimation,
-                            value: isSelected
-                        )
-                    
-                    // Icon with Apple's enhanced vibrancy
-                    Image(systemName: isSelected ? item.selectedIcon : item.icon)
-                        .font(.system(size: 18, weight: .medium))
-                        .foregroundColor(isSelected ? theme.primary : theme.onSurfaceVariant)
-                        .liquidGlassVibrancy(isSelected ? .prominent : .medium)
-                        .scaleEffect(isSelected ? 1.08 : 1.0)
-                        .animation(
-                            LiquidGlassTheme.respectingUserPreferences(.quick).springAnimation,
-                            value: isSelected
-                        )
-                    
-                    // Badge
-                    if let badge = badge, badge > 0 {
-                        Text("\(badge)")
-                            .font(.caption2)
-                            .fontWeight(.bold)
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(
-                                Capsule()
-                                    .fill(theme.error)
-                                    .liquidGlassVibrancy(.maximum)
-                                    .shadow(color: theme.error.opacity(0.4), radius: 3, x: 0, y: 2)
-                            )
-                            .offset(x: 10, y: -10)
-                            .scaleEffect(isSelected ? 1.05 : 1.0)
-                            .animation(.spring(response: 0.3, dampingFraction: 0.8), value: isSelected)
-                    }
-                }
-                
-                // Title with dynamic badge count
-                Text(badgeTitle)
-                    .font(.caption2)
-                    .fontWeight(isSelected ? .semibold : .regular)
-                    .foregroundColor(isSelected ? theme.primary : theme.onSurfaceVariant)
-                    .lineLimit(1)
-                    .animation(.easeInOut(duration: 0.2), value: isSelected)
-            }
-        }
-        .buttonStyle(.plain)
-        .frame(maxWidth: .infinity, minHeight: 56) // iOS 26 minimum touch target for thumb accessibility
-        .contentShape(Rectangle())
-        .background {
-            // Invisible expanded touch area for easier thumb access
-            Rectangle()
-                .fill(Color.clear)
-                .frame(minHeight: 64) // Extra touch area beyond visual bounds
-        }
-    }
-    
-    private var badgeTitle: String {
-        if let badge = badge, badge > 0 && (item.title == "Library" || item.title == "Insights") {
-            return "\(item.title) (\(badge))"
-        }
-        return item.title
-    }
-}
 
 // MARK: - Author Search Request Type
 struct AuthorSearchRequest: Hashable, Identifiable {
@@ -1104,39 +949,43 @@ struct LibraryViewForSplitView: View {
         }
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
-                HStack(spacing: Theme.Spacing.md) {
-                    BackgroundImportProgressIndicator()
-                    
-                    Button { showingEnhancement.toggle() } label: {
-                        ZStack(alignment: .topTrailing) {
-                            Image(systemName: "chart.line.uptrend.xyaxis")
-                                .foregroundColor(currentTheme.primary)
-                            
-                            let qualityReport = DataCompletenessService.analyzeLibraryQuality(allBooks)
-                            let booksNeedingAttention = qualityReport.booksNeedingAttention
-                            
-                            if booksNeedingAttention > 0 {
-                                Text("\(booksNeedingAttention)")
-                                    .font(.caption2)
-                                    .foregroundColor(.white)
-                                    .background(
-                                        Circle()
-                                            .fill(Color.red)
-                                            .frame(width: 16, height: 16)
-                                    )
-                                    .offset(x: 8, y: -4)
-                            }
+                BackgroundImportProgressIndicator()
+            }
+            
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button { showingEnhancement.toggle() } label: {
+                    ZStack(alignment: .topTrailing) {
+                        Image(systemName: "chart.line.uptrend.xyaxis")
+                            .foregroundColor(currentTheme.primary)
+                        
+                        let qualityReport = DataCompletenessService.analyzeLibraryQuality(allBooks)
+                        let booksNeedingAttention = qualityReport.booksNeedingAttention
+                        
+                        if booksNeedingAttention > 0 {
+                            Text("\(booksNeedingAttention)")
+                                .font(.caption2)
+                                .foregroundColor(.white)
+                                .background(
+                                    Circle()
+                                        .fill(Color.red)
+                                        .frame(width: 16, height: 16)
+                                )
+                                .offset(x: 8, y: -4)
                         }
                     }
-                    
-                    Button { showingFilters.toggle() } label: {
-                        Image(systemName: libraryFilter.isActive ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle")
-                            .foregroundColor(libraryFilter.isActive ? currentTheme.primary : Color.primary)
-                    }
-                    
-                    Button { showingSettings.toggle() } label: {
-                        Image(systemName: "gearshape")
-                    }
+                }
+            }
+            
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button { showingFilters.toggle() } label: {
+                    Image(systemName: libraryFilter.isActive ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle")
+                        .foregroundColor(libraryFilter.isActive ? currentTheme.primary : Color.primary)
+                }
+            }
+            
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button { showingSettings.toggle() } label: {
+                    Image(systemName: "gearshape")
                 }
             }
         }

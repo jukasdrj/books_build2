@@ -130,44 +130,48 @@ struct LibraryView: View {
         }
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
-                HStack(spacing: Theme.Spacing.md) {
-                    // Background import progress indicator (subtle)
-                    BackgroundImportProgressIndicator()
-                    
-                    // Library enhancement insights button with badge
-                    Button { showingEnhancement.toggle() } label: {
-                        ZStack(alignment: .topTrailing) {
-                            Image(systemName: "chart.line.uptrend.xyaxis")
-                                .foregroundColor(currentTheme.primary)
-                            
-                            // Badge showing books needing attention
-                            let qualityReport = DataCompletenessService.analyzeLibraryQuality(allBooks)
-                            let booksNeedingAttention = qualityReport.booksNeedingAttention
-                            
-                            if booksNeedingAttention > 0 {
-                                Text("\(booksNeedingAttention)")
-                                    .font(.caption2)
-                                    .foregroundColor(.white)
-                                    .background(
-                                        Circle()
-                                            .fill(Color.red)
-                                            .frame(width: 16, height: 16)
-                                    )
-                                    .offset(x: 8, y: -4)
-                            }
+                // Background import progress indicator (subtle)
+                BackgroundImportProgressIndicator()
+            }
+            
+            ToolbarItem(placement: .navigationBarTrailing) {
+                // Library enhancement insights button with badge
+                Button { showingEnhancement.toggle() } label: {
+                    ZStack(alignment: .topTrailing) {
+                        Image(systemName: "chart.line.uptrend.xyaxis")
+                            .foregroundColor(currentTheme.primary)
+                        
+                        // Badge showing books needing attention
+                        let qualityReport = DataCompletenessService.analyzeLibraryQuality(allBooks)
+                        let booksNeedingAttention = qualityReport.booksNeedingAttention
+                        
+                        if booksNeedingAttention > 0 {
+                            Text("\(booksNeedingAttention)")
+                                .font(.caption2)
+                                .foregroundColor(.white)
+                                .background(
+                                    Circle()
+                                        .fill(Color.red)
+                                        .frame(width: 16, height: 16)
+                                )
+                                .offset(x: 8, y: -4)
                         }
                     }
-                    .accessibilityLabel("Library insights")
-                    .accessibilityHint("View data quality and enhancement recommendations. \(DataCompletenessService.analyzeLibraryQuality(allBooks).booksNeedingAttention) books need attention")
-                    
-                    Button { showingFilters.toggle() } label: {
-                        Image(systemName: libraryFilter.isActive ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle")
-                            .foregroundColor(libraryFilter.isActive ? currentTheme.primary : Color.primary)
-                    }
-                    
-                    Button { showingSettings.toggle() } label: {
-                        Image(systemName: "gearshape")
-                    }
+                }
+                .accessibilityLabel("Library insights")
+                .accessibilityHint("View data quality and enhancement recommendations. \(DataCompletenessService.analyzeLibraryQuality(allBooks).booksNeedingAttention) books need attention")
+            }
+            
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button { showingFilters.toggle() } label: {
+                    Image(systemName: libraryFilter.isActive ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle")
+                        .foregroundColor(libraryFilter.isActive ? currentTheme.primary : Color.primary)
+                }
+            }
+            
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button { showingSettings.toggle() } label: {
+                    Image(systemName: "gearshape")
                 }
             }
         }
