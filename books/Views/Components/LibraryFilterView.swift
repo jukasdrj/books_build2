@@ -533,6 +533,257 @@ struct FilterToggleRow: View {
             material: .regularMaterial,
             level: .optimized
         )
-    }\n    \n    @ViewBuilder\n    private var ratingQualitySection: some View {\n        VStack(alignment: .leading, spacing: Theme.Spacing.md) {\n            Text(\"Rating & Quality\")\n                .titleMedium()\n                .foregroundColor(currentTheme.primaryText)\n            \n            // Rating Range Slider\n            if !filter.showUnratedOnly {\n                VStack(alignment: .leading, spacing: Theme.Spacing.sm) {\n                    HStack {\n                        Text(\"Rating Range\")\n                            .bodyMedium()\n                            .foregroundColor(currentTheme.primaryText)\n                        \n                        Spacer()\n                        \n                        Text(\"\\(Int(filter.ratingRange.lowerBound))★ - \\(Int(filter.ratingRange.upperBound))★\")\n                            .labelMedium()\n                            .foregroundColor(currentTheme.secondaryText)\n                    }\n                    \n                    // Custom range slider would go here - simplified for now\n                    HStack(spacing: Theme.Spacing.sm) {\n                        ForEach(1...5, id: \\.self) { rating in\n                            Button {\n                                withAnimation(.smooth) {\n                                    let ratingDouble = Double(rating)\n                                    if filter.ratingRange.contains(ratingDouble) {\n                                        // Remove from range (simplified logic)\n                                        if rating <= 3 {\n                                            filter.ratingRange = ratingDouble+1...filter.ratingRange.upperBound\n                                        } else {\n                                            filter.ratingRange = filter.ratingRange.lowerBound...ratingDouble-1\n                                        }\n                                    } else {\n                                        // Add to range (simplified logic)\n                                        let newLower = min(filter.ratingRange.lowerBound, ratingDouble)\n                                        let newUpper = max(filter.ratingRange.upperBound, ratingDouble)\n                                        filter.ratingRange = newLower...newUpper\n                                    }\n                                }\n                                HapticFeedbackManager.shared.lightImpact()\n                            } label: {\n                                Image(systemName: filter.ratingRange.contains(Double(rating)) ? \"star.fill\" : \"star\")\n                                    .foregroundColor(filter.ratingRange.contains(Double(rating)) ? currentTheme.warning : currentTheme.outline)\n                                    .font(.title2)\n                            }\n                        }\n                    }\n                }\n            }\n            \n            // Data Quality Filter\n            VStack(alignment: .leading, spacing: Theme.Spacing.sm) {\n                Text(\"Data Quality\")\n                    .bodyMedium()\n                    .foregroundColor(currentTheme.primaryText)\n                \n                LazyVGrid(columns: [\n                    GridItem(.flexible()),\n                    GridItem(.flexible()),\n                    GridItem(.flexible())\n                ], spacing: Theme.Spacing.sm) {\n                    ForEach(LibraryFilter.DataQualityLevel.allCases, id: \\.self) { quality in\n                        Button {\n                            withAnimation(.smooth) {\n                                if filter.dataQualityFilter == quality {\n                                    filter.dataQualityFilter = nil\n                                } else {\n                                    filter.dataQualityFilter = quality\n                                }\n                            }\n                            HapticFeedbackManager.shared.lightImpact()\n                        } label: {\n                            VStack(spacing: Theme.Spacing.xs) {\n                                Image(systemName: quality.systemImage)\n                                    .font(.title3)\n                                    .foregroundColor(filter.dataQualityFilter == quality ? currentTheme.onPrimary : currentTheme.primary)\n                                \n                                Text(quality.rawValue)\n                                    .labelSmall()\n                                    .foregroundColor(filter.dataQualityFilter == quality ? currentTheme.onPrimary : currentTheme.primaryText)\n                                    .multilineTextAlignment(.center)\n                            }\n                            .padding(.horizontal, Theme.Spacing.xs)\n                            .padding(.vertical, Theme.Spacing.sm)\n                            .background(\n                                RoundedRectangle(cornerRadius: Theme.CornerRadius.small)\n                                    .fill(filter.dataQualityFilter == quality ? currentTheme.primary : currentTheme.surfaceVariant)\n                            )\n                        }\n                        .buttonStyle(.plain)\n                    }\n                }\n            }\n        }\n        .padding(Theme.Spacing.lg)\n        .progressiveGlassEffect(\n            material: .regularMaterial,\n            level: .optimized\n        )\n    }\n    \n    @ViewBuilder\n    private var dateMetadataSection: some View {\n        VStack(alignment: .leading, spacing: Theme.Spacing.md) {\n            Text(\"Date & Metadata\")\n                .titleMedium()\n                .foregroundColor(currentTheme.primaryText)\n            \n            // Publication Year Range\n            VStack(alignment: .leading, spacing: Theme.Spacing.sm) {\n                HStack {\n                    Text(\"Publication Year\")\n                        .bodyMedium()\n                        .foregroundColor(currentTheme.primaryText)\n                    \n                    Spacer()\n                    \n                    if let yearRange = filter.publishedYearRange {\n                        Button(\"Clear\") {\n                            withAnimation(.smooth) {\n                                filter.publishedYearRange = nil\n                            }\n                        }\n                        .buttonStyle(.borderless)\n                        .foregroundColor(currentTheme.primary)\n                        .font(.caption)\n                    }\n                }\n                \n                if let yearRange = filter.publishedYearRange {\n                    Text(\"\\(yearRange.lowerBound) - \\(yearRange.upperBound)\")\n                        .labelMedium()\n                        .foregroundColor(currentTheme.secondaryText)\n                } else {\n                    Button(\"Set Year Range\") {\n                        // For now, set a common range - in full implementation would show year picker\n                        withAnimation(.smooth) {\n                            filter.publishedYearRange = 2000...2024\n                        }\n                        HapticFeedbackManager.shared.lightImpact()\n                    }\n                    .buttonStyle(.bordered)\n                    .foregroundColor(currentTheme.primary)\n                }\n            }\n            \n            // Page Count Range\n            VStack(alignment: .leading, spacing: Theme.Spacing.sm) {\n                HStack {\n                    Text(\"Page Count\")\n                        .bodyMedium()\n                        .foregroundColor(currentTheme.primaryText)\n                    \n                    Spacer()\n                    \n                    if let pageRange = filter.pageCountRange {\n                        Button(\"Clear\") {\n                            withAnimation(.smooth) {\n                                filter.pageCountRange = nil\n                            }\n                        }\n                        .buttonStyle(.borderless)\n                        .foregroundColor(currentTheme.primary)\n                        .font(.caption)\n                    }\n                }\n                \n                if let pageRange = filter.pageCountRange {\n                    Text(\"\\(pageRange.lowerBound) - \\(pageRange.upperBound) pages\")\n                        .labelMedium()\n                        .foregroundColor(currentTheme.secondaryText)\n                } else {\n                    HStack(spacing: Theme.Spacing.sm) {\n                        Button(\"Short (<200)\") {\n                            withAnimation(.smooth) {\n                                filter.pageCountRange = 0...200\n                            }\n                        }\n                        .buttonStyle(.bordered)\n                        .font(.caption)\n                        \n                        Button(\"Medium (200-400)\") {\n                            withAnimation(.smooth) {\n                                filter.pageCountRange = 200...400\n                            }\n                        }\n                        .buttonStyle(.bordered)\n                        .font(.caption)\n                        \n                        Button(\"Long (400+)\") {\n                            withAnimation(.smooth) {\n                                filter.pageCountRange = 400...2000\n                            }\n                        }\n                        .buttonStyle(.bordered)\n                        .font(.caption)\n                    }\n                }\n            }\n        }\n        .padding(Theme.Spacing.lg)\n        .progressiveGlassEffect(\n            material: .regularMaterial,\n            level: .optimized\n        )\n    }\n}\n\n// MARK: - Advanced Filter Components\n\nstruct AdvancedFilterChip: View {\n    @Environment(\\.appTheme) private var currentTheme\n    let title: String\n    let subtitle: String\n    let isSelected: Bool\n    let action: () -> Void\n    \n    var body: some View {\n        Button(action: action) {\n            VStack(alignment: .leading, spacing: Theme.Spacing.xs) {\n                Text(title)\n                    .labelLarge()\n                    .foregroundColor(isSelected ? currentTheme.onPrimary : currentTheme.primaryText)\n                    .frame(maxWidth: .infinity, alignment: .leading)\n                \n                Text(subtitle)\n                    .labelSmall()\n                    .foregroundColor(isSelected ? currentTheme.onPrimary.opacity(0.8) : currentTheme.secondaryText)\n                    .frame(maxWidth: .infinity, alignment: .leading)\n            }\n            .padding(Theme.Spacing.md)\n            .background(\n                RoundedRectangle(cornerRadius: Theme.CornerRadius.medium)\n                    .fill(isSelected ? currentTheme.primary : currentTheme.surfaceVariant)\n            )\n            .overlay(\n                RoundedRectangle(cornerRadius: Theme.CornerRadius.medium)\n                    .stroke(isSelected ? currentTheme.primary : currentTheme.outline.opacity(0.3), lineWidth: 1)\n            )\n            .scaleEffect(isSelected ? 1.02 : 1.0)\n            .animation(.smooth, value: isSelected)\n        }\n        .buttonStyle(.plain)\n    }\n}
+    }
+    
+    @ViewBuilder
+    private var ratingQualitySection: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.md) {
+            Text("Rating & Quality")
+                .titleMedium()
+                .foregroundColor(currentTheme.primaryText)
+            
+            // Rating Range Slider
+            if !filter.showUnratedOnly {
+                VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+                    HStack {
+                        Text("Rating Range")
+                            .bodyMedium()
+                            .foregroundColor(currentTheme.primaryText)
+                        
+                        Spacer()
+                        
+                        Text("\(Int(filter.ratingRange.lowerBound))★ - \(Int(filter.ratingRange.upperBound))★")
+                            .labelMedium()
+                            .foregroundColor(currentTheme.secondaryText)
+                    }
+                    
+                    // Custom range slider would go here - simplified for now
+                    HStack(spacing: Theme.Spacing.sm) {
+                        ForEach(1...5, id: \.self) { rating in
+                            Button {
+                                withAnimation(.smooth) {
+                                    let ratingDouble = Double(rating)
+                                    if filter.ratingRange.contains(ratingDouble) {
+                                        // Remove from range (simplified logic)
+                                        if rating <= 3 {
+                                            filter.ratingRange = ratingDouble+1...filter.ratingRange.upperBound
+                                        } else {
+                                            filter.ratingRange = filter.ratingRange.lowerBound...ratingDouble-1
+                                        }
+                                    } else {
+                                        // Add to range (simplified logic)
+                                        let newLower = min(filter.ratingRange.lowerBound, ratingDouble)
+                                        let newUpper = max(filter.ratingRange.upperBound, ratingDouble)
+                                        filter.ratingRange = newLower...newUpper
+                                    }
+                                }
+                                HapticFeedbackManager.shared.lightImpact()
+                            } label: {
+                                Image(systemName: filter.ratingRange.contains(Double(rating)) ? "star.fill" : "star")
+                                    .foregroundColor(filter.ratingRange.contains(Double(rating)) ? currentTheme.warning : currentTheme.outline)
+                                    .font(.title2)
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Data Quality Filter
+            VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+                Text("Data Quality")
+                    .bodyMedium()
+                    .foregroundColor(currentTheme.primaryText)
+                
+                LazyVGrid(columns: [
+                    GridItem(.flexible()),
+                    GridItem(.flexible()),
+                    GridItem(.flexible())
+                ], spacing: Theme.Spacing.sm) {
+                    ForEach(LibraryFilter.DataQualityLevel.allCases, id: \.self) { quality in
+                        Button {
+                            withAnimation(.smooth) {
+                                if filter.dataQualityFilter == quality {
+                                    filter.dataQualityFilter = nil
+                                } else {
+                                    filter.dataQualityFilter = quality
+                                }
+                            }
+                            HapticFeedbackManager.shared.lightImpact()
+                        } label: {
+                            VStack(spacing: Theme.Spacing.xs) {
+                                Image(systemName: quality.systemImage)
+                                    .font(.title3)
+                                    .foregroundColor(filter.dataQualityFilter == quality ? currentTheme.onPrimary : currentTheme.primary)
+                                
+                                Text(quality.rawValue)
+                                    .labelSmall()
+                                    .foregroundColor(filter.dataQualityFilter == quality ? currentTheme.onPrimary : currentTheme.primaryText)
+                                    .multilineTextAlignment(.center)
+                            }
+                            .padding(.horizontal, Theme.Spacing.xs)
+                            .padding(.vertical, Theme.Spacing.sm)
+                            .background(
+                                RoundedRectangle(cornerRadius: Theme.CornerRadius.small)
+                                    .fill(filter.dataQualityFilter == quality ? currentTheme.primary : currentTheme.surfaceVariant)
+                            )
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
+        }
+        .padding(Theme.Spacing.lg)
+        .progressiveGlassEffect(
+            material: .regularMaterial,
+            level: .optimized
+        )
+    }
+    
+    @ViewBuilder
+    private var dateMetadataSection: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.md) {
+            Text("Date & Metadata")
+                .titleMedium()
+                .foregroundColor(currentTheme.primaryText)
+            
+            // Publication Year Range
+            VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+                HStack {
+                    Text("Publication Year")
+                        .bodyMedium()
+                        .foregroundColor(currentTheme.primaryText)
+                    
+                    Spacer()
+                    
+                    if let yearRange = filter.publishedYearRange {
+                        Button("Clear") {
+                            withAnimation(.smooth) {
+                                filter.publishedYearRange = nil
+                            }
+                        }
+                        .buttonStyle(.borderless)
+                        .foregroundColor(currentTheme.primary)
+                        .font(.caption)
+                    }
+                }
+                
+                if let yearRange = filter.publishedYearRange {
+                    Text("\(yearRange.lowerBound) - \(yearRange.upperBound)")
+                        .labelMedium()
+                        .foregroundColor(currentTheme.secondaryText)
+                } else {
+                    Button("Set Year Range") {
+                        // For now, set a common range - in full implementation would show year picker
+                        withAnimation(.smooth) {
+                            filter.publishedYearRange = 2000...2024
+                        }
+                        HapticFeedbackManager.shared.lightImpact()
+                    }
+                    .buttonStyle(.bordered)
+                    .foregroundColor(currentTheme.primary)
+                }
+            }
+            
+            // Page Count Range
+            VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+                HStack {
+                    Text("Page Count")
+                        .bodyMedium()
+                        .foregroundColor(currentTheme.primaryText)
+                    
+                    Spacer()
+                    
+                    if let pageRange = filter.pageCountRange {
+                        Button("Clear") {
+                            withAnimation(.smooth) {
+                                filter.pageCountRange = nil
+                            }
+                        }
+                        .buttonStyle(.borderless)
+                        .foregroundColor(currentTheme.primary)
+                        .font(.caption)
+                    }
+                }
+                
+                if let pageRange = filter.pageCountRange {
+                    Text("\(pageRange.lowerBound) - \(pageRange.upperBound) pages")
+                        .labelMedium()
+                        .foregroundColor(currentTheme.secondaryText)
+                } else {
+                    HStack(spacing: Theme.Spacing.sm) {
+                        Button("Short (<200)") {
+                            withAnimation(.smooth) {
+                                filter.pageCountRange = 0...200
+                            }
+                        }
+                        .buttonStyle(.bordered)
+                        .font(.caption)
+                        
+                        Button("Medium (200-400)") {
+                            withAnimation(.smooth) {
+                                filter.pageCountRange = 200...400
+                            }
+                        }
+                        .buttonStyle(.bordered)
+                        .font(.caption)
+                        
+                        Button("Long (400+)") {
+                            withAnimation(.smooth) {
+                                filter.pageCountRange = 400...2000
+                            }
+                        }
+                        .buttonStyle(.bordered)
+                        .font(.caption)
+                    }
+                }
+            }
+        }
+        .padding(Theme.Spacing.lg)
+        .progressiveGlassEffect(
+            material: .regularMaterial,
+            level: .optimized
+        )
+    }
+}
 
-#Preview {\n    LibraryFilterView(filter: .constant(LibraryFilter.all))\n}
+// MARK: - Advanced Filter Components
+
+struct AdvancedFilterChip: View {
+    @Environment(\.appTheme) private var currentTheme
+    let title: String
+    let subtitle: String
+    let isSelected: Bool
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+                Text(title)
+                    .labelLarge()
+                    .foregroundColor(isSelected ? currentTheme.onPrimary : currentTheme.primaryText)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                
+                Text(subtitle)
+                    .labelSmall()
+                    .foregroundColor(isSelected ? currentTheme.onPrimary.opacity(0.8) : currentTheme.secondaryText)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .padding(Theme.Spacing.md)
+            .background(
+                RoundedRectangle(cornerRadius: Theme.CornerRadius.medium)
+                    .fill(isSelected ? currentTheme.primary : currentTheme.surfaceVariant)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: Theme.CornerRadius.medium)
+                    .stroke(isSelected ? currentTheme.primary : currentTheme.outline.opacity(0.3), lineWidth: 1)
+            )
+            .scaleEffect(isSelected ? 1.02 : 1.0)
+            .animation(.smooth, value: isSelected)
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+#Preview {
+    LibraryFilterView(filter: .constant(LibraryFilter.all))
+}

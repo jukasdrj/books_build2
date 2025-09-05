@@ -175,7 +175,7 @@ class SearchHistoryService {
         let historySuggestions = recentSearches
             .filter { $0.query.lowercased().contains(trimmedQuery) }
             .prefix(3)
-            .map { SearchSuggestion(text: $0.query, type: .history, metadata: "\\($0.searchCount) time\\($0.searchCount > 1 ? \"s\" : \"\")") }
+            .map { SearchSuggestion(text: $0.query, type: .history, metadata: "\($0.searchCount) time\($0.searchCount > 1 ? "s" : "")") }
         suggestions.append(contentsOf: historySuggestions)
         
         // 2. Favorite-based suggestions
@@ -237,7 +237,7 @@ class SearchHistoryService {
             .prefix(2)
         
         suggestions.append(contentsOf: authors.map { author, count in
-            SearchSuggestion(text: author.key, type: .author, metadata: "\\(count) book\\(count > 1 ? \"s\" : \"\") in library")
+            SearchSuggestion(text: author, type: .author, metadata: "\(count) book\(count > 1 ? "s" : "") in library")
         })
         
         // Title suggestions
@@ -280,12 +280,12 @@ class SearchHistoryService {
                 .prefix(5)
             
             if !recentReads.isEmpty {
-                newSuggestions.append(\"More from recent authors\")
+                newSuggestions.append("More from recent authors")
             }
             
             let currentlyReading = userLibrary.filter { $0.readingStatus == .reading }
             if !currentlyReading.isEmpty {
-                newSuggestions.append(\"Similar to current reads\")
+                newSuggestions.append("Similar to current reads")
             }
         }
         
@@ -304,9 +304,9 @@ class SearchHistoryService {
         
         switch hour {
         case 6..<12:
-            newSuggestions.append(\"Morning reads\")
+            newSuggestions.append("Morning reads")
         case 18..<22:
-            newSuggestions.append(\"Evening favorites\")
+            newSuggestions.append("Evening favorites")
         default:
             break
         }
@@ -323,7 +323,7 @@ class SearchHistoryService {
             UserDefaults.standard.set(data, forKey: searchHistoryKey)
         } catch {
             #if DEBUG
-            print(\"❌ SearchHistory: Failed to save history: \\(error)\")
+            print("❌ SearchHistory: Failed to save history: \(error)")
             #endif
         }
     }
@@ -339,7 +339,7 @@ class SearchHistoryService {
             recentSearches = try decoder.decode([SearchHistoryItem].self, from: data)
         } catch {
             #if DEBUG
-            print(\"⚠️ SearchHistory: Failed to load history, starting fresh: \\(error)\")
+            print("⚠️ SearchHistory: Failed to load history, starting fresh: \(error)")
             #endif
             recentSearches = []
         }
@@ -352,7 +352,7 @@ class SearchHistoryService {
             UserDefaults.standard.set(data, forKey: favoriteSearchesKey)
         } catch {
             #if DEBUG
-            print(\"❌ SearchHistory: Failed to save favorites: \\(error)\")
+            print("❌ SearchHistory: Failed to save favorites: \(error)")
             #endif
         }
     }
@@ -368,7 +368,7 @@ class SearchHistoryService {
             favoriteSearches = try decoder.decode([SearchHistoryItem].self, from: data)
         } catch {
             #if DEBUG
-            print(\"⚠️ SearchHistory: Failed to load favorites, starting fresh: \\(error)\")
+            print("⚠️ SearchHistory: Failed to load favorites, starting fresh: \(error)")
             #endif
             favoriteSearches = []
         }
@@ -422,15 +422,19 @@ struct SearchSuggestion: Identifiable, Hashable {
         case title
         case genre
         case contextual
+        case autoComplete
+        case expansion
         
         var systemImage: String {
             switch self {
-            case .history: return \"clock\"
-            case .favorite: return \"star.fill\"
-            case .author: return \"person.fill\"
-            case .title: return \"book.fill\"
-            case .genre: return \"tag.fill\"
-            case .contextual: return \"lightbulb.fill\"
+            case .history: return "clock"
+            case .favorite: return "star.fill"
+            case .author: return "person.fill"
+            case .title: return "book.fill"
+            case .genre: return "tag.fill"
+            case .contextual: return "lightbulb.fill"
+            case .autoComplete: return "text.cursor"
+            case .expansion: return "plus.magnifyingglass"
             }
         }
         
@@ -442,6 +446,8 @@ struct SearchSuggestion: Identifiable, Hashable {
             case .title: return .green
             case .genre: return .purple
             case .contextual: return .orange
+            case .autoComplete: return .primary
+            case .expansion: return .secondary
             }
         }
     }
@@ -450,7 +456,12 @@ struct SearchSuggestion: Identifiable, Hashable {
 // MARK: - SwiftUI Environment Integration
 
 struct SearchHistoryEnvironmentKey: EnvironmentKey {
-    static let defaultValue = SearchHistoryService.shared
+    static let defaultValue: SearchHistoryService = {
+        @MainActor func create() -> SearchHistoryService {
+            return SearchHistoryService.shared
+        }
+        return MainActor.assumeIsolated(create)
+    }()
 }
 
 extension EnvironmentValues {

@@ -19,18 +19,19 @@ struct BackgroundImportProgressIndicator: View {
     @State private var isConnecting = true
     
     var body: some View {
-        Group {
+        VStack {
             if isConnecting && backgroundCoordinator == nil {
                 // Skeleton state while connecting to coordinator
-                SkeletonProgressIndicator()
-                    .progressiveGlassEffect(material: .regular, level: .subtle)
+                SkeletonProgressRing(size: 40, color: theme.primary)
+                    .progressiveGlassEffect(material: .regularMaterial, level: .minimal)
             } else if hasError {
                 // Error state with retry
-                ErrorProgressIndicator(
-                    message: errorMessage,
+                ErrorProgressRing(
+                    size: 40,
+                    color: theme.error,
                     onRetry: { setupImportService() }
                 )
-                .progressiveGlassEffect(material: .regular, level: .subtle)
+                .progressiveGlassEffect(material: .regularMaterial, level: .minimal)
             } else if let coordinator = backgroundCoordinator, 
                coordinator.isImporting, 
                coordinator.progress != nil {
@@ -50,7 +51,7 @@ struct BackgroundImportProgressIndicator: View {
                             ProgressView()
                                 .progressViewStyle(CircularProgressViewStyle(tint: theme.primary))
                                 .scaleEffect(0.6)
-                                .progressiveGlassEffect(material: .regular, level: .subtle)
+                                .progressiveGlassEffect(material: .regularMaterial, level: .minimal)
                         }
                         
                         // Progress text (minimal)
@@ -67,7 +68,7 @@ struct BackgroundImportProgressIndicator: View {
                     BackgroundImportDetailView(coordinator: coordinator)
                 }
                 .transition(.move(edge: .top).combined(with: .opacity))
-                .progressiveGlassEffect(material: .regular, level: .elevated)
+                .progressiveGlassEffect(material: .regularMaterial, level: .optimized)
                 .accessibilityLabel("Import progress: \(coordinator.progress?.processedBooks ?? 0) of \(coordinator.progress?.totalBooks ?? 0) books")
                 .accessibilityHint("Double tap to view detailed progress")
             }

@@ -333,7 +333,7 @@ struct AdvancedSearchModal: View {
                         .overlay {
                             RoundedRectangle(cornerRadius: 16, style: .continuous)
                                 .strokeBorder(
-                                    isSearchFieldFocused ? primaryColor : .separator.opacity(0.3),
+                                    isSearchFieldFocused ? primaryColor : Color.secondary.opacity(0.3),
                                     lineWidth: isSearchFieldFocused ? 2 : 1
                                 )
                         }
@@ -438,7 +438,7 @@ struct AdvancedSearchModal: View {
                     ("Recent Releases", "clock.fill", "2024"),
                     ("Award Winners", "trophy.fill", "award"),
                     ("Short Reads", "timer", "<200 pages")
-                ], id: \\.0) { title, icon, query in
+                ], id: \.0) { title, icon, query in
                     Button {
                         applyQuickPreset(title: title, query: query)
                     } label: {
@@ -579,7 +579,7 @@ struct AdvancedSearchModal: View {
                             .frame(maxWidth: .infinity, minHeight: 80)
                             .background {
                                 RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                    .fill(isSelected ? primaryColor : .thinMaterial)
+                                    .fill(isSelected ? primaryColor : Color(uiColor: .systemGray5))
                                     .overlay {
                                         if !isSelected {
                                             RoundedRectangle(cornerRadius: 12, style: .continuous)
@@ -623,7 +623,7 @@ struct AdvancedSearchModal: View {
                     icon: "magnifyingglass.circle",
                     title: "No Results Yet",
                     subtitle: "Configure your search criteria and tap Search to find books",
-                    style: .info
+                    style: .discovery
                 ))
             } else {
                 LazyVStack(spacing: Theme.Spacing.md) {
@@ -800,7 +800,7 @@ struct AdvancedSearchModal: View {
                 .padding(.vertical, 8)
                 .background {
                     Capsule()
-                        .fill(isSelected ? primaryColor : .thinMaterial)
+                        .fill(isSelected ? primaryColor : Color(uiColor: .systemGray5))
                         .overlay {
                             if !isSelected {
                                 Capsule()
@@ -935,13 +935,13 @@ struct AdvancedSearchCriteria {
         var components: [String] = []
         
         if !query.isEmpty {
-            components.append("Query: "\\(query)"")
+            components.append("Query: \"\(query)\"")
         }
         if !authors.isEmpty {
-            components.append("Authors: \\(authors.joined(separator: ", "))")
+            components.append("Authors: \(authors.joined(separator: ", "))")
         }
         if let yearRange = publishedYearRange {
-            components.append("Years: \\(yearRange.lowerBound)-\\(yearRange.upperBound)")
+            components.append("Years: \(yearRange.lowerBound)-\(yearRange.upperBound)")
         }
         if let pageRange = pageCountRange {
             components.append("Pages: \\(pageRange.lowerBound)-\\(pageRange.upperBound)")
@@ -953,10 +953,10 @@ struct AdvancedSearchCriteria {
 
 #Preview {
     AdvancedSearchModal { results, criteria in
-        print("Search completed with \\(results.count) results")
-        print("Criteria: \\(criteria.summary)")
+        print("Search completed with \(results.count) results")
+        print("Criteria: \(criteria.summary)")
     }
-    .environment(\\.unifiedThemeStore, UnifiedThemeStore())
-    .environment(\\.searchHistory, SearchHistoryService.shared)
-    .environment(\\.searchDebouncer, SearchDebouncer())
+    .environment(\.unifiedThemeStore, UnifiedThemeStore())
+    .environment(\.searchHistory, SearchHistoryService.shared)
+    .environment(\.searchDebouncer, SearchDebouncer())
 }

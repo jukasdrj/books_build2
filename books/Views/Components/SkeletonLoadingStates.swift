@@ -310,7 +310,7 @@ struct ErrorImportBanner: View {
 
 // MARK: - Empty States with Helpful Guidance
 
-struct EmptyStateView: View {
+struct SkeletonEmptyStateView: View {
     let title: String
     let message: String
     let systemImage: String
@@ -349,7 +349,7 @@ struct EmptyStateView: View {
                     action()
                 }
                 .materialButton(style: .filled)
-                .progressiveGlassEffect(material: .regular, level: .elevated)
+                .progressiveGlassEffect(material: .regular, level: .optimized)
             }
         }
         .padding(Theme.Spacing.xl)
@@ -382,12 +382,12 @@ struct ContextualProgressIndicator: View {
                 ProgressView()
                     .progressViewStyle(CircularProgressViewStyle(tint: theme.primary))
                     .scaleEffect(0.8)
-                    .progressiveGlassEffect(material: .regular, level: .subtle)
+                    .progressiveGlassEffect(material: .regular, level: .minimal)
             } else {
                 ProgressView(value: progress)
                     .progressViewStyle(LinearProgressViewStyle(tint: theme.primary))
                     .frame(height: 6)
-                    .progressiveGlassEffect(material: .regular, level: .subtle)
+                    .progressiveGlassEffect(material: .regular, level: .minimal)
             }
             
             // Text content
@@ -416,7 +416,7 @@ struct ContextualProgressIndicator: View {
         }
         .padding(Theme.Spacing.md)
         .materialCard()
-        .progressiveGlassEffect(material: .regular, level: .elevated)
+        .progressiveGlassEffect(material: .regular, level: .optimized)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(isIndeterminate ? "\(title) in progress" : "\(title): \(Int(progress * 100))% complete")
     }
@@ -458,7 +458,7 @@ struct ContextualProgressIndicator: View {
                 Text("Empty State")
                     .font(.caption)
                     .foregroundColor(.secondary)
-                EmptyStateView(
+                SkeletonEmptyStateView(
                     title: "No Books Found",
                     message: "Your library is empty. Start by adding some books to track your reading progress.",
                     systemImage: "books.vertical",

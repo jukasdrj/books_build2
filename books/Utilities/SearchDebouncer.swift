@@ -68,7 +68,7 @@ class SearchDebouncer {
         
         // Store query timing for adaptive learning
         let now = Date()
-        let timeSinceLastQuery = now.timeIntervalSince(lastQueryTime)
+        let _ = now.timeIntervalSince(lastQueryTime)
         lastQueryTime = now
         
         currentTask = Task {
@@ -99,7 +99,7 @@ class SearchDebouncer {
             updatePerformanceMetrics(duration: searchDuration)
             
             #if DEBUG
-            print("🔍 SearchDebouncer: Query '\(trimmedQuery)' executed in \(String(format: \"%.3f\", searchDuration))s after \(String(format: \"%.3f\", adaptiveDelay))s delay")
+            print("🔍 SearchDebouncer: Query '\(trimmedQuery)' executed in \(String(format: "%.3f", searchDuration))s after \(String(format: "%.3f", adaptiveDelay))s delay")
             #endif
         }
     }
@@ -183,7 +183,7 @@ class SearchDebouncer {
         cacheHitRate = Double(similarQueries.count) / Double(min(queryHistory.count, 5))
         
         #if DEBUG
-        print("📊 SearchDebouncer: Avg query time: \(String(format: \"%.3f\", averageQueryTime))s, Cache hit rate: \(String(format: \"%.1f\", cacheHitRate * 100))%")
+        print("📊 SearchDebouncer: Avg query time: \(String(format: "%.3f", averageQueryTime))s, Cache hit rate: \(String(format: "%.1f", cacheHitRate * 100))%")
         #endif
     }
     
@@ -274,8 +274,8 @@ class SearchDebouncer {
     // MARK: - Performance Monitoring
     
     /// Get current performance statistics
-    func getPerformanceStats() -> PerformanceStats {
-        return PerformanceStats(
+    func getPerformanceStats() -> SearchPerformanceStats {
+        return SearchPerformanceStats(
             totalQueries: queryCount,
             averageQueryTime: averageQueryTime,
             cacheHitRate: cacheHitRate,
@@ -305,39 +305,9 @@ enum QueryComplexity {
     case isbn       // ISBN pattern detected
 }
 
-struct SearchSuggestion: Identifiable, Hashable {
-    let id = UUID()
-    let text: String
-    let type: SuggestionType
-    let metadata: String?
-    
-    enum SuggestionType {
-        case autoComplete
-        case expansion
-        case contextual
-        case history
-        
-        var systemImage: String {
-            switch self {
-            case .autoComplete: return "text.cursor"
-            case .expansion: return "plus.magnifyingglass"
-            case .contextual: return "lightbulb"
-            case .history: return "clock"
-            }
-        }
-        
-        var priority: Int {
-            switch self {
-            case .autoComplete: return 4
-            case .contextual: return 3
-            case .expansion: return 2
-            case .history: return 1
-            }
-        }
-    }
-}
+// SearchSuggestion is defined in SearchHistoryService.swift to avoid duplication
 
-struct PerformanceStats {
+struct SearchPerformanceStats {
     let totalQueries: Int
     let averageQueryTime: TimeInterval
     let cacheHitRate: Double
@@ -355,7 +325,12 @@ struct PerformanceStats {
 // MARK: - SwiftUI Environment Integration
 
 struct SearchDebouncerEnvironmentKey: EnvironmentKey {
-    static let defaultValue = SearchDebouncer()
+    static let defaultValue: SearchDebouncer = {
+        @MainActor func create() -> SearchDebouncer {
+            return SearchDebouncer()
+        }
+        return MainActor.assumeIsolated(create)
+    }()
 }
 
 extension EnvironmentValues {
