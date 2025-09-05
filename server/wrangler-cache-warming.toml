@@ -1,0 +1,92 @@
+# Wrangler configuration for Cache-Warming Integrated CloudFlare Worker
+# Features: Author Indexing + Cultural Data + Automatic Cache Warming with Cron
+
+name = "books-api-proxy-cache-warming"
+main = "production-cache-integrated.js" 
+compatibility_date = "2023-05-18"
+compatibility_flags = ["nodejs_compat"]
+
+# ===== CRON TRIGGERS FOR AUTOMATIC CACHE WARMING =====
+[triggers]
+crons = [
+  "0 1 * * *",    # Bootstrap at 1:00 AM UTC - Aggressive initial population (3000+ books)
+  "0 2 * * *",    # Daily at 2:00 AM UTC - New releases (last 7 days)
+  "0 3 * * 1",    # Weekly Monday at 3:00 AM UTC - Popular authors batch
+  "0 4 1 * *"     # Monthly 1st at 4:00 AM UTC - Historical bestsellers
+]
+
+# KV namespace for book/search caching and author profiles
+[[kv_namespaces]]
+binding = "BOOKS_CACHE"
+id = "b9cade63b6db48fd80c109a013f38fdb"
+
+# R2 bucket for long-term storage 
+[[r2_buckets]]
+binding = "BOOKS_R2"
+bucket_name = "books-cache"
+
+# ===== PRODUCTION ENVIRONMENT =====
+[env.production.vars]
+ISBNdb1 = ""  # Set during deployment
+
+[env.production.secrets]
+google1 = ""  # Set via: wrangler secret put google1 (Knowledge Graph API)
+google2 = ""  # Set via: wrangler secret put google2
+GOOGLE_SEARCH_API_KEY = ""  # Set via: wrangler secret put GOOGLE_SEARCH_API_KEY (Custom Search API)
+
+[env.production]
+workers_dev = true
+
+# Production KV and R2 bindings
+[[env.production.kv_namespaces]]
+binding = "BOOKS_CACHE"
+id = "b9cade63b6db48fd80c109a013f38fdb"
+
+[[env.production.r2_buckets]]
+binding = "BOOKS_R2"
+bucket_name = "books-cache"
+
+# Production cron triggers
+[env.production.triggers]
+crons = [
+  "0 1 * * *",    # Bootstrap at 1:00 AM UTC - Aggressive initial population (3000+ books)
+  "0 2 * * *",    # Daily new releases
+  "0 3 * * 1",    # Weekly popular authors  
+  "0 4 1 * *"     # Monthly historical books
+]
+
+# ===== STAGING ENVIRONMENT =====
+[env.staging.vars]
+ISBNdb1 = ""
+
+[env.staging.secrets] 
+google1 = ""
+google2 = ""
+GOOGLE_SEARCH_API_KEY = ""
+
+# Staging KV and R2 bindings
+[[env.staging.kv_namespaces]]
+binding = "BOOKS_CACHE"
+id = "b9cade63b6db48fd80c109a013f38fdb"
+
+[[env.staging.r2_buckets]]
+binding = "BOOKS_R2"
+bucket_name = "books-cache"
+
+# Staging cron triggers (disabled for testing)
+# [env.staging.triggers]
+# crons = []
+
+# ===== PERFORMANCE AND RESOURCE LIMITS =====
+[limits]
+cpu_ms = 30000  # 30 seconds max execution time for cron jobs
+memory_mb = 256 # 256 MB memory for cache warming operations
+
+# ===== BUILD CONFIGURATION =====
+[build]
+command = ""
+cwd = ""
+watch_dir = ""
+
+[env.production.build]
+command = ""

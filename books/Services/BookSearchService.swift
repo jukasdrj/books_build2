@@ -11,13 +11,54 @@ class BookSearchService: ObservableObject {
     
     // MARK: - Configuration
     
-    /// Your CloudFlare Worker endpoint - update this after deployment
-    private let proxyBaseURL = "https://books-api-proxy.jukasdrj.workers.dev"
+    /// Primary CloudFlare Worker endpoint with custom domain
+    private let primaryProxyURL = "https://books.ooheynerds.com"
+    /// Fallback CloudFlare Worker endpoint 
+    private let fallbackProxyURL = "https://books-api-proxy.jukasdrj.workers.dev"
     
     private init() {
         #if DEBUG
-        print("✅ BookSearchService: Using proxy-based API at \(proxyBaseURL)")
+        print("✅ BookSearchService: Using proxy-based API")
+        print("   Primary: \(primaryProxyURL)")
+        print("   Fallback: \(fallbackProxyURL)")
         #endif
+    }
+    
+    // MARK: - URL Management with Fallback
+    
+    /// Get the appropriate proxy URL with automatic fallback logic
+    private func getProxyBaseURL() async -> String {
+        // Try primary URL first
+        if await isEndpointHealthy(primaryProxyURL) {
+            #if DEBUG
+            print("📡 Using primary endpoint: \(primaryProxyURL)")
+            #endif
+            return primaryProxyURL
+        }
+        
+        // Fallback to secondary URL
+        #if DEBUG
+        print("⚠️ Primary endpoint unavailable, using fallback: \(fallbackProxyURL)")
+        #endif
+        return fallbackProxyURL
+    }
+    
+    /// Quick health check for endpoint availability
+    private func isEndpointHealthy(_ baseURL: String) async -> Bool {
+        guard let url = URL(string: "\(baseURL)/health") else { return false }
+        
+        do {
+            let (_, response) = try await URLSession.shared.data(from: url)
+            if let httpResponse = response as? HTTPURLResponse {
+                return httpResponse.statusCode == 200
+            }
+            return false
+        } catch {
+            #if DEBUG
+            print("🚨 Health check failed for \(baseURL): \(error.localizedDescription)")
+            #endif
+            return false
+        }
     }
     
     // MARK: - API Provider Selection
@@ -130,8 +171,9 @@ class BookSearchService: ObservableObject {
             return .success([])
         }
         
-        // Build proxy URL
-        guard var components = URLComponents(string: "\(proxyBaseURL)/search") else {
+        // Get proxy URL with fallback logic
+        let baseURL = await getProxyBaseURL()
+        guard var components = URLComponents(string: "\(baseURL)/search") else {
             return .failure(.invalidURL)
         }
         
@@ -309,7 +351,8 @@ class BookSearchService: ObservableObject {
         sortBy: SortOption,
         maxResults: Int
     ) async -> Result<[BookMetadata], BookError> {
-        guard var components = URLComponents(string: "\(proxyBaseURL)/search") else {
+        let baseURL = await getProxyBaseURL()
+        guard var components = URLComponents(string: "\(baseURL)/search") else {
             return .failure(.invalidURL)
         }
         
@@ -359,7 +402,8 @@ class BookSearchService: ObservableObject {
     
     /// Direct ISBNDB fallback for ISBN lookups when Google Books fails
     private func searchByISBNWithISBNDBFallback(_ isbn: String, provider: APIProvider = .auto) async -> Result<BookMetadata?, BookError> {
-        guard var components = URLComponents(string: "\(proxyBaseURL)/isbn") else {
+        let baseURL = await getProxyBaseURL()
+        guard var components = URLComponents(string: "\(baseURL)/isbn") else {
             return .failure(.invalidURL)
         }
         
@@ -440,7 +484,7 @@ class BookSearchService: ObservableObject {
             ErrorHandler.shared.handle(
                 error,
                 context: "BookSearchService Proxy Error",
-                userInfo: ["url": url.absoluteString, "proxy": proxyBaseURL]
+                userInfo: ["url": url.absoluteString, "proxy": "dynamic-fallback"]
             )
             return .failure(.proxyError(error.localizedDescription))
         } catch {
@@ -785,7 +829,7 @@ private struct ProxyISBNResponse: Codable {
     
     func toBookMetadata() -> BookMetadata? {
         guard let volumeInfo = volumeInfo else { return nil }
-        return ProxyVolumeItem(kind: kind ?? "", id: id ?? "", volumeInfo: volumeInfo).toBookMetadata(provider: provider)
+        return ProxyVolumeItem(kind: kind ?? "", id: id ?? "", volumeInfo: volumeInfo, culturalMetadata: nil).toBookMetadata(provider: provider)
     }
 }
 
@@ -793,6 +837,7 @@ private struct ProxyVolumeItem: Codable {
     let kind: String
     let id: String
     let volumeInfo: ProxyVolumeInfo
+    let culturalMetadata: ProxyCulturalMetadata?
     
     func toBookMetadata(provider: String? = nil) -> BookMetadata {
         let isbn13 = volumeInfo.industryIdentifiers?.first(where: { $0.type == "ISBN_13" })?.identifier
@@ -831,7 +876,110 @@ private struct ProxyVolumeItem: Codable {
             fieldSources["genre"] = apiSourceInfo
         }
 
-        let totalFields: Double = 10.0
+        // Extract enhanced cultural metadata from the API response
+        var extractedNationality: String? = nil
+        var extractedGender: AuthorGender? = nil
+        var extractedRegion: CulturalRegion? = nil
+        var extractedThemes: [String] = []
+        
+        if let culturalMeta = culturalMetadata, let authors = culturalMeta.authors, !authors.isEmpty {
+            // Use the first author's cultural data as primary
+            if let firstAuthor = authors.first, let profile = firstAuthor.culturalProfile {
+                
+                // Map nationality from API (handle adjective forms)
+                if let nationalityString = profile.nationality?.lowercased() {
+                    switch nationalityString {
+                    case "american": 
+                        extractedNationality = "United States"
+                        extractedRegion = .northAmerica
+                    case "british", "english": 
+                        extractedNationality = "United Kingdom"
+                        extractedRegion = .europe
+                    case "canadian": 
+                        extractedNationality = "Canada"
+                        extractedRegion = .northAmerica
+                    case "japanese": 
+                        extractedNationality = "Japan"
+                        extractedRegion = .asia
+                    case "chinese": 
+                        extractedNationality = "China"
+                        extractedRegion = .asia
+                    case "indian": 
+                        extractedNationality = "India"
+                        extractedRegion = .asia
+                    case "french": 
+                        extractedNationality = "France"
+                        extractedRegion = .europe
+                    case "german": 
+                        extractedNationality = "Germany"
+                        extractedRegion = .europe
+                    case "african":
+                        // Generic "African" - don't set specific country, but set region
+                        extractedNationality = nil
+                        extractedRegion = .africa
+                    case "european":
+                        extractedNationality = nil
+                        extractedRegion = .europe
+                    case "asian":
+                        extractedNationality = nil
+                        extractedRegion = .asia
+                    default:
+                        // If it's already a country name, use as-is
+                        extractedNationality = profile.nationality
+                    }
+                }
+                
+                // Map gender from API to enum
+                if let genderString = profile.gender {
+                    switch genderString.lowercased() {
+                    case "female": extractedGender = .female
+                    case "male": extractedGender = .male
+                    case "non-binary", "nonbinary": extractedGender = .nonBinary
+                    case "other": extractedGender = .other
+                    default: extractedGender = .unknown
+                    }
+                }
+                
+                // If region not set by nationality, try explicit regions from API
+                if extractedRegion == nil, let regions = profile.regions, !regions.isEmpty {
+                    let regionString = regions.first?.lowercased() ?? ""
+                    switch regionString {
+                    case "africa": extractedRegion = .africa
+                    case "asia": extractedRegion = .asia
+                    case "europe": extractedRegion = .europe
+                    case "north america", "northamerica": extractedRegion = .northAmerica
+                    case "south america", "southamerica": extractedRegion = .southAmerica
+                    case "oceania": extractedRegion = .oceania
+                    case "middle east", "middleeast": extractedRegion = .middleEast
+                    case "caribbean": extractedRegion = .caribbean
+                    case "central asia", "centralasia": extractedRegion = .centralAsia
+                    case "indigenous": extractedRegion = .indigenous
+                    default: break
+                    }
+                }
+                
+                // Extract cultural themes
+                if let themes = profile.themes {
+                    extractedThemes = themes
+                }
+            }
+            
+            // Add cultural data to field sources if available
+            if extractedNationality != nil {
+                fieldSources["authorNationality"] = apiSourceInfo
+            }
+            if extractedGender != nil {
+                fieldSources["authorGender"] = apiSourceInfo
+            }
+            if extractedRegion != nil {
+                fieldSources["culturalRegion"] = apiSourceInfo
+            }
+            if !extractedThemes.isEmpty {
+                fieldSources["culturalThemes"] = apiSourceInfo
+            }
+        }
+
+        let totalFields: Double = 14.0  // Updated count including cultural fields
         let presentFields = Double(fieldSources.count)
         let completeness = presentFields / totalFields
 
@@ -868,6 +1016,10 @@ private struct ProxyVolumeItem: Codable {
             publisher: volumeInfo.publisher,
             isbn: isbn13 ?? isbn10,
             genre: volumeInfo.categories ?? [],
+            authorNationality: extractedNationality,
+            authorGender: extractedGender,
+            culturalRegion: extractedRegion,
+            culturalThemes: extractedThemes,
             dataSource: .proxyAPI,
             fieldDataSources: fieldSources,
             dataCompleteness: completeness,
@@ -899,6 +1051,44 @@ private struct ProxyIndustryIdentifier: Codable {
 private struct ProxyImageLinks: Codable {
     let smallThumbnail: String?
     let thumbnail: String?
+}
+
+// MARK: - Enhanced Cultural Metadata Structures
+
+private struct ProxyCulturalMetadata: Codable {
+    let authors: [ProxyAuthorCultural]?
+    let diversityScore: ProxyDiversityScore?
+    let lastUpdated: Double?
+    let version: String?
+}
+
+private struct ProxyAuthorCultural: Codable {
+    let name: String?
+    let culturalProfile: ProxyAuthorCulturalProfile?
+    let confidence: Double?
+}
+
+private struct ProxyAuthorCulturalProfile: Codable {
+    let nationality: String?
+    let gender: String?
+    let languages: [String]?
+    let regions: [String]?
+    let themes: [String]?
+    let timeSpan: ProxyTimeSpan?
+    let lastUpdated: Double?
+    let confidence: Double?
+}
+
+private struct ProxyTimeSpan: Codable {
+    let earliest: Int?
+    let latest: Int?
+}
+
+private struct ProxyDiversityScore: Codable {
+    let regions: [String: Double]?
+    let languages: [String: Double]?
+    let genders: [String: Double]?
+    let score: Double?
 }
 
 private enum ProxyError: LocalizedError {
