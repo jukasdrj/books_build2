@@ -1,0 +1,71 @@
+# Wrangler configuration for Author-Integrated CloudFlare Worker
+# Implements Task 8 (Author Indexing) and Task 9 (Cultural Data Propagation)
+
+name = "books-api-proxy-author-integrated"
+main = "production-author-integrated.js" 
+compatibility_date = "2023-05-18"
+
+# KV namespace for book/search caching and author profiles
+[[kv_namespaces]]
+binding = "BOOKS_CACHE"
+id = "b9cade63b6db48fd80c109a013f38fdb"
+
+# R2 bucket for long-term storage 
+[[r2_buckets]]
+binding = "BOOKS_R2"
+bucket_name = "books-cache"
+
+# Environment variables for API keys
+[env.production.vars]
+ISBNdb1 = ""  # Set during deployment
+
+[env.production.secrets]
+google1 = ""  # Set via: wrangler secret put google1
+google2 = ""  # Set via: wrangler secret put google2
+
+# Routes for production deployment
+[env.production]
+workers_dev = true
+
+# Production KV and R2 bindings
+[[env.production.kv_namespaces]]
+binding = "BOOKS_CACHE"
+id = "b9cade63b6db48fd80c109a013f38fdb"
+
+[[env.production.r2_buckets]]
+binding = "BOOKS_R2"
+bucket_name = "books-cache"
+
+# Development environment
+[env.staging.vars]
+ISBNdb1 = ""
+
+[env.staging.secrets] 
+google1 = ""
+google2 = ""
+
+# Staging KV and R2 bindings
+[[env.staging.kv_namespaces]]
+binding = "BOOKS_CACHE"
+id = "b9cade63b6db48fd80c109a013f38fdb"
+
+[[env.staging.r2_buckets]]
+binding = "BOOKS_R2"
+bucket_name = "books-cache"
+
+# Performance and resource limits
+[limits]
+cpu_ms = 30000  # 30 seconds max execution time
+memory_mb = 128 # 128 MB memory limit
+
+# Build configuration for ES modules
+[build]
+command = ""
+cwd = ""
+watch_dir = ""
+
+[env.production.build]
+command = ""
+
+# Compatibility flags
+compatibility_flags = ["nodejs_compat"]

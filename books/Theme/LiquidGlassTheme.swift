@@ -55,7 +55,6 @@ struct LiquidGlassTheme {
             case .clear: return 0.0     // No blur for content clarity
             }
         }
-    }
     
     // MARK: - Depth & Elevation System
     enum GlassDepth {
@@ -220,6 +219,13 @@ struct LiquidGlassTypography {
     let labelSmall = Font.system(size: 11, weight: .semibold, design: .default)
 }
 
+// MARK: - CGFloat Extension for Clamping
+extension CGFloat {
+    func clamped(to range: ClosedRange<CGFloat>) -> CGFloat {
+        return Swift.min(Swift.max(self, range.lowerBound), range.upperBound)
+    }
+}
+
 // MARK: - Liquid Glass View Modifiers
 
 struct LiquidGlassCardModifier: ViewModifier {
@@ -227,32 +233,36 @@ struct LiquidGlassCardModifier: ViewModifier {
     let depth: LiquidGlassTheme.GlassDepth
     let radius: LiquidGlassTheme.GlassRadius
     let vibrancy: LiquidGlassTheme.VibrancyLevel
+    let contentAdaptive: Bool
+    
+    @Environment(\.colorScheme) private var colorScheme
     
     init(
         material: LiquidGlassTheme.GlassMaterial,
         depth: LiquidGlassTheme.GlassDepth,
         radius: LiquidGlassTheme.GlassRadius,
-        vibrancy: LiquidGlassTheme.VibrancyLevel
+        vibrancy: LiquidGlassTheme.VibrancyLevel,
+        contentAdaptive: Bool = true
     ) {
         self.material = material
         self.depth = depth
         self.radius = radius
         self.vibrancy = vibrancy
+        self.contentAdaptive = contentAdaptive
     }
     
     func body(content: Content) -> some View {
-        // Always use standard SwiftUI effects (Metal acceleration disabled to prevent texture validation errors)
         content
             .background(
                 RoundedRectangle(cornerRadius: radius.value)
                     .fill(
-                        accessibleMaterial.material
-                            .opacity(adaptiveOpacity)
+                        adaptiveMaterial.material
+                            .opacity(contentAdaptiveOpacity)
                     )
-                    .blur(radius: accessibleMaterial.blurRadius)
+                    .blur(radius: adaptiveBlurRadius)
                     .shadow(
-                        color: .black.opacity(depth.shadowOpacity),
-                        radius: depth.shadowRadius,
+                        color: adaptiveShadowColor,
+                        radius: adaptiveShadowRadius,
                         x: 0,
                         y: depth.yOffset
                     )
@@ -260,14 +270,71 @@ struct LiquidGlassCardModifier: ViewModifier {
             .clipShape(RoundedRectangle(cornerRadius: radius.value))
     }
     
-    // Apple's accessibility-aware material selection
-    @MainActor private var accessibleMaterial: LiquidGlassTheme.GlassMaterial {
-        LiquidGlassTheme.accessibleMaterial(material)
+    // MARK: - Content-Adaptive Properties
+    
+    /// Apple-compliant accessibility and content-aware material selection
+    @MainActor private var adaptiveMaterial: LiquidGlassTheme.GlassMaterial {
+        let accessibleBaseMaterial = LiquidGlassTheme.accessibleMaterial(material)
+        
+        if contentAdaptive {
+            // Basic color scheme adaptation
+            switch colorScheme {
+            case .dark:
+                // Dark mode: allow more transparent materials to show content richness
+                switch accessibleBaseMaterial {
+                case .thick: return .regular
+                case .regular: return .thin
+                default: return accessibleBaseMaterial
+                }
+            case .light:
+                // Light mode: use more opaque materials for better contrast
+                switch accessibleBaseMaterial {
+                case .ultraThin: return .thin
+                case .thin: return .regular
+                default: return accessibleBaseMaterial
+                }
+            @unknown default:
+                return accessibleBaseMaterial
+            }
+        }
+        
+        return accessibleBaseMaterial
     }
     
-    // Content-adaptive opacity combining material and vibrancy
-    private var adaptiveOpacity: Double {
-        material.adaptivityFactor * vibrancy.opacity
+    /// Content-adaptive opacity that considers color scheme
+    private var contentAdaptiveOpacity: Double {
+        let baseOpacity = material.adaptivityFactor * vibrancy.opacity
+        
+        if contentAdaptive {
+            // Adjust opacity based on color scheme
+            let colorSchemeMultiplier: Double = colorScheme == .dark ? 0.8 : 1.1
+            return (baseOpacity * colorSchemeMultiplier).clamped(to: 0.2...0.95)
+        }
+        
+        return baseOpacity
+    }
+    
+    /// Apple-optimized blur radius
+    private var adaptiveBlurRadius: CGFloat {
+        return adaptiveMaterial.blurRadius
+    }
+    
+    /// Content-aware shadow color
+    private var adaptiveShadowColor: Color {
+        let baseShadowOpacity = depth.shadowOpacity
+        
+        if contentAdaptive {
+            // Adapt shadow based on color scheme
+            let shadowMultiplier: Double = colorScheme == .dark ? 0.7 : 1.2
+            return .black.opacity(baseShadowOpacity * shadowMultiplier)
+        }
+        
+        return .black.opacity(baseShadowOpacity)
+    }
+    
+    /// Content-adaptive shadow radius
+    private var adaptiveShadowRadius: CGFloat {
+        return depth.shadowRadius
     }
 }
 
@@ -350,14 +417,35 @@ extension View {
         material: LiquidGlassTheme.GlassMaterial = .regular,
         depth: LiquidGlassTheme.GlassDepth = .elevated,
         radius: LiquidGlassTheme.GlassRadius = .comfortable,
-        vibrancy: LiquidGlassTheme.VibrancyLevel = .medium
+        vibrancy: LiquidGlassTheme.VibrancyLevel = .medium,
+        contentAdaptive: Bool = true
     ) -> some View {
         self.modifier(LiquidGlassCardModifier(
             material: material,
             depth: depth,
             radius: radius,
-            vibrancy: vibrancy
+            vibrancy: vibrancy,
+            contentAdaptive: contentAdaptive
         ))
+    }
+    
+    /// Content-adaptive Liquid Glass card that follows Apple's dynamic material specification
+    func adaptiveLiquidGlassCard(
+        material: LiquidGlassTheme.GlassMaterial = .regular,
+        depth: LiquidGlassTheme.GlassDepth = .elevated,
+        radius: LiquidGlassTheme.GlassRadius = .comfortable,
+        vibrancy: LiquidGlassTheme.VibrancyLevel = .medium,
+        backgroundColor: Color? = nil,
+        contentColors: [Color] = []
+    ) -> some View {
+        self
+            .modifier(LiquidGlassCardModifier(
+                material: material,
+                depth: depth,
+                radius: radius,
+                vibrancy: vibrancy,
+                contentAdaptive: true
+            ))
     }
     
     func liquidGlassButton(
@@ -430,39 +518,7 @@ extension View {
 }
 
 // MARK: - iOS 26 Native TabView Integration
-
-@available(iOS 26.0, *)
-struct LiquidGlassTabView: View {
-    @Binding var selectedTab: Int
-    let libraryCount: Int
-    let completedBooksCount: Int
-    
-    var body: some View {
-        TabView(selection: $selectedTab) {
-            LibraryView()
-                .tabItem {
-                    Label("Library", systemImage: "books.vertical")
-                }
-                .badge(libraryCount > 0 ? libraryCount : 0)
-                .tag(0)
-            
-            SearchView()
-                .tabItem {
-                    Label("Search", systemImage: "magnifyingglass")
-                }
-                .tag(1)
-            
-            ReadingInsightsView()
-                .tabItem {
-                    Label("Insights", systemImage: "chart.line.uptrend.xyaxis")
-                }
-                .badge(completedBooksCount > 0 ? completedBooksCount : 0)
-                .tag(2)
-        }
-        .tabViewStyle(.automatic) // Fallback to automatic style
-        .tint(.primary)
-    }
-}
+// Note: TabView implementation moved to main app structure to avoid dependency issues
 
 // MARK: - Accessibility Enhancements (Apple's Inclusive Design)
 

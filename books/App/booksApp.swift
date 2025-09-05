@@ -81,6 +81,7 @@ struct booksApp: App {
 struct ThemedRootView: View {
     @ObservedObject var unifiedThemeStore: UnifiedThemeStore
     @StateObject private var cloudKitManager = CloudKitManager()
+    @StateObject private var contentAnalyzer = LiquidGlassContentAnalyzer.shared
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.modelContext) private var modelContext
     @State private var hasBypassedICloudLogin = UserDefaults.standard.bool(forKey: "hasBypassedICloudLogin")
@@ -101,10 +102,16 @@ struct ThemedRootView: View {
         // Integrate unified theme system with reactive updates
         .environment(\.unifiedThemeStore, unifiedThemeStore)
         .environment(\.appTheme, unifiedThemeStore.appTheme)
+        .environment(\.liquidGlassContentAnalyzer, contentAnalyzer)
         .preferredColorScheme(unifiedThemeStore.preferredColorScheme)
-        .onChange(of: colorScheme) { _, _ in
-            // Force refresh system UI when color scheme changes
-            // No longer needed with new theming system
+        .onChange(of: colorScheme) { _, newColorScheme in
+            // Update content analyzer with new color scheme for adaptive materials
+            contentAnalyzer.analyzeColorScheme(newColorScheme)
+            
+            #if DEBUG
+            print("[ContentAnalyzer] 🌓 Color scheme changed to \(newColorScheme == .light ? "Light" : "Dark")")
+            print("  - Updated content analysis for adaptive Liquid Glass materials")
+            #endif
         }
         .statusBarHidden(false)
         .onAppear {
