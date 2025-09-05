@@ -233,6 +233,72 @@ struct LibraryFilterView: View {
     }
     
     @ViewBuilder
+    private var advancedFiltersSection: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.md) {
+            Text("Smart Filters")
+                .titleMedium()
+                .foregroundColor(currentTheme.primaryText)
+            
+            LazyVGrid(columns: [
+                GridItem(.flexible()),
+                GridItem(.flexible())
+            ], spacing: Theme.Spacing.sm) {
+                AdvancedFilterChip(
+                    title: "📖 Currently Reading", 
+                    subtitle: "Books in progress",
+                    isSelected: filter.showCurrentlyReadingOnly
+                ) {
+                    withAnimation(.smooth) {
+                        filter.showCurrentlyReadingOnly.toggle()
+                    }
+                    HapticFeedbackManager.shared.lightImpact()
+                }
+                
+                AdvancedFilterChip(
+                    title: "📝 With Notes", 
+                    subtitle: "Books with personal notes",
+                    isSelected: filter.showWithNotesOnly
+                ) {
+                    withAnimation(.smooth) {
+                        filter.showWithNotesOnly.toggle()
+                    }
+                    HapticFeedbackManager.shared.lightImpact()
+                }
+                
+                AdvancedFilterChip(
+                    title: "🕒 Recently Added", 
+                    subtitle: "Last 30 days",
+                    isSelected: filter.showRecentlyAddedOnly
+                ) {
+                    withAnimation(.smooth) {
+                        filter.showRecentlyAddedOnly.toggle()
+                    }
+                    HapticFeedbackManager.shared.lightImpact()
+                }
+                
+                AdvancedFilterChip(
+                    title: "⭐ Unrated", 
+                    subtitle: "Books needing ratings",
+                    isSelected: filter.showUnratedOnly
+                ) {
+                    withAnimation(.smooth) {
+                        filter.showUnratedOnly.toggle()
+                        if filter.showUnratedOnly {
+                            filter.ratingRange = 0.0...5.0 // Reset rating range
+                        }
+                    }
+                    HapticFeedbackManager.shared.lightImpact()
+                }
+            }
+        }
+        .padding(Theme.Spacing.lg)
+        .progressiveGlassEffect(
+            material: .regularMaterial,
+            level: .optimized
+        )
+    }
+    
+    @ViewBuilder
     private var sortingSection: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.md) {
             Text("Sort By")
@@ -334,197 +400,6 @@ struct LibraryFilterView: View {
                         }
                         HapticFeedbackManager.shared.lightImpact()
                     }
-                }
-            }
-        }
-        .padding(Theme.Spacing.lg)
-        .progressiveGlassEffect(
-            material: .regularMaterial,
-            level: .optimized
-        )
-    }
-}
-
-// MARK: - Supporting Views
-
-struct QuickFilterChip: View {
-    @Environment(\.appTheme) private var currentTheme
-    let title: String
-    let subtitle: String
-    let isSelected: Bool
-    let fullWidth: Bool
-    let action: () -> Void
-    
-    init(title: String, subtitle: String, isSelected: Bool, fullWidth: Bool = false, action: @escaping () -> Void) {
-        self.title = title
-        self.subtitle = subtitle
-        self.isSelected = isSelected
-        self.fullWidth = fullWidth
-        self.action = action
-    }
-    
-    var body: some View {
-        Button(action: action) {
-            VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
-                Text(title)
-                    .labelLarge()
-                    .foregroundColor(isSelected ? currentTheme.onPrimary : currentTheme.primaryText)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                
-                Text(subtitle)
-                    .labelSmall()
-                    .foregroundColor(isSelected ? currentTheme.onPrimary.opacity(0.8) : currentTheme.secondaryText)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            }
-            .padding(Theme.Spacing.md)
-            .background(
-                RoundedRectangle(cornerRadius: Theme.CornerRadius.medium)
-                    .fill(isSelected ? currentTheme.primary : currentTheme.surfaceVariant)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: Theme.CornerRadius.medium)
-                    .stroke(isSelected ? currentTheme.primary : currentTheme.outline.opacity(0.3), lineWidth: 1)
-            )
-        }
-        .buttonStyle(.plain)
-        .conditionalModifier(fullWidth) { view in
-            view.gridCellColumns(2)
-        }
-    }
-}
-
-struct ReadingStatusFilterChip: View {
-    @Environment(\.appTheme) private var currentTheme
-    let status: ReadingStatus
-    let isSelected: Bool
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: Theme.Spacing.sm) {
-                Circle()
-                    .fill(status.textColor(theme: currentTheme))
-                    .frame(width: 12, height: 12)
-                
-                Text(status.rawValue)
-                    .labelMedium()
-                    .foregroundColor(isSelected ? currentTheme.onPrimary : currentTheme.primaryText)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                
-                if isSelected {
-                    Image(systemName: "checkmark")
-                        .font(.caption)
-                        .foregroundColor(currentTheme.onPrimary)
-                }
-            }
-            .padding(.horizontal, Theme.Spacing.md)
-            .padding(.vertical, Theme.Spacing.sm)
-            .background(
-                RoundedRectangle(cornerRadius: Theme.CornerRadius.medium)
-                    .fill(isSelected ? currentTheme.primary : currentTheme.surfaceVariant)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: Theme.CornerRadius.medium)
-                    .stroke(isSelected ? currentTheme.primary : currentTheme.outline.opacity(0.3), lineWidth: 1)
-            )
-        }
-        .buttonStyle(.plain)
-    }
-}
-
-struct FilterToggleRow: View {
-    @Environment(\.appTheme) private var currentTheme
-    let title: String
-    let subtitle: String
-    let icon: String
-    @Binding var isOn: Bool
-    
-    var body: some View {
-        HStack(spacing: Theme.Spacing.md) {
-            Image(systemName: icon)
-                .foregroundColor(currentTheme.primary)
-                .frame(width: 24, height: 24)
-            
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                    .bodyMedium()
-                    .foregroundColor(currentTheme.primaryText)
-                
-                Text(subtitle)
-                    .labelSmall()
-                    .foregroundColor(currentTheme.secondaryText)
-            }
-            
-            Spacer()
-            
-            Toggle("", isOn: $isOn)
-                .tint(currentTheme.primary)
-                .onChange(of: isOn) { _, newValue in
-                    HapticFeedbackManager.shared.lightImpact()
-                }
-        }
-        .padding(.horizontal, Theme.Spacing.sm)
-        .padding(.vertical, Theme.Spacing.xs)
-    }
-    
-    // MARK: - iOS 26 Advanced Filter Sections
-    
-    @ViewBuilder
-    private var advancedFiltersSection: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.md) {
-            Text("Smart Filters")
-                .titleMedium()
-                .foregroundColor(currentTheme.primaryText)
-            
-            LazyVGrid(columns: [
-                GridItem(.flexible()),
-                GridItem(.flexible())
-            ], spacing: Theme.Spacing.sm) {
-                AdvancedFilterChip(
-                    title: "📖 Currently Reading", 
-                    subtitle: "Books in progress",
-                    isSelected: filter.showCurrentlyReadingOnly
-                ) {
-                    withAnimation(.smooth) {
-                        filter.showCurrentlyReadingOnly.toggle()
-                    }
-                    HapticFeedbackManager.shared.lightImpact()
-                }
-                
-                AdvancedFilterChip(
-                    title: "📝 With Notes", 
-                    subtitle: "Books with personal notes",
-                    isSelected: filter.showWithNotesOnly
-                ) {
-                    withAnimation(.smooth) {
-                        filter.showWithNotesOnly.toggle()
-                    }
-                    HapticFeedbackManager.shared.lightImpact()
-                }
-                
-                AdvancedFilterChip(
-                    title: "🕒 Recently Added", 
-                    subtitle: "Last 30 days",
-                    isSelected: filter.showRecentlyAddedOnly
-                ) {
-                    withAnimation(.smooth) {
-                        filter.showRecentlyAddedOnly.toggle()
-                    }
-                    HapticFeedbackManager.shared.lightImpact()
-                }
-                
-                AdvancedFilterChip(
-                    title: "⭐ Unrated", 
-                    subtitle: "Books needing ratings",
-                    isSelected: filter.showUnratedOnly
-                ) {
-                    withAnimation(.smooth) {
-                        filter.showUnratedOnly.toggle()
-                        if filter.showUnratedOnly {
-                            filter.ratingRange = 0.0...5.0 // Reset rating range
-                        }
-                    }
-                    HapticFeedbackManager.shared.lightImpact()
                 }
             }
         }
@@ -743,6 +618,129 @@ struct FilterToggleRow: View {
             material: .regularMaterial,
             level: .optimized
         )
+    }
+}
+
+// MARK: - Supporting Views
+
+struct QuickFilterChip: View {
+    @Environment(\.appTheme) private var currentTheme
+    let title: String
+    let subtitle: String
+    let isSelected: Bool
+    let fullWidth: Bool
+    let action: () -> Void
+    
+    init(title: String, subtitle: String, isSelected: Bool, fullWidth: Bool = false, action: @escaping () -> Void) {
+        self.title = title
+        self.subtitle = subtitle
+        self.isSelected = isSelected
+        self.fullWidth = fullWidth
+        self.action = action
+    }
+    
+    var body: some View {
+        Button(action: action) {
+            VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+                Text(title)
+                    .labelLarge()
+                    .foregroundColor(isSelected ? currentTheme.onPrimary : currentTheme.primaryText)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                
+                Text(subtitle)
+                    .labelSmall()
+                    .foregroundColor(isSelected ? currentTheme.onPrimary.opacity(0.8) : currentTheme.secondaryText)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .padding(Theme.Spacing.md)
+            .background(
+                RoundedRectangle(cornerRadius: Theme.CornerRadius.medium)
+                    .fill(isSelected ? currentTheme.primary : currentTheme.surfaceVariant)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: Theme.CornerRadius.medium)
+                    .stroke(isSelected ? currentTheme.primary : currentTheme.outline.opacity(0.3), lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
+        .conditionalModifier(fullWidth) { view in
+            view.gridCellColumns(2)
+        }
+    }
+}
+
+struct ReadingStatusFilterChip: View {
+    @Environment(\.appTheme) private var currentTheme
+    let status: ReadingStatus
+    let isSelected: Bool
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: Theme.Spacing.sm) {
+                Circle()
+                    .fill(status.textColor(theme: currentTheme))
+                    .frame(width: 12, height: 12)
+                
+                Text(status.rawValue)
+                    .labelMedium()
+                    .foregroundColor(isSelected ? currentTheme.onPrimary : currentTheme.primaryText)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                
+                if isSelected {
+                    Image(systemName: "checkmark")
+                        .font(.caption)
+                        .foregroundColor(currentTheme.onPrimary)
+                }
+            }
+            .padding(.horizontal, Theme.Spacing.md)
+            .padding(.vertical, Theme.Spacing.sm)
+            .background(
+                RoundedRectangle(cornerRadius: Theme.CornerRadius.medium)
+                    .fill(isSelected ? currentTheme.primary : currentTheme.surfaceVariant)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: Theme.CornerRadius.medium)
+                    .stroke(isSelected ? currentTheme.primary : currentTheme.outline.opacity(0.3), lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+struct FilterToggleRow: View {
+    @Environment(\.appTheme) private var currentTheme
+    let title: String
+    let subtitle: String
+    let icon: String
+    @Binding var isOn: Bool
+    
+    var body: some View {
+        HStack(spacing: Theme.Spacing.md) {
+            Image(systemName: icon)
+                .foregroundColor(currentTheme.primary)
+                .frame(width: 24, height: 24)
+            
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .bodyMedium()
+                    .foregroundColor(currentTheme.primaryText)
+                
+                Text(subtitle)
+                    .labelSmall()
+                    .foregroundColor(currentTheme.secondaryText)
+            }
+            
+            Spacer()
+            
+            Toggle("", isOn: $isOn)
+                .tint(currentTheme.primary)
+                .onChange(of: isOn) { _, newValue in
+                    HapticFeedbackManager.shared.lightImpact()
+                }
+        }
+        .padding(.horizontal, Theme.Spacing.sm)
+        .padding(.vertical, Theme.Spacing.xs)
     }
 }
 

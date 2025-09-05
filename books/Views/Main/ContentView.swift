@@ -778,6 +778,7 @@ struct LibraryViewForSplitView: View {
     @State private var showingSettings = false
     @State private var showingEnhancement = false
     @State private var libraryFilter = LibraryFilter.all
+    @State private var selectedQuickFilter: QuickFilterType?
     
     @Query private var allBooks: [UserBook]
     @State private var stableFilteredBooks: [UserBook] = []
@@ -884,7 +885,7 @@ struct LibraryViewForSplitView: View {
             // Header section (same as LibraryView)
             VStack(spacing: 0) {
                 ImportStatusBanner()
-                QuickFilterBar(filter: $libraryFilter) { }
+                QuickFilterBar(filter: $libraryFilter, selectedQuickFilter: $selectedQuickFilter)
                 Divider()
                 layoutToggleSection
             }

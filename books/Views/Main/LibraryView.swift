@@ -10,6 +10,7 @@ struct LibraryView: View {
     @State private var showingSettings = false
     @State private var showingEnhancement = false
     @State private var libraryFilter = LibraryFilter.all
+    @State private var selectedQuickFilter: QuickFilterType?
     
     // iPad sheet presentation
     @State private var showingBookDetailSheet = false
@@ -424,7 +425,7 @@ private extension LibraryView {
             ImportStatusBanner()
             
             // Quick filter bar
-            QuickFilterBar(filter: $libraryFilter) { }
+            QuickFilterBar(filter: $libraryFilter, selectedQuickFilter: $selectedQuickFilter)
             
             Divider()
             
