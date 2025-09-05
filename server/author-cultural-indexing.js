@@ -301,6 +301,386 @@ export class AuthorCulturalIndexer {
     return hints;
   }
 
+  // ===== ENHANCED GOOGLE APIs FOR BIOGRAPHICAL DATA =====
+  
+  // Get author biographical data from Google Knowledge Graph API
+  async getAuthorBiographyFromKnowledgeGraph(authorName) {
+    const apiKey = this.env.google1; // Using existing google1 key with KG access
+    if (!apiKey) {
+      console.warn('Google Knowledge Graph API key not available');
+      return null;
+    }
+
+    try {
+      const params = new URLSearchParams({
+        query: `${authorName} author writer`,
+        types: 'Person',
+        languages: 'en',
+        key: apiKey
+      });
+
+      const response = await fetch(
+        `https://kgsearch.googleapis.com/v1/entities:search?${params}`,
+        { 
+          headers: { 'User-Agent': 'CloudflareWorker/2.0 BookSearchProxy' },
+          signal: AbortSignal.timeout(5000)
+        }
+      );
+
+      if (!response.ok) {
+        console.warn(`Knowledge Graph API error: ${response.status}`);
+        return null;
+      }
+
+      const data = await response.json();
+      return this.extractKnowledgeGraphCulturalData(data.itemListElement, authorName);
+
+    } catch (error) {
+      console.warn(`Knowledge Graph lookup failed for ${authorName}:`, error.message);
+      return null;
+    }
+  }
+
+  // Extract cultural data from Knowledge Graph response
+  extractKnowledgeGraphCulturalData(entities, authorName) {
+    if (!entities || entities.length === 0) return null;
+
+    for (const entity of entities) {
+      const item = entity.result;
+      const name = item.name?.toLowerCase();
+      const description = item.description?.toLowerCase() || '';
+      const detailedDescription = item.detailedDescription?.articleBody?.toLowerCase() || '';
+      
+      // Verify this is likely the correct author
+      if (!name || !name.includes(authorName.toLowerCase().split(' ')[0])) {
+        continue;
+      }
+
+      // Check if this is an author/writer
+      if (!description.includes('author') && !description.includes('writer') && 
+          !description.includes('novelist') && !description.includes('poet')) {
+        continue;
+      }
+
+      const culturalData = {
+        nationality: this.extractNationalityFromKG(description, detailedDescription),
+        gender: this.extractGenderFromKG(description, detailedDescription),
+        birthPlace: this.extractBirthPlaceFromKG(detailedDescription),
+        culturalBackground: this.extractCulturalBackgroundFromKG(detailedDescription),
+        confidence: 85, // High confidence for Knowledge Graph data
+        source: 'Google Knowledge Graph API',
+        entityId: item['@id'],
+        lastUpdated: Date.now()
+      };
+
+      console.log(`📚 KNOWLEDGE GRAPH: Found ${authorName} - ${culturalData.nationality}, ${culturalData.gender}`);
+      return culturalData;
+    }
+
+    return null;
+  }
+
+  // Extract nationality from Knowledge Graph data
+  extractNationalityFromKG(description, detailedDescription) {
+    const text = `${description} ${detailedDescription}`;
+    
+    const nationalityPatterns = {
+      'American': /\b(american|united states|usa|us)\b/,
+      'British': /\b(british|england|uk|united kingdom|english)\b/,
+      'Canadian': /\b(canadian|canada)\b/,
+      'Australian': /\b(australian|australia)\b/,
+      'French': /\b(french|france)\b/,
+      'German': /\b(german|germany)\b/,
+      'Italian': /\b(italian|italy)\b/,
+      'Spanish': /\b(spanish|spain)\b/,
+      'Japanese': /\b(japanese|japan)\b/,
+      'Chinese': /\b(chinese|china)\b/,
+      'Indian': /\b(indian|india)\b/,
+      'Nigerian': /\b(nigerian|nigeria)\b/,
+      'South African': /\b(south african|south africa)\b/,
+      'Brazilian': /\b(brazilian|brazil)\b/,
+      'Mexican': /\b(mexican|mexico)\b/,
+      'Kenyan': /\b(kenyan|kenya)\b/,
+      'Ghanaian': /\b(ghanaian|ghana)\b/,
+      'Irish': /\b(irish|ireland)\b/,
+      'Scottish': /\b(scottish|scotland)\b/,
+      'Welsh': /\b(welsh|wales)\b/
+    };
+
+    for (const [nationality, pattern] of Object.entries(nationalityPatterns)) {
+      if (pattern.test(text)) {
+        return nationality;
+      }
+    }
+
+    return null;
+  }
+
+  // Extract gender from Knowledge Graph data
+  extractGenderFromKG(description, detailedDescription) {
+    const text = `${description} ${detailedDescription}`;
+    
+    if (/\b(she|her|woman|female|actress|authoress)\b/.test(text)) {
+      return 'Female';
+    } else if (/\b(he|him|man|male|actor)\b/.test(text)) {
+      return 'Male';
+    }
+    
+    return 'Not specified';
+  }
+
+  // Extract birth place from Knowledge Graph data
+  extractBirthPlaceFromKG(detailedDescription) {
+    const birthPatterns = [
+      /born in ([^,\.]+)/,
+      /birth place[:\s]+([^,\.]+)/i,
+      /native of ([^,\.]+)/
+    ];
+
+    for (const pattern of birthPatterns) {
+      const match = detailedDescription.match(pattern);
+      if (match) {
+        return match[1].trim();
+      }
+    }
+
+    return null;
+  }
+
+  // Extract cultural background from Knowledge Graph data
+  extractCulturalBackgroundFromKG(detailedDescription) {
+    const culturalKeywords = {
+      'African': ['african', 'africa', 'diaspora', 'post-colonial'],
+      'Asian': ['asian', 'east asian', 'south asian', 'oriental'],
+      'Latin American': ['latin american', 'hispanic', 'latino', 'chicano'],
+      'Indigenous': ['indigenous', 'native american', 'first nations', 'aboriginal'],
+      'Caribbean': ['caribbean', 'west indian', 'antillean'],
+      'Middle Eastern': ['middle eastern', 'arab', 'persian', 'islamic']
+    };
+
+    const themes = [];
+    const text = detailedDescription.toLowerCase();
+
+    for (const [background, keywords] of Object.entries(culturalKeywords)) {
+      for (const keyword of keywords) {
+        if (text.includes(keyword)) {
+          themes.push(background);
+          break;
+        }
+      }
+    }
+
+    return themes;
+  }
+
+  // Get author biographical data from Google Custom Search API
+  async getAuthorBiographyFromCustomSearch(authorName) {
+    const apiKey = this.env.GOOGLE_SEARCH_API_KEY;
+    const cxId = this.env.GOOGLE_SEARCH_CX_ID || '017576662512468239146:omuauf_lfve'; // Default Books CX
+    
+    if (!apiKey) {
+      console.warn('Google Custom Search API key not available');
+      return null;
+    }
+
+    try {
+      const queries = [
+        `"${authorName}" author biography nationality gender`,
+        `"${authorName}" writer cultural background ethnicity`,
+        `"${authorName}" author diversity demographics`
+      ];
+
+      const allResults = [];
+
+      for (const query of queries) {
+        const params = new URLSearchParams({
+          key: apiKey,
+          cx: cxId,
+          q: query,
+          num: 3,
+          safe: 'active'
+        });
+
+        const response = await fetch(
+          `https://customsearch.googleapis.com/customsearch/v1?${params}`,
+          { 
+            headers: { 'User-Agent': 'CloudflareWorker/2.0 BookSearchProxy' },
+            signal: AbortSignal.timeout(5000)
+          }
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          allResults.push(...(data.items || []));
+        }
+
+        // Rate limiting delay
+        await new Promise(resolve => setTimeout(resolve, 200));
+      }
+
+      return this.parseCustomSearchBiographicalData(allResults, authorName);
+
+    } catch (error) {
+      console.warn(`Custom Search lookup failed for ${authorName}:`, error.message);
+      return null;
+    }
+  }
+
+  // Parse biographical data from Custom Search results
+  parseCustomSearchBiographicalData(searchResults, authorName) {
+    if (!searchResults || searchResults.length === 0) return null;
+
+    const culturalData = {
+      nationality: null,
+      gender: 'Not specified',
+      ethnicity: null,
+      regions: [],
+      languages: [],
+      themes: [],
+      confidence: 0,
+      source: 'Google Custom Search API',
+      lastUpdated: Date.now()
+    };
+
+    let totalText = '';
+    for (const result of searchResults) {
+      totalText += `${result.title} ${result.snippet} `.toLowerCase();
+    }
+
+    // Gender detection with higher precision
+    const femaleIndicators = /\b(she|her|herself|woman|female|daughter|wife|mother|actress|authoress|ms\.|mrs\.|miss)\b/g;
+    const maleIndicators = /\b(he|him|himself|man|male|son|husband|father|actor|mr\.)\b/g;
+
+    const femaleMatches = (totalText.match(femaleIndicators) || []).length;
+    const maleMatches = (totalText.match(maleIndicators) || []).length;
+
+    if (femaleMatches > maleMatches && femaleMatches >= 2) {
+      culturalData.gender = 'Female';
+      culturalData.confidence += 25;
+    } else if (maleMatches > femaleMatches && maleMatches >= 2) {
+      culturalData.gender = 'Male';
+      culturalData.confidence += 25;
+    }
+
+    // Enhanced nationality extraction
+    const nationalityPatterns = {
+      'American': /(american|united states|usa|us|born in america|from america)\b/,
+      'British': /(british|england|uk|united kingdom|english|born in britain|from britain)\b/,
+      'Canadian': /(canadian|canada|born in canada|from canada)\b/,
+      'Australian': /(australian|australia|born in australia|from australia)\b/,
+      'Nigerian': /(nigerian|nigeria|born in nigeria|from nigeria)\b/,
+      'South African': /(south african|south africa|born in south africa)\b/,
+      'Kenyan': /(kenyan|kenya|born in kenya|from kenya)\b/,
+      'Ghanaian': /(ghanaian|ghana|born in ghana|from ghana)\b/,
+      'Indian': /(indian|india|born in india|from india)\b/,
+      'Chinese': /(chinese|china|born in china|from china)\b/,
+      'Japanese': /(japanese|japan|born in japan|from japan)\b/,
+      'French': /(french|france|born in france|from france)\b/,
+      'German': /(german|germany|born in germany|from germany)\b/,
+      'Brazilian': /(brazilian|brazil|born in brazil|from brazil)\b/,
+      'Mexican': /(mexican|mexico|born in mexico|from mexico)\b/
+    };
+
+    for (const [nationality, pattern] of Object.entries(nationalityPatterns)) {
+      if (pattern.test(totalText)) {
+        culturalData.nationality = nationality;
+        culturalData.confidence += 30;
+        break;
+      }
+    }
+
+    // Cultural/ethnic background detection
+    const culturalPatterns = {
+      'African American': /(african american|afro-american|black american)\b/,
+      'Hispanic': /(hispanic|latino|latina|chicano|chicana)\b/,
+      'Asian American': /(asian american|chinese american|japanese american|korean american)\b/,
+      'Indigenous': /(indigenous|native american|first nations|aboriginal)\b/,
+      'Jewish': /(jewish|judaism|hebrew)\b/,
+      'Caribbean': /(caribbean|west indian|jamaican|haitian|trinidadian)\b/
+    };
+
+    for (const [ethnicity, pattern] of Object.entries(culturalPatterns)) {
+      if (pattern.test(totalText)) {
+        culturalData.ethnicity = ethnicity;
+        culturalData.confidence += 15;
+        break;
+      }
+    }
+
+    // Regional and thematic extraction
+    const regionalKeywords = {
+      'Africa': ['african', 'nigeria', 'kenya', 'ghana', 'senegal', 'south africa'],
+      'Asia': ['asian', 'chinese', 'japanese', 'indian', 'korean', 'vietnamese'],
+      'Latin America': ['latin american', 'mexican', 'brazilian', 'argentinian', 'colombian'],
+      'Caribbean': ['caribbean', 'jamaican', 'haitian', 'trinidadian'],
+      'Middle East': ['middle eastern', 'arab', 'persian', 'israeli']
+    };
+
+    for (const [region, keywords] of Object.entries(regionalKeywords)) {
+      for (const keyword of keywords) {
+        if (totalText.includes(keyword)) {
+          culturalData.regions.push(region);
+          culturalData.themes.push(`${region} Literature`);
+          culturalData.confidence += 10;
+          break;
+        }
+      }
+    }
+
+    console.log(`🔍 CUSTOM SEARCH: ${authorName} - ${culturalData.nationality}, ${culturalData.gender} (${culturalData.confidence}% confidence)`);
+    
+    return culturalData.confidence > 20 ? culturalData : null;
+  }
+
+  // Enhanced author profile building with Google APIs
+  async buildEnhancedAuthorProfile(authorName, books = []) {
+    const profile = await this.buildAuthorProfile(authorName, books);
+    if (!profile) return null;
+
+    try {
+      // Try Knowledge Graph API first (higher accuracy)
+      let enhancedData = await this.getAuthorBiographyFromKnowledgeGraph(authorName);
+      
+      // Fallback to Custom Search if KG doesn't have data
+      if (!enhancedData || enhancedData.confidence < 50) {
+        const searchData = await this.getAuthorBiographyFromCustomSearch(authorName);
+        if (searchData && (!enhancedData || searchData.confidence > enhancedData.confidence)) {
+          enhancedData = searchData;
+        }
+      }
+
+      // Merge enhanced data into profile
+      if (enhancedData) {
+        profile.culturalProfile.nationality = enhancedData.nationality || profile.culturalProfile.nationality;
+        profile.culturalProfile.gender = enhancedData.gender !== 'Not specified' ? enhancedData.gender : profile.culturalProfile.gender;
+        
+        if (enhancedData.regions) {
+          profile.culturalProfile.regions = [...new Set([...profile.culturalProfile.regions, ...enhancedData.regions])];
+        }
+        
+        if (enhancedData.themes) {
+          profile.culturalProfile.themes = [...new Set([...profile.culturalProfile.themes, ...enhancedData.themes])];
+        }
+
+        // Boost confidence with external data
+        profile.culturalProfile.confidence = Math.min(100, profile.culturalProfile.confidence + (enhancedData.confidence * 0.3));
+        
+        // Track data sources
+        profile.metadata.sources = profile.metadata.sources || [];
+        profile.metadata.sources.push(enhancedData.source);
+        profile.metadata.enhancedAt = Date.now();
+
+        console.log(`🎯 ENHANCED PROFILE: ${authorName} (${profile.culturalProfile.confidence}% confidence from ${profile.metadata.sources.length} sources)`);
+      }
+
+      return profile;
+
+    } catch (error) {
+      console.error(`Enhanced profiling failed for ${authorName}:`, error.message);
+      return profile; // Return basic profile if enhancement fails
+    }
+  }
+
   // Analyze and update cultural profile based on all works
   async analyzeCulturalData(authorProfile) {
     const culturalData = {

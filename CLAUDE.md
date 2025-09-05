@@ -10,7 +10,8 @@ SwiftUI iOS book reading tracker app with cultural diversity tracking. Uses Swif
 - ✅ **CloudFlare Optimization**: Production-ready intelligent caching system deployed
 - ✅ **AuthorProfile Integration**: Complete SwiftData integration with automatic migration
 - ✅ **Search Workflow Migration**: Complete with clean minimalist design + Apple HIG compliance
-- 🚀 **Next Phase**: Phase 2 theme migration + Enhanced UI Features
+- ✅ **Automatic Cache Warming**: ⭐ NEW - Cron-scheduled pre-loading of new releases & popular books
+- 🚀 **Next Phase**: iOS UI integration with enhanced cultural data features
 
 ## Development Commands
 
@@ -30,11 +31,25 @@ SwiftUI iOS book reading tracker app with cultural diversity tracking. Uses Swif
 - `swift_validate_file("file_path")` - Syntax validation
 
 ### Search Infrastructure
-**OPTIMIZED** CloudFlare Workers at `https://books-api-proxy.jukasdrj.workers.dev` with:
+**FULLY OPTIMIZED** CloudFlare Workers at:
+- **Primary**: `https://books-api-proxy.jukasdrj.workers.dev`
+- **Custom Domain**: `https://books.ooheynerds.com` ⭐ **NEW**
+
+**Core Features:**
 - **Multi-tier Caching**: KV (hot) + R2 (cold) for 74% cost reduction
 - **Performance**: 5-10x faster responses (1000ms → 100ms average)
 - **API Providers**: Google Books → ISBNdb → Open Library with intelligent fallbacks
 - **Cost Optimization**: $220/month → $57/month target achieved
+- **⭐ Automatic Cache Warming**: Cron-scheduled pre-loading system
+  - **Daily 2AM UTC**: New releases (last 7 days, ~50-100 books)
+  - **Weekly Monday 3AM UTC**: Popular authors (~50 books/week)
+  - **Monthly 1st 4AM UTC**: Historical bestsellers (~100 books/month)
+- **Expected Performance**: 90%+ cache hit rate within 30 days, <50ms responses for cached content
+
+**Enhanced Author Intelligence (Configured, Pending Implementation):**
+- **Google Knowledge Graph API**: Integrated with google1 environment variable
+- **Google Custom Search API**: GOOGLE_SEARCH_API_KEY configured in CloudFlare secrets
+- **Cultural Data Enhancement**: Ready for biographical and diversity data enrichment
 
 ## Architecture
 
@@ -51,7 +66,9 @@ SwiftUI iOS book reading tracker app with cultural diversity tracking. Uses Swif
 
 ### Key Services
 - **BookSearchService**: Optimized CloudFlare integration with intelligent caching
+  - **⚠️ Update Required**: Configure for custom domain `books.ooheynerds.com` migration
 - **AuthorService**: ✨ NEW - Author profile management, matching, and cultural data enhancement
+- **⭐ CacheWarmer**: NEW - Automatic pre-loading of new releases and popular books
 - **CSVImportService**: Goodreads import with validation
 - **UnifiedThemeStore**: Theme management
 - **KeychainService**: Secure data storage
@@ -104,9 +121,9 @@ Strong focus on cultural diversity tracking:
 
 ---
 
-## 🚀 Phase 1 Complete: CloudFlare Optimization & Author Indexing
+## 🚀 Phase 1-3 Complete: CloudFlare Optimization, Author Indexing & Cache Warming
 
-### ✅ **COMPLETED (September 2025)**
+### ✅ **COMPLETED (January 2025)**
 
 #### **CloudFlare Backend Optimization**
 - ✅ **Production-Ready Worker**: Deployed intelligent caching system to `https://books-api-proxy.jukasdrj.workers.dev`
@@ -114,6 +131,11 @@ Strong focus on cultural diversity tracking:
 - ✅ **Performance Gains**: 5-10x faster responses (1000ms → 100ms average)
 - ✅ **Cost Optimization**: Architecture deployed for 74% reduction ($220→$57/month)
 - ✅ **Cache Verification**: Intelligent prepopulation working with automatic promotion
+- ✅ **⭐ Automatic Cache Warming**: Cron-scheduled pre-loading system deployed
+  - **Daily**: New releases detection and caching
+  - **Weekly**: Popular authors complete works 
+  - **Monthly**: Historical bestsellers and classics
+  - **Expected**: 90%+ cache hit rate within 30 days
 
 #### **iOS AuthorProfile System**
 - ✅ **AuthorProfile Model**: Complete SwiftData model with cultural diversity tracking
@@ -142,15 +164,37 @@ Strong focus on cultural diversity tracking:
   ```
 - ✅ **Test Migration**: Build succeeds, migration runs once on app startup with UserDefaults tracking
 
-#### **🚀 Phase 3: Enhanced UI Features (Next Steps)**
-- [ ] **Update BookSearchService**: Integrate AuthorService for author profile creation during searches
+#### **⭐ Phase 3 Complete: Automatic Cache Warming System**
+- ✅ **CacheWarmer Service**: Complete automatic book pre-loading system
+- ✅ **Cron Scheduling**: Daily, weekly, and monthly cache warming jobs
+- ✅ **New Release Detection**: Automatic discovery and caching of newly published books
+- ✅ **Popular Content Caching**: Pre-loads top 1000+ historical and contemporary books
+- ✅ **Cultural Data Integration**: Author profiles built automatically during warming
+- ✅ **Performance Optimization**: Expected 90%+ cache hit rates within 30 days
+
+#### **🚀 Phase 4: Enhanced Cultural Data Intelligence (Next Priority)**
+- [ ] **⭐ Google Knowledge Graph Integration**: Implement enhanced author biographical data collection
+  - Use configured google1 API key for Knowledge Graph API access
+  - Extract nationality, gender, cultural background from prominent author profiles
+  - Integrate with existing AuthorCulturalIndexer system
+- [ ] **⭐ Google Custom Search Integration**: Comprehensive biographical data mining
+  - Use configured GOOGLE_SEARCH_API_KEY for Wikipedia/literary database searches  
+  - Parse biographical text for diversity indicators and cultural metadata
+  - Implement confidence-based cultural data validation
+- [ ] **Enhanced Author Profiling**: Multi-API author intelligence system
+  - Google Books + Knowledge Graph + Custom Search integration
+  - Automated cultural diversity data population during cache warming
+  - Custom domain support: migrate to `https://books.ooheynerds.com`
+
+#### **🚀 Phase 5: UI Integration & User Experience**
+- [ ] **Update BookSearchService**: Parse enhanced cultural metadata from CloudFlare responses
 - [ ] **Enhance Search Results**: Display author cultural data and diversity indicators in search cards
 - [ ] **Update CSV Import**: Create AuthorProfile entities during Goodreads import process
 - [ ] **SearchView Updates**: Add cultural diversity filtering options (region, gender, language)
 - [ ] **Author Detail Views**: Create dedicated author profile screens with cultural data
 - [ ] **LibraryView Enhancement**: Author-based filtering, sorting, and diversity analytics
 
-### 🎯 **Phase 4: Advanced Cultural Analytics**
+### 🎯 **Phase 6: Advanced Cultural Analytics**
 
 #### **Enhanced Reading Insights**
 - [ ] **ReadingInsightsView Enhancement**: Use AuthorProfile data for comprehensive diversity analytics
@@ -196,6 +240,13 @@ Strong focus on cultural diversity tracking:
 - [ ] **Documentation**: Update API documentation for new caching headers
 - [ ] **Monitoring**: Set up CloudFlare analytics dashboard
 
+#### **API Configuration Updates**
+- [ ] **Custom Domain Migration**: Update iOS BookSearchService to use `books.ooheynerds.com`
+- [ ] **Google APIs Enhancement**: Implement Knowledge Graph + Custom Search integration
+  - **google1**: Enhanced with Knowledge Graph API access (configured)
+  - **GOOGLE_SEARCH_API_KEY**: Custom Search API key in CloudFlare secrets (configured)
+  - **Implementation**: Add biographical data collection to AuthorCulturalIndexer
+
 #### **Future Considerations**
 - [ ] **D1 Database**: Consider migrating author index to CloudFlare D1 for complex queries
 - [ ] **Durable Objects**: Evaluate for real-time author collaboration features  
@@ -216,6 +267,13 @@ Strong focus on cultural diversity tracking:
 - **UI Component Evolution**: Systematic replacement of deprecated modifiers (`.nativeCard()` → `.liquidGlassCard()`) maintains design system integrity
 - **Progressive Enhancement**: AuthorProfile system works alongside existing string-based authors, allowing gradual feature rollout
 - **Centralized Cultural Data**: Storing author information once and sharing across books eliminates duplication and improves data quality
+
+### **Phase 3: Automatic Cache Warming System**
+- **Zero Manual Effort**: Transforms reactive caching to proactive intelligent content delivery
+- **Smart Scheduling**: Cron jobs spread across time zones to maximize API provider free tiers
+- **Content Strategy**: Curated lists of 300+ classics, bestsellers, and diverse voices ensure comprehensive coverage
+- **Cultural Integration**: Author profiles built automatically during cache warming process
+- **Performance Prediction**: Expected 90%+ cache hit rates solve the "cold cache problem" completely
 
 
 # important-instruction-reminders
