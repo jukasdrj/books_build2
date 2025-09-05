@@ -1,31 +1,27 @@
 import SwiftUI
 
-// MARK: - iOS 26 Liquid Glass Book Card
-// Enhanced book card with translucent materials, vibrancy effects, and fluid animations
+// MARK: - iOS 26 HIG-Compliant Book Card
+// Book content card using standard materials per Apple HIG (content layer)
+// Glass effects removed to comply with iOS 26 guidelines
 
 struct LiquidGlassBookCardView: View {
     let book: UserBook
-    @Environment(\.appTheme) private var theme
+    @Environment(\.unifiedThemeStore) private var themeStore
     @Environment(\.colorScheme) private var colorScheme
     @State private var hoverIntensity: CGFloat = 0
     
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // Enhanced book cover with depth and vibrancy
+            // Book cover section
             bookCoverSection
             
-            // Book information with liquid glass styling
+            // Book information section with content layer styling
             bookInfoSection
         }
-        .liquidGlassCard(
-            material: .regular,
-            depth: .elevated,
-            radius: .comfortable,
-            vibrancy: .medium
-        )
-        .brightness(hoverIntensity * 0.1)
+        .layerStyle(.content, intensity: .medium, themeStore: themeStore)
+        .brightness(hoverIntensity * 0.05) // Reduced brightness effect for content
         .onHover { hovering in
-            withAnimation(LiquidGlassTheme.FluidAnimation.smooth.springAnimation) {
+            withAnimation(.easeInOut(duration: 0.2)) {
                 hoverIntensity = hovering ? 1.0 : 0.0
             }
         }
@@ -39,11 +35,11 @@ struct LiquidGlassBookCardView: View {
     @ViewBuilder
     private var bookCoverSection: some View {
         ZStack {
-            // Background gradient for depth
+            // Subtle background gradient for content layer
             LinearGradient(
                 colors: [
-                    theme.primary.opacity(0.1),
-                    theme.secondary.opacity(0.05)
+                    themeStore.textColor(for: .content, prominence: .primary).opacity(0.03),
+                    themeStore.textColor(for: .content, prominence: .secondary).opacity(0.02)
                 ],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
@@ -82,19 +78,19 @@ struct LiquidGlassBookCardView: View {
     @ViewBuilder
     private var bookInfoSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            // Title with enhanced typography (removed blur for readability)
+            // Title with content layer typography
             Text(book.metadata?.title ?? "Unknown Title")
-                .font(LiquidGlassTheme.typography.titleMedium)
-                .foregroundColor(theme.primaryText)
+                .font(.system(size: 16, weight: .semibold, design: .default))
+                .layerText(.content, prominence: .primary, themeStore: themeStore)
                 .lineLimit(2)
                 .minimumScaleFactor(0.9)
                 .multilineTextAlignment(.leading)
             
-            // Authors (removed blur for readability)
+            // Authors with content layer styling
             if let authors = book.metadata?.authors, !authors.isEmpty {
                 Text(authors.joined(separator: ", "))
-                    .font(LiquidGlassTheme.typography.bodySmall)
-                    .foregroundColor(theme.secondaryText)
+                    .font(.system(size: 14, weight: .regular, design: .default))
+                    .layerText(.content, prominence: .secondary, themeStore: themeStore)
                     .lineLimit(1)
             }
             
@@ -136,7 +132,7 @@ struct LiquidGlassBookCardView: View {
                     .fill(.regularMaterial)
                     .overlay(
                         Circle()
-                            .fill(status.color(theme: theme))
+                            .fill(status.color(theme: themeStore.appTheme))
                             .opacity(0.8)
                     )
             )
@@ -166,11 +162,11 @@ struct LiquidGlassBookCardView: View {
             ProgressView(value: progress / 100.0)
                 .progressViewStyle(LinearProgressViewStyle())
                 .frame(width: 40)
-                .tint(theme.primary)
+                .tint(themeStore.textColor(for: .content, prominence: .primary))
             
             Text("\(Int(progress))%")
-                .font(LiquidGlassTheme.typography.labelSmall)
-                .foregroundColor(theme.primary)
+                .font(.system(size: 11, weight: .medium, design: .default))
+                .layerText(.content, prominence: .primary, themeStore: themeStore)
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 4)
@@ -185,13 +181,13 @@ struct LiquidGlassBookCardView: View {
                 .font(.caption2)
             
             Text(region.shortName)
-                .font(LiquidGlassTheme.typography.labelSmall)
-                .foregroundColor(region.color(theme: theme))
+                .font(.system(size: 11, weight: .medium, design: .default))
+                .foregroundColor(region.color(theme: themeStore.appTheme))
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 4)
         .background(
-            region.color(theme: theme).opacity(0.1)
+            region.color(theme: themeStore.appTheme).opacity(0.1)
                 .overlay(.ultraThinMaterial.opacity(0.5))
         )
         .clipShape(Capsule())

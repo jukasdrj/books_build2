@@ -336,6 +336,182 @@ extension VibrancyColor {
     }
 }
 
+// MARK: - iOS 26 Layer Separation System
+/// Defines the proper usage of glass effects vs standard materials per Apple HIG
+enum LayerType {
+    case functional    // Navigation, tabs, sidebars, modals - USE GLASS
+    case content       // Books, text, data displays - USE MATERIALS
+    
+    var displayName: String {
+        switch self {
+        case .functional: return "Functional Layer"
+        case .content: return "Content Layer"
+        }
+    }
+    
+    var description: String {
+        switch self {
+        case .functional:
+            return "Controls and navigation elements that float above content. Uses Liquid Glass effects."
+        case .content:
+            return "App content like books, text, and data. Uses standard materials for clarity."
+        }
+    }
+    
+    /// Returns appropriate background material for this layer type
+    func backgroundMaterial(intensity: MaterialIntensity = .medium) -> Material {
+        switch self {
+        case .functional:
+            // Glass effects for functional elements (tabs, navigation, sidebars)
+            switch intensity {
+            case .ultraLight: return .ultraThinMaterial
+            case .light: return .thinMaterial
+            case .medium: return .regularMaterial
+            case .heavy: return .thickMaterial
+            case .maximum: return .ultraThickMaterial
+            }
+        case .content:
+            // Standard materials for content clarity and readability
+            switch intensity {
+            case .ultraLight: return .ultraThinMaterial
+            case .light: return .thinMaterial
+            case .medium: return .regularMaterial
+            case .heavy: return .regularMaterial  // Cap at regular for content readability
+            case .maximum: return .thickMaterial  // Maximum for content should still be readable
+            }
+        }
+    }
+    
+    /// Returns whether this layer type should use glass effects
+    var shouldUseGlassEffects: Bool {
+        switch self {
+        case .functional: return true   // Glass effects for functional layers
+        case .content: return false     // NO glass effects for content layers
+        }
+    }
+    
+    /// Returns appropriate text opacity for this layer type
+    func textOpacity(for prominence: TextProminence = .primary) -> Double {
+        switch self {
+        case .functional:
+            // Functional layer text needs high contrast over glass
+            switch prominence {
+            case .primary: return 0.95
+            case .secondary: return 0.8
+            case .tertiary: return 0.65
+            case .hint: return 0.5
+            }
+        case .content:
+            // Content layer text optimized for readability
+            switch prominence {
+            case .primary: return 1.0     // Maximum readability for content
+            case .secondary: return 0.85
+            case .tertiary: return 0.7
+            case .hint: return 0.55
+            }
+        }
+    }
+}
+
+/// Material intensity levels for both functional and content layers
+enum MaterialIntensity {
+    case ultraLight, light, medium, heavy, maximum
+    
+    var displayName: String {
+        switch self {
+        case .ultraLight: return "Ultra Light"
+        case .light: return "Light"
+        case .medium: return "Medium"
+        case .heavy: return "Heavy"
+        case .maximum: return "Maximum"
+        }
+    }
+}
+
+/// Text prominence levels for proper hierarchy
+enum TextProminence {
+    case primary, secondary, tertiary, hint
+    
+    var displayName: String {
+        switch self {
+        case .primary: return "Primary"
+        case .secondary: return "Secondary"
+        case .tertiary: return "Tertiary"
+        case .hint: return "Hint"
+        }
+    }
+}
+
+// MARK: - Layer-Aware Theme Extensions
+extension UnifiedThemeStore {
+    /// Get appropriate background material for a specific layer type
+    func backgroundMaterial(for layerType: LayerType, intensity: MaterialIntensity = .medium) -> Material {
+        return layerType.backgroundMaterial(intensity: intensity)
+    }
+    
+    /// Get appropriate text color with proper opacity for layer type
+    func textColor(for layerType: LayerType, prominence: TextProminence = .primary) -> Color {
+        let opacity = layerType.textOpacity(for: prominence)
+        
+        if currentTheme.isLiquidGlass, let liquidVariant = currentTheme.liquidGlassVariant {
+            switch prominence {
+            case .primary: return liquidVariant.colorDefinition.primary.color.opacity(opacity)
+            case .secondary: return liquidVariant.colorDefinition.secondary.color.opacity(opacity)
+            case .tertiary: return liquidVariant.colorDefinition.accent.color.opacity(opacity)
+            case .hint: return liquidVariant.colorDefinition.secondary.color.opacity(opacity * 0.7)
+            }
+        } else {
+            switch prominence {
+            case .primary: return appTheme.primaryText.opacity(opacity)
+            case .secondary: return appTheme.secondaryText.opacity(opacity)
+            case .tertiary: return appTheme.primaryText.opacity(opacity * 0.7)
+            case .hint: return appTheme.secondaryText.opacity(opacity * 0.6)
+            }
+        }
+    }
+    
+    /// Check if glass effects are appropriate for this layer type
+    func shouldUseGlass(for layerType: LayerType) -> Bool {
+        return layerType.shouldUseGlassEffects && currentTheme.isLiquidGlass
+    }
+}
+
+// MARK: - HIG Compliance Extensions
+extension View {
+    /// Apply layer-appropriate styling based on iOS 26 HIG guidelines
+    func layerStyle(
+        _ layerType: LayerType,
+        intensity: MaterialIntensity = .medium,
+        themeStore: UnifiedThemeStore
+    ) -> some View {
+        Group {
+            if layerType.shouldUseGlassEffects && themeStore.currentTheme.isLiquidGlass {
+                // Functional layer: Use glass effects
+                self.background(themeStore.backgroundMaterial(for: layerType, intensity: intensity))
+                    .liquidGlassCard(
+                        material: LiquidGlassTheme.GlassMaterial.regular,
+                        depth: .floating,
+                        radius: .comfortable,
+                        vibrancy: .medium
+                    )
+            } else {
+                // Content layer or legacy theme: Use standard materials
+                self.background(themeStore.backgroundMaterial(for: layerType, intensity: intensity))
+                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            }
+        }
+    }
+    
+    /// Quick access to layer-appropriate text styling
+    func layerText(
+        _ layerType: LayerType,
+        prominence: TextProminence = .primary,
+        themeStore: UnifiedThemeStore
+    ) -> some View {
+        self.foregroundColor(themeStore.textColor(for: layerType, prominence: prominence))
+    }
+}
+
 // MARK: - Migration Safety Check
 /// Ensures that migration doesn't break existing functionality
 struct ThemeMigrationValidator {
