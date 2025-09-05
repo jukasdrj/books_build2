@@ -332,12 +332,10 @@ struct ReadingInsightsView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(20)
-        .optimizedLiquidGlassCard(
-            material: .thin,
-            depth: .elevated,
-            radius: .comfortable,
-            vibrancy: .medium
-        )
+        .progressiveGlassContainer {
+            RoundedRectangle(cornerRadius: 16)
+                .fill(.thinMaterial)
+        }
         .shadow(color: color.opacity(0.1), radius: 10, x: 0, y: 5)
         .scaleEffect(animateElements ? 1 : 0.9)
         .opacity(animateElements ? 1 : 0.6)

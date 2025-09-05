@@ -44,12 +44,13 @@ struct SettingsView: View {
                 // MARK: - Personalization Section (Primary Importance)
                 VStack(spacing: adaptiveContentSpacing) {
                     // Enhanced theme selection with primary prominence
-                    LiquidGlassButton("Choose Your Theme", style: .primary, haptic: .medium) {
+                    Button("Choose Your Theme") {
                         showingThemePicker = true
                         Task { @MainActor in
                             HapticFeedbackManager.shared.mediumImpact()
                         }
                     }
+                    .progressiveGlassButton(style: .primary)
                     
                     // Appearance control with enhanced vibrancy
                     EnhancedAppearanceControl(
@@ -71,12 +72,13 @@ struct SettingsView: View {
                 
                 // MARK: - Reading Goals Section (Secondary Importance)
                 VStack(spacing: adaptiveContentSpacing) {
-                    LiquidGlassButton("Reading Goals", style: .primary, haptic: .light) {
+                    Button("Reading Goals") {
                         showingGoalSettings = true
                         Task { @MainActor in
                             HapticFeedbackManager.shared.lightImpact()
                         }
                     }
+                    .progressiveGlassButton(style: .primary)
                 }
                 .liquidGlassSection(
                     header: {

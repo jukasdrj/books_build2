@@ -2225,11 +2225,9 @@ struct SearchResultRow: View {
                     width: 65, // Larger cover for better presence
                     height: 95
                 )
-                .optimizedLiquidGlassCard(
-                    material: .regular,
-                    depth: .elevated, // Enhanced depth for better presence
-                    radius: .comfortable, // More rounded for modern look
-                    vibrancy: .medium
+                .progressiveGlassEffect(
+                    material: .regularMaterial,
+                    level: .full
                 )
                 .shadow(
                     color: primaryColor.opacity(0.15), // Stronger colored shadow
