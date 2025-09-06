@@ -1,0 +1,29 @@
+# Books API Proxy Tail Worker Configuration
+name = "books-api-tail"
+main = "src/index.js"
+compatibility_date = "2025-02-04"
+compatibility_flags = ["nodejs_compat"]
+
+# This is a tail worker that processes logs from books-api-proxy
+[[tail_consumers]]
+service = "books-api-proxy"  # The worker to tail
+# environment = "production"  # Optional: specify environment
+
+# KV Storage for analytics and alerts
+[[kv_namespaces]]
+binding = "TAIL_ANALYTICS"
+id = "tail_analytics_namespace_id_placeholder"
+preview_id = "tail_analytics_preview_id_placeholder"
+
+# Environment variables for configuration
+[vars]
+ALERT_THRESHOLD_ERROR_RATE = "0.1"     # 10% error rate triggers alert
+ALERT_THRESHOLD_SLOW_RATE = "0.2"      # 20% slow requests triggers alert
+ALERT_THRESHOLD_CACHE_MISS = "0.5"     # 50% cache miss rate triggers alert
+SLOW_REQUEST_THRESHOLD = "5000"        # 5 seconds
+RETENTION_HOURS = "168"                # 7 days (168 hours)
+
+# Optional: Custom domain for analytics dashboard
+# routes = [
+#   { pattern = "analytics.books.ooheynerds.com/*", zone_name = "ooheynerds.com" }
+# ]

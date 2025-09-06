@@ -1,0 +1,26 @@
+{
+  "name": "books-api-tail",
+  "version": "1.0.0",
+  "description": "Tail worker for monitoring books API proxy logs and performance",
+  "main": "src/index.js",
+  "scripts": {
+    "deploy": "wrangler deploy",
+    "dev": "wrangler dev",
+    "tail": "wrangler tail books-api-proxy",
+    "setup": "npm run create-kv && npm run deploy",
+    "create-kv": "wrangler kv:namespace create TAIL_ANALYTICS && wrangler kv:namespace create TAIL_ANALYTICS --preview"
+  },
+  "keywords": [
+    "cloudflare",
+    "worker",
+    "tail",
+    "monitoring",
+    "analytics",
+    "books"
+  ],
+  "author": "oooe",
+  "license": "MIT",
+  "devDependencies": {
+    "wrangler": "^3.80.0"
+  }
+}
