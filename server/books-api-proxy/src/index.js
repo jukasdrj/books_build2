@@ -250,7 +250,8 @@ function calculateBookQualityScore(book, originalQuery) {
   const lowQualityTerms = [
     'summary', 'study guide', 'sparknotes', 'cliffsnotes', 'quick read',
     'analysis', 'companion', 'workbook', 'test prep', 'exam guide',
-    'collection set', 'bundle', '3-book', '4-book', '5-book'
+    'collection set', 'bundle', '3-book', '4-book', '5-book',
+    'movie tie in', 'movie tie-in', 'classroom edition', 'tie-in edition', 'movie edition', 'film tie-in'
   ];
   
   const titleLower = title.toLowerCase();
@@ -324,7 +325,7 @@ function filterAndSortResults(results, qualityParams, originalQuery) {
     
     // Apply study guides filter
     if (excludeStudyGuides) {
-      const studyTerms = ['study guide', 'sparknotes', 'cliffsnotes', 'summary', 'analysis', 'companion'];
+      const studyTerms = ['study guide', 'sparknotes', 'cliffsnotes', 'summary', 'analysis', 'companion', 'movie tie in', 'movie tie-in', 'classroom edition', 'tie-in edition', 'movie edition', 'film tie-in'];
       if (studyTerms.some(term => title.toLowerCase().includes(term))) {
         return false;
       }
