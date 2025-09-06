@@ -163,7 +163,11 @@ class BookSearchService: ObservableObject {
         sortBy: SortOption = .relevance,
         maxResults: Int = 40,
         includeTranslations: Bool = false,
-        provider: APIProvider = .auto
+        provider: APIProvider = .auto,
+        excludeCollections: Bool = true,
+        excludeStudyGuides: Bool = true,
+        qualityFilter: String = "standard",
+        minPages: Int? = nil
     ) async -> Result<[BookMetadata], BookError> {
         // Handle empty queries
         let trimmedQuery = query.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -201,6 +205,15 @@ class BookSearchService: ObservableObject {
             queryItems.append(URLQueryItem(name: "langRestrict", value: "en"))
         }
         
+        // Quality filtering parameters (NEW - Fix for collections/summaries filtering)
+        queryItems.append(URLQueryItem(name: "excludeCollections", value: String(excludeCollections)))
+        queryItems.append(URLQueryItem(name: "excludeStudyGuides", value: String(excludeStudyGuides)))
+        queryItems.append(URLQueryItem(name: "qualityFilter", value: qualityFilter))
+        
+        if let minPages = minPages {
+            queryItems.append(URLQueryItem(name: "minPages", value: String(minPages)))
+        }
+        
         components.queryItems = queryItems
         
         guard let url = components.url else {
@@ -232,7 +245,9 @@ class BookSearchService: ObservableObject {
         _ author: String,
         sortBy: SortOption = .popularity,
         maxResults: Int = 40,
-        includeTranslations: Bool = false
+        includeTranslations: Bool = false,
+        excludeCollections: Bool = true,
+        excludeStudyGuides: Bool = true
     ) async -> Result<[BookMetadata], BookError> {
         let trimmedAuthor = author.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedAuthor.isEmpty else {
@@ -246,7 +261,9 @@ class BookSearchService: ObservableObject {
             query: authorQuery,
             sortBy: sortBy,
             maxResults: maxResults,
-            includeTranslations: includeTranslations
+            includeTranslations: includeTranslations,
+            excludeCollections: excludeCollections,
+            excludeStudyGuides: excludeStudyGuides
         )
     }
     
@@ -255,7 +272,9 @@ class BookSearchService: ObservableObject {
         _ title: String,
         sortBy: SortOption = .relevance,
         maxResults: Int = 40,
-        includeTranslations: Bool = false
+        includeTranslations: Bool = false,
+        excludeCollections: Bool = true,
+        excludeStudyGuides: Bool = true
     ) async -> Result<[BookMetadata], BookError> {
         let trimmedTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedTitle.isEmpty else {
@@ -269,7 +288,9 @@ class BookSearchService: ObservableObject {
             query: titleQuery,
             sortBy: sortBy,
             maxResults: maxResults,
-            includeTranslations: includeTranslations
+            includeTranslations: includeTranslations,
+            excludeCollections: excludeCollections,
+            excludeStudyGuides: excludeStudyGuides
         )
     }
     
@@ -312,7 +333,9 @@ class BookSearchService: ObservableObject {
         sortBy: SortOption = .relevance,
         maxResults: Int = 40,
         includeTranslations: Bool = false,
-        provider: APIProvider = .auto
+        provider: APIProvider = .auto,
+        excludeCollections: Bool = true,
+        excludeStudyGuides: Bool = true
     ) async -> Result<[BookMetadata], BookError> {
         // First try with specified provider
         let primaryResult = await search(
@@ -320,7 +343,9 @@ class BookSearchService: ObservableObject {
             sortBy: sortBy,
             maxResults: maxResults,
             includeTranslations: includeTranslations,
-            provider: provider
+            provider: provider,
+            excludeCollections: excludeCollections,
+            excludeStudyGuides: excludeStudyGuides
         )
         
         switch primaryResult {
@@ -332,7 +357,9 @@ class BookSearchService: ObservableObject {
             return await searchWithISBNDBFallback(
                 query: query,
                 sortBy: sortBy,
-                maxResults: maxResults
+                maxResults: maxResults,
+                excludeCollections: excludeCollections,
+                excludeStudyGuides: excludeStudyGuides
             )
             
         case .failure:
@@ -340,7 +367,9 @@ class BookSearchService: ObservableObject {
             return await searchWithISBNDBFallback(
                 query: query,
                 sortBy: sortBy,
-                maxResults: maxResults
+                maxResults: maxResults,
+                excludeCollections: excludeCollections,
+                excludeStudyGuides: excludeStudyGuides
             )
         }
     }
@@ -349,7 +378,9 @@ class BookSearchService: ObservableObject {
     private func searchWithISBNDBFallback(
         query: String,
         sortBy: SortOption,
-        maxResults: Int
+        maxResults: Int,
+        excludeCollections: Bool = true,
+        excludeStudyGuides: Bool = true
     ) async -> Result<[BookMetadata], BookError> {
         let baseURL = await getProxyBaseURL()
         guard var components = URLComponents(string: "\(baseURL)/search") else {
@@ -373,6 +404,11 @@ class BookSearchService: ObservableObject {
         case .relevance:
             break // Default relevance sorting
         }
+        
+        // Add quality filtering parameters
+        queryItems.append(URLQueryItem(name: "excludeCollections", value: String(excludeCollections)))
+        queryItems.append(URLQueryItem(name: "excludeStudyGuides", value: String(excludeStudyGuides)))
+        queryItems.append(URLQueryItem(name: "qualityFilter", value: "standard"))
         
         components.queryItems = queryItems
         
