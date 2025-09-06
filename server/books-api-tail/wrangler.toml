@@ -4,10 +4,7 @@ main = "src/index.js"
 compatibility_date = "2025-02-04"
 compatibility_flags = ["nodejs_compat"]
 
-# This is a tail worker that processes logs from books-api-proxy
-[[tail_consumers]]
-service = "books-api-proxy"  # The worker to tail
-# environment = "production"  # Optional: specify environment
+# This is a tail worker that processes logs sent from books-api-proxy
 
 # KV Storage for analytics and alerts
 [[kv_namespaces]]
