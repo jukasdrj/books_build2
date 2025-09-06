@@ -530,7 +530,7 @@ struct LibraryFilterView: View {
                     
                     Spacer()
                     
-                    if let yearRange = filter.publishedYearRange {
+                    if filter.publishedYearRange != nil {
                         Button("Clear") {
                             withAnimation(.smooth) {
                                 filter.publishedYearRange = nil
@@ -568,7 +568,7 @@ struct LibraryFilterView: View {
                     
                     Spacer()
                     
-                    if let pageRange = filter.pageCountRange {
+                    if filter.pageCountRange != nil {
                         Button("Clear") {
                             withAnimation(.smooth) {
                                 filter.pageCountRange = nil

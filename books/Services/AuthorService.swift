@@ -242,8 +242,6 @@ final class AuthorService: ObservableObject {
     
     /// Update author statistics based on user's library
     private func updateAuthorStatistics(_ author: AuthorProfile) async {
-        let bookDescriptor = FetchDescriptor<BookMetadata>()
-        
         do {
             let userBookDescriptor = FetchDescriptor<UserBook>()
             let allUserBooks = try modelContext.fetch(userBookDescriptor)

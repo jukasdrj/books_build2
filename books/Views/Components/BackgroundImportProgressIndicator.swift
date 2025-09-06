@@ -103,14 +103,8 @@ struct BackgroundImportProgressIndicator: View {
             isConnecting = false
         } else {
             // Try to initialize
-            do {
-                backgroundCoordinator = BackgroundImportCoordinator.initialize(with: modelContext)
-                isConnecting = false
-            } catch {
-                hasError = true
-                errorMessage = "Failed to initialize import service"
-                isConnecting = false
-            }
+            backgroundCoordinator = BackgroundImportCoordinator.initialize(with: modelContext)
+            isConnecting = false
         }
     }
 }

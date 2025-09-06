@@ -281,7 +281,10 @@ class LiquidGlassContentAnalyzer: ObservableObject, @unchecked Sendable {
     
     private func analyzeSystemEnvironment() {
         #if os(iOS)
-        let isDarkMode = UIScreen.main.traitCollection.userInterfaceStyle == .dark
+        // Use a default trait collection instead of UIScreen.main
+        // This will be updated with actual context when used in views
+        let traitCollection = UITraitCollection.current
+        let isDarkMode = traitCollection.userInterfaceStyle == .dark
         let colorScheme: ColorScheme = isDarkMode ? .dark : .light
         #else
         let colorScheme: ColorScheme = .light // Fallback for other platforms

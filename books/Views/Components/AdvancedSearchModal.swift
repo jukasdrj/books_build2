@@ -505,7 +505,7 @@ struct AdvancedSearchModal: View {
             FilterSectionCard(title: "Publication Year", icon: "calendar") {
                 if let yearRange = publishedYearRange {
                     HStack {
-                        Text("\\(yearRange.lowerBound) - \\(yearRange.upperBound)")
+                        Text("\(yearRange.lowerBound) - \(yearRange.upperBound)")
                             .font(LiquidGlassTheme.typography.bodyMedium)
                             .foregroundStyle(.primary)
                         
@@ -944,7 +944,7 @@ struct AdvancedSearchCriteria {
             components.append("Years: \(yearRange.lowerBound)-\(yearRange.upperBound)")
         }
         if let pageRange = pageCountRange {
-            components.append("Pages: \\(pageRange.lowerBound)-\\(pageRange.upperBound)")
+            components.append("Pages: \(pageRange.lowerBound)-\(pageRange.upperBound)")
         }
         
         return components.isEmpty ? "No criteria" : components.joined(separator: " • ")

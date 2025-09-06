@@ -604,7 +604,7 @@ struct ReadingInsightsView: View {
     // MARK: - Performance Optimization
     
     private func loadSection(_ section: String) {
-        withAnimation(.smooth(duration: 0.4)) {
+        _ = withAnimation(.smooth(duration: 0.4)) {
             sectionsLoaded.insert(section)
         }
     }
