@@ -12,8 +12,8 @@ service = "books-api-proxy"  # The worker to tail
 # KV Storage for analytics and alerts
 [[kv_namespaces]]
 binding = "TAIL_ANALYTICS"
-id = "tail_analytics_namespace_id_placeholder"
-preview_id = "tail_analytics_preview_id_placeholder"
+id = "ce6a611a14b845478c087429dffe3372"
+preview_id = "44e4c458e5d742908c409170d1069517"
 
 # Environment variables for configuration
 [vars]

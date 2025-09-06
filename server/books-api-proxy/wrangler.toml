@@ -44,7 +44,3 @@ crons = [
   "0 3 * * 1",   # Weekly: 3 AM UTC Monday - Popular authors
   "0 4 1 * *"    # Monthly: 4 AM UTC 1st - Historical bestsellers
 ]
-
-# Tail worker for monitoring and analytics
-[[tail_consumers]]
-service = "books-api-tail"

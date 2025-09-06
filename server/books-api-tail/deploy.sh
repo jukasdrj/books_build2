@@ -22,30 +22,10 @@ fi
 
 echo "✅ Authenticated with Cloudflare"
 
-# Create KV namespace if it doesn't exist
-echo "📦 Setting up KV namespace for tail analytics..."
-
-# Create production KV namespace
-TAIL_ANALYTICS_ID=$(wrangler kv:namespace create TAIL_ANALYTICS --json | jq -r '.result.id' 2>/dev/null || echo "")
-if [ -z "$TAIL_ANALYTICS_ID" ]; then
-    echo "⚠️  KV namespace might already exist or there was an error. Continuing with deployment..."
-else
-    echo "✅ Created KV namespace: $TAIL_ANALYTICS_ID"
-    
-    # Update wrangler.toml with the actual namespace ID
-    sed -i.bak "s/tail_analytics_namespace_id_placeholder/$TAIL_ANALYTICS_ID/g" wrangler.toml
-fi
-
-# Create preview KV namespace
-TAIL_ANALYTICS_PREVIEW_ID=$(wrangler kv:namespace create TAIL_ANALYTICS --preview --json | jq -r '.result.id' 2>/dev/null || echo "")
-if [ -z "$TAIL_ANALYTICS_PREVIEW_ID" ]; then
-    echo "⚠️  Preview KV namespace might already exist or there was an error. Continuing with deployment..."
-else
-    echo "✅ Created preview KV namespace: $TAIL_ANALYTICS_PREVIEW_ID"
-    
-    # Update wrangler.toml with the actual preview namespace ID
-    sed -i.bak "s/tail_analytics_preview_id_placeholder/$TAIL_ANALYTICS_PREVIEW_ID/g" wrangler.toml
-fi
+# KV namespaces are already configured in wrangler.toml
+echo "📦 KV namespaces already configured:"
+echo "  • Production: ce6a611a14b845478c087429dffe3372"
+echo "  • Preview: 44e4c458e5d742908c409170d1069517"
 
 # Deploy the tail worker
 echo "🚀 Deploying tail worker..."
