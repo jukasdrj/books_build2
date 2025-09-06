@@ -15,11 +15,6 @@ struct BookDetailsView: View {
             VStack(alignment: .leading, spacing: Theme.Spacing.xl) {
                 BookHeaderSection(book: book)
                 
-                // Smart data quality prompts
-                SmartPromptsSection(book: book, modelContext: modelContext)
-                
-                RatingSection(rating: $book.rating)
-                
                 // NEW: Reading Progress Section
                 if book.readingStatus == .reading || book.readingStatus == .read || book.currentPage > 0 {
                     ReadingProgressSection(book: book)
@@ -246,6 +241,36 @@ struct BookHeaderSection: View {
                 BookStatusSelector(book: book)
                     .padding(.top, Theme.Spacing.xs)
                 
+                // Rating stars - positioned under status selector
+                VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+                    Text("Your Rating")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(currentTheme.secondaryText)
+                    
+                    HStack(spacing: Theme.Spacing.xs) {
+                        ForEach(1...5, id: \.self) { star in
+                            Button(action: {
+                                withAnimation(.smooth(duration: 0.3)) {
+                                    if book.rating == star {
+                                        book.rating = nil // Allow un-setting rating
+                                    } else {
+                                        book.rating = star
+                                    }
+                                }
+                                HapticFeedbackManager.shared.mediumImpact()
+                            }) {
+                                Image(systemName: star <= (book.rating ?? 0) ? "star.fill" : "star")
+                                    .font(.system(size: 18))
+                                    .foregroundColor(currentTheme.accentHighlight)
+                                    .symbolEffect(.bounce, value: book.rating)
+                            }
+                            .scaleEffect(star == book.rating ? 1.2 : 1.0)
+                            .animation(.bouncy(duration: 0.4), value: book.rating)
+                        }
+                    }
+                }
+                .padding(.top, Theme.Spacing.sm)
+                
                 Spacer()
             }
             .frame(minHeight: 180)
@@ -284,13 +309,9 @@ struct RatingSection: View {
                     }
                     .scaleEffect(star == rating ? 1.25 : 1.0)
                     .animation(.bouncy(duration: 0.4), value: rating)
-                    .progressiveGlassButton(style: .adaptive)
                 }
                 Spacer()
             }
-        }
-        .progressiveGlassContainer {
-            EmptyView()
         }
     }
 }

@@ -17,14 +17,15 @@ SwiftUI iOS book reading tracker app with cultural diversity tracking. Uses Swif
 - ✅ **AuthorSearch Language Filtering**: ⭐ NEW - English-first results with translation toggle
 - ✅ **Stage 4 Detail & Interaction Excellence**: ⭐ COMPLETE - Premium detail views, intelligent search, skeleton loading states
 - ✅ **Build System Resolution**: ⭐ COMPLETE - All critical compilation errors resolved, app fully operational
+- ✅ **BookDetailsView UX Enhancement**: ⭐ NEW - Cleaner interface with integrated star rating and removed intrusive suggestions
 - 🚀 **Next Phase**: Stage 5 Excellence & Optimization
 
 ## Development Commands
 
 ### Building and Testing
-- **Build**: `build_sim({ projectPath: "books.xcodeproj", scheme: "books", simulatorName: "iPhone 16" })`
-- **Run**: `build_run_sim({ projectPath: "books.xcodeproj", scheme: "books", simulatorName: "iPhone 16" })`
-- **Test**: `test_sim({ projectPath: "books.xcodeproj", scheme: "books", simulatorName: "iPhone 16" })`
+- **Build**: `build_sim({ projectPath: "books.xcodeproj", scheme: "books", simulatorName: "iPhone 16 Pro" })`
+- **Run**: `build_run_sim({ projectPath: "books.xcodeproj", scheme: "books", simulatorName: "iPhone 16 Pro" })`
+- **Test**: `test_sim({ projectPath: "books.xcodeproj", scheme: "books", simulatorName: "iPhone 16 Pro" })`
 
 ### Project Structure
 - **Main project**: `books_build2/books.xcodeproj`
@@ -85,7 +86,7 @@ SwiftUI iOS book reading tracker app with cultural diversity tracking. Uses Swif
 
 ### Key Services
 - **BookSearchService**: Optimized CloudFlare integration with intelligent caching
-  - **⚠️ Update Required**: Configure for custom domain `books.ooheynerds.com` migration
+  - **✅ Custom Domain Active**: Primary URL is `books.ooheynerds.com` with intelligent fallback
 - **AuthorService**: ✨ NEW - Author profile management, matching, and cultural data enhancement
 - **⭐ CacheWarmer**: NEW - Automatic pre-loading of new releases and popular books
 - **CSVImportService**: Goodreads import with validation
@@ -309,7 +310,7 @@ Strong focus on cultural diversity tracking:
 - [ ] **Monitoring**: Set up CloudFlare analytics dashboard
 
 #### **API Configuration Updates**
-- [ ] **Custom Domain Migration**: Update iOS BookSearchService to use `books.ooheynerds.com`
+- [x] **Custom Domain Migration**: ✅ COMPLETE - iOS BookSearchService updated to use `books.ooheynerds.com`
 - [ ] **Google APIs Enhancement**: Implement Knowledge Graph + Custom Search integration
   - **google1**: Enhanced with Knowledge Graph API access (configured)
   - **GOOGLE_SEARCH_API_KEY**: Custom Search API key in CloudFlare secrets (configured)
@@ -357,6 +358,16 @@ Strong focus on cultural diversity tracking:
 - **Performance Engineering**: Adaptive debouncing, efficient animations, and memory-conscious implementations
 - **Build System Mastery**: Successfully resolved all compilation errors and achieved clean build status
 - **Production Readiness**: App fully operational with all Stage 4 enhancements integrated and tested
+
+#### **✅ BookDetailsView UX Enhancement (January 2025)**
+- ✅ **Cleaner Interface**: Removed intrusive suggestion cards that were pestering users constantly
+- ✅ **Integrated Star Rating**: Repositioned 5-star rating system to header area under reading status for better UX
+- ✅ **Non-Intrusive Design**: Suggestions now live only in LibraryEnhancementView where users actively seek improvements
+- ✅ **Fixed Progressive Glass Issues**: Resolved `.progressiveGlassButton()` conflicts causing blank buttons and hidden content
+- ✅ **Enhanced Rating Experience**: Preserved all animations (bounce, scale, haptic feedback) in the new compact design
+- ✅ **Cultural Information Restoration**: Fixed missing cultural selection pickers in EditBookView
+- ✅ **Reading Progress Integration**: Successfully added PageInputView functionality to EditBookView
+- ✅ **Focus on Content**: BookDetailsView now serves its primary purpose - clean book information viewing
 
 ### **Build System Resolution & Quality Assurance**
 - **Critical Error Analysis**: Applied 5 Whys methodology to identify root causes of 25+ compilation failures

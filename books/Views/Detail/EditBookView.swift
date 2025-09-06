@@ -24,6 +24,7 @@ struct EditBookView: View {
     @State private var selectedFormat: BookFormat?
     @State private var tags: String
     @State private var showingDeleteAlert = false
+    @State private var showingPageInput = false
 
     init(userBook: UserBook, onSave: @escaping (UserBook) -> Void) {
         self.userBook = userBook
@@ -109,7 +110,7 @@ struct EditBookView: View {
                                             .labelSmall()
                                             .foregroundColor(selectedFormat == format ? currentTheme.onPrimary : currentTheme.primaryText)
                                     }
-.frame(height: 60)
+                                    .frame(height: 60)
                                     .frame(maxWidth: .infinity)
                                     .background(selectedFormat == format ? currentTheme.primaryAction : currentTheme.cardBackground)
                                     .cornerRadius(Theme.CornerRadius.medium)
@@ -117,11 +118,8 @@ struct EditBookView: View {
                                         RoundedRectangle(cornerRadius: Theme.CornerRadius.medium)
                                             .stroke(selectedFormat == format ? currentTheme.primaryAction : currentTheme.outline, lineWidth: 1)
                                     )
-                                    .progressiveGlassContainer {
-                                        EmptyView()
-                                    }
                                 }
-                                .progressiveGlassButton(style: .adaptive)
+                                .buttonStyle(.plain)
                             }
                         }
                     }
@@ -207,15 +205,12 @@ struct EditBookView: View {
                             .accessibilityHint("Read-only book metadata")
                     }
                     
-    // Use new structured cultural selection pickers
+                    // Use new structured cultural selection pickers
                     CulturalSelectionSection(
                         originalLanguage: $originalLanguage,
                         authorNationality: $authorNationality,
                         authorGender: $selectedAuthorGender
                     )
-                    .progressiveGlassContainer {
-                        EmptyView()
-                    }
                 } header: {
                     Text("Cultural & Language Details")
                         .titleSmall()
@@ -249,6 +244,53 @@ struct EditBookView: View {
                         .foregroundColor(currentTheme.primaryText)
                 } footer: {
                     Text("Use tags to organize and categorize your books. Example: Fiction, Favorite, Philosophy, Must-Read")
+                        .labelSmall()
+                        .foregroundColor(currentTheme.secondaryText)
+                }
+                
+                // Reading Progress Section
+                Section {
+                    Button(action: {
+                        showingPageInput = true
+                    }) {
+                        HStack {
+                            VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+                                Text("Update Reading Progress")
+                                    .labelMedium()
+                                    .foregroundColor(currentTheme.primaryText)
+                                
+                                if userBook.currentPage > 0 || userBook.readingProgress > 0 {
+                                    if let totalPages = userBook.metadata?.pageCount, totalPages > 0 {
+                                        Text("Page \(userBook.currentPage) of \(totalPages) (\(Int(userBook.readingProgress * 100))%)")
+                                            .bodySmall()
+                                            .foregroundColor(currentTheme.secondaryText)
+                                    } else {
+                                        Text("\(Int(userBook.readingProgress * 100))% complete")
+                                            .bodySmall()
+                                            .foregroundColor(currentTheme.secondaryText)
+                                    }
+                                } else {
+                                    Text("Tap to set current page")
+                                        .bodySmall()
+                                        .foregroundColor(currentTheme.secondaryText)
+                                }
+                            }
+                            
+                            Spacer()
+                            
+                            Image(systemName: "chevron.right")
+                                .foregroundColor(currentTheme.secondaryText)
+                                .font(.system(size: 14, weight: .medium))
+                        }
+                        .padding(.vertical, Theme.Spacing.xs)
+                    }
+                    .progressiveGlassButton(style: .adaptive)
+                } header: {
+                    Text("Reading Progress")
+                        .titleSmall()
+                        .foregroundColor(currentTheme.primaryText)
+                } footer: {
+                    Text("Track your current page and reading progress. This helps with reading goals and insights.")
                         .labelSmall()
                         .foregroundColor(currentTheme.secondaryText)
                 }
@@ -319,6 +361,26 @@ struct EditBookView: View {
                 Button("Cancel", role: .cancel) { }
             } message: {
                 Text("This will permanently remove \"\(userBook.metadata?.title ?? "this book")\" from your library. This action cannot be undone.")
+            }
+            .sheet(isPresented: $showingPageInput) {
+                PageInputView(
+                    currentPage: Binding(
+                        get: { userBook.currentPage },
+                        set: { newValue in userBook.currentPage = newValue }
+                    ),
+                    totalPages: Binding(
+                        get: { userBook.metadata?.pageCount ?? 0 },
+                        set: { newValue in 
+                            if let metadata = userBook.metadata {
+                                metadata.pageCount = newValue > 0 ? newValue : nil
+                            }
+                        }
+                    ),
+                    onSave: {
+                        HapticFeedbackManager.shared.lightImpact()
+                        // Progress is automatically saved via the binding
+                    }
+                )
             }
         }
     }
