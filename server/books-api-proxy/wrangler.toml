@@ -1,19 +1,23 @@
 # CloudFlare Worker Configuration
 name = "books-api-proxy"
-main = "../production-cache-integrated.js"
+main = "src/index.js"
 compatibility_date = "2025-02-04"
 compatibility_flags = ["nodejs_compat"]
+
+# Log push for analytics and monitoring
+logpush = true
+
+# Secrets Store bindings for higher API limits
+secrets_store_secrets = [
+  { binding = "GOOGLE_BOOKS_HARDOOOE", store_id = "b0562ac16fde468c8af12717a6c88400", secret_name = "Google_books_hardoooe" },
+  { binding = "GOOGLE_BOOKS_IOSKEY", store_id = "b0562ac16fde468c8af12717a6c88400", secret_name = "Google_books_ioskey" },
+  { binding = "GOOGLE_SEARCH_API_KEY", store_id = "b0562ac16fde468c8af12717a6c88400", secret_name = "GOOGLE_SEARCH_API_KEY" },
+  { binding = "ISBN_SEARCH_KEY", store_id = "b0562ac16fde468c8af12717a6c88400", secret_name = "ISBN_search_key" }
+]
 
 # Observability
 [observability]
 enabled = true
-
-# Environment variables (set these in CloudFlare dashboard)
-# [env.production]
-# name = "books-api-proxy-prod"
-
-# [env.staging]
-# name = "books-api-proxy-staging"
 
 # KV Storage for caching and rate limiting (hot cache)
 [[kv_namespaces]]
@@ -27,11 +31,16 @@ binding = "BOOKS_R2"
 bucket_name = "books-cache"
 preview_bucket_name = "books-cache-preview"
 
-# Environment Variables (secrets - set via wrangler secret)
-# wrangler secret put GOOGLE_BOOKS_API_KEY
-# wrangler secret put WORLDCAT_API_KEY (if you get one)
+# Custom domain for production API
+routes = [
+  { pattern = "books.ooheynerds.com/*", zone_name = "ooheynerds.com" }
+]
 
-# Custom domains (optional - set up after deployment)
-# routes = [
-#   { pattern = "books-api.yourdomain.com/*", zone_name = "yourdomain.com" }
-# ]
+# Cron triggers for automatic cache warming
+[triggers]
+crons = [
+  "0 1 * * *",   # Bootstrap: 1 AM UTC - Aggressive initial population (runs once)
+  "0 2 * * *",   # Daily: 2 AM UTC - New releases (last 7 days)
+  "0 3 * * 1",   # Weekly: 3 AM UTC Monday - Popular authors
+  "0 4 1 * *"    # Monthly: 4 AM UTC 1st - Historical bestsellers
+]
